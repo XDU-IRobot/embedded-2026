@@ -32,7 +32,7 @@ void AsyncBuzzer::Beep(int beeps, int interval_ms) {
   beep_count_ = 0;
   beep_on_ = false;
   __HAL_TIM_SET_AUTORELOAD(htim_delay_, interval_ms * 1000);  // 设置定时器周期
-  HAL_TIM_Base_Start_IT(htim_delay_);  // 启动定时器中断
+  HAL_TIM_Base_Start_IT(htim_delay_);                         // 启动定时器中断
 }
 
 pTIM_CallbackTypeDef AsyncBuzzer::CallableObjToCallbackFnPtr(std::function<void(TIM_HandleTypeDef*)> func) {
