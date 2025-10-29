@@ -8,7 +8,8 @@
 #include "tim.h"
 
 /**
- * @brief 基于 STM32 定时器的定频任务封装
+ * @brief 基于 STM32
+ * 定时器的定频任务封装。类接管一个定时器，利用定时器中断周期性执行回调函数，达到运行高精度定频任务的目的。
  *
  * 用法示例：
  *  - 在创建 TimerTask 时传入对应的 TIM_HandleTypeDef* 和回调。
@@ -20,7 +21,7 @@
  */
 class TimerTask {
  public:
-  using Callback = etl::delegate<void()>;  // 回调类型改为 etl::delegate
+  using Callback = etl::delegate<void()>;  // 回调函数类型
 
   explicit TimerTask(TIM_HandleTypeDef* htim = nullptr, Callback cb = {}) : htim_(htim), cb_(std::move(cb)) {
     Register(this);
