@@ -9,6 +9,11 @@ jobs:
   build_steer_infantry_cs:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          # When running on pull_request we want to checkout the PR head commit
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/build-target
         with:
           target: steer_infantry_cs
@@ -16,6 +21,10 @@ jobs:
   build_drone_gb:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/build-target
         with:
           target: build_drone_gb
