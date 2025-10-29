@@ -91,7 +91,7 @@ class Gimbal2Dof {
   struct {
     float yaw_position;
     float pitch_position;
-    float yaw_speed_ff;   ///< Yaw 速度前馈
+    float yaw_speed_ff;  ///< Yaw 速度前馈
     float yaw_output_ff;  ///< Yaw 控制量前馈，控制量具体是力矩、电流或者什么，取决于电机驱动
   } target_{};            ///< 目标状态
   struct {
