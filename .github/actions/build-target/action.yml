@@ -1,0 +1,32 @@
+name: "build-target"
+description: "Reusable action to checkout, setup arm-none-eabi toolchain and build a CMake target"
+inputs:
+  target:
+    description: "CMake target to build"
+    required: true
+  build_type:
+    description: "CMake preset / build type"
+    required: false
+    default: "Release"
+  generator:
+    description: "CMake generator"
+    required: false
+    default: "Unix Makefiles"
+  build_dir:
+    description: "Build directory passed to cmake --build"
+    required: false
+    default: "./build/Release"
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: "recursive"
+    - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
+      uses: carlosperate/arm-none-eabi-gcc-action@v1
+    - name: Build
+      shell: bash
+      run: |
+        cmake --preset "${{ inputs.build_type }}" -G "${{ inputs.generator }}"
+        cmake --build "${{ inputs.build_dir }}" --target "${{ inputs.target }}" -- -j

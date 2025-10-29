@@ -1,0 +1,22 @@
+name: build
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build_steer_infantry_cs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/build-target
+        with:
+          target: steer_infantry_cs
+          build_type: ${{ env.BUILD_TYPE }}
+  build_drone_gb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/build-target
+        with:
+          target: build_drone_gb
+          build_type: ${{ env.BUILD_TYPE }}
