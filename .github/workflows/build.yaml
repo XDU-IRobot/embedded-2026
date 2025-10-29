@@ -1,31 +1,14 @@
 name: build
 
-on: [push, pull_request]
-
-env:
-  BUILD_TYPE: Release
+on:
+  workflow_dispatch: {}
 
 jobs:
-  build_steer_infantry_cs:
+  info:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: "recursive"
-          # When running on pull_request we want to checkout the PR head commit
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: ./.github/actions/build-target
-        with:
-          target: steer_infantry_cs
-          build_type: ${{ env.BUILD_TYPE }}
-  build_drone_gb:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: "recursive"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: ./.github/actions/build-target
-        with:
-          target: build_drone_gb
-          build_type: ${{ env.BUILD_TYPE }}
+      - name: List targets
+        run: |
+          echo "This repository now uses per-target workflows with badges:"
+          echo "- build-steer_infantry_cs"
+          echo "- build-drone_gb"
