@@ -1,10 +1,10 @@
 # embedded-2026
 
-2026赛季的所有嵌入式开发工作均在此仓库进行。
+IRobot 2026赛季嵌入式组代码仓库，为最大化代码复用和管理效率，除工程机械臂、硬件等特殊项目外，赛季内大部分嵌入式软件开发工作在此仓库进行。
 
-## Build status
+## CI status
 
-| 模块    | 构建状态                                                                                                                            |
+| 模块    | 编译测试通过？                                                                                                                         |
 |-------|---------------------------------------------------------------------------------------------------------------------------------|
 | 舵轮底盘  | ![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml/badge.svg) |
 | 无人机云台 | ![build-drone_gb](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml/badge.svg)                   |
