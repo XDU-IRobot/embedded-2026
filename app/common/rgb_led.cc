@@ -1,6 +1,4 @@
 
-#pragma once
-
 #include "rgb_led.hpp"
 
 void LED::Init() {

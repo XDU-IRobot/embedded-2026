@@ -7,12 +7,13 @@
 template <size_t MaxDevices>
 class DeviceManager {
  public:
-  void operator<<(rm::device::Device *device) {
+  DeviceManager &operator<<(rm::device::Device *device) {
     if (devices_.size() < MaxDevices) {
       devices_.push_back(device);
     } else {
       for (;;);  // 超出最大设备数量，进入死循环以便调试
     }
+    return *this;
   }
 
   bool all_device_ok() const {

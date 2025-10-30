@@ -74,8 +74,8 @@ class Gimbal2Dof {
   auto &pid() { return pid_; }
   auto &state() { return state_; }
   auto &target() { return target_; }
-  auto &output() { return output_; }
 
+  auto &output() { return output_; }
  private:
   bool enabled_{false};           ///< 有力/无力？
   bool speed_pid_enabled_{true};  ///< 单环/双环？
