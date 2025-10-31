@@ -1,8 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    stm32f4xx_it.h
-  * @brief   This file contains the headers of the interrupt handlers.
+  * @file           : main.h
+  * @brief          : Header for main.c file.
+  *                   This file contains the common defines of the application.
   ******************************************************************************
   * @attention
   *
@@ -18,12 +19,15 @@
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F4xx_IT_H
-#define __STM32F4xx_IT_H
+#ifndef __MAIN_H
+#define __MAIN_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -46,33 +50,33 @@ extern "C" {
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-void NMI_Handler(void);
-void HardFault_Handler(void);
-void MemManage_Handler(void);
-void BusFault_Handler(void);
-void UsageFault_Handler(void);
-void SVC_Handler(void);
-void DebugMon_Handler(void);
-void PendSV_Handler(void);
-void SysTick_Handler(void);
-void EXTI0_IRQHandler(void);
-void EXTI3_IRQHandler(void);
-void EXTI4_IRQHandler(void);
-void CAN1_RX0_IRQHandler(void);
-void EXTI9_5_IRQHandler(void);
-void TIM8_UP_TIM13_IRQHandler(void);
-void TIM8_TRG_COM_TIM14_IRQHandler(void);
-void DMA2_Stream1_IRQHandler(void);
-void CAN2_RX0_IRQHandler(void);
-void OTG_FS_IRQHandler(void);
-void DMA2_Stream6_IRQHandler(void);
-void DMA2_Stream7_IRQHandler(void);
+void Error_Handler(void);
+
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
+
+/* Private defines -----------------------------------------------------------*/
+#define ONBOARD_KEY_Pin GPIO_PIN_0
+#define ONBOARD_KEY_GPIO_Port GPIOA
+#define ONBOARD_KEY_EXTI_IRQn EXTI0_IRQn
+#define CS1_ACCEL_Pin GPIO_PIN_4
+#define CS1_ACCEL_GPIO_Port GPIOA
+#define INT1_ACCEL_Pin GPIO_PIN_4
+#define INT1_ACCEL_GPIO_Port GPIOC
+#define INT1_ACCEL_EXTI_IRQn EXTI4_IRQn
+#define INT1_GRYO_Pin GPIO_PIN_5
+#define INT1_GRYO_GPIO_Port GPIOC
+#define INT1_GRYO_EXTI_IRQn EXTI9_5_IRQn
+#define CS1_GYRO_Pin GPIO_PIN_0
+#define CS1_GYRO_GPIO_Port GPIOB
+
+/* USER CODE BEGIN Private defines */
+
+/* USER CODE END Private defines */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __STM32F4xx_IT_H */
+#endif /* __MAIN_H */

@@ -3,6 +3,7 @@
 
 #include "can.h"
 #include "usart.h"
+#include "spi.h"
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
@@ -24,10 +25,12 @@ struct GlobalWarehouse {
   rm::device::DR16 *rc{nullptr};           ///< 遥控器
   rm::device::GM6020 *yaw_motor{nullptr};  ///< 云台 Yaw 电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  ///< 云台 Pitch 电机
+  rm::device::BMI088 *imu{nullptr};                                                 ///< BMI088 IMU
 
   // 控制器 //
-  Gimbal2Dof gimbal_controller;    ///< 二轴云台控制器
-  Shoot3Fric shoot_controller{9};  ///< 三摩擦轮发射机构控制器，12发拨盘
+  Gimbal2Dof gimbal_controller;          ///< 二轴云台控制器
+  Shoot3Fric shoot_controller{9};        ///< 三摩擦轮发射机构控制器，9发拨盘
+  rm::modules::MahonyAhrs ahrs{1000.f};  ///< mahony 姿态解算器，频率 1000Hz
 
   void Init() {
     buzzer = new AsyncBuzzer;
@@ -35,11 +38,12 @@ struct GlobalWarehouse {
 
     can1 = new rm::hal::Can{hcan1};
     can2 = new rm::hal::Can{hcan2};
-    dbus = new rm::hal::Serial{huart6, 36, rm::hal::stm32::UartMode::kDma, rm::hal::stm32::UartMode::kNormal};
+    dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
     rc = new rm::device::DR16{*dbus};
     yaw_motor = new rm::device::GM6020{*can1, 1};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{*can2, {}};
+    imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
     device_manager << rc << yaw_motor << pitch_motor;
 
@@ -49,10 +53,19 @@ struct GlobalWarehouse {
     can2->Begin();
     buzzer->Init();
     led->Init();
+    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
   }
 } *globals;
 
-void MainLoop() {}
+void MainLoop() {
+  globals->imu->Update();
+  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(),   //
+                                                globals->imu->gyro_y(),   //
+                                                globals->imu->gyro_z(),   //
+                                                globals->imu->accel_x(),  //
+                                                globals->imu->accel_y(),  //
+                                                globals->imu->accel_z()});
+}
 
 extern "C" [[noreturn]] void AppMain(void) {
   globals = new GlobalWarehouse;
