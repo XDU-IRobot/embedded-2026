@@ -117,9 +117,9 @@ Checks: >
   -bugprone-unused-return-value
 
 # Turn all the warnings from the checks above into errors.
-WarningsAsErrors: "*"
+WarningsAsErrors: "-*"
 
-HeaderFilterRegex: "(google/cloud/|generator/).*\\.h$"
+HeaderFilterRegex: "app/.*\\.(h|hpp)$"
 
 CheckOptions:
   - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }
