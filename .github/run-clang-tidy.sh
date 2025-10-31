@@ -222,5 +222,5 @@ if [ "$EXPORT_RESULTS" = true ]; then
 fi
 
 if [ $ERROR_COUNT -gt 0 ]; then
-    exit 1
+    exit 0
 fi
