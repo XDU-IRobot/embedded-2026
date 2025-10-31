@@ -202,7 +202,7 @@ if [ "$EXPORT_RESULTS" = true ]; then
             FIXES_FILE_UNFILTERED="$RESULT_DIR/fixes-unfiltered.yaml"
             mv "$FIXES_FILE" "$FIXES_FILE_UNFILTERED"
             
-            if python3 ./filter-fixes.py "$FIXES_FILE_UNFILTERED" "$FIXES_FILE"; then
+            if python3 .github/filter-fixes.py "$FIXES_FILE_UNFILTERED" "$FIXES_FILE"; then
                 echo -e "${GREEN}✓ Filtered fixes saved to: $FIXES_FILE${NC}"
                 echo -e "  Unfiltered version: ${YELLOW}$FIXES_FILE_UNFILTERED${NC}"
             else
