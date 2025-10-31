@@ -25,7 +25,7 @@ jobs:
         run: cmake --preset Debug -G "Unix Makefiles" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Analyze
         run: |
-          python3 .github/run_clang_tidy.py -p build/Debug -export-fixes fixes.yaml -source-filter='.*app/.*\.(cc|hpp)$'
+          python3 .github/run_clang_tidy.py -p build/Debug -export-fixes fixes.yaml -source-filter='.*app/.*\.(cc|hpp)$' || true
           python3 .github/filter_fixes.py fixes.yaml
       - name: Run clang-tidy-pr-comments action
         uses: platisd/clang-tidy-pr-comments@v1
