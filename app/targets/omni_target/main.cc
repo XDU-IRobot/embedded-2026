@@ -11,6 +11,8 @@
 #include "device_manager.hpp"
 #include "controllers/quad_omni_chassis.hpp"
 
+int AAA;
+
 struct GlobalWarehouse {
   AsyncBuzzer *buzzer{nullptr};  ///< 蜂鸣器
   LED *led{nullptr};             ///< RGB LED灯
