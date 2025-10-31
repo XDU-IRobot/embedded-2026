@@ -22,6 +22,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang-tidy
+      - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
       - name: Prepare compile_commands.json
         run: |
           cmake --preset Debug -G "Unix Makefiles" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
