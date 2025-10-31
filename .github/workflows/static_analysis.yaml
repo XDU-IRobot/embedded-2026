@@ -31,7 +31,7 @@ jobs:
           # The GitHub token (or a personal access token)
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # The path to the clang-tidy fixes generated previously
-          clang_tidy_fixes: clang-tidy-result/fixes.yml
+          clang_tidy_fixes: clang-tidy-result/fixes.yaml
           # Optionally set to true if you want the Action to request
           # changes in case warnings are found
           request_changes: true
