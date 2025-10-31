@@ -65,6 +65,8 @@ void MainLoop() {
                                                 globals->imu->accel_x(),  //
                                                 globals->imu->accel_y(),  //
                                                 globals->imu->accel_z()});
+  globals->yaw_motor->IsAlive();
+  globals->rc->IsAlive();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {

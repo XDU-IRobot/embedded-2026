@@ -1,0 +1,20 @@
+name: build-omni_target
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/build-target
+        with:
+          target: omni_target
+          build_type: ${{ env.BUILD_TYPE }}
+
