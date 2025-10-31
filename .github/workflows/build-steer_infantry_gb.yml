@@ -1,6 +1,6 @@
 name: build-steer_infantry_gb
 
-on: [push, pull_request]
+on: push
 
 env:
   BUILD_TYPE: Release
