@@ -24,7 +24,7 @@ jobs:
       - name: Prepare compile_commands.json
         run: cmake --preset Debug -G "Unix Makefiles" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Analyze
-        run: ./run-clang-tidy.sh --export
+        run: .github/run-clang-tidy.sh --export
       - name: Process clang-tidy warnings
         uses: asarium/clang-tidy-action@v1
         with:
