@@ -25,7 +25,17 @@ jobs:
         run: cmake --preset Debug -G "Unix Makefiles" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Analyze
         run: .github/run-clang-tidy.sh --export
-      - name: Process clang-tidy warnings
-        uses: asarium/clang-tidy-action@v1
+      - name: Run clang-tidy-pr-comments action
+        uses: platisd/clang-tidy-pr-comments@v1
         with:
-          fixesFile: clang-tidy-result/fixes.yaml
+          # The GitHub token (or a personal access token)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The path to the clang-tidy fixes generated previously
+          clang_tidy_fixes: clang-tidy-result/fixes.yml
+          # Optionally set to true if you want the Action to request
+          # changes in case warnings are found
+          request_changes: true
+          # Optionally set the number of comments per review
+          # to avoid GitHub API timeouts for heavily loaded
+          # pull requests
+          suggestions_per_comment: 10
