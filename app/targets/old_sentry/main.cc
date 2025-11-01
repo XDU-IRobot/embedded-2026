@@ -11,6 +11,121 @@
 #include "controllers/gimbal_double_yaw.hpp"
 #include "controllers/shoot_3fric.hpp"
 
+using namespace rm;
+
+// 状态机
+typedef enum {
+    NO_FORCE = 0u, // 无力模式
+    TEST, // 调试模式
+    MATCH, // 比赛模式
+
+    GB_REMOTE, // 云台遥控模式
+    GB_NAVIGATE, // 云台导航模式
+    GB_AIMBOT, // 云台自瞄模式
+
+    CS_REMOTE, // 底盘遥控模式
+    CS_NAVIGATE, // 底盘导航模式
+} StateMachineType;
+
+class RcTcRefereeData {
+public:
+    RcTcRefereeData() = delete;
+
+    explicit RcTcRefereeData(rm::hal::SerialInterface &serial);
+
+    void Begin();
+
+    void RxCallback(const std::vector<u8> &data, u16 rx_len);
+
+private:
+    rm::hal::SerialInterface *serial_;
+};
+
+class Gimbal {
+public:
+    StateMachineType GimbalMove_ = {NO_FORCE}; // 云台运动状态
+
+private:
+    struct ChassisRequestState_t {
+        i8 ChassisMoveXRequest; // x轴运动控制
+        i8 ChassisMoveYRequest; // y轴运动控制
+        u8 ChassisStateRequest; // 底盘运动状态：无力，测试，随动，小陀螺正转，小陀螺反转
+        u8 UiChange; // 开启Ui
+        u8 GetTargetFlag; // 自瞄状态
+        u8 SuggestFireFlag; // 建议开火
+        i8 AimSpeedChange; // 转速等级
+        i8 reserve[1]; // 保留位
+    };
+
+    f32 gimbal_yaw_rc_ = 0.0f; // 云台yaw轴遥控数据
+    f32 gimbal_pitch_rc_ = 0.0f; // 云台pitch轴遥控数据
+
+    i16 ammo_flag_rc_ = 0; // 摩擦轮遥控数据位
+
+    i8 aim_speed_change_ = 0; // 摩擦轮转速改变值
+
+    f32 ammo_left_speed_ = 0.0f; // 左摩擦轮速度
+    f32 ammo_right_speed_ = 0.0f; // 右摩擦轮速度
+
+    u16 heat_limit_ = 0; // 热量上限值
+    u16 heat_real_ = 0; // 热量实时值
+    i16 heat_last_ = 0; // 上一次热量值
+    i16 heat_delay_time_ = 0; // 热量发送延迟时间
+
+    i16 back_turn_time_ = 0; // 拨盘反转时长
+    i16 back_turn_flag_ = 0; // 拨盘反转触发时长 100
+
+    f32 rotor_position_ = 0.0f; // 拨盘位置
+    f32 last_rotor_position_ = 0.0f; // 上一次拨盘位置
+    f32 rotor_target_position_ = 0.0f; // 拨盘目标位置
+    u32 rotor_circle_flag_ = 0; // 拨盘过圈标志
+
+    u32 shoot_flag_ = 0; // 开火标志
+    u32 shoot_flag_last_ = 0; // 上一次开火标志
+
+    bool speed_change_flag_ = false; // 速度模式改变标志
+
+    bool single_wheel_flag_ = false; // 单轮模式标志
+    bool single_wheel_state_ = false; // 单轮模式状态
+
+    bool DMEnable_ = false; // 4310电机使能标志
+
+    bool DF_flag_ = false; // 大符标志
+    bool XF_flag_ = false; // 小符标志
+    bool DF_state_ = false; // 大符状态
+    bool XF_state_ = false; // 小符状态
+
+    const f32 once_circle_ = 17000.0f; // 单圈编码值 17000f
+    const f32 k_yaw_speed_ = 1.2f; // 云台yaw轴速度前馈系数 1.2f
+    const f32 k_yaw_current_ = -0.5f; // 云台yaw轴电流前馈系数 -0.5f
+    const f32 k_chassis_xy_rc_ = 100.0f; // 底盘xy轴遥控前馈系数 100.0f
+    const f32 ammo_init_speed_ = 6300.0f; // 摩擦轮初始速度 6300.0f
+    const f32 k_ammo_speed_change_ = 20.0f; // 摩擦轮速度改变系数 20.0f
+    const f32 rotor_position_dalte_ = 2000.0f; // 拨盘位置误差值 2000.0f
+    const f32 rotor_init_speed_[4] = {2000.0f, 2500.0f, 2000.0f, -1000.0f};
+    // 拨盘初始速度速度 {低等级正转，高等级正转，单发，反转}{2000.0f, 2500.0f, 2000.0f, -1000.0f}
+    const f32 sensitivity_x_ = 0.3f; // 云台x轴灵敏度 0.3f
+    const f32 sensitivity_y_ = 0.2f; // 云台y轴灵敏度 0.2f
+    const f32 k_mouse_sensitivity_x_ = 10.0f; // 鼠标x轴灵敏系数 10.0f
+    const f32 k_mouse_sensitivity_y_ = 10.0f; // 鼠标y轴灵敏系数 10.0f
+    const f32 highest_pitch_angle_ = 35.0f; // 云台pitch轴最高 35.0f
+    const f32 lowest_pitch_angle_ = 30.0f; // 云台pitch轴最低 30.0f
+
+    static void GimbalInit();
+
+    static void GimbalStateUpdate();
+
+    static void GimbalEnableUpdate();
+} *gimbal;
+
+class Chassis {
+public:
+    StateMachineType ChassisMove_ = {NO_FORCE}; // 底盘运动状态
+private:
+    f32 chassis_x_rc_ = 0.0f; // 底盘x轴遥控数据
+    f32 chassis_y_rc_ = 0.0f; // 底盘y轴遥控数据
+} *chassis;
+
 struct GlobalWarehouse {
     AsyncBuzzer *buzzer{nullptr}; ///< 蜂鸣器
     LED *led{nullptr}; ///< RGB LED灯
@@ -22,6 +137,7 @@ struct GlobalWarehouse {
     // 设备 //
     DeviceManager<10> device_manager; ///< 设备管理器，维护所有设备在线状态
     rm::device::DR16 *rc{nullptr}; ///< 遥控器
+    rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer;
     rm::device::GM6020 *up_yaw_motor{nullptr}; ///< 云台 Yaw 上电机
     rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *down_yaw_motor{nullptr}; ///< 云台 Yaw 下电机
     rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr}; ///< 云台 Pitch 电机
@@ -32,24 +148,31 @@ struct GlobalWarehouse {
     Shoot3Fric shoot_controller{9}; ///< 三摩擦轮发射机构控制器，9发拨盘
     rm::modules::MahonyAhrs ahrs{1000.0f};
 
-    // 变量 //
-    int DM_enable_flag = 0;
-    // const float yaw_gyro_bias = 0.0015f; // 偏航角（角度值）的陀螺仪偏移量
+    // 常、变量 //
+    const f32 yaw_gyro_bias_ = 0.0015f; // 偏航角（角度值）的陀螺仪偏移量
+    int DM_enable_flag_ = 0;
+    StateMachineType StateMachine_ = {NO_FORCE}; // 当前状态
 
+    // 函数 //
     void Init();
+
+    void GimbalPIDInit();
+
+    void RCStateUpdate();
 } *globals;
 
 void MainLoop() {
     globals->imu->Update();
     globals->ahrs.Update( //
         rm::modules::ImuData6Dof{
-            globals->imu->gyro_y(), globals->imu->gyro_z(), globals->imu->gyro_x(),
+            globals->imu->gyro_y(), globals->imu->gyro_z(), globals->imu->gyro_x() + globals->yaw_gyro_bias_,
             globals->imu->accel_y(), globals->imu->accel_z(), globals->imu->accel_x()
         });
-    if (globals->DM_enable_flag == 0) {  // 使达妙电机使能
+    if (globals->DM_enable_flag_ == 0) {
+        // 使达妙电机使能
         globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-        // globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-        globals->DM_enable_flag = 1;
+        globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+        globals->DM_enable_flag_ = 1;
     } else {
         globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
@@ -103,4 +226,178 @@ void GlobalWarehouse::Init() {
     rc->Begin();
     buzzer->Init();
     led->Init();
+
+    GimbalPIDInit();
+}
+
+void GlobalWarehouse::GimbalPIDInit() {
+    // 初始化PID
+    // 上部 Yaw PID 参数
+    gimbal_controller.pid().up_yaw_position.SetKp(15.0f); // 位置环
+    gimbal_controller.pid().up_yaw_position.SetKi(0.0f);
+    gimbal_controller.pid().up_yaw_position.SetKd(2000.0f);
+    gimbal_controller.pid().up_yaw_position.SetMaxOut(15000.0f);
+    gimbal_controller.pid().up_yaw_position.SetMaxIout(360.0f);
+    gimbal_controller.pid().up_yaw_speed.SetKp(220.0f); // 速度环
+    gimbal_controller.pid().up_yaw_speed.SetKi(0.0f);
+    gimbal_controller.pid().up_yaw_speed.SetKd(0.0f);
+    gimbal_controller.pid().up_yaw_speed.SetMaxOut(25000.0f);
+    gimbal_controller.pid().up_yaw_speed.SetMaxIout(360.0f);
+    // 下部 Yaw PID 参数
+    gimbal_controller.pid().down_yaw_position.SetKp(15.0f); // 位置环
+    gimbal_controller.pid().down_yaw_position.SetKi(0.0f);
+    gimbal_controller.pid().down_yaw_position.SetKd(2000.0f);
+    gimbal_controller.pid().down_yaw_position.SetMaxOut(15000.0f);
+    gimbal_controller.pid().down_yaw_position.SetMaxIout(360.0f);
+    gimbal_controller.pid().down_yaw_speed.SetKp(220.0f); // 速度环
+    gimbal_controller.pid().down_yaw_speed.SetKi(0.0f);
+    gimbal_controller.pid().down_yaw_speed.SetKd(0.0f);
+    gimbal_controller.pid().down_yaw_speed.SetMaxOut(25000.0f);
+    gimbal_controller.pid().down_yaw_speed.SetMaxIout(360.0f);
+    // pitch PID 参数
+    gimbal_controller.pid().pitch_position.SetKp(15.0f); // 位置环
+    gimbal_controller.pid().pitch_position.SetKi(0.0f);
+    gimbal_controller.pid().pitch_position.SetKd(2000.0f);
+    gimbal_controller.pid().pitch_position.SetMaxOut(15000.0f);
+    gimbal_controller.pid().pitch_position.SetMaxIout(360.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(220.0f); // 速度环
+    gimbal_controller.pid().pitch_speed.SetKi(0.0f);
+    gimbal_controller.pid().pitch_speed.SetKd(0.0f);
+    gimbal_controller.pid().pitch_speed.SetMaxOut(25000.0f);
+    gimbal_controller.pid().pitch_speed.SetMaxIout(360.0f);
+}
+
+RcTcRefereeData::RcTcRefereeData(rm::hal::SerialInterface &serial) : serial_(&serial) {
+    static rm::hal::SerialRxCallbackFunction rx_callback =
+            std::bind(&RcTcRefereeData::RxCallback, this, std::placeholders::_1, std::placeholders::_2);
+    this->serial_->AttachRxCallback(rx_callback);
+}
+
+void RcTcRefereeData::Begin() { this->serial_->Begin(); }
+
+void RcTcRefereeData::RxCallback(const std::vector<u8> &data, u16 rx_len) {
+    for (u16 i = 0; i < rx_len; i++) {
+        globals->referee_data_buffer << data.at(i);
+    }
+}
+
+void Gimbal::GimbalInit() {
+    gimbal->gimbal_yaw_rc_ = globals->ahrs.euler_angle().yaw; // 云台yaw初始化
+    gimbal->gimbal_pitch_rc_ = globals->ahrs.euler_angle().pitch; // 云台pitch初始化
+}
+
+void GlobalWarehouse::RCStateUpdate() {
+    if (globals->referee_data_buffer.data().robot_status.power_management_gimbal_output == 0) {
+        globals->StateMachine_ = NO_FORCE;
+    } else {
+        switch (globals->rc->switch_r()) {
+            case rm::device::DR16::SwitchPosition::kUp:
+                // 右拨杆打到最上侧挡位
+                if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
+                    globals->StateMachine_ = NO_FORCE;
+                } else if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
+                    globals->StateMachine_ = NO_FORCE;
+                } else {
+                    globals->StateMachine_ =
+                            MATCH; // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+                }
+                break;
+
+            case rm::device::DR16::SwitchPosition::kMid:
+                // 右拨杆打到中间挡位
+                if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
+                    globals->StateMachine_ = TEST;
+                    gimbal->GimbalMove_ = GB_AIMBOT;
+                    chassis->ChassisMove_ = CS_REMOTE;
+                } else if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
+                    globals->StateMachine_ = TEST;
+                    gimbal->GimbalMove_ = GB_NAVIGATE;
+                    chassis->ChassisMove_ = CS_NAVIGATE;
+                } else {
+                    globals->StateMachine_ = TEST; // 左拨杆拨到下侧，进入测试模式
+                    gimbal->GimbalMove_ = GB_REMOTE;
+                    chassis->ChassisMove_ = CS_REMOTE;
+                }
+                break;
+
+            case rm::device::DR16::SwitchPosition::kDown:
+                // 右拨杆打到最下侧挡位，此时全部全部无力
+                globals->StateMachine_ = NO_FORCE;
+                break;
+
+            default:
+                globals->StateMachine_ = NO_FORCE; // 如果遥控器离线，进入无力模式
+                break;
+        }
+    }
+}
+
+void Gimbal::GimbalStateUpdate() {
+    switch (globals->StateMachine_) {
+        case NO_FORCE: // 无力模式下，所有电机失能
+            GimbalDisableUpdate(); // 云台电机失能计算
+            AmmoDisableUpdate(); // 摩擦轮机构失能计算
+            RotorDisableUpdate(); // 拨盘失能计算
+            ChassisDisableUpdate(); // 底盘电机失能计算
+            break;
+
+        case TEST: // 测试模式下，发射系统与拨盘电机失能
+            if (gimbal->GimbalMove_ == GB_AIMBOT) {
+                GimbalEnableUpdate(); // 云台电机使能计算
+                AmmoEnableUpdate(); // 摩擦轮机构使能计算
+                RotorEnableUpdate(); // 拨盘使能计算
+                ChassisEnableUpdate(); // 底盘电机使能计算
+            } else {
+                GimbalEnableUpdate(); // 云台电机使能计算
+                AmmoDisableUpdate(); // 摩擦轮机构失能计算
+                RotorDisableUpdate(); // 拨盘失能计算
+                ChassisEnableUpdate(); // 底盘电机使能计算
+            }
+            break;
+
+        case MATCH: // 比赛模式下，所有电机正常工作
+            GimbalMatchUpdate(); // 云台电机使能计算
+            // AmmoEnableUpdate();                  // 摩擦轮机构使能计算
+            // RotorEnableUpdate();                 // 拨盘使能计算
+            // ChassisDisableUpdate(); // 底盘电机失能计算
+            break;
+
+        default: // 错误状态，所有电机失能
+            GimbalDisableUpdate(); // 云台电机失能计算
+            AmmoDisableUpdate(); // 摩擦轮机构失能计算
+            RotorDisableUpdate(); // 拨盘失能计算
+            ChassisDisableUpdate(); // 底盘电机失能计算
+            break;
+    }
+}
+
+void Gimbal::GimbalEnableUpdate() {
+    DaMiaoMotorEnable();
+    GimbalRCDataUpdate();
+    // GimabalImu.mode = 0x00;
+    if (gimbal->GimbalMove_ == GB_NAVIGATE) {
+        globals->gimbal_controller.
+                gimbal->down_yaw_pid_speed_.Update(
+                    NucControl.yaw_speed + kmove_yaw_speed * gimbal->down_yaw_motor.rpm() * 0.0f,
+                    gimbal->down_yaw_motor.rpm());
+        gimbal->down_yaw_motor.SetCurrent(static_cast<i16>(gimbal->down_yaw_pid_speed_.value()));
+        MovePIDUpdate();
+    } else {
+        gimbal->gimbal_yaw_rc = LoopConstrain(gimbal->gimbal_yaw_rc, 0.0f, 360.0f); // yaw轴周期限制
+        gimbal->down_yaw_pid_position_.Update(gimbal->gimbal_yaw_rc, yaw);
+        gimbal->down_yaw_pid_speed_.Update(
+            gimbal->down_yaw_pid_position_.value() + kmove_yaw_speed * gimbal->down_yaw_motor.rpm(),
+            gimbal->down_yaw_motor.rpm());
+        gimbal->down_yaw_motor.SetCurrent(static_cast<i16>(gimbal->down_yaw_pid_speed_.value()));
+
+        gimbal->up_yaw_pid_position_.Update(up_yaw_init_angle, gimbal->up_yaw_motor.encoder());
+        gimbal->up_yaw_pid_speed_.Update(
+            gimbal->up_yaw_pid_position_.value() + kmove_yaw_speed * gimbal->up_yaw_motor.rpm(),
+            gimbal->up_yaw_motor.rpm());
+        gimbal->up_yaw_motor.SetCurrent(static_cast<i16>(gimbal->up_yaw_pid_speed_.value()));
+    }
+    gimbal->gimbal_pitch_rc = Constrain(gimbal->gimbal_pitch_rc, -35.0f, 28.0f); // pitch轴限位
+    gimbal->pitch_pid_position_.Update(-gimbal->gimbal_pitch_rc, -pitch);
+    gimbal->pitch_pid_speed_.Update(gimbal->pitch_pid_position_.value(), pitch_motor_->vel());
+    pitch_motor_->SetPosition(0, 0, -gimbal->pitch_pid_speed_.value(), 0, 0);
 }

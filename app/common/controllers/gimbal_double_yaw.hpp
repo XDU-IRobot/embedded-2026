@@ -38,6 +38,7 @@ class GimbalDoubleYaw {
     if (!enabled_) {
       // 无力，控制量设0直接返回
       output_.up_yaw = 0.f;
+      output_.down_yaw = 0.f;
       output_.pitch = 0.f;
       return;
     }
