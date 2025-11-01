@@ -1,4 +1,4 @@
-
+﻿
 #include <librm.hpp>
 
 #include "can.h"
@@ -59,12 +59,14 @@ struct GlobalWarehouse {
 
 void MainLoop() {
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(),   //
-                                                globals->imu->gyro_y(),   //
-                                                globals->imu->gyro_z(),   //
-                                                globals->imu->accel_x(),  //
-                                                globals->imu->accel_y(),  //
-                                                globals->imu->accel_z()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(),   //
+                                                -globals->imu->gyro_x(),   //
+                                                -globals->imu->gyro_z(),   //
+                                                -globals->imu->accel_y(),  //
+                                                -globals->imu->accel_x(),  //
+                                                -globals->imu->accel_z()});
+  globals->yaw_motor->IsAlive();
+  globals->rc->IsAlive();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {

@@ -4,11 +4,12 @@
 
 ## CI status
 
-| 模块    | 编译测试状态                                                                                                                                                                                                                       |
-|-------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 舵轮底盘  | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml) |
-| 舵轮云台  | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml) |
-| 无人机云台 | [![build-drone_gb](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml)                            |
+| 模块      | 编译测试状态                                                                                                                                                                                                                       |
+|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 舵轮底盘    | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml) |
+| 全向轮靶车底盘 | [![build-omni_target](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-omni_target.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-omni_target.yml)                   |
+| 舵轮云台    | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml) |
+| 无人机云台   | [![build-drone_gb](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml)                            |
 
 ## 开发指南
 

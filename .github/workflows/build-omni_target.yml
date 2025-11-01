@@ -1,4 +1,4 @@
-name: build-drone_gb
+name: build-omni_target
 
 on: push
 
@@ -15,6 +15,6 @@ jobs:
           ref: ${{ github.sha }}
       - uses: ./.github/actions/build-target
         with:
-          target: drone_gb
+          target: omni_target
           build_type: ${{ env.BUILD_TYPE }}
 
