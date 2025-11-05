@@ -416,12 +416,12 @@ void Gimbal::GimbalStateUpdate() {
 
 void Gimbal::GimbalRCDataUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  //
-                                             -gimbal->sensitivity_x_, gimbal->sensitivity_x_);
+                                                 -gimbal->sensitivity_x_, gimbal->sensitivity_x_);
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -660, 660,  //
-                                               -gimbal->sensitivity_y_, gimbal->sensitivity_y_);
+                                                   -gimbal->sensitivity_y_, gimbal->sensitivity_y_);
   gimbal->gimbal_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.0f, 360.0f);  // yaw轴周期限制
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_, -gimbal->highest_pitch_angle_,
-                                                gimbal->lowest_pitch_angle_);  // pitch轴限位
+                                                    gimbal->lowest_pitch_angle_);  // pitch轴限位
 }
 
 void Gimbal::GimbalEnableUpdate() {
