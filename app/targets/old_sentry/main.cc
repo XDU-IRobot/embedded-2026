@@ -58,8 +58,8 @@ class Gimbal {
     i8 reserve[1];           // 保留位
   };
 
-  f32 gimbal_yaw_rc_ = 0.0f;    // 云台yaw轴遥控数据
-  f32 gimbal_pitch_rc_ = 0.0f;  // 云台pitch轴遥控数据
+  f32 gimbal_yaw_target_ = 0.0f;    // 云台yaw轴遥控数据
+  f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴遥控数据
 
   i16 ammo_flag_rc_ = 0;  // 摩擦轮遥控数据位
 
@@ -365,8 +365,8 @@ void GlobalWarehouse::RCStateUpdate() {
 void Gimbal::GimbalTask() {}
 
 void Gimbal::GimbalInit() {
-  gimbal->gimbal_yaw_rc_ = globals->ahrs.euler_angle().yaw;      // 云台yaw初始化
-  gimbal->gimbal_pitch_rc_ = globals->ahrs.euler_angle().pitch;  // 云台pitch初始化
+  gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;      // 云台yaw初始化
+  gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;  // 云台pitch初始化
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -415,12 +415,12 @@ void Gimbal::GimbalStateUpdate() {
 }
 
 void Gimbal::GimbalRCDataUpdate() {
-  gimbal->gimbal_yaw_rc_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  //
+  gimbal->gimbal_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  //
                                              -gimbal->sensitivity_x_, gimbal->sensitivity_x_);
-  gimbal->gimbal_pitch_rc_ -= rm::modules::Map(globals->rc->left_y(), -660, 660,  //
+  gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -660, 660,  //
                                                -gimbal->sensitivity_y_, gimbal->sensitivity_y_);
-  gimbal->gimbal_yaw_rc_ = rm::modules::Wrap(gimbal->gimbal_yaw_rc_, 0.0f, 360.0f);  // yaw轴周期限制
-  gimbal->gimbal_pitch_rc_ = rm::modules::clamp(gimbal->gimbal_pitch_rc_, -gimbal->highest_pitch_angle_,
+  gimbal->gimbal_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.0f, 360.0f);  // yaw轴周期限制
+  gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_, -gimbal->highest_pitch_angle_,
                                                 gimbal->lowest_pitch_angle_);  // pitch轴限位
 }
 
@@ -430,7 +430,7 @@ void Gimbal::GimbalEnableUpdate() {
   // // GimabalImu.mode = 0x00;
   globals->gimbal_controller.Enable(true);
   if (gimbal->GimbalMove_ == GB_REMOTE) {
-    globals->gimbal_controller.SetTarget(2600.0f, gimbal->gimbal_yaw_rc_, gimbal->gimbal_pitch_rc_);
+    globals->gimbal_controller.SetTarget(2600.0f, gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_);
     globals->gimbal_controller.Update(globals->up_yaw_motor->encoder(), globals->up_yaw_motor->rpm(),
                                       globals->down_yaw_motor->pos(), globals->down_yaw_motor->vel(),
                                       globals->pitch_motor->pos(), globals->pitch_motor->vel());
