@@ -420,8 +420,8 @@ void Gimbal::GimbalRCDataUpdate() {
   gimbal->gimbal_pitch_rc_ -= rm::modules::Map(globals->rc->left_y(), -660, 660,  //
                                                -gimbal->sensitivity_y_, gimbal->sensitivity_y_);
   gimbal->gimbal_yaw_rc_ = rm::modules::Wrap(gimbal->gimbal_yaw_rc_, 0.0f, 360.0f);  // yaw轴周期限制
-  // gimbal->gimbal_pitch_rc_ = rm::modules::clamp(gimbal->gimbal_pitch_rc_, -gimbal->highest_pitch_angle_,
-                                                // gimbal->lowest_pitch_angle_);  // pitch轴限位
+  gimbal->gimbal_pitch_rc_ = rm::modules::clamp(gimbal->gimbal_pitch_rc_, -gimbal->highest_pitch_angle_,
+                                                gimbal->lowest_pitch_angle_);  // pitch轴限位
 }
 
 void Gimbal::GimbalEnableUpdate() {
