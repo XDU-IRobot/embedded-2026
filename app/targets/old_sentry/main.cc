@@ -21,6 +21,7 @@ typedef enum {
 
     GB_REMOTE, // 云台遥控模式
     GB_NAVIGATE, // 云台导航模式
+    GB_SCAN, // 扫描模式
     GB_AIMBOT, // 云台自瞄模式
 
     CS_REMOTE, // 底盘遥控模式
@@ -111,11 +112,37 @@ private:
     const f32 highest_pitch_angle_ = 35.0f; // 云台pitch轴最高 35.0f
     const f32 lowest_pitch_angle_ = 30.0f; // 云台pitch轴最低 30.0f
 
+public:
+    static void GimbalTask();
+
+private:
     static void GimbalInit();
 
     static void GimbalStateUpdate();
 
+    static void GimbalRCDataUpdate();
+
     static void GimbalEnableUpdate();
+
+    static void GimbalMatchUpdate();
+
+    static void GimbalDisableUpdate();
+
+    static void AmmoEnableUpdate();
+
+    static void AmmoDisableUpdate();
+
+    static void RotorEnableUpdate();
+
+    static void RotorDisableUpdate();
+
+    static void DaMiaoMotorEnable();
+
+    static void DaMiaoMotorDisable();
+
+    static void AimbotDateUpdate();
+
+    static void MovePIDUpdate();
 } *gimbal;
 
 class Chassis {
@@ -124,6 +151,17 @@ public:
 private:
     f32 chassis_x_rc_ = 0.0f; // 底盘x轴遥控数据
     f32 chassis_y_rc_ = 0.0f; // 底盘y轴遥控数据
+
+public:
+
+private:
+    static void ChassisStateUpdate();
+
+    static void ChassisEnableUpdate();
+
+    static void ChassisMatchUpdate();
+
+    static void ChassisDisableUpdate();
 } *chassis;
 
 struct GlobalWarehouse {
@@ -181,6 +219,8 @@ void MainLoop() {
 
 extern "C" [[noreturn]] void AppMain(void) {
     globals = new GlobalWarehouse;
+    gimbal = new Gimbal;
+    chassis = new Chassis;
     globals->Init();
 
     // 创建主循环定时任务，定频1khz
@@ -281,11 +321,6 @@ void RcTcRefereeData::RxCallback(const std::vector<u8> &data, u16 rx_len) {
     }
 }
 
-void Gimbal::GimbalInit() {
-    gimbal->gimbal_yaw_rc_ = globals->ahrs.euler_angle().yaw; // 云台yaw初始化
-    gimbal->gimbal_pitch_rc_ = globals->ahrs.euler_angle().pitch; // 云台pitch初始化
-}
-
 void GlobalWarehouse::RCStateUpdate() {
     if (globals->referee_data_buffer.data().robot_status.power_management_gimbal_output == 0) {
         globals->StateMachine_ = NO_FORCE;
@@ -332,26 +367,42 @@ void GlobalWarehouse::RCStateUpdate() {
     }
 }
 
+void Gimbal::GimbalTask() {
+}
+
+void Gimbal::GimbalInit() {
+    gimbal->gimbal_yaw_rc_ = globals->ahrs.euler_angle().yaw; // 云台yaw初始化
+    gimbal->gimbal_pitch_rc_ = globals->ahrs.euler_angle().pitch; // 云台pitch初始化
+}
+
 void Gimbal::GimbalStateUpdate() {
     switch (globals->StateMachine_) {
         case NO_FORCE: // 无力模式下，所有电机失能
             GimbalDisableUpdate(); // 云台电机失能计算
             AmmoDisableUpdate(); // 摩擦轮机构失能计算
             RotorDisableUpdate(); // 拨盘失能计算
-            ChassisDisableUpdate(); // 底盘电机失能计算
             break;
 
         case TEST: // 测试模式下，发射系统与拨盘电机失能
-            if (gimbal->GimbalMove_ == GB_AIMBOT) {
-                GimbalEnableUpdate(); // 云台电机使能计算
-                AmmoEnableUpdate(); // 摩擦轮机构使能计算
-                RotorEnableUpdate(); // 拨盘使能计算
-                ChassisEnableUpdate(); // 底盘电机使能计算
-            } else {
-                GimbalEnableUpdate(); // 云台电机使能计算
-                AmmoDisableUpdate(); // 摩擦轮机构失能计算
-                RotorDisableUpdate(); // 拨盘失能计算
-                ChassisEnableUpdate(); // 底盘电机使能计算
+            switch (gimbal->GimbalMove_) {
+                case GB_REMOTE:
+                    GimbalEnableUpdate(); // 云台电机使能计算
+                    AmmoDisableUpdate(); // 摩擦轮机构失能计算
+                    RotorDisableUpdate(); // 拨盘失能计算
+                    break;
+
+                case GB_AIMBOT:
+                case GB_SCAN:
+                    GimbalEnableUpdate(); // 云台电机使能计算
+                    AmmoEnableUpdate(); // 摩擦轮机构使能计算
+                    RotorEnableUpdate(); // 拨盘使能计算
+                    break;
+
+                default:
+                    GimbalDisableUpdate(); // 云台电机失能计算
+                    AmmoDisableUpdate(); // 摩擦轮机构失能计算
+                    RotorDisableUpdate(); // 拨盘失能计算
+                    break;
             }
             break;
 
@@ -359,45 +410,121 @@ void Gimbal::GimbalStateUpdate() {
             GimbalMatchUpdate(); // 云台电机使能计算
             // AmmoEnableUpdate();                  // 摩擦轮机构使能计算
             // RotorEnableUpdate();                 // 拨盘使能计算
-            // ChassisDisableUpdate(); // 底盘电机失能计算
             break;
 
         default: // 错误状态，所有电机失能
             GimbalDisableUpdate(); // 云台电机失能计算
             AmmoDisableUpdate(); // 摩擦轮机构失能计算
             RotorDisableUpdate(); // 拨盘失能计算
-            ChassisDisableUpdate(); // 底盘电机失能计算
             break;
     }
+}
+
+void Gimbal::GimbalRCDataUpdate() {
+    gimbal->gimbal_yaw_rc_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, //
+                                               -gimbal->sensitivity_x_, gimbal->sensitivity_x_);
+    gimbal->gimbal_pitch_rc_ -= rm::modules::Map(globals->rc->left_y(), -660, 660, //
+                                                 -gimbal->sensitivity_y_, gimbal->sensitivity_y_);
+    gimbal->gimbal_yaw_rc_ = rm::modules::Wrap(gimbal->gimbal_yaw_rc_, 0.0f, 360.0f); // yaw轴周期限制
+    gimbal->gimbal_pitch_rc_ = rm::modules::clamp(gimbal->gimbal_pitch_rc_, -gimbal->highest_pitch_angle_,
+                                                  gimbal->lowest_pitch_angle_); // pitch轴限位
 }
 
 void Gimbal::GimbalEnableUpdate() {
     DaMiaoMotorEnable();
     GimbalRCDataUpdate();
-    // GimabalImu.mode = 0x00;
-    if (gimbal->GimbalMove_ == GB_NAVIGATE) {
-        globals->gimbal_controller.
-                gimbal->down_yaw_pid_speed_.Update(
-                    NucControl.yaw_speed + kmove_yaw_speed * gimbal->down_yaw_motor.rpm() * 0.0f,
-                    gimbal->down_yaw_motor.rpm());
-        gimbal->down_yaw_motor.SetCurrent(static_cast<i16>(gimbal->down_yaw_pid_speed_.value()));
-        MovePIDUpdate();
+    // // GimabalImu.mode = 0x00;
+    globals->gimbal_controller.Enable(true);
+    if (gimbal->GimbalMove_ == GB_REMOTE) {
+        globals->gimbal_controller.SetTarget(2600.0f, gimbal->gimbal_yaw_rc_, gimbal->gimbal_pitch_rc_);
+        globals->gimbal_controller.Update(globals->up_yaw_motor->encoder(), globals->up_yaw_motor->rpm(),
+                                          globals->down_yaw_motor->pos(), globals->down_yaw_motor->vel(),
+                                          globals->pitch_motor->pos(), globals->pitch_motor->vel());
+    } else if (gimbal->GimbalMove_ == GB_SCAN) {
+    } else if (gimbal->GimbalMove_ == GB_AIMBOT) {
     } else {
-        gimbal->gimbal_yaw_rc = LoopConstrain(gimbal->gimbal_yaw_rc, 0.0f, 360.0f); // yaw轴周期限制
-        gimbal->down_yaw_pid_position_.Update(gimbal->gimbal_yaw_rc, yaw);
-        gimbal->down_yaw_pid_speed_.Update(
-            gimbal->down_yaw_pid_position_.value() + kmove_yaw_speed * gimbal->down_yaw_motor.rpm(),
-            gimbal->down_yaw_motor.rpm());
-        gimbal->down_yaw_motor.SetCurrent(static_cast<i16>(gimbal->down_yaw_pid_speed_.value()));
-
-        gimbal->up_yaw_pid_position_.Update(up_yaw_init_angle, gimbal->up_yaw_motor.encoder());
-        gimbal->up_yaw_pid_speed_.Update(
-            gimbal->up_yaw_pid_position_.value() + kmove_yaw_speed * gimbal->up_yaw_motor.rpm(),
-            gimbal->up_yaw_motor.rpm());
-        gimbal->up_yaw_motor.SetCurrent(static_cast<i16>(gimbal->up_yaw_pid_speed_.value()));
     }
-    gimbal->gimbal_pitch_rc = Constrain(gimbal->gimbal_pitch_rc, -35.0f, 28.0f); // pitch轴限位
-    gimbal->pitch_pid_position_.Update(-gimbal->gimbal_pitch_rc, -pitch);
-    gimbal->pitch_pid_speed_.Update(gimbal->pitch_pid_position_.value(), pitch_motor_->vel());
-    pitch_motor_->SetPosition(0, 0, -gimbal->pitch_pid_speed_.value(), 0, 0);
+}
+
+
+void Gimbal::GimbalMatchUpdate() {
+}
+
+void Gimbal::GimbalDisableUpdate() {
+}
+
+void Gimbal::AmmoEnableUpdate() {
+}
+
+void Gimbal::AmmoDisableUpdate() {
+}
+
+void Gimbal::RotorEnableUpdate() {
+}
+
+void Gimbal::RotorDisableUpdate() {
+}
+
+void Gimbal::DaMiaoMotorEnable() {
+}
+
+void Gimbal::DaMiaoMotorDisable() {
+}
+
+void Gimbal::AimbotDateUpdate() {
+    // if ((Aimbot.AimbotState >> 0) & 0x01) {
+    //     gimbal->gimbal_yaw_rc = Aimbot.Yaw;
+    //     gimbal->gimbal_pitch_rc = Aimbot.Pitch;
+    // }
+}
+
+void Gimbal::MovePIDUpdate() {
+    // gimbal->gimbal_yaw_rc = LoopConstrain(gimbal->gimbal_yaw_rc, 0.0f, 360.0f);  // yaw轴周期限制
+    // // gimbal->gimbal_yaw_rc =
+    // //     LoopConstrain(gimbal->gimbal_yaw_rc, (f32)gimbal->down_yaw_motor.encoder() / 8191.0f * 360.0f - 45.0f,
+    // //                   (f32)gimbal->up_yaw_motor.encoder() / 8191.0f * 360.0f + 45.0f);  // yaw轴周期限制
+    // gimbal->gimbal_pitch_rc = Constrain(gimbal->gimbal_pitch_rc, -35.0f, 28.0f);  // pitch轴限位
+    // gimbal->up_yaw_pid_position_.Update(gimbal->gimbal_yaw_rc, yaw);
+    // gimbal->up_yaw_pid_speed_.Update(gimbal->up_yaw_pid_position_.value() + kmove_yaw_speed * gimbal->up_yaw_motor.rpm(),
+    //                                  gimbal->up_yaw_motor.rpm());
+    // gimbal->pitch_pid_position_.Update(-gimbal->gimbal_pitch_rc, -pitch);
+    // gimbal->pitch_pid_speed_.Update(gimbal->pitch_pid_position_.value(), pitch_motor_->vel());
+}
+
+void Chassis::ChassisStateUpdate() {
+    switch (globals->StateMachine_) {
+        case NO_FORCE:
+            ChassisDisableUpdate(); // 底盘电机失能计算
+            break;
+
+        case TEST:
+            switch (chassis->ChassisMove_) {
+                case CS_REMOTE:
+                case CS_NAVIGATE:
+                    ChassisEnableUpdate(); // 底盘电机使能计算
+                    break;
+
+                default: // 错误状态，所有电机失能
+                    ChassisDisableUpdate(); // 底盘电机失能计算
+                    break;
+            }
+            break;
+
+        case MATCH: // 比赛模式下，所有电机正常工作
+            ChassisMatchUpdate(); // 底盘电机使能计算
+            break;
+
+        default: // 错误状态，所有电机失能
+            ChassisDisableUpdate(); // 底盘电机失能计算
+            break;
+    }
+}
+
+void Chassis::ChassisEnableUpdate() {
+}
+
+void Chassis::ChassisMatchUpdate() {
+}
+
+void Chassis::ChassisDisableUpdate() {
 }

@@ -9,8 +9,6 @@ class GimbalDoubleYaw {
  public:
   GimbalDoubleYaw() {
     pid_.up_yaw_position
-        .SetCircular(true)           //
-        .SetCircularCycle(M_PI * 2)  //
         .SetFuzzy(true)              //
         .SetFuzzyErrorScale(M_PI);   //
     pid_.down_yaw_position
@@ -69,7 +67,7 @@ class GimbalDoubleYaw {
   /**
    * @brief 设置目标位置和前馈量
    */
-  void SetTarget(float up_yaw_position, float pitch_position, float down_yaw_position,
+  void SetTarget(float up_yaw_position, float down_yaw_position, float pitch_position,
                  float yaw_speed_feedforward = 0.f, float yaw_control_feedforward = 0.f) {
     target_.up_yaw_position = up_yaw_position;
     target_.down_yaw_position = down_yaw_position;
