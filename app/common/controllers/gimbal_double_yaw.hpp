@@ -47,10 +47,10 @@ class GimbalDoubleYaw {
 
     if (speed_pid_enabled_) {
       // 速度位置双环
-      const float up_yaw_speed_target = pid_.up_yaw_position.out() + target_.yaw_speed_ff;
+      const float up_yaw_speed_target = pid_.up_yaw_position.out();
       pid_.up_yaw_speed.Update(up_yaw_speed_target, state_.up_yaw_speed, dt);
-      output_.up_yaw = pid_.up_yaw_speed.out() + target_.yaw_output_ff;
-      const float down_yaw_speed_target = pid_.down_yaw_position.out();
+      output_.up_yaw = pid_.up_yaw_speed.out();
+      const float down_yaw_speed_target = pid_.down_yaw_position.out() + target_.yaw_speed_ff;
       pid_.down_yaw_speed.Update(down_yaw_speed_target, state_.down_yaw_speed, dt);
       output_.down_yaw = pid_.down_yaw_speed.out() + target_.yaw_output_ff;
       const float pitch_speed_target = pid_.pitch_position.out();

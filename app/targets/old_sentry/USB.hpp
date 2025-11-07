@@ -1,5 +1,5 @@
-#ifndef __USB_COMMUNICATE_HPP__
-#define __USB_COMMUNICATE_HPP__
+#ifndef USB_HPP
+#define USB_HPP
 
 #include <stdint.h>
 #include <string.h>
@@ -41,7 +41,7 @@ typedef struct __attribute__((packed)) {
     uint8_t mode;
     // 包尾
     uint8_t _EOF;
-} GimabalImuFrame_SCM_t;
+} GimbalImuFrame_SCM_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,4 +74,4 @@ extern "C" {
 }
 #endif
 
-#endif /* __USB_COMMUNICATE_HPP__ */
+#endif // USB_HPP

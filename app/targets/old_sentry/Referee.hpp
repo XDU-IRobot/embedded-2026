@@ -1,8 +1,22 @@
-//
-// Created by chenm on 2025/11/7.
-//
+#ifndef REFEREE_HPP
+#define REFEREE_HPP
 
-#ifndef BOARDC_REFEREE_HPP
-#define BOARDC_REFEREE_HPP
+#include <librm.hpp>
 
-#endif //BOARDC_REFEREE_HPP
+using namespace rm;
+
+class RcTcRefereeData {
+public:
+    RcTcRefereeData() = delete;
+
+    explicit RcTcRefereeData(rm::hal::SerialInterface &serial);
+
+    void Begin();
+
+    void RxCallback(const std::vector<u8> &data, u16 rx_len);
+
+private:
+    rm::hal::SerialInterface *serial_;
+};
+
+#endif //REFEREE_HPP
