@@ -6,17 +6,17 @@
 using namespace rm;
 
 class RcTcRefereeData {
-public:
-    RcTcRefereeData() = delete;
+ public:
+  RcTcRefereeData() = delete;
 
-    explicit RcTcRefereeData(rm::hal::SerialInterface &serial);
+  explicit RcTcRefereeData(rm::hal::SerialInterface &serial);
 
-    void Begin();
+  void Begin();
 
-    void RxCallback(const std::vector<u8> &data, u16 rx_len);
+  void RxCallback(const std::vector<u8> &data, u16 rx_len);
 
-private:
-    rm::hal::SerialInterface *serial_;
+ private:
+  rm::hal::SerialInterface *serial_;
 };
 
-#endif //REFEREE_HPP
+#endif  // REFEREE_HPP
