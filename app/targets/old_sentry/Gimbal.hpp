@@ -8,115 +8,115 @@
 using namespace rm;
 
 inline class Gimbal {
- public:
-  StateMachineType GimbalMove_ = {NO_FORCE};  // 云台运动状态
-  const f32 yaw_gyro_bias_ = 0.0015f;         // 偏航角（角度值）的陀螺仪偏移量
+public:
+    StateMachineType GimbalMove_ = {NO_FORCE}; // 云台运动状态
+    const f32 yaw_gyro_bias_ = 0.0015f; // 偏航角（角度值）的陀螺仪偏移量
 
- private:
-  struct ChassisRequestState_t {
-    i8 ChassisMoveXRequest;  // x轴运动控制
-    i8 ChassisMoveYRequest;  // y轴运动控制
-    u8 ChassisStateRequest;  // 底盘运动状态：无力，测试，随动，小陀螺正转，小陀螺反转
-    u8 UiChange;             // 开启Ui
-    u8 GetTargetFlag;        // 自瞄状态
-    u8 SuggestFireFlag;      // 建议开火
-    i8 AimSpeedChange;       // 转速等级
-    i8 reserve[1];           // 保留位
-  };
+private:
+    struct ChassisRequestState_t {
+        i8 ChassisMoveXRequest; // x轴运动控制
+        i8 ChassisMoveYRequest; // y轴运动控制
+        u8 ChassisStateRequest; // 底盘运动状态：无力，测试，随动，小陀螺正转，小陀螺反转
+        u8 UiChange; // 开启Ui
+        u8 GetTargetFlag; // 自瞄状态
+        u8 SuggestFireFlag; // 建议开火
+        i8 AimSpeedChange; // 转速等级
+        i8 reserve[1]; // 保留位
+    };
 
-  f32 gimbal_up_yaw_target_ = 0.0f;  // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
-  f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，0~2pi，左正右负）
-  f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
+    f32 gimbal_up_yaw_target_ = 0.0f; // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
+    f32 gimbal_down_yaw_target_ = 0.0f; // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，0~2pi，左正右负）
+    f32 gimbal_pitch_target_ = 0.0f; // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
 
-  f32 gravity_compensation_ = 0.0f;    // 重力补偿值
-  f32 k_gravity_compensation_ = 1.0f;  // 重力补偿系数
+    f32 gravity_compensation_ = 0.0f; // 重力补偿值
+    f32 k_gravity_compensation_ = 1.0f; // 重力补偿系数
 
-  i16 ammo_flag_ = 0;  // 摩擦轮数据位
+    i16 ammo_flag_ = 0; // 摩擦轮数据位
 
-  f32 aim_speed_change_ = 0.0f;  // 摩擦轮转速改变值
+    f32 aim_speed_change_ = 0.0f; // 摩擦轮转速改变值
 
-  f32 ammo_left_speed_ = 0.0f;   // 左摩擦轮速度
-  f32 ammo_right_speed_ = 0.0f;  // 右摩擦轮速度
+    f32 ammo_left_speed_ = 0.0f; // 左摩擦轮速度
+    f32 ammo_right_speed_ = 0.0f; // 右摩擦轮速度
 
-  u16 heat_limit_ = 0;       // 热量上限值
-  u16 heat_real_ = 0;        // 热量实时值
-  i16 heat_last_ = 0;        // 上一次热量值
-  i16 heat_delay_time_ = 0;  // 热量发送延迟时间
+    u16 heat_limit_ = 0; // 热量上限值
+    u16 heat_real_ = 0; // 热量实时值
+    i16 heat_last_ = 0; // 上一次热量值
+    i16 heat_delay_time_ = 0; // 热量发送延迟时间
 
-  i16 back_turn_time_ = 0;  // 拨盘反转时长
-  i16 back_turn_flag_ = 0;  // 拨盘反转触发时长 100
+    i16 back_turn_time_ = 0; // 拨盘反转时长
+    i16 back_turn_flag_ = 0; // 拨盘反转触发时长 100
 
-  f32 rotor_position_ = 0.0f;         // 拨盘位置
-  f32 last_rotor_position_ = 0.0f;    // 上一次拨盘位置
-  f32 rotor_target_position_ = 0.0f;  // 拨盘目标位置
-  u32 rotor_circle_flag_ = 0;         // 拨盘过圈标志
+    f32 rotor_position_ = 0.0f; // 拨盘位置
+    f32 last_rotor_position_ = 0.0f; // 上一次拨盘位置
+    f32 rotor_target_position_ = 0.0f; // 拨盘目标位置
+    u32 rotor_circle_flag_ = 0; // 拨盘过圈标志
 
-  u32 shoot_flag_ = 0;       // 开火标志
-  u32 shoot_flag_last_ = 0;  // 上一次开火标志
+    u32 shoot_flag_ = 0; // 开火标志
+    u32 shoot_flag_last_ = 0; // 上一次开火标志
 
-  bool DM_enable_flag_ = false;  // 4310电机使能标志
+    bool DM_enable_flag_ = false; // 4310电机使能标志
 
-  bool down_yaw_target_refresh_flag_ = false;
+    bool down_yaw_target_refresh_flag_ = false;
 
-  bool scan_yaw_flag_ = false;    // 扫描yaw轴方向标识位
-  bool scan_pitch_flag_ = false;  // 扫描pitch轴方向标识位
+    bool scan_yaw_flag_ = false; // 扫描yaw轴方向标识位
+    bool scan_pitch_flag_ = false; // 扫描pitch轴方向标识位
 
-  bool DF_flag_ = false;   // 大符标志
-  bool XF_flag_ = false;   // 小符标志
-  bool DF_state_ = false;  // 大符状态
-  bool XF_state_ = false;  // 小符状态
+    bool DF_flag_ = false; // 大符标志
+    bool XF_flag_ = false; // 小符标志
+    bool DF_state_ = false; // 大符状态
+    bool XF_state_ = false; // 小符状态
 
-  const f32 once_circle_ = 17000.0f;          // 单圈编码值 17000f
-  const f32 ammo_init_speed_ = 6300.0f;       // 摩擦轮初始速度 6300.0f
-  const f32 k_ammo_speed_change_ = 0.0f;      // 摩擦轮速度改变系数 0.0f
-  const f32 rotor_position_delta_ = 2000.0f;  // 拨盘位置误差值 2000.0f
-  const f32 rotor_init_speed_[4] = {2000.0f, 2500.0f, 2000.0f, -1000.0f};
-  // 拨盘初始速度速度 {低等级正转，高等级正转，单发，反转}{2000.0f, 2500.0f, 2000.0f, -1000.0f}
-  const f32 sensitivity_up_yaw_ = 3.0f;      // 云台上部yaw轴灵敏度 3.0f
-  const f32 sensitivity_down_yaw_ = 0.002f;  // 云台下部yaw轴灵敏度 0.3f
-  const f32 sensitivity_pitch_ = 0.002f;     // 云台pitch轴灵敏度 0.3f
-  const f32 highest_pitch_angle_ = 0.54f;    // 云台pitch轴最高 0.54f（弧度制）
-  const f32 lowest_pitch_angle_ = -0.38f;    // 云台pitch轴最低 0.38f（弧度制）
-  const f32 max_up_yaw_angle_ = 4050.0f;     // 云台上部yaw轴最大 4050.0f（编码器值）
-  const f32 min_up_yaw_angle_ = 1650.0f;     // 云台上部yaw轴最小 1650.0f（编码器值）
-  const f32 down_yaw_move_high_ = 3700.0f;   // 云台上部yaw轴大于高值，云台下部yaw轴随动
-  const f32 down_yaw_move_low_ = 2000.0f;    // 云台上部yaw轴小于低值，云台下部yaw轴随动
+    const f32 once_circle_ = 17000.0f; // 单圈编码值 17000f
+    const f32 ammo_init_speed_ = 6300.0f; // 摩擦轮初始速度 6300.0f
+    const f32 k_ammo_speed_change_ = 0.0f; // 摩擦轮速度改变系数 0.0f
+    const f32 rotor_position_delta_ = 2000.0f; // 拨盘位置误差值 2000.0f
+    const f32 rotor_init_speed_[4] = {2000.0f, 2500.0f, 2000.0f, -1000.0f};
+    // 拨盘初始速度速度 {低等级正转，高等级正转，单发，反转}{2000.0f, 2500.0f, 2000.0f, -1000.0f}
+    const f32 sensitivity_up_yaw_ = 3.0f; // 云台上部yaw轴灵敏度 3.0f
+    const f32 sensitivity_down_yaw_ = 0.002f; // 云台下部yaw轴灵敏度 0.3f
+    const f32 sensitivity_pitch_ = 0.002f; // 云台pitch轴灵敏度 0.3f
+    const f32 highest_pitch_angle_ = 0.54f; // 云台pitch轴最高 0.54f（弧度制）
+    const f32 lowest_pitch_angle_ = -0.38f; // 云台pitch轴最低 0.38f（弧度制）
+    const f32 max_up_yaw_angle_ = 4050.0f; // 云台上部yaw轴最大 4050.0f（编码器值）
+    const f32 min_up_yaw_angle_ = 1650.0f; // 云台上部yaw轴最小 1650.0f（编码器值）
+    const f32 down_yaw_move_high_ = 3700.0f; // 云台上部yaw轴大于高值，云台下部yaw轴随动
+    const f32 down_yaw_move_low_ = 2000.0f; // 云台上部yaw轴小于低值，云台下部yaw轴随动
 
- public:
-  void GimbalTask();
+public:
+    void GimbalInit();
 
-  void GimbalInit();
+    void GimbalTask();
 
- private:
-  void GimbalStateUpdate();
+private:
+    void GimbalStateUpdate();
 
-  void GimbalRCTargetUpdate();
+    void GimbalRCTargetUpdate();
 
-  void GimbalScanTargetUpdate();
+    void GimbalScanTargetUpdate();
 
-  void GimbalAimbotTargetUpdate();
+    void GimbalAimbotTargetUpdate();
 
-  void GimbalDownYawFollow();
+    void GimbalDownYawFollow();
 
-  void GimbalMovePIDUpdate();
+    void GimbalMovePIDUpdate();
 
-  void GimbalEnableUpdate();
+    void GimbalMatchUpdate();
 
-  void GimbalMatchUpdate();
+    void GimbalEnableUpdate();
 
-  void GimbalDisableUpdate();
+    void GimbalDisableUpdate();
 
-  void DaMiaoMotorEnable();
+    void DaMiaoMotorEnable();
 
-  void DaMiaoMotorDisable();
+    void DaMiaoMotorDisable();
 
-  void AmmoEnableUpdate();
+    void AmmoEnableUpdate();
 
-  void AmmoDisableUpdate();
+    void AmmoDisableUpdate();
 
-  void RotorEnableUpdate();
+    void RotorEnableUpdate();
 
-  void RotorDisableUpdate();
+    void RotorDisableUpdate();
 } *gimbal;
 
 #endif  // GIMBAL_HPP

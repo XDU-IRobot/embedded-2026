@@ -2,45 +2,40 @@
 #define USB_HPP
 
 #include <stdint.h>
-#include <string.h>
 
 typedef struct __attribute__((packed)) {
-  // 包头
-  uint8_t _SOF;
-  uint8_t ID;
-  // 自瞄状态
-  uint8_t AimbotState;
-  uint8_t AimbotTarget;
-  // 自瞄数据
-  float Pitch;
-  float Yaw;
-  // 自瞄目标角速度
-  float TargetPitchSpeed;
-  float TargetYawSpeed;
-  // 时间戳
-  float SystemTimer;
-  // 包尾
-  uint8_t _EOF;
-  // 处理后数据
-  float PitchRelativeAngle;
-  float YawRelativeAngle;
-
+    // 包头
+    uint8_t _SOF;
+    uint8_t ID;
+    // 自瞄状态
+    uint8_t AimbotState;
+    uint8_t AimbotTarget;
+    // 自瞄数据
+    float Pitch;
+    float Yaw;
+    // 自瞄目标角速度
+    float TargetPitchSpeed;
+    float TargetYawSpeed;
+    // 时间戳
+    float SystemTimer;
+    // 包尾
+    uint8_t _EOF;
 } AimbotFrame_SCM_t;
 
 typedef struct __attribute__((packed)) {
-  // 包头
-  uint8_t _SOF;
-  uint8_t ID;
-  // IMU数据
-  uint32_t TimeStamp;
-  float q0;
-  float q1;
-  float q2;
-  float q3;
-  uint8_t robot_id;
-  uint8_t mode;
-  // 包尾
-  uint8_t _EOF;
+    // 包头
+    uint8_t _SOF;
+    uint8_t ID;
+    // IMU数据
+    uint32_t TimeStamp;
+    float q0;
+    float q1;
+    float q2;
+    float q3;
+    uint8_t robot_id;
+    uint8_t mode;
+    // 包尾
+    uint8_t _EOF;
 } GimbalImuFrame_SCM_t;
 
 #ifdef __cplusplus
