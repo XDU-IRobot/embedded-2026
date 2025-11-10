@@ -11,6 +11,36 @@
 #include "device_manager.hpp"
 #include "controllers/gimbal_2dof.hpp"
 
+
+float Map(float value, float from_min, float from_max, float to_min, float to_max) {
+    return (value - from_min) * (to_max - to_min) / (from_max - from_min) + to_min;
+}
+float LoopConstrain(float input, float min_value, float max_value) {
+    float cycle = max_value - min_value;
+    if (cycle < 0) {
+        return input;
+    }
+
+    if (input > max_value) {
+        while (input > max_value) {
+            input -= cycle;
+        }
+    } else if (input < min_value) {
+        while (input < min_value) {
+            input += cycle;
+        }
+    }
+    return input;
+}
+float Constrain(float input, float min_value, float max_value) {
+    if (input < min_value) {
+        return min_value;
+    } else if (input > max_value) {
+        return max_value;
+    } else {
+        return input;
+    }
+}
 struct GlobalWarehouse
 {
     AsyncBuzzer *buzzer{nullptr}; ///< 蜂鸣器
@@ -35,6 +65,9 @@ struct GlobalWarehouse
     SparseValueWatcher<rm::device::DR16::SwitchPosition> rc_l_switch_watcher, rc_r_switch_watcher;
     rm::modules::MahonyAhrs ahrs{1000.f}; ///< mahony 姿态解算器，频率 1000Hz
 
+    float rc_yaw_data=0;
+    float rc_pitch_data=0;
+
     void Init()
     {
         buzzer = new AsyncBuzzer;
@@ -45,13 +78,15 @@ struct GlobalWarehouse
 
         rc = new rm::device::DR16{*dbus};
         yaw_motor = new rm::device::GM6020{*can1, 2};
+        for (int i=0;i<1000;i++){};
         pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{*can1, {}};
+        for (int i=0;i<1000;i++){};
         left_fric_motor = new rm::device::M3508{*can1, 4};
         right_fric_motor = new rm::device::M3508{*can1, 3};
         driver_motor = new rm::device::M2006{*can1, 1};
         imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
-        device_manager << rc << yaw_motor << pitch_motor << left_fric_motor << right_fric_motor; //<<driver_motor;
+        device_manager << rc << yaw_motor ;//<< pitch_motor ;//<< left_fric_motor << right_fric_motor; //<<driver_motor;
 
         can1->SetFilter(0, 0);
         can1->Begin();
@@ -86,7 +121,12 @@ void MainLoop()
     globals->rc_l_switch_watcher.Update(globals->rc->switch_l());
     globals->rc_r_switch_watcher.Update(globals->rc->switch_r());
 
-    globals->gimbal_controller.SetTarget(globals->rc->left_x() / 660.f * 20.f, globals->rc->left_y() / 660.f * 20.f);
+    globals->rc_yaw_data += Map(globals->rc->left_x(), -660, 660, -0.3f, 0.3f);  // 遥控器映射yaw轴
+    globals->rc_yaw_data = LoopConstrain(globals->rc_yaw_data, 0, 360);
+    globals->rc_pitch_data += Map(globals->rc->left_y(), -660, 660, -0.3f, 0.3f);  // 遥控器映射pitch轴
+    globals->rc_pitch_data = Constrain(globals->rc_pitch_data, 150.0f, 190.0f);
+
+    globals->gimbal_controller.SetTarget(globals->rc_yaw_data, globals->rc_pitch_data);
     globals->gimbal_controller.Update(-57.3 * -globals->ahrs.euler_angle().roll + 180,
                                       globals->yaw_motor->rpm() * (2.f * M_PI / 60.f),
                                       -57.3 * globals->ahrs.euler_angle().pitch + 180,
@@ -94,7 +134,9 @@ void MainLoop()
     );
 
     globals->yaw_motor->SetCurrent(globals->gimbal_controller.output().yaw);
+    for (int i=0;i<1000;i++){};
     globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
+    for (int i=0;i<1000;i++){};
 }
 
 extern "C" [[noreturn]] void AppMain(void)
