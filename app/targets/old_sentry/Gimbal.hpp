@@ -9,8 +9,11 @@ using namespace rm;
 
 inline class Gimbal {
 public:
-    StateMachineType GimbalMove_ = {NO_FORCE}; // 云台运动状态
-    const f32 yaw_gyro_bias_ = 0.0015f; // 偏航角（角度值）的陀螺仪偏移量
+    StateMachineType GimbalMove_ = {kNoForce}; // 云台运动状态
+
+    f32 pitch_torque_ = 0.0f; // pitch轴力矩数据
+
+    const f32 mid_up_yaw_angle_ = 2840.0f; // 云台上部yaw轴中值 2840.0f（编码器值）
 
 private:
     struct ChassisRequestState_t {
@@ -31,32 +34,26 @@ private:
     f32 gravity_compensation_ = 0.0f; // 重力补偿值
     f32 k_gravity_compensation_ = 1.0f; // 重力补偿系数
 
-    i16 ammo_flag_ = 0; // 摩擦轮数据位
+    f32 ammo_speed_ = 0.0f; // 摩擦轮速度 6000.0f -> 24m/s 初速度
+    f32 ammo_speed_change_ = 0.0f; // 摩擦轮转速改变值
 
-    f32 aim_speed_change_ = 0.0f; // 摩擦轮转速改变值
+    u8 shoot_num_ = 0; // 开火次数
+    f32 shoot_initial_speed_[10] = {}; // 子弹初速度
+    f32 last_shoot_initial_speed_ = 0.0f; // 上一次的子弹初速度
+    f32 shoot_initial_average_speed_ = 0.0f; // 子弹初速度平均值
+    f32 target_shoot_initial_speed_ = 0.0f; // 目标子弹初速度
 
-    f32 ammo_left_speed_ = 0.0f; // 左摩擦轮速度
-    f32 ammo_right_speed_ = 0.0f; // 右摩擦轮速度
+    f32 shoot_frequency_ = 0.0f;
 
     u16 heat_limit_ = 0; // 热量上限值
-    u16 heat_real_ = 0; // 热量实时值
-    i16 heat_last_ = 0; // 上一次热量值
-    i16 heat_delay_time_ = 0; // 热量发送延迟时间
+    u16 heat_current_ = 0; // 热量实时值
 
-    i16 back_turn_time_ = 0; // 拨盘反转时长
-    i16 back_turn_flag_ = 0; // 拨盘反转触发时长 100
-
-    f32 rotor_position_ = 0.0f; // 拨盘位置
-    f32 last_rotor_position_ = 0.0f; // 上一次拨盘位置
-    f32 rotor_target_position_ = 0.0f; // 拨盘目标位置
-    u32 rotor_circle_flag_ = 0; // 拨盘过圈标志
-
-    u32 shoot_flag_ = 0; // 开火标志
-    u32 shoot_flag_last_ = 0; // 上一次开火标志
+    bool shoot_flag_ = false; // 开火标志
+    bool single_shoot_flag_ = false; // 单发标志
 
     bool DM_enable_flag_ = false; // 4310电机使能标志
 
-    bool down_yaw_target_refresh_flag_ = false;
+    bool down_yaw_target_refresh_flag_ = false; // 云台下部yaw轴目标数据刷新标志
 
     bool scan_yaw_flag_ = false; // 扫描yaw轴方向标识位
     bool scan_pitch_flag_ = false; // 扫描pitch轴方向标识位
@@ -66,12 +63,7 @@ private:
     bool DF_state_ = false; // 大符状态
     bool XF_state_ = false; // 小符状态
 
-    const f32 once_circle_ = 17000.0f; // 单圈编码值 17000f
-    const f32 ammo_init_speed_ = 6300.0f; // 摩擦轮初始速度 6300.0f
-    const f32 k_ammo_speed_change_ = 0.0f; // 摩擦轮速度改变系数 0.0f
-    const f32 rotor_position_delta_ = 2000.0f; // 拨盘位置误差值 2000.0f
-    const f32 rotor_init_speed_[4] = {2000.0f, 2500.0f, 2000.0f, -1000.0f};
-    // 拨盘初始速度速度 {低等级正转，高等级正转，单发，反转}{2000.0f, 2500.0f, 2000.0f, -1000.0f}
+    const f32 ammo_init_speed_ = 6000.0f; // 摩擦轮初始速度 6000.0f
     const f32 sensitivity_up_yaw_ = 3.0f; // 云台上部yaw轴灵敏度 3.0f
     const f32 sensitivity_down_yaw_ = 0.002f; // 云台下部yaw轴灵敏度 0.3f
     const f32 sensitivity_pitch_ = 0.002f; // 云台pitch轴灵敏度 0.3f
@@ -110,13 +102,13 @@ private:
 
     void DaMiaoMotorDisable();
 
-    void AmmoEnableUpdate();
+    void ShootEnableUpdate();
 
-    void AmmoDisableUpdate();
+    void ShootDisableUpdate();
 
-    void RotorEnableUpdate();
+    void AmmoSpeedUpdate();
 
-    void RotorDisableUpdate();
+    void SetMotorCurrent();
 } *gimbal;
 
 #endif  // GIMBAL_HPP

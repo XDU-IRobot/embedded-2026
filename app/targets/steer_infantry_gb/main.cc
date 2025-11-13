@@ -28,7 +28,7 @@ struct GlobalWarehouse {
 
   // 控制器 //
   Gimbal2Dof gimbal_controller;          ///< 二轴云台控制器
-  Shoot3Fric shoot_controller{9};        ///< 三摩擦轮发射机构控制器，9发拨盘
+  Shoot3Fric shoot_controller{8};        ///< 三摩擦轮发射机构控制器，9发拨盘
   rm::modules::MahonyAhrs ahrs{1000.f};  ///< mahony 姿态解算器，频率 1000Hz
 
   void Init() {

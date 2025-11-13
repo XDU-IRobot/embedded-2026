@@ -10,24 +10,16 @@ public:
     QuadSteeringChassis(float wheel_radius, float chassis_radius) : kinematics_(chassis_radius) {
         pid_.lf_steer_position
                 .SetCircular(true)
-                .SetCircularCycle(M_PI * 2)
-                .SetFuzzy(true)
-                .SetFuzzyErrorScale(M_PI);
+                .SetCircularCycle(M_PI * 2.0f);
         pid_.rf_steer_position
                 .SetCircular(true)
-                .SetCircularCycle(M_PI * 2)
-                .SetFuzzy(true)
-                .SetFuzzyErrorScale(M_PI);
+                .SetCircularCycle(M_PI * 2.0f);
         pid_.lb_steer_position
                 .SetCircular(true)
-                .SetCircularCycle(M_PI * 2)
-                .SetFuzzy(true)
-                .SetFuzzyErrorScale(M_PI);
+                .SetCircularCycle(M_PI * 2.0f);
         pid_.rb_steer_position
                 .SetCircular(true)
-                .SetCircularCycle(M_PI * 2)
-                .SetFuzzy(true)
-                .SetFuzzyErrorScale(M_PI);
+                .SetCircularCycle(M_PI * 2.0f);
     }
 
     /**
@@ -106,13 +98,13 @@ public:
         }
 
         // 轮速控制
-        pid_.lf_wheel.Update(static_cast<float>(fk_result.lf_wheel_speed), state_.lf_wheel_speed, dt);
+        pid_.lf_wheel.Update(static_cast<float>(-fk_result.lf_wheel_speed), state_.lf_wheel_speed, dt);
         output_.lf_wheel = pid_.lf_wheel.out();
-        pid_.rf_wheel.Update(static_cast<float>(fk_result.rf_wheel_speed), state_.rf_wheel_speed, dt);
+        pid_.rf_wheel.Update(static_cast<float>(-fk_result.rf_wheel_speed), state_.rf_wheel_speed, dt);
         output_.rf_wheel = pid_.rf_wheel.out();
-        pid_.lb_wheel.Update(static_cast<float>(fk_result.lr_wheel_speed), state_.lb_wheel_speed, dt);
+        pid_.lb_wheel.Update(static_cast<float>(-fk_result.lr_wheel_speed), state_.lb_wheel_speed, dt);
         output_.lb_wheel = pid_.lb_wheel.out();
-        pid_.rb_wheel.Update(static_cast<float>(fk_result.rr_wheel_speed), state_.rb_wheel_speed, dt);
+        pid_.rb_wheel.Update(static_cast<float>(-fk_result.rr_wheel_speed), state_.rb_wheel_speed, dt);
         output_.rb_wheel = pid_.rb_wheel.out();
     }
 

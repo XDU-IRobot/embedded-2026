@@ -9,33 +9,44 @@
 #include "controllers/gimbal_double_yaw.hpp"
 #include "controllers/quad_steering_chassis.hpp"
 #include "controllers/shoot_3fric.hpp"
+#include "controllers/counter.hpp"
 
 #include "USB.hpp"
 
 // 状态机
 typedef enum {
-    NO_FORCE = 0u, // 无力模式
-    TEST, // 调试模式
-    MATCH, // 比赛模式
+    kUnable = 0u, // 断电模式
+    kNoForce, // 无力模式
+    kTest, // 调试模式
+    kMatch, // 比赛模式
 
-    GB_REMOTE, // 云台遥控模式
-    GB_SCAN, // 扫描模式
-    GB_AIMBOT, // 云台自瞄模式
+    kGbRemote, // 云台遥控模式
+    kGbScan, // 扫描模式
+    kGbAimbot, // 云台自瞄模式
 
-    CS_REMOTE, // 底盘遥控模式
-    CS_NAVIGATE, // 底盘导航模式
+    kCsRemote, // 底盘遥控模式
+    kCsNavigate, // 底盘导航模式
 } StateMachineType;
 
 inline struct GlobalWarehouse {
-    AsyncBuzzer *buzzer{nullptr}; ///< 蜂鸣器
-    LED *led{nullptr}; ///< RGB LED灯
+public:
+    // Buzzer *buzzer{nullptr}; ///< 蜂鸣器
+    // rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
+    //     rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario,
+    //     rm::modules::buzzer_melody::SeeUAgain> buzzer_controller;
+    // LED *led{nullptr}; ///< RGB LED灯
+    // rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
+    //     rm::modules::led_pattern::GreenBreath, rm::modules::led_pattern::RgbFlow> led_controller; ///< RGB LED控制器
 
     // 硬件接口 //
     rm::hal::Can *can1{nullptr}, *can2{nullptr}; ///< CAN 总线接口
     rm::hal::Serial *dbus{nullptr}; ///< 遥控器串口接口
 
     // 设备 //
-    DeviceManager<20> device_manager; ///< 设备管理器，维护所有设备在线状态
+    DeviceManager<1> device_rc; ///< 设备管理器，维护所有设备在线状态
+    DeviceManager<3> device_gimbal;
+    DeviceManager<8> device_chassis;
+    DeviceManager<3> device_shoot;
     // 云台
     rm::device::BMI088 *imu{nullptr}; ///< IMU
     rm::device::DR16 *rc{nullptr}; ///< 遥控器
@@ -54,26 +65,48 @@ inline struct GlobalWarehouse {
     rm::device::M3508 *wheel_rf{nullptr}; ///< 右前轮电机
     rm::device::M3508 *wheel_lb{nullptr}; ///< 左后轮电机
     rm::device::M3508 *wheel_rb{nullptr}; ///< 右后轮电机
+
     rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer; ///< 裁判系统数据缓冲区
 
     // 控制器 //
+    rm::modules::MahonyAhrs ahrs{1000.0f}; ///< 姿态解算器
     GimbalDoubleYaw gimbal_controller; ///< 二轴双 Yaw 云台控制器
     QuadSteeringChassis chassis_controller{0.0f, 0.4714f}; ///< 四轮转向底盘控制器
-    Shoot3Fric shoot_controller{8}; ///< 三摩擦轮发射机构控制器，8发拨盘
-    rm::modules::MahonyAhrs ahrs{1000.0f}; ///< 姿态解算器
+    Shoot3Fric shoot_controller{8, 36.0f}; ///< 三摩擦轮发射机构控制器，8发拨盘
+    Counter dail_position_counter{0.0, 8191.0f}; ///< 云台 Yaw 下部电机位置计数器
 
     // USB //
-    AimbotFrame_SCM_t Aimbot; ///< NUC数据
-    GimbalImuFrame_SCM_t Imu; ///< IMU数据
-    // 状态机 //
-    StateMachineType StateMachine_ = {NO_FORCE}; // 当前状态
+    GimbalDataFrame_SCM_t *GimbalData{nullptr}; ///< IMU数据
+    RefereeDataFrame_SCM_t *RefereeData{nullptr}; ///< 裁判系统数据
+    AimbotFrame_SCM_t *Aimbot{nullptr}; ///< 自瞄数据
+    NucControlFrame_SCM_t *NucControl{nullptr}; ///< NUC控制数据
+
+    StateMachineType StateMachine_ = {kNoForce}; // 当前状态
+    int time_ = 0;
+    const float yaw_gyro_bias_ = 0.0015f; // 偏航角（角度值）的陀螺仪偏移量
+    const float rc_max_value_ = 660.0f; // 遥控器最大值
+    const float GM6020_encoder_max_ = 8191.0f; // GM6020 电机编码器最大值
 
     // 函数 //
+public:
     void Init();
 
+    void SubLoop500Hz();
+
+    void SubLoop250Hz();
+
+    void SubLoop100Hz();
+
+    void SubLoop50Hz();
+
+    void SubLoop10Hz();
+
+private:
     void GimbalPIDInit();
 
     void ChassisPIDInit();
+
+    void ShootPIDInit();
 
     void RCStateUpdate();
 } *globals;

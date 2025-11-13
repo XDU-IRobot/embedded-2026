@@ -49,6 +49,8 @@ struct GlobalWarehouse {
     buzzer->Init();
     led->Init();
     rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+
+
   }
 } *globals;
 

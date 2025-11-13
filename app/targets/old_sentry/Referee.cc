@@ -14,3 +14,7 @@ void RcTcRefereeData::RxCallback(const std::vector<u8> &data, u16 rx_len) {
         globals->referee_data_buffer << data.at(i);
     }
 }
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+
+}
