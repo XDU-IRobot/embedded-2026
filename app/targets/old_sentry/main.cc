@@ -9,8 +9,7 @@
 #include "main.hpp"
 #include "Gimbal.hpp"
 #include "Chassis.hpp"
-#include "Referee.hpp"
-bool a;
+
 using namespace rm;
 
 void MainLoop() {
@@ -27,9 +26,6 @@ extern "C" [[noreturn]] void AppMain(void) {
     gimbal = new Gimbal;
     chassis = new Chassis;
     globals->Init();
-    // rm::hal::Serial referee_uart(huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma);
-    // RcTcRefereeData rcdata(referee_uart);
-    // rcdata.Begin();
 
     // 创建主循环定时任务，定频1khz
     TimerTask mainloop_1000hz{
@@ -51,6 +47,8 @@ void GlobalWarehouse::Init() {
     can1 = new rm::hal::Can{hcan1};
     can2 = new rm::hal::Can{hcan2};
     dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    // referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
+    // rcdata = new rm::device::RcTcRefereeData{*referee_uart};
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
     rc = new rm::device::DR16{*dbus};
@@ -83,6 +81,7 @@ void GlobalWarehouse::Init() {
     can2->SetFilter(0, 0);
     can2->Begin();
     rc->Begin();
+    // rcdata->Begin();
     // buzzer->Init();
     // led->Init();
 

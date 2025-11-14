@@ -12,6 +12,9 @@
 #include "controllers/counter.hpp"
 
 #include "USB.hpp"
+#include "Referee.hpp"
+
+#define LIBRM_BYPASS_HAL_ASSERT
 
 // 状态机
 typedef enum {
@@ -66,6 +69,8 @@ public:
     rm::device::M3508 *wheel_lb{nullptr}; ///< 左后轮电机
     rm::device::M3508 *wheel_rb{nullptr}; ///< 右后轮电机
 
+    // rm::hal::Serial *referee_uart{nullptr};
+    // rm::device::RcTcRefereeData *rcdata{nullptr};
     rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer; ///< 裁判系统数据缓冲区
 
     // 控制器 //
