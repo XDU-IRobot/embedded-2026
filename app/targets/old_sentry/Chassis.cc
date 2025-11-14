@@ -70,7 +70,7 @@ void Chassis::ChassisRCDataUpdate() {
         chassis->chassis_follow_pid_.Update(0.0f, -chassis->down_yaw_delta_, 1.0f);
         chassis->chassis_target_w_ = chassis->chassis_follow_pid_.out();
     }
-    if (std::abs(chassis->chassis_target_w_) > 2000.0f) {
+    if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
         chassis->chassis_target_x_ *= 0.5;
         chassis->chassis_target_y_ *= 0.5;
     }
@@ -139,7 +139,7 @@ void Chassis::ChassisNavigateDataUpdate() {
             rm::modules::Map(globals->NucControl->w, -chassis->chassis_max_navigate_w_,
                              chassis->chassis_max_navigate_w_, -chassis->chassis_max_navigate_w_,
                              chassis->chassis_max_navigate_w_) * std::cos(chassis->down_yaw_delta_);
-    if (std::abs(chassis->chassis_target_w_) > 2000.0f) {
+    if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
         chassis->chassis_target_x_ *= 0.5;
         chassis->chassis_target_y_ *= 0.5;
     }
@@ -191,11 +191,11 @@ void Chassis::ChassisDisableUpdate() {
 
 void Chassis::PowerLimitLoop() {
     // 缓冲能量过低判断
-    if (globals->referee_data_buffer.data().power_heat_data.buffer_energy < 10) {
+    if (globals->referee_data_buffer->data().power_heat_data.buffer_energy < 10) {
         chassis->k_speed_power_limit_ = 0.0f;
-    } else if (globals->referee_data_buffer.data().power_heat_data.buffer_energy < 60) {
+    } else if (globals->referee_data_buffer->data().power_heat_data.buffer_energy < 60) {
         chassis->k_speed_power_limit_ = static_cast<f32>(pow(
-            static_cast<f32>(globals->referee_data_buffer.data().power_heat_data.buffer_energy) / 60.0f, 2));
+            static_cast<f32>(globals->referee_data_buffer->data().power_heat_data.buffer_energy) / 60.0f, 2));
     } else {
         chassis->k_speed_power_limit_ = 1.0f;
     }

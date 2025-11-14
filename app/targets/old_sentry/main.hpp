@@ -12,6 +12,7 @@
 #include "controllers/counter.hpp"
 
 #include "USB.hpp"
+#include "Referee.hpp"
 
 // 状态机
 typedef enum {
@@ -30,17 +31,18 @@ typedef enum {
 
 inline struct GlobalWarehouse {
 public:
-    // Buzzer *buzzer{nullptr}; ///< 蜂鸣器
-    // rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
-    //     rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario,
-    //     rm::modules::buzzer_melody::SeeUAgain> buzzer_controller;
-    // LED *led{nullptr}; ///< RGB LED灯
-    // rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
-    //     rm::modules::led_pattern::GreenBreath, rm::modules::led_pattern::RgbFlow> led_controller; ///< RGB LED控制器
+    Buzzer *buzzer{nullptr}; ///< 蜂鸣器
+    rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
+        rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario,
+        rm::modules::buzzer_melody::SeeUAgain, rm::modules::buzzer_melody::TheLick> buzzer_controller;
+    LED *led{nullptr}; ///< RGB LED灯
+    rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
+        rm::modules::led_pattern::GreenBreath, rm::modules::led_pattern::RgbFlow> led_controller; ///< RGB LED控制器
 
     // 硬件接口 //
     rm::hal::Can *can1{nullptr}, *can2{nullptr}; ///< CAN 总线接口
     rm::hal::Serial *dbus{nullptr}; ///< 遥控器串口接口
+    rm::hal::Serial *referee_uart{nullptr}; ///< 裁判系统串口接口
 
     // 设备 //
     DeviceManager<1> device_rc; ///< 设备管理器，维护所有设备在线状态
@@ -50,6 +52,7 @@ public:
     // 云台
     rm::device::BMI088 *imu{nullptr}; ///< IMU
     rm::device::DR16 *rc{nullptr}; ///< 遥控器
+    rm::device::RxReferee *rx_referee{nullptr}; ///< 裁判系统
     rm::device::GM6020 *up_yaw_motor{nullptr}; ///< 云台 Yaw 上电机
     rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *down_yaw_motor{nullptr}; ///< 云台 Yaw 下电机
     rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr}; ///< 云台 Pitch 电机
@@ -66,7 +69,7 @@ public:
     rm::device::M3508 *wheel_lb{nullptr}; ///< 左后轮电机
     rm::device::M3508 *wheel_rb{nullptr}; ///< 右后轮电机
 
-    rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer; ///< 裁判系统数据缓冲区
+    rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr}; ///< 裁判系统数据缓冲区
 
     // 控制器 //
     rm::modules::MahonyAhrs ahrs{1000.0f}; ///< 姿态解算器

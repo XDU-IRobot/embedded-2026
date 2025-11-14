@@ -9,8 +9,7 @@
 #include "main.hpp"
 #include "Gimbal.hpp"
 #include "Chassis.hpp"
-#include "Referee.hpp"
-bool a;
+
 using namespace rm;
 
 void MainLoop() {
@@ -27,9 +26,6 @@ extern "C" [[noreturn]] void AppMain(void) {
     gimbal = new Gimbal;
     chassis = new Chassis;
     globals->Init();
-    // rm::hal::Serial referee_uart(huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma);
-    // RcTcRefereeData rcdata(referee_uart);
-    // rcdata.Begin();
 
     // 创建主循环定时任务，定频1khz
     TimerTask mainloop_1000hz{
@@ -45,14 +41,17 @@ extern "C" [[noreturn]] void AppMain(void) {
 }
 
 void GlobalWarehouse::Init() {
-    // buzzer = new Buzzer;
-    // led = new LED;
+    buzzer = new Buzzer;
+    led = new LED;
 
     can1 = new rm::hal::Can{hcan1};
     can2 = new rm::hal::Can{hcan2};
     dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-    imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+    referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
 
+    imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+    rx_referee = new rm::device::RxReferee{*globals->referee_uart};
+    referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
     rc = new rm::device::DR16{*dbus};
     up_yaw_motor = new rm::device::GM6020{*can1, 5};
     down_yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> //
@@ -83,11 +82,12 @@ void GlobalWarehouse::Init() {
     can2->SetFilter(0, 0);
     can2->Begin();
     rc->Begin();
-    // buzzer->Init();
-    // led->Init();
+    rx_referee->Begin();
+    buzzer->Init();
+    led->Init();
 
-    // led_controller.SetPattern<modules::led_pattern::GreenBreath>();
-    // buzzer_controller.Play<modules::buzzer_melody::Startup>();
+    led_controller.SetPattern<modules::led_pattern::GreenBreath>();
+    buzzer_controller.Play<modules::buzzer_melody::TheLick>();
 
     globals->GimbalPIDInit();
     globals->ChassisPIDInit();
@@ -301,9 +301,9 @@ void GlobalWarehouse::SubLoop100Hz() {
 
 void GlobalWarehouse::SubLoop50Hz() {
     if (globals->time_ % 10 == 0) {
-        // const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
-        // (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
-        // buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
+        const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
+        (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
+        buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
     }
 }
 

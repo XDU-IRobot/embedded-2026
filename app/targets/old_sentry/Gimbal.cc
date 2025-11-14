@@ -196,8 +196,8 @@ void Gimbal::ShootEnableUpdate() {
     gimbal->AmmoSpeedUpdate();
     // globals->shoot_controller.SetArmSpeed(ammo_speed_);
     globals->shoot_controller.SetArmSpeed(0.0f);
-    gimbal->heat_limit_ = globals->referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
-    gimbal->heat_current_ = globals->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
+    gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
+    gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
     globals->dail_position_counter.IncreaseUpdate(globals->dial_motor->encoder());
     if (globals->rc->dial() <= -650
         // && heat_limit_ - heat_current_ > 100
@@ -244,15 +244,15 @@ void Gimbal::ShootDisableUpdate() {
 }
 
 void Gimbal::AmmoSpeedUpdate() {
-    if (globals->referee_data_buffer.data().shoot_data.initial_speed > 20.0f &&
-        globals->referee_data_buffer.data().shoot_data.initial_speed < 30.0f &&
-        globals->referee_data_buffer.data().shoot_data.initial_speed != gimbal->last_shoot_initial_speed_) {
+    if (globals->referee_data_buffer->data().shoot_data.initial_speed > 20.0f &&
+        globals->referee_data_buffer->data().shoot_data.initial_speed < 30.0f &&
+        globals->referee_data_buffer->data().shoot_data.initial_speed != gimbal->last_shoot_initial_speed_) {
         if (gimbal->shoot_initial_speed_[0] == 0.0f) {
-            for (int i = 0; i < 10; i++) {
-                gimbal->shoot_initial_speed_[i] = globals->referee_data_buffer.data().shoot_data.initial_speed;
+            for (float & i : gimbal->shoot_initial_speed_) {
+                i = globals->referee_data_buffer->data().shoot_data.initial_speed;
             }
         } else {
-            gimbal->shoot_initial_speed_[shoot_num_] = globals->referee_data_buffer.data().shoot_data.initial_speed;
+            gimbal->shoot_initial_speed_[shoot_num_] = globals->referee_data_buffer->data().shoot_data.initial_speed;
             if (shoot_num_ < 10) {
                 shoot_num_++;
             } else {

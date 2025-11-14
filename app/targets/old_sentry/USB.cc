@@ -64,13 +64,13 @@ void GimbalDataSend() {
  * @brief          发送自瞄所需裁判系统数据
  */
 void RefereeDataSend() {
-    globals->RefereeData->robot_id = globals->referee_data_buffer.data().robot_status.robot_id;
-    globals->RefereeData->current_HP = globals->referee_data_buffer.data().robot_status.current_HP;
-    globals->RefereeData->maximum_HP = globals->referee_data_buffer.data().robot_status.maximum_HP;
-    globals->RefereeData->barrel1_speed = globals->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
-    globals->RefereeData->barrel2_speed = globals->referee_data_buffer.data().power_heat_data.shooter_17mm_2_barrel_heat;
-    globals->RefereeData->x = globals->referee_data_buffer.data().robot_pos.x;
-    globals->RefereeData->y = globals->referee_data_buffer.data().robot_pos.y;
+    globals->RefereeData->robot_id = globals->referee_data_buffer->data().robot_status.robot_id;
+    globals->RefereeData->current_HP = globals->referee_data_buffer->data().robot_status.current_HP;
+    globals->RefereeData->maximum_HP = globals->referee_data_buffer->data().robot_status.maximum_HP;
+    globals->RefereeData->barrel1_speed = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
+    globals->RefereeData->barrel2_speed = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_2_barrel_heat;
+    globals->RefereeData->x = globals->referee_data_buffer->data().robot_pos.x;
+    globals->RefereeData->y = globals->referee_data_buffer->data().robot_pos.y;
     USBSendMessage(reinterpret_cast<uint8_t *>(&globals->RefereeData), sizeof(globals->RefereeData), 0x07);
 }
 
