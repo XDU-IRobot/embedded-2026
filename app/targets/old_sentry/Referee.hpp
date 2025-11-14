@@ -6,19 +6,19 @@
 using namespace rm;
 
 namespace rm::device {
-    class RxReferee : public Device{
-    public:
-        RxReferee() = delete;
+class RxReferee : public Device {
+ public:
+  RxReferee() = delete;
 
-        explicit RxReferee(rm::hal::SerialInterface &serial);
+  explicit RxReferee(rm::hal::SerialInterface &serial);
 
-        void Begin();
+  void Begin();
 
-        void RxCallback(const std::vector<u8> &data, u16 rx_len);
+  void RxCallback(const std::vector<u8> &data, u16 rx_len);
 
-    private:
-        rm::hal::SerialInterface *serial_;
-    };
-}
+ private:
+  rm::hal::SerialInterface *serial_;
+};
+}  // namespace rm::device
 
 #endif  // REFEREE_HPP
