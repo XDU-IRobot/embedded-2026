@@ -7,7 +7,12 @@
  */
 class QuadSteeringChassis {
  public:
-  QuadSteeringChassis(float wheel_radius, float chassis_radius) : kinematics_(chassis_radius) {}
+  QuadSteeringChassis(float wheel_radius, float chassis_radius) : kinematics_(chassis_radius) {
+    pid_.lf_steer_position.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
+    pid_.rf_steer_position.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
+    pid_.lb_steer_position.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
+    pid_.rb_steer_position.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
+  }
 
   /**
    * @brief 更新一步，角度单位均为弧度，速度单位均为弧度每秒
@@ -47,10 +52,10 @@ class QuadSteeringChassis {
                             state_.lb_steer_position, state_.rb_steer_position);
 
     // 舵控制
-    pid_.lf_steer_position.Update(fk_result.lf_steer_position, state_.lf_steer_position, dt);
-    pid_.rf_steer_position.Update(fk_result.rf_steer_position, state_.rf_steer_position, dt);
-    pid_.lb_steer_position.Update(fk_result.lr_steer_position, state_.lb_steer_position, dt);
-    pid_.rb_steer_position.Update(fk_result.rr_steer_position, state_.rb_steer_position, dt);
+    pid_.lf_steer_position.Update(static_cast<float>(fk_result.lf_steer_position), state_.lf_steer_position, dt);
+    pid_.rf_steer_position.Update(static_cast<float>(fk_result.rf_steer_position), state_.rf_steer_position, dt);
+    pid_.lb_steer_position.Update(static_cast<float>(fk_result.lr_steer_position), state_.lb_steer_position, dt);
+    pid_.rb_steer_position.Update(static_cast<float>(fk_result.rr_steer_position), state_.rb_steer_position, dt);
 
     if (speed_pid_enabled_) {
       const float lf_steer_target_speed = pid_.lf_steer_position.out();
@@ -83,13 +88,13 @@ class QuadSteeringChassis {
     }
 
     // 轮速控制
-    pid_.lf_wheel.Update(fk_result.lf_wheel_speed, state_.lf_wheel_speed, dt);
+    pid_.lf_wheel.Update(static_cast<float>(-fk_result.lf_wheel_speed), state_.lf_wheel_speed, dt);
     output_.lf_wheel = pid_.lf_wheel.out();
-    pid_.rf_wheel.Update(fk_result.rf_wheel_speed, state_.rf_wheel_speed, dt);
+    pid_.rf_wheel.Update(static_cast<float>(-fk_result.rf_wheel_speed), state_.rf_wheel_speed, dt);
     output_.rf_wheel = pid_.rf_wheel.out();
-    pid_.lb_wheel.Update(fk_result.lr_wheel_speed, state_.lb_wheel_speed, dt);
+    pid_.lb_wheel.Update(static_cast<float>(-fk_result.lr_wheel_speed), state_.lb_wheel_speed, dt);
     output_.lb_wheel = pid_.lb_wheel.out();
-    pid_.rb_wheel.Update(fk_result.rr_wheel_speed, state_.rb_wheel_speed, dt);
+    pid_.rb_wheel.Update(static_cast<float>(-fk_result.rr_wheel_speed), state_.rb_wheel_speed, dt);
     output_.rb_wheel = pid_.rb_wheel.out();
   }
 
@@ -132,6 +137,7 @@ class QuadSteeringChassis {
     rm::modules::PID lb_steer_speed, lb_steer_position;  ///< 左后舵速度环和位置环
     rm::modules::PID rb_steer_speed, rb_steer_position;  ///< 右后舵速度环和位置环
   } pid_;
+
   struct {
     float lf_wheel_speed;     ///< 左前轮速度
     float rf_wheel_speed;     ///< 右前轮速度
