@@ -145,26 +145,26 @@ void Gimbal::GimbalMatchUpdate() {
 }
 
 void Gimbal::GimbalEnableUpdate() {
-    gimbal->DaMiaoMotorEnable();
-    globals->gimbal_controller.Enable(true);
-    globals->GimbalData->aim_mode = 0x01;
-    f32 yaw = rm::modules::Map(static_cast<f32>(globals->up_yaw_motor->encoder()) - gimbal->mid_up_yaw_angle_,
-                               0.0f, globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
-    yaw = rm::modules::Wrap(yaw, -static_cast<f32>(M_PI), M_PI);
-    gimbal->EulerToQuaternion(yaw, -globals->pitch_motor->pos(), 0.0f);
-    if (gimbal->GimbalMove_ == kGbRemote) {
-        gimbal->GimbalRCTargetUpdate();
-        gimbal->GimbalMovePIDUpdate();
-    } else if (gimbal->GimbalMove_ == kGbScan) {
-        gimbal->GimbalScanTargetUpdate();
-        gimbal->GimbalMovePIDUpdate();
-    } else if (gimbal->GimbalMove_ == kGbAimbot) {
-        // gimbal->GimbalAimbotTargetUpdate();
-        gimbal->GimbalMovePIDUpdate();
-    } else {
-        globals->gimbal_controller.Enable(false);
-    }
-    gimbal->SetMotorCurrent();
+  gimbal->DaMiaoMotorEnable();
+  globals->gimbal_controller.Enable(true);
+  globals->GimbalData->aim_mode = 0x01;
+  f32 yaw = rm::modules::Map(static_cast<f32>(globals->up_yaw_motor->encoder()) - gimbal->mid_up_yaw_angle_, 0.0f,
+                             globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
+  yaw = rm::modules::Wrap(yaw, -static_cast<f32>(M_PI), M_PI);
+  gimbal->EulerToQuaternion(yaw, -globals->pitch_motor->pos(), 0.0f);
+  if (gimbal->GimbalMove_ == kGbRemote) {
+    gimbal->GimbalRCTargetUpdate();
+    gimbal->GimbalMovePIDUpdate();
+  } else if (gimbal->GimbalMove_ == kGbScan) {
+    gimbal->GimbalScanTargetUpdate();
+    gimbal->GimbalMovePIDUpdate();
+  } else if (gimbal->GimbalMove_ == kGbAimbot) {
+    // gimbal->GimbalAimbotTargetUpdate();
+    gimbal->GimbalMovePIDUpdate();
+  } else {
+    globals->gimbal_controller.Enable(false);
+  }
+  gimbal->SetMotorCurrent();
 }
 
 void Gimbal::GimbalDisableUpdate() {
@@ -198,39 +198,39 @@ void Gimbal::DaMiaoMotorDisable() {
 }
 
 void Gimbal::ShootEnableUpdate() {
-    globals->shoot_controller.Enable(true);
-    globals->shoot_controller.Arm(true);
-    gimbal->AmmoSpeedUpdate();
-    globals->shoot_controller.SetArmSpeed(ammo_speed_);
-    gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
-    gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
-    globals->dail_position_counter.IncreaseUpdate(globals->dial_motor->encoder());
-    if (globals->rc->dial() <= -650
-        // && heat_limit_ - heat_current_ > 100
-    ) {
-        if (!single_shoot_flag_) {
-            globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
-            single_shoot_flag_ = true;
-        } else {
-            globals->shoot_controller.SetMode(Shoot3Fric::kStop);
-        }
-    } else if (globals->rc->dial() >= 650) {
-        globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
-        // if (heat_limit_ - heat_current_ > 100) {
-        gimbal->shoot_frequency_ = -20.0f;
-        // } else if (heat_limit_ - heat_current_ < 40) {
-        //     gimbal->shoot_frequency_ = 0.0f;
-        // } else {
-        //     gimbal->shoot_frequency_ = -std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f;
-        // }
-        globals->shoot_controller.SetShootFrequency(shoot_frequency_); // 负值为正转
+  globals->shoot_controller.Enable(true);
+  globals->shoot_controller.Arm(true);
+  gimbal->AmmoSpeedUpdate();
+  globals->shoot_controller.SetArmSpeed(ammo_speed_);
+  gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
+  gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
+  globals->dail_position_counter.IncreaseUpdate(globals->dial_motor->encoder());
+  if (globals->rc->dial() <= -650
+      // && heat_limit_ - heat_current_ > 100
+  ) {
+    if (!single_shoot_flag_) {
+      globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
+      single_shoot_flag_ = true;
     } else {
-        globals->shoot_controller.SetMode(Shoot3Fric::kStop);
-        single_shoot_flag_ = false;
+      globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
-    globals->shoot_controller.Fire();
-    globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
-                                     globals->dail_position_counter.output(), globals->dial_motor->rpm());
+  } else if (globals->rc->dial() >= 650) {
+    globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
+    // if (heat_limit_ - heat_current_ > 100) {
+    gimbal->shoot_frequency_ = -20.0f;
+    // } else if (heat_limit_ - heat_current_ < 40) {
+    //     gimbal->shoot_frequency_ = 0.0f;
+    // } else {
+    //     gimbal->shoot_frequency_ = -std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f;
+    // }
+    globals->shoot_controller.SetShootFrequency(shoot_frequency_);  // 负值为正转
+  } else {
+    globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+    single_shoot_flag_ = false;
+  }
+  globals->shoot_controller.Fire();
+  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
+                                   globals->dail_position_counter.output(), globals->dial_motor->rpm());
 }
 
 void Gimbal::ShootDisableUpdate() {
@@ -274,29 +274,30 @@ void Gimbal::AmmoSpeedUpdate() {
                               gimbal->target_shoot_initial_speed_ +
                           gimbal->ammo_init_speed_;
   }
-    if (globals->referee_data_buffer->data().shoot_data.initial_speed > 20.0f &&
-        globals->referee_data_buffer->data().shoot_data.initial_speed < 30.0f &&
-        globals->referee_data_buffer->data().shoot_data.initial_speed != gimbal->last_shoot_initial_speed_) {
-        if (gimbal->shoot_initial_speed_[0] == 0.0f) {
-            for (float &i: gimbal->shoot_initial_speed_) {
-                i = globals->referee_data_buffer->data().shoot_data.initial_speed;
-            }
-        } else {
-            gimbal->shoot_initial_speed_[shoot_num_] = globals->referee_data_buffer->data().shoot_data.initial_speed;
-            if (shoot_num_ < 10) {
-                shoot_num_++;
-            } else {
-                shoot_num_ = 0;
-            }
-        }
-    }
-    gimbal->shoot_initial_average_speed_ /= 10.0f;
+  if (globals->referee_data_buffer->data().shoot_data.initial_speed > 20.0f &&
+      globals->referee_data_buffer->data().shoot_data.initial_speed < 30.0f &&
+      globals->referee_data_buffer->data().shoot_data.initial_speed != gimbal->last_shoot_initial_speed_) {
     if (gimbal->shoot_initial_speed_[0] == 0.0f) {
-        gimbal->ammo_speed_ = gimbal->ammo_init_speed_;
+      for (float &i : gimbal->shoot_initial_speed_) {
+        i = globals->referee_data_buffer->data().shoot_data.initial_speed;
+      }
     } else {
-        gimbal->ammo_speed_ = (gimbal->target_shoot_initial_speed_ - gimbal->shoot_initial_average_speed_) /
-                              gimbal->target_shoot_initial_speed_ + gimbal->ammo_init_speed_;
+      gimbal->shoot_initial_speed_[shoot_num_] = globals->referee_data_buffer->data().shoot_data.initial_speed;
+      if (shoot_num_ < 10) {
+        shoot_num_++;
+      } else {
+        shoot_num_ = 0;
+      }
     }
+  }
+  gimbal->shoot_initial_average_speed_ /= 10.0f;
+  if (gimbal->shoot_initial_speed_[0] == 0.0f) {
+    gimbal->ammo_speed_ = gimbal->ammo_init_speed_;
+  } else {
+    gimbal->ammo_speed_ = (gimbal->target_shoot_initial_speed_ - gimbal->shoot_initial_average_speed_) /
+                              gimbal->target_shoot_initial_speed_ +
+                          gimbal->ammo_init_speed_;
+  }
 }
 
 void Gimbal::SetMotorCurrent() {
@@ -307,45 +308,43 @@ void Gimbal::SetMotorCurrent() {
 }
 
 void Gimbal::EulerToQuaternion(f32 yaw, f32 pitch, f32 roll) {
-    // 计算各角度的一半
-    f32 halfYaw = yaw * 0.5;
-    f32 halfPitch = pitch * 0.5;
-    f32 halfRoll = roll * 0.5;
+  // 计算各角度的一半
+  f32 halfYaw = yaw * 0.5;
+  f32 halfPitch = pitch * 0.5;
+  f32 halfRoll = roll * 0.5;
 
-    // 计算各角度一半的正弦和余弦值
-    f32 cosYaw = cos(halfYaw);
-    f32 sinYaw = sin(halfYaw);
-    f32 cosPitch = cos(halfPitch);
-    f32 sinPitch = sin(halfPitch);
-    f32 cosRoll = cos(halfRoll);
-    f32 sinRoll = sin(halfRoll);
+  // 计算各角度一半的正弦和余弦值
+  f32 cosYaw = cos(halfYaw);
+  f32 sinYaw = sin(halfYaw);
+  f32 cosPitch = cos(halfPitch);
+  f32 sinPitch = sin(halfPitch);
+  f32 cosRoll = cos(halfRoll);
+  f32 sinRoll = sin(halfRoll);
 
-    // 根据ZYX旋转顺序计算四元数分量
-    globals->up_yaw_qw = cosYaw * cosPitch * cosRoll + sinYaw * sinPitch * sinRoll;
-    globals->up_yaw_qx = cosYaw * cosPitch * sinRoll - sinYaw * sinPitch * cosRoll;
-    globals->up_yaw_qy = sinYaw * cosPitch * cosRoll + cosYaw * sinPitch * sinRoll;
-    globals->up_yaw_qz = cosYaw * sinPitch * cosRoll - sinYaw * cosPitch * sinRoll;
+  // 根据ZYX旋转顺序计算四元数分量
+  globals->up_yaw_qw = cosYaw * cosPitch * cosRoll + sinYaw * sinPitch * sinRoll;
+  globals->up_yaw_qx = cosYaw * cosPitch * sinRoll - sinYaw * sinPitch * cosRoll;
+  globals->up_yaw_qy = sinYaw * cosPitch * cosRoll + cosYaw * sinPitch * sinRoll;
+  globals->up_yaw_qz = cosYaw * sinPitch * cosRoll - sinYaw * cosPitch * sinRoll;
 
-    // 归一化四元数
-    // 计算四元数的模长平方
-    f32 norm = globals->up_yaw_qw * globals->up_yaw_qw +
-               globals->up_yaw_qx * globals->up_yaw_qx +
-               globals->up_yaw_qy * globals->up_yaw_qy +
-               globals->up_yaw_qz * globals->up_yaw_qz;
+  // 归一化四元数
+  // 计算四元数的模长平方
+  f32 norm = globals->up_yaw_qw * globals->up_yaw_qw + globals->up_yaw_qx * globals->up_yaw_qx +
+             globals->up_yaw_qy * globals->up_yaw_qy + globals->up_yaw_qz * globals->up_yaw_qz;
 
-    // 如果模长不为零，则进行归一化
-    if (norm > 0.0) {
-        // 使用标准库函数计算归一化因子
-        f32 invNorm = 1.0 / sqrt(norm);
-        globals->up_yaw_qw *= invNorm;
-        globals->up_yaw_qx *= invNorm;
-        globals->up_yaw_qy *= invNorm;
-        globals->up_yaw_qz *= invNorm;
-    } else {
-        // 如果模长为零，返回单位四元数
-        globals->up_yaw_qw = 1.0;
-        globals->up_yaw_qx = 0.0;
-        globals->up_yaw_qy = 0.0;
-        globals->up_yaw_qz = 0.0;
-    }
+  // 如果模长不为零，则进行归一化
+  if (norm > 0.0) {
+    // 使用标准库函数计算归一化因子
+    f32 invNorm = 1.0 / sqrt(norm);
+    globals->up_yaw_qw *= invNorm;
+    globals->up_yaw_qx *= invNorm;
+    globals->up_yaw_qy *= invNorm;
+    globals->up_yaw_qz *= invNorm;
+  } else {
+    // 如果模长为零，返回单位四元数
+    globals->up_yaw_qw = 1.0;
+    globals->up_yaw_qx = 0.0;
+    globals->up_yaw_qy = 0.0;
+    globals->up_yaw_qz = 0.0;
+  }
 }
