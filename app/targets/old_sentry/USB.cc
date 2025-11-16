@@ -52,10 +52,10 @@ void USBSendMessage(uint8_t *address, uint16_t len, uint8_t id) {
  */
 void GimbalDataSend() {
     globals->GimbalData->TimeStamp = 0;
-    // globals->GimbalData->q0 = ;
-    // globals->GimbalData->q1 = ;
-    // globals->GimbalData->q2 = ;
-    // globals->GimbalData->q3 = ;
+    globals->GimbalData->q0 = globals->up_yaw_qw;
+    globals->GimbalData->q1 = globals->up_yaw_qx;
+    globals->GimbalData->q2 = globals->up_yaw_qy;
+    globals->GimbalData->q3 = globals->up_yaw_qz;
     globals->GimbalData->motor_yaw_angle = globals->down_yaw_motor->pos();
     USBSendMessage(reinterpret_cast<uint8_t *>(&globals->GimbalData), (uint16_t) sizeof(globals->GimbalData), 0x03);
 }

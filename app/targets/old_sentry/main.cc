@@ -87,7 +87,7 @@ void GlobalWarehouse::Init() {
     led->Init();
 
     led_controller.SetPattern<modules::led_pattern::GreenBreath>();
-    buzzer_controller.Play<modules::buzzer_melody::TheLick>();
+    buzzer_controller.Play<modules::buzzer_melody::Startup>();
 
     globals->GimbalPIDInit();
     globals->ChassisPIDInit();
@@ -233,6 +233,7 @@ void GlobalWarehouse::RCStateUpdate() {
                         globals->StateMachine_ = kMatch; // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
                         break;
                     case rm::device::DR16::SwitchPosition::kMid:
+                        buzzer_controller.Play<modules::buzzer_melody::Startup>();
                     case rm::device::DR16::SwitchPosition::kUp:
                     default:
                         globals->StateMachine_ = kNoForce; // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作

@@ -86,6 +86,7 @@ public:
 
     StateMachineType StateMachine_ = {kNoForce}; // 当前状态
     int time_ = 0;
+    float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;
     const float yaw_gyro_bias_ = 0.0015f; // 偏航角（角度值）的陀螺仪偏移量
     const float rc_max_value_ = 660.0f; // 遥控器最大值
     const float GM6020_encoder_max_ = 8191.0f; // GM6020 电机编码器最大值
