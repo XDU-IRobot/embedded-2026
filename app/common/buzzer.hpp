@@ -6,7 +6,7 @@
 #include "tim.h"
 
 /**
- * @brief   简单阻塞式蜂鸣器
+ * @brief   简单蜂鸣器
  */
 class Buzzer {
  public:
@@ -14,7 +14,7 @@ class Buzzer {
 
   void Init();
 
-  void Beep(int beeps, int interval_ms = 50);
+  void SetFrequency(uint32_t frequency);
 
  private:
   TIM_HandleTypeDef* htim_;

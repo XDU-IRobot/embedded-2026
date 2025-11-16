@@ -21,3 +21,8 @@ add_exe_target(steer_infantry_cs "${STEER_INFANTRY_CS_SOURCES};${COMMON_SOURCES}
 # 舵轮云台
 file(GLOB_RECURSE STEER_INFANTRY_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/steer_infantry_gb/*.cc)
 add_exe_target(steer_infantry_gb "${STEER_INFANTRY_GB_SOURCES};${COMMON_SOURCES}")
+
+# 老哨兵云台
+file(GLOB_RECURSE OLD_SENTRY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/old_sentry/*.cc)
+add_exe_target(old_sentry "${OLD_SENTRY_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(old_sentry PRIVATE OLD_SENTRY)

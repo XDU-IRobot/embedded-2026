@@ -1,5 +1,4 @@
-
-#include <librm.hpp>
+﻿#include <librm.hpp>
 
 #include "can.h"
 #include "usart.h"
@@ -28,8 +27,11 @@ struct GlobalWarehouse {
   rm::device::BMI088 *imu{nullptr};                                                 ///< BMI088 IMU
 
   // 控制器 //
-  Gimbal2Dof gimbal_controller;          ///< 二轴云台控制器
-  Shoot3Fric shoot_controller{9};        ///< 三摩擦轮发射机构控制器，9发拨盘
+  Gimbal2Dof gimbal_controller;  ///< 二轴云台控制器
+  Shoot3Fric shoot_controller{
+      8,
+      1.f  // placeholder
+  };  ///< 三摩擦轮发射机构控制器，9发拨盘
   rm::modules::MahonyAhrs ahrs{1000.f};  ///< mahony 姿态解算器，频率 1000Hz
 
   void Init() {
@@ -59,12 +61,12 @@ struct GlobalWarehouse {
 
 void MainLoop() {
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(),   //
-                                                globals->imu->gyro_y(),   //
-                                                globals->imu->gyro_z(),   //
-                                                globals->imu->accel_x(),  //
-                                                globals->imu->accel_y(),  //
-                                                globals->imu->accel_z()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(),   //
+                                                -globals->imu->gyro_x(),   //
+                                                -globals->imu->gyro_z(),   //
+                                                -globals->imu->accel_y(),  //
+                                                -globals->imu->accel_x(),  //
+                                                -globals->imu->accel_z()});
   globals->yaw_motor->IsAlive();
   globals->rc->IsAlive();
 }

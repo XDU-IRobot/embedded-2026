@@ -1,5 +1,6 @@
-
 set(BUILD_TESTS OFF)
+
+add_compile_definitions(LIBRM_BYPASS_HAL_ASSERT)
 
 add_subdirectory(librm)
 
