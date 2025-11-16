@@ -2,6 +2,7 @@
 
 #include "can.h"
 #include "usart.h"
+#include "spi.h"
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
@@ -22,11 +23,22 @@ struct GlobalWarehouse {
   DeviceManager<10> device_manager;  ///< 设备管理器，维护所有设备在线状态
   rm::device::DR16 *rc{nullptr};     ///< 遥控器
   rm::device::M3508 *lf_motor{nullptr}, *rf_motor{nullptr}, *lb_motor{nullptr}, *rb_motor{nullptr};  ///< 四个底盘电机
+  rm::device::BMI088 *imu{nullptr};
 
   // 控制器 //
   QuadOmniChassis chassis_controller;
   SparseValueWatcher<rm::device::DR16::SwitchPosition> rc_l_switch_watcher, rc_r_switch_watcher;
   rm::modules::MahonyAhrs ahrs{1000.f};  ///< mahony 姿态解算器，频率 1000Hz
+
+  enum ControlMode {
+    kNoForce,
+    kNormal,
+    kHoldSpin,
+    kHeadless,
+  } control_mode;
+  ;
+  float hold_spin_speed = 0.f;
+  float heading_offset = 0.f;
 
   void Init() {
     buzzer = new AsyncBuzzer;
@@ -40,6 +52,7 @@ struct GlobalWarehouse {
     rf_motor = new rm::device::M3508{*can2, 1};
     lb_motor = new rm::device::M3508{*can2, 3};
     rb_motor = new rm::device::M3508{*can2, 2};
+    imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
     device_manager << rc << lf_motor << rf_motor << lb_motor << rb_motor;
 
@@ -59,11 +72,35 @@ void MainLoop() {
     globals->chassis_controller.Enable(false);
   }
 
+  globals->imu->Update();
+  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(),   //
+                                                globals->imu->gyro_y(),   //
+                                                globals->imu->gyro_z(),   //
+                                                globals->imu->accel_x(),  //
+                                                globals->imu->accel_y(),  //
+                                                globals->imu->accel_z()});
+  const auto &[roll, pitch, yaw] = globals->ahrs.euler_angle();
+
   globals->rc_l_switch_watcher.Update(globals->rc->switch_l());
   globals->rc_r_switch_watcher.Update(globals->rc->switch_r());
 
-  globals->chassis_controller.SetTarget(globals->rc->left_x() / 660.f * 20.f, globals->rc->left_y() / 660.f * 20.f,
-                                        globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f);
+  if (globals->control_mode == GlobalWarehouse::ControlMode::kHoldSpin) {
+    globals->chassis_controller.SetTarget(globals->rc->left_x() / 660.f * 20.f, globals->rc->left_y() / 660.f * 20.f,
+                                          globals->hold_spin_speed);
+  } else if (globals->control_mode == GlobalWarehouse::ControlMode::kHeadless) {
+    float vx = globals->rc->left_x() / 660.f * 20.f;
+    float vy = globals->rc->left_y() / 660.f * 20.f;
+    float current_yaw = yaw;
+    float cos_theta = cos(globals->heading_offset - current_yaw);
+    float sin_theta = sin(globals->heading_offset - current_yaw);
+    float vx_rotated = vx * cos_theta - vy * sin_theta;
+    float vy_rotated = vx * sin_theta + vy * cos_theta;
+    globals->chassis_controller.SetTarget(vx_rotated, vy_rotated,
+                                          globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f);
+  } else {
+    globals->chassis_controller.SetTarget(globals->rc->left_x() / 660.f * 20.f, globals->rc->left_y() / 660.f * 20.f,
+                                          globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f);
+  }
   globals->chassis_controller.Update(globals->lf_motor->rpm() * (2.f * M_PI / 60.f) / 19.f,  //
                                      globals->rf_motor->rpm() * (2.f * M_PI / 60.f) / 19.f,  //
                                      globals->lb_motor->rpm() * (2.f * M_PI / 60.f) / 19.f,  //
@@ -83,16 +120,31 @@ extern "C" [[noreturn]] void AppMain(void) {
   globals->rc_l_switch_watcher.OnValueChange(
       etl::delegate<void(const rm::device::DR16::SwitchPosition &, const rm::device::DR16::SwitchPosition &)>::create(
           [&](const rm::device::DR16::SwitchPosition &old_value, const rm::device::DR16::SwitchPosition &new_value) {
-            globals->buzzer->Beep(1);
+            if (globals->control_mode == GlobalWarehouse::ControlMode::kNormal) {
+              if (new_value == rm::device::DR16::SwitchPosition::kUp) {
+                globals->buzzer->Beep(2, 35);
+                globals->hold_spin_speed = globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f;
+                globals->control_mode = GlobalWarehouse::ControlMode::kHoldSpin;
+              }
+            }
           }));
   globals->rc_r_switch_watcher.OnValueChange(
       etl::delegate<void(const rm::device::DR16::SwitchPosition &, const rm::device::DR16::SwitchPosition &)>::create(
           [&](const rm::device::DR16::SwitchPosition &old_value, const rm::device::DR16::SwitchPosition &new_value) {
-            if (new_value == rm::device::DR16::SwitchPosition::kUp) {
+            if (new_value == rm::device::DR16::SwitchPosition::kMid) {
               globals->buzzer->Beep(2, 35);
+              globals->control_mode = GlobalWarehouse::ControlMode::kNormal;
               globals->chassis_controller.Enable(true);
+            } else if (new_value == rm::device::DR16::SwitchPosition::kUp) {
+              if (globals->control_mode != GlobalWarehouse::ControlMode::kHeadless) {
+                globals->buzzer->Beep(2, 35);
+                globals->control_mode = GlobalWarehouse::ControlMode::kHeadless;
+                globals->chassis_controller.Enable(true);
+              }
+              globals->heading_offset = globals->ahrs.euler_angle().yaw;
             } else {
               globals->buzzer->Beep(1);
+              globals->control_mode = GlobalWarehouse::ControlMode::kNoForce;
               globals->chassis_controller.Enable(false);
             }
           }));

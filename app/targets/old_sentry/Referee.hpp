@@ -5,11 +5,12 @@
 
 using namespace rm;
 
-class RcTcRefereeData {
+namespace rm::device {
+class RxReferee : public Device {
  public:
-  RcTcRefereeData() = delete;
+  RxReferee() = delete;
 
-  explicit RcTcRefereeData(rm::hal::SerialInterface &serial);
+  explicit RxReferee(rm::hal::SerialInterface &serial);
 
   void Begin();
 
@@ -18,5 +19,6 @@ class RcTcRefereeData {
  private:
   rm::hal::SerialInterface *serial_;
 };
+}  // namespace rm::device
 
 #endif  // REFEREE_HPP

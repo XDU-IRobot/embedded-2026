@@ -1,5 +1,4 @@
 #include "Gimbal.hpp"
-void Gimbal::GimbalTask() { gimbal->GimbalStateUpdate(); }
 
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->up_yaw_motor->encoder();
@@ -7,55 +6,59 @@ void Gimbal::GimbalInit() {
   gimbal->gimbal_pitch_target_ = globals->pitch_motor->pos();
 }
 
+void Gimbal::GimbalTask() { gimbal->GimbalStateUpdate(); }
+
 void Gimbal::GimbalStateUpdate() {
   switch (globals->StateMachine_) {
-    case NO_FORCE:            // 无力模式下，所有电机失能
-      GimbalDisableUpdate();  // 云台电机失能计算
-      AmmoDisableUpdate();    // 摩擦轮机构失能计算
-      RotorDisableUpdate();   // 拨盘失能计算
+    case kNoForce:                    // 无力模式下，所有电机失能
+      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+      gimbal->ShootDisableUpdate();   // 摩擦轮机构失能计算
       break;
 
-    case TEST:  // 测试模式下，发射系统与拨盘电机失能
+    case kTest:  // 测试模式下，发射系统与拨盘电机失能
       switch (gimbal->GimbalMove_) {
-        case GB_REMOTE:
-          GimbalEnableUpdate();  // 云台电机使能计算
-          AmmoDisableUpdate();   // 摩擦轮机构失能计算
-          RotorDisableUpdate();  // 拨盘失能计算
+        case kGbRemote:
+          gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+          gimbal->ShootDisableUpdate();  // 摩擦轮机构失能计算
           break;
 
-        case GB_AIMBOT:
-        case GB_SCAN:
-          GimbalEnableUpdate();  // 云台电机使能计算
-          AmmoEnableUpdate();    // 摩擦轮机构使能计算
-          RotorEnableUpdate();   // 拨盘使能计算
+        case kGbAimbot:
+        case kGbScan:
+          gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+          gimbal->ShootDisableUpdate();  // 摩擦轮机构使能计算
           break;
 
         default:
-          GimbalDisableUpdate();  // 云台电机失能计算
-          AmmoDisableUpdate();    // 摩擦轮机构失能计算
-          RotorDisableUpdate();   // 拨盘失能计算
+          gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+          gimbal->ShootDisableUpdate();   // 摩擦轮机构失能计算
           break;
       }
       break;
 
-    case MATCH:             // 比赛模式下，所有电机正常工作
-      GimbalMatchUpdate();  // 云台电机使能计算
-      // AmmoEnableUpdate();                  // 摩擦轮机构使能计算
-      // RotorEnableUpdate();                 // 拨盘使能计算
+    case kMatch:                    // 比赛模式下，所有电机正常工作
+      gimbal->GimbalMatchUpdate();  // 云台电机使能计算
+      // gimbal->ShootEnableUpdate();                  // 摩擦轮机构使能计算
       break;
 
-    default:                  // 错误状态，所有电机失能
-      GimbalDisableUpdate();  // 云台电机失能计算
-      AmmoDisableUpdate();    // 摩擦轮机构失能计算
-      RotorDisableUpdate();   // 拨盘失能计算
+    default:                          // 错误状态，所有电机失能
+      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+      gimbal->ShootDisableUpdate();   // 摩擦轮机构失能计算
       break;
+  }
+  if (!globals->device_gimbal.all_device_ok()) {
+    gimbal->GimbalDisableUpdate();
+  }
+  if (!globals->device_shoot.all_device_ok()) {
+    gimbal->ShootDisableUpdate();
   }
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  //
+  gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
+                                                    -globals->rc_max_value_, globals->rc_max_value_,
                                                     -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
-  gimbal->gimbal_pitch_target_ += rm::modules::Map(globals->rc->left_y(), -660, 660,  //
+  gimbal->gimbal_pitch_target_ += rm::modules::Map(globals->rc->left_y(),  // pitch轴目标值
+                                                   -globals->rc_max_value_, globals->rc_max_value_,
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->GimbalDownYawFollow();
   // gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(gimbal->gimbal_up_yaw_target_, // 上部yaw轴限位
@@ -85,15 +88,19 @@ void Gimbal::GimbalScanTargetUpdate() {
   } else {
     gimbal->gimbal_pitch_target_ += 0.0006f;
   }
-  gimbal->gimbal_down_yaw_target_ -= 0.0002f;
+  if (globals->StateMachine_ == kMatch) {
+    gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->NucControl->yaw_speed, -1.0f, 1.0f, -0.0005f, 0.0005f);
+  } else {
+    gimbal->gimbal_down_yaw_target_ -= 0.0005f;
+  }
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
 }
 
 void Gimbal::GimbalAimbotTargetUpdate() {
-  if ((globals->Aimbot.AimbotState >> 0) & 0x01) {
-    gimbal->gimbal_up_yaw_target_ = globals->Aimbot.Yaw;
-    gimbal->gimbal_pitch_target_ = globals->Aimbot.Pitch;
+  if ((globals->Aimbot->AimbotState >> 0) & 0x01) {
+    gimbal->gimbal_up_yaw_target_ = globals->Aimbot->Yaw;
+    gimbal->gimbal_pitch_target_ = globals->Aimbot->Pitch;
   }
   gimbal->GimbalDownYawFollow();
 }
@@ -101,11 +108,11 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 void Gimbal::GimbalDownYawFollow() {
   if (gimbal->gimbal_up_yaw_target_ > gimbal->down_yaw_move_high_) {
     gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_high_;
-    gimbal->gimbal_down_yaw_target_ += 0.001f;
+    gimbal->gimbal_down_yaw_target_ += 0.002f;
     gimbal->down_yaw_target_refresh_flag_ = true;
   } else if (gimbal->gimbal_up_yaw_target_ < gimbal->down_yaw_move_low_) {
     gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_low_;
-    gimbal->gimbal_down_yaw_target_ -= 0.001f;
+    gimbal->gimbal_down_yaw_target_ -= 0.002f;
     gimbal->down_yaw_target_refresh_flag_ = true;
   } else {
     if (gimbal->down_yaw_target_refresh_flag_) {
@@ -117,43 +124,55 @@ void Gimbal::GimbalDownYawFollow() {
                                                       -static_cast<f32>(M_PI), M_PI);
 }
 
+void Gimbal::GimbalMovePIDUpdate() {
+  globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
+                                       gimbal->gimbal_pitch_target_);
+  globals->gimbal_controller.Update(globals->up_yaw_motor->encoder(), globals->up_yaw_motor->rpm(),
+                                    globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
+                                    globals->pitch_motor->pos(), globals->pitch_motor->vel());
+  gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->pitch_motor->pos());
+  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gimbal->gravity_compensation_;
+  gimbal->pitch_torque_ = rm::modules::Clamp(pitch_torque_, -10.0f, 10.0f);
+}
+
+void Gimbal::GimbalMatchUpdate() {
+  if ((globals->Aimbot->AimbotState >> 0 & 0x01) == 1) {
+    gimbal->GimbalMove_ = kGbAimbot;
+  } else {
+    gimbal->GimbalMove_ = kGbScan;
+  }
+  gimbal->GimbalEnableUpdate();
+}
+
 void Gimbal::GimbalEnableUpdate() {
-  DaMiaoMotorEnable();
+  gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
-  // // GimbalImu.mode = 0x00;
-  if (gimbal->GimbalMove_ == GB_REMOTE) {
-    GimbalRCTargetUpdate();
-    GimbalMovePIDUpdate();
-  } else if (gimbal->GimbalMove_ == GB_SCAN) {
-    GimbalScanTargetUpdate();
-    GimbalMovePIDUpdate();
-  } else if (gimbal->GimbalMove_ == GB_AIMBOT) {
-    GimbalAimbotTargetUpdate();
-    GimbalMovePIDUpdate();
+  globals->GimbalData->aim_mode = 0x01;
+  if (gimbal->GimbalMove_ == kGbRemote) {
+    gimbal->GimbalRCTargetUpdate();
+    gimbal->GimbalMovePIDUpdate();
+  } else if (gimbal->GimbalMove_ == kGbScan) {
+    gimbal->GimbalScanTargetUpdate();
+    gimbal->GimbalMovePIDUpdate();
+  } else if (gimbal->GimbalMove_ == kGbAimbot) {
+    // gimbal->GimbalAimbotTargetUpdate();
+    gimbal->GimbalMovePIDUpdate();
   } else {
     globals->gimbal_controller.Enable(false);
   }
-  auto pitch_torque = globals->gimbal_controller.output().pitch + gimbal->gravity_compensation_;
-  pitch_torque = rm::modules::Clamp(pitch_torque, -10.0f, 10.0f);
-  globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
-  globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
-  globals->pitch_motor->SetPosition(0, 0, pitch_torque, 0, 0);
-  rm::device::DjiMotor<>::SendCommand();  // 发送电流
+  gimbal->SetMotorCurrent();
 }
 
-void Gimbal::GimbalMatchUpdate() {}
-
 void Gimbal::GimbalDisableUpdate() {
-  DaMiaoMotorDisable();
+  gimbal->DaMiaoMotorDisable();
   globals->gimbal_controller.Enable(false);
+  globals->GimbalData->aim_mode = 0x00;
   gimbal->gimbal_up_yaw_target_ = globals->up_yaw_motor->encoder();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->pitch_motor->pos();
   gimbal->gravity_compensation_ = 0.0f;
-  globals->up_yaw_motor->SetCurrent(0);
-  globals->down_yaw_motor->SetPosition(0, 0, 0, 0, 0);
-  globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
-  rm::device::DjiMotor<>::SendCommand();  // 发送电流
+  gimbal->GimbalMovePIDUpdate();
+  gimbal->SetMotorCurrent();
 }
 
 void Gimbal::DaMiaoMotorEnable() {
@@ -174,19 +193,89 @@ void Gimbal::DaMiaoMotorDisable() {
   }
 }
 
-void Gimbal::GimbalMovePIDUpdate() {
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
-                                       gimbal->gimbal_pitch_target_);
-  globals->gimbal_controller.Update(globals->up_yaw_motor->encoder(), globals->up_yaw_motor->rpm(),
-                                    globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
-                                    globals->pitch_motor->pos(), globals->pitch_motor->vel());
-  gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->pitch_motor->pos());
+void Gimbal::ShootEnableUpdate() {
+  globals->shoot_controller.Enable(true);
+  globals->shoot_controller.Arm(true);
+  gimbal->AmmoSpeedUpdate();
+  // globals->shoot_controller.SetArmSpeed(ammo_speed_);
+  globals->shoot_controller.SetArmSpeed(0.0f);
+  gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
+  gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
+  globals->dail_position_counter.IncreaseUpdate(globals->dial_motor->encoder());
+  if (globals->rc->dial() <= -650
+      // && heat_limit_ - heat_current_ > 100
+  ) {
+    if (!single_shoot_flag_) {
+      globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
+      single_shoot_flag_ = true;
+    } else {
+      globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+    }
+  } else if (globals->rc->dial() >= 650) {
+    globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
+    // if (heat_limit_ - heat_current_ > 100) {
+    gimbal->shoot_frequency_ = -20.0f;
+    // } else if (heat_limit_ - heat_current_ < 40) {
+    //     gimbal->shoot_frequency_ = 0.0f;
+    // } else {
+    //     gimbal->shoot_frequency_ = -std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f;
+    // }
+    globals->shoot_controller.SetShootFrequency(shoot_frequency_);  // 负值为正转
+  } else {
+    globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+    single_shoot_flag_ = false;
+  }
+  globals->shoot_controller.Fire();
+  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
+                                   globals->dail_position_counter.output(), globals->dial_motor->rpm());
 }
 
-void Gimbal::AmmoEnableUpdate() {}
+void Gimbal::ShootDisableUpdate() {
+  globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+  if (globals->StateMachine_ == kUnable || globals->StateMachine_ == kNoForce) {
+    globals->shoot_controller.Enable(false);
+    globals->shoot_controller.Arm(false);
+  } else {
+    globals->shoot_controller.Enable(true);
+    globals->shoot_controller.SetArmSpeed(0.0f);
+  }
+  globals->shoot_controller.Arm(false);
+  globals->shoot_controller.Fire();
+  globals->dail_position_counter.Init(globals->dial_motor->encoder());
+  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
+                                   globals->dail_position_counter.output(), globals->dial_motor->rpm());
+}
 
-void Gimbal::AmmoDisableUpdate() {}
+void Gimbal::AmmoSpeedUpdate() {
+  if (globals->referee_data_buffer->data().shoot_data.initial_speed > 20.0f &&
+      globals->referee_data_buffer->data().shoot_data.initial_speed < 30.0f &&
+      globals->referee_data_buffer->data().shoot_data.initial_speed != gimbal->last_shoot_initial_speed_) {
+    if (gimbal->shoot_initial_speed_[0] == 0.0f) {
+      for (float &i : gimbal->shoot_initial_speed_) {
+        i = globals->referee_data_buffer->data().shoot_data.initial_speed;
+      }
+    } else {
+      gimbal->shoot_initial_speed_[shoot_num_] = globals->referee_data_buffer->data().shoot_data.initial_speed;
+      if (shoot_num_ < 10) {
+        shoot_num_++;
+      } else {
+        shoot_num_ = 0;
+      }
+    }
+  }
+  gimbal->shoot_initial_average_speed_ /= 10.0f;
+  if (gimbal->shoot_initial_speed_[0] == 0.0f) {
+    gimbal->ammo_speed_ = gimbal->ammo_init_speed_;
+  } else {
+    gimbal->ammo_speed_ = (gimbal->target_shoot_initial_speed_ - gimbal->shoot_initial_average_speed_) /
+                              gimbal->target_shoot_initial_speed_ +
+                          gimbal->ammo_init_speed_;
+  }
+}
 
-void Gimbal::RotorEnableUpdate() {}
-
-void Gimbal::RotorDisableUpdate() {}
+void Gimbal::SetMotorCurrent() {
+  globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
+  globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
+  globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
+  globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
+}

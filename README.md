@@ -4,12 +4,13 @@
 
 ## CI status
 
-| 模块           | 编译测试状态                                                                                                                                                                                                                 |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 舵轮底盘       | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml) |
-| 全向轮靶车底盘 | [![build-omni_target](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-omni_target.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-omni_target.yml)                   |
-| 舵轮云台       | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml) |
+| 模块        | 编译测试状态                                                                                                                                                                                                                       |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 舵轮底盘      | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml) |
+| 全向轮靶车底盘   | [![build-omni_target](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-omni_target.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-omni_target.yml)                   |
+| 舵轮云台      | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml) |
 | 无人机云台     | [![build-drone_gb](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml)                            |
+| 2025赛季老哨兵 | [![build-old_sentry](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-old_sentry.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-old_sentry.yml)                      |
 
 ## 开发指南
 
@@ -27,7 +28,8 @@
 `app/` 目录包含 `common/` 和 `targets/` 两个子目录：
 
 - `common/`: 存放通用代码模块，这些模块会被所有目标共享使用。例如：“二轴云台控制器”、“定时任务执行器”这种所有兵种开发时都会用的模块，应放在此目录下。
-- `targets/`: 存放特定“目标”的代码，每一块 C 板控制的一个实体称作一个目标。例如：“3 号老舵轮的底盘”、“新串腿底盘”、“某架无人机云台”称作一个目标。每个目标都有自己独立的代码目录，目录名即为目标名。
+- `targets/`: 存放特定“目标”的代码，每一块 C 板控制的一个实体称作一个目标。例如：“3
+  号老舵轮的底盘”、“新串腿底盘”、“某架无人机云台”称作一个目标。每个目标都有自己独立的代码目录，目录名即为目标名。
 
 ### 分支规则
 
@@ -37,7 +39,8 @@
 
 ### 合并窗口
 
-非快速迭代期（如快比赛前两三个周），每周六全天为合并窗口，所有人在此期间整理好本周在自己的分支上完成的工作，保证可编译、可运行、运行效果符合预期后，发起合并到 `main` 分支的 Pull Request。PR 通过 CI 审查和人工审查后，由组长合并。
+非快速迭代期（如快比赛前两三个周），每周六全天为合并窗口，所有人在此期间整理好本周在自己的分支上完成的工作，保证可编译、可运行、运行效果符合预期后，发起合并到
+`main` 分支的 Pull Request。PR 通过 CI 审查和人工审查后，由组长合并。
 
 快速迭代期，每周的偶数日为合并窗口，规则同上。
 

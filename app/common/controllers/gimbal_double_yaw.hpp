@@ -8,17 +8,9 @@
 class GimbalDoubleYaw {
  public:
   GimbalDoubleYaw() {
-    pid_.up_yaw_position
-        .SetFuzzy(true)             //
-        .SetFuzzyErrorScale(M_PI);  //
-    pid_.down_yaw_position
-        .SetCircular(true)           //
-        .SetCircularCycle(M_PI * 2)  //
-        .SetFuzzy(true)              //
-        .SetFuzzyErrorScale(M_PI);   //
-    pid_.pitch_position
-        .SetFuzzy(true)             //
-        .SetFuzzyErrorScale(M_PI);  //
+    pid_.up_yaw_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
+    pid_.down_yaw_position.SetCircular(true).SetCircularCycle(M_PI * 2.0f).SetDiffFirst(false);
+    pid_.pitch_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
   }
 
   /**
@@ -99,6 +91,7 @@ class GimbalDoubleYaw {
   struct {
     rm::modules::PID up_yaw_speed, up_yaw_position, down_yaw_position, down_yaw_speed, pitch_speed, pitch_position;
   } pid_;
+
   struct {
     float up_yaw_position;
     float up_yaw_speed;
