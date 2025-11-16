@@ -241,75 +241,74 @@ void GlobalWarehouse::RCStateUpdate() {
                 }
                 break;
 
-            case rm::device::DR16::SwitchPosition::kMid:
-                // 右拨杆打到中间挡位
-                switch (globals->rc->switch_l()) {
-                    case rm::device::DR16::SwitchPosition::kDown:
-                        globals->StateMachine_ = kTest; // 左拨杆拨到下侧，进入测试模式
-                        gimbal->GimbalMove_ = kGbRemote;
-                        chassis->ChassisMove_ = kCsRemote;
-                        break;
-                    case rm::device::DR16::SwitchPosition::kMid:
-                        globals->StateMachine_ = kTest;
-                        gimbal->GimbalMove_ = kGbScan;
-                        chassis->ChassisMove_ = kCsNavigate;
-                        break;
-                    case rm::device::DR16::SwitchPosition::kUp:
-                        globals->StateMachine_ = kTest;
-                        gimbal->GimbalMove_ = kGbAimbot;
-                        chassis->ChassisMove_ = kCsNavigate;
-                        break;
-                    default:
-                        globals->StateMachine_ = kNoForce; // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
-                        break;
-                }
-                break;
-
-            case rm::device::DR16::SwitchPosition::kDown:
-            default:
-                globals->StateMachine_ = kNoForce; // 如果遥控器离线，进入无力模式
-                break;
+      case rm::device::DR16::SwitchPosition::kMid:
+        // 右拨杆打到中间挡位
+        switch (globals->rc->switch_l()) {
+          case rm::device::DR16::SwitchPosition::kDown:
+            globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+            gimbal->GimbalMove_ = kGbRemote;
+            chassis->ChassisMove_ = kCsRemote;
+            break;
+          case rm::device::DR16::SwitchPosition::kMid:
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbScan;
+            chassis->ChassisMove_ = kCsNavigate;
+            break;
+          case rm::device::DR16::SwitchPosition::kUp:
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbAimbot;
+            chassis->ChassisMove_ = kCsNavigate;
+            break;
+          default:
+            globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+            break;
         }
+        break;
+
+      case rm::device::DR16::SwitchPosition::kDown:
+      default:
+        globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
+        break;
     }
+  }
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
-    globals->imu->Update();
-    globals->ahrs.Update(rm::modules::ImuData6Dof{
-        globals->imu->gyro_y(), globals->imu->gyro_z(), globals->imu->gyro_x() + globals->yaw_gyro_bias_,
-        globals->imu->accel_y(), globals->imu->accel_z(), globals->imu->accel_x()
-    });
-    globals->RCStateUpdate();
-    gimbal->GimbalTask();
-    chassis->ChassisTask();
-    rm::device::DjiMotor<>::SendCommand(*can1);
-    rm::device::DjiMotor<>::SendCommand(*can2);
+  globals->imu->Update();
+  globals->ahrs.Update(rm::modules::ImuData6Dof{
+      globals->imu->gyro_y(), globals->imu->gyro_z(), globals->imu->gyro_x() + globals->yaw_gyro_bias_,
+      globals->imu->accel_y(), globals->imu->accel_z(), globals->imu->accel_x()});
+  globals->RCStateUpdate();
+  gimbal->GimbalTask();
+  chassis->ChassisTask();
+  rm::device::DjiMotor<>::SendCommand(*can1);
+  rm::device::DjiMotor<>::SendCommand(*can2);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
-    if (globals->time_ % 2 == 0) {
-        globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
-        globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
-    }
+  if (globals->time_ % 2 == 0) {
+    globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
+    globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
+  }
 }
 
 void GlobalWarehouse::SubLoop100Hz() {
-    if (globals->time_ % 5 == 0) {
-        GimbalDataSend();
-        RefereeDataSend();
-    }
+  if (globals->time_ % 5 == 0) {
+    GimbalDataSend();
+    RefereeDataSend();
+  }
 }
 
 void GlobalWarehouse::SubLoop50Hz() {
-    if (globals->time_ % 10 == 0) {
-        const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
-        (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
-        buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
-    }
+  if (globals->time_ % 10 == 0) {
+    const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
+    (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
+    buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
+  }
 }
 
 void GlobalWarehouse::SubLoop10Hz() {
-    if (globals->time_ % 50 == 0) {
-        globals->time_ = 0;
-    }
+  if (globals->time_ % 50 == 0) {
+    globals->time_ = 0;
+  }
 }
