@@ -15,8 +15,7 @@ class Shoot2Fric {
   /**
    * @brief 更新状态
    */
-  void Update(float fric_1_speed, float fric_2_speed, float loader_position, float loader_speed,
-              float dt = 1.0f) {
+  void Update(float fric_1_speed, float fric_2_speed, float loader_position, float loader_speed, float dt = 1.0f) {
     state_.fric_1_speed = fric_1_speed;
     state_.fric_2_speed = fric_2_speed;
     state_.loader_speed = loader_speed;
