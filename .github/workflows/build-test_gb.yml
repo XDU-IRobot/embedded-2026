@@ -1,4 +1,4 @@
-name: build-steer_infantry_gb
+name: build-test_gb
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - main
   push:
     branches:
-      - 'target/steer_infantry_gb'
+      - 'target/test_gb'
 
 env:
   BUILD_TYPE: Release
@@ -21,6 +21,6 @@ jobs:
           ref: ${{ github.sha }}
       - uses: ./.github/actions/build-target
         with:
-          target: steer_infantry_gb
+          target: test_gb
           build_type: ${{ env.BUILD_TYPE }}
 
