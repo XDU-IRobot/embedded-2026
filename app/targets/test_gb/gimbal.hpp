@@ -65,13 +65,9 @@ class Manual : public etl::fsm_state<Gimbal, Manual, fsm_events::ModeSwitchReque
                                      fsm_events::ModeSwitchRequest, fsm_events::ManualCommand> {
  public:
   //***********************************
-  etl::fsm_state_id_t on_enter_state() {
-    return No_State_Change;
-  }
+  etl::fsm_state_id_t on_enter_state() { return No_State_Change; }
   //***********************************
-  void on_exit_state() {
-    get_fsm_context();
-  }
+  void on_exit_state() { get_fsm_context(); }
   etl::fsm_state_id_t on_event(const fsm_events::ModeSwitchRequest& event) { return event.mode_; }
   etl::fsm_state_id_t on_event_unknown(const etl::imessage& event) {
     get_fsm_context().LogUnknownEvent(event);
