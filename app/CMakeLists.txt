@@ -30,3 +30,4 @@ target_compile_definitions(old_sentry PRIVATE OLD_SENTRY)
 # 测试平台云台
 file(GLOB_RECURSE TEST_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/test_gb/*.cc)
 add_exe_target(test_gb "${TEST_GB_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(test_gb PRIVATE TEST_GB)

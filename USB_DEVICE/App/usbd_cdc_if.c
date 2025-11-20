@@ -23,6 +23,7 @@
 
 /* USER CODE BEGIN INCLUDE */
 #include "old_sentry/USB.hpp"
+#include "test_gb/USB.hpp"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -262,7 +263,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
     USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-#ifdef OLD_SENTRY
+#if defined (OLD_SENTRY) || defined (TEST_GB)
     USBReceive(Buf, *Len);
 #endif
 
