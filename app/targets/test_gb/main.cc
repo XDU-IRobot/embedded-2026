@@ -9,7 +9,7 @@
 #include "main.hpp"
 #include "Gimbal.hpp"
 
-float d,e,f;
+float d, e, f;
 
 using namespace rm;
 

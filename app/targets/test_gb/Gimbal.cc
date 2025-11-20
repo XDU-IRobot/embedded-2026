@@ -1,6 +1,6 @@
 #include "Gimbal.hpp"
 
-float a,b,c;
+float a, b, c;
 
 void Gimbal::GimbalInit() {
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
@@ -39,7 +39,7 @@ void Gimbal::GimbalStateUpdate() {
 
 void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -globals->rc_max_value_, globals->rc_max_value_,
-                                                 -gimbal->sensitivity_, gimbal->sensitivity_);      // 上部yaw轴目标值
+                                                 -gimbal->sensitivity_, gimbal->sensitivity_);  // 上部yaw轴目标值
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -globals->rc_max_value_,  // pitch轴目标值
                                                    globals->rc_max_value_, -gimbal->sensitivity_, gimbal->sensitivity_);
   gimbal->gimbal_yaw_target_ =

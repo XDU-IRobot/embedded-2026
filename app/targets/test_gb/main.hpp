@@ -49,7 +49,7 @@ inline struct GlobalWarehouse {
 
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
-  Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
+  Gimbal2Dof gimbal_controller;          ///< 二轴双 Yaw 云台控制器
 
   // USB //
   GimbalDataFrame_SCM_t *GimbalData{nullptr};  ///< IMU数据
