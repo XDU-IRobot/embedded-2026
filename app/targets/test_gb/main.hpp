@@ -48,7 +48,7 @@ inline struct GlobalWarehouse {
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{1000.0f};  ///< 姿态解算器
+  rm::modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
   Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
 
   // USB //

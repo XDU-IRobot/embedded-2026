@@ -9,6 +9,8 @@
 #include "main.hpp"
 #include "Gimbal.hpp"
 
+float d,e,f;
+
 using namespace rm;
 
 void MainLoop() {
@@ -53,8 +55,8 @@ void GlobalWarehouse::Init() {
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
 
-  device_rc << rc;                                                 // 遥控器
-  device_gimbal << yaw_motor << pitch_motor;       // 云台电机
+  device_rc << rc;                            // 遥控器
+  device_gimbal << yaw_motor << pitch_motor;  // 云台电机
 
   can1->SetFilter(0, 0);
   can1->Begin();
@@ -72,25 +74,25 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(0.0f);  // 位置环 60.0f 0.0f 2500.0f
+  gimbal_controller.pid().yaw_position.SetKp(20.0f);  // 位置环 60.0f 0.0f 2500.0f
   gimbal_controller.pid().yaw_position.SetKi(0.0f);
-  gimbal_controller.pid().yaw_position.SetKd(0.0f);
+  gimbal_controller.pid().yaw_position.SetKd(3.0f);
   gimbal_controller.pid().yaw_position.SetMaxOut(10000.0f);
   gimbal_controller.pid().yaw_position.SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(1.6f);  // 速度环 1.8f 0.0f 4.5f
+  gimbal_controller.pid().yaw_speed.SetKp(0.4f);  // 速度环 1.8f 0.0f 4.5f
   gimbal_controller.pid().yaw_speed.SetKi(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKd(4.5f);
+  gimbal_controller.pid().yaw_speed.SetKd(0.2f);
   gimbal_controller.pid().yaw_speed.SetMaxOut(10.0f);
   gimbal_controller.pid().yaw_speed.SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(0.0f);  // 位置环 15.0f 0.0f 1.0f
+  gimbal_controller.pid().pitch_position.SetKp(20.0f);  // 位置环 15.0f 0.0f 1.0f
   gimbal_controller.pid().pitch_position.SetKi(0.0f);
-  gimbal_controller.pid().pitch_position.SetKd(0.0f);
+  gimbal_controller.pid().pitch_position.SetKd(2.5f);
   gimbal_controller.pid().pitch_position.SetMaxOut(10000.0f);
   gimbal_controller.pid().pitch_position.SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(1.6f);  // 速度环 1.6f 0.0f 4.5f
+  gimbal_controller.pid().pitch_speed.SetKp(0.4f);  // 速度环 1.6f 0.0f 4.5f
   gimbal_controller.pid().pitch_speed.SetKi(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKd(4.5f);
+  gimbal_controller.pid().pitch_speed.SetKd(0.2f);
   gimbal_controller.pid().pitch_speed.SetMaxOut(10.0f);
   gimbal_controller.pid().pitch_speed.SetMaxIout(0.0f);
 }
@@ -122,7 +124,7 @@ void GlobalWarehouse::RCStateUpdate() {
           break;
         case rm::device::DR16::SwitchPosition::kUp:
         default:
-          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+          globals->StateMachine_ = kNoForce;
           break;
       }
       break;
@@ -136,19 +138,19 @@ void GlobalWarehouse::RCStateUpdate() {
 
 void GlobalWarehouse::SubLoop500Hz() {
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{
-      globals->imu->gyro_y(), globals->imu->gyro_z(), globals->imu->gyro_x(),
-      globals->imu->accel_y(), globals->imu->accel_z(), globals->imu->accel_x()});
+  globals->ahrs.Update(  //
+      rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
+                               -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
   globals->RCStateUpdate();
   gimbal->GimbalTask();
-  globals->yaw_motor->SetPosition(0, 0, 0, 0, 0);
-  globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
+  // globals->yaw_motor->SetPosition(0, 0, 0, 0, 0);
+  // globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time_ % 2 == 0) {
-    // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-    // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
+    globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+    globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
   }
 }
 
