@@ -72,7 +72,7 @@ void Gimbal::GimbalRCTargetUpdate() {
                                                    -globals->rc_max_value_, globals->rc_max_value_,
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   // gimbal->GimbalDownYawFollow();
-  gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(gimbal->gimbal_up_yaw_target_, // 上部yaw轴限位
+  gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴限位
                                                      gimbal->min_up_yaw_angle_, gimbal->max_up_yaw_angle_);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);

@@ -88,13 +88,13 @@ inline struct GlobalWarehouse {
   AimbotFrame_SCM_t Aimbot;            ///< 自瞄数据
   NucControlFrame_SCM_t NucControl;    ///< NUC控制数据
 
-  StateMachineType StateMachine_ = {kNoForce};                                               // 当前状态
-  u_int8_t time = 0;                                                                         // 时间
-  u_int8_t music = false;                                                                    // 控制音乐播放
-  bool USB_selection = false;                                                                // 选择发送不同的usb数据
+  StateMachineType StateMachine_ = {kNoForce};  // 当前状态
+  u_int8_t time = 0;                            // 时间
+  u_int8_t music = false;                       // 控制音乐播放
+  bool USB_selection = false;                   // 选择发送不同的usb数据
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
-  float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;              // 云台上部Yaw电机的四元数
+  float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;  // 云台上部Yaw电机的四元数
   const float yaw_gyro_bias_ = 0.0015f;       // 偏航角（角度值）的陀螺仪偏移量
   const float rc_max_value_ = 660.0f;         // 遥控器最大值
   const float GM6020_encoder_max_ = 8191.0f;  // GM6020 电机编码器最大值

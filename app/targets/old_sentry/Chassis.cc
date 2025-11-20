@@ -48,11 +48,10 @@ void Chassis::ChassisStateUpdate() {
 }
 
 void Chassis::ChassisRCDataUpdate() {
-  chassis->down_yaw_delta_ =
-      chassis->front_down_yaw_angle_ -
-      rm::modules::Wrap(globals->down_yaw_motor->pos(), -static_cast<f32>(M_PI), M_PI);  //
-      // + rm::modules::Map(gimbal->mid_up_yaw_angle_ - static_cast<f32>(globals->up_yaw_motor->encoder()), 0.0f,
-      //                    globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
+  chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ -
+                             rm::modules::Wrap(globals->down_yaw_motor->pos(), -static_cast<f32>(M_PI), M_PI);  //
+  // + rm::modules::Map(gimbal->mid_up_yaw_angle_ - static_cast<f32>(globals->up_yaw_motor->encoder()), 0.0f,
+  //                    globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
   if (std::abs(globals->rc->right_y()) > 20 || std::abs(globals->rc->right_x()) > 20) {
     chassis->chassis_receive_x_ =

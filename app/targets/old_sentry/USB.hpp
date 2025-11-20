@@ -28,8 +28,8 @@ typedef struct __attribute__((packed)) {
   uint8_t hurt_armor;  // 受击装甲板 0 1 2 3 4 (0表示未受击)
   uint16_t current_HP;
   // uint16_t maximum_HP;
-  uint8_t game_progress;   // 比赛阶段 0 1 2 3 4 5（0未开始比赛，1准备阶段，2裁判自检，3五秒倒计时，4比赛中，5结算阶段）
-  uint16_t remain_time;    // 比赛剩余时间（420s）
+  uint8_t game_progress;  // 比赛阶段 0 1 2 3 4 5（0未开始比赛，1准备阶段，2裁判自检，3五秒倒计时，4比赛中，5结算阶段）
+  uint16_t remain_time;   // 比赛剩余时间（420s）
   uint16_t remain_bullet;  // 允许发弹量
   uint8_t robot_id;        // 0为红，1为蓝
   // float x;
