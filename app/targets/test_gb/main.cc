@@ -4,90 +4,170 @@
 #include "usart.h"
 #include "spi.h"
 
-#include "rgb_led.hpp"
-#include "buzzer.hpp"
 #include "timer_task.hpp"
-#include "sparse_value_watcher.hpp"
-#include "device_manager.hpp"
-#include "controllers/quad_omni_chassis.hpp"
 
-#include "test_gb/gimbal.hpp"
+#include "main.hpp"
+#include "Gimbal.hpp"
 
-struct GlobalWarehouse {
-  Buzzer *buzzer{nullptr};  ///< 蜂鸣器
-  LED *led{nullptr};        ///< RGB LED灯
+using namespace rm;
 
-  // 硬件接口 //
-  rm::hal::Can *can2{nullptr};     ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};  ///< 遥控器串口接口
-
-  // 设备 //
-  DeviceManager<10> device_manager;  ///< 设备管理器，维护所有设备在线状态
-  rm::device::DR16 *rc{nullptr};     ///< 遥控器
-  rm::device::M3508 *lf_motor{nullptr}, *rf_motor{nullptr}, *lb_motor{nullptr}, *rb_motor{nullptr};  ///< 四个底盘电机
-  rm::device::BMI088 *imu{nullptr};
-
-  // 控制器 //
-  QuadOmniChassis chassis_controller;
-  SparseValueWatcher<rm::device::DR16::SwitchPosition> rc_l_switch_watcher, rc_r_switch_watcher;
-  rm::modules::MahonyAhrs ahrs{500.f};  ///< mahony 姿态解算器，频率 1000Hz
-
-  void Init() {
-    buzzer = new Buzzer;
-    led = new LED;
-
-    can2 = new rm::hal::Can{hcan2};
-    dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-
-    rc = new rm::device::DR16{*dbus};
-    lf_motor = new rm::device::M3508{*can2, 4};
-    rf_motor = new rm::device::M3508{*can2, 1};
-    lb_motor = new rm::device::M3508{*can2, 3};
-    rb_motor = new rm::device::M3508{*can2, 2};
-    imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-
-    device_manager << rc << lf_motor << rf_motor << lb_motor << rb_motor;
-
-    can2->SetFilter(0, 0);
-    can2->Begin();
-    buzzer->Init();
-    led->Init();
-    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
-  }
-} *globals;
-
-void MainLoop() { rm::device::DjiMotor<>::SendCommand(); }
+void MainLoop() {
+  globals->time_++;
+  globals->SubLoop500Hz();
+  globals->SubLoop250Hz();
+  globals->SubLoop100Hz();
+  globals->SubLoop50Hz();
+  globals->SubLoop10Hz();
+}
 
 extern "C" [[noreturn]] void AppMain(void) {
   globals = new GlobalWarehouse;
+  gimbal = new Gimbal;
   globals->Init();
-
-  globals->rc_l_switch_watcher.OnValueChange(
-      etl::delegate<void(const rm::device::DR16::SwitchPosition &, const rm::device::DR16::SwitchPosition &)>::create(
-          [&](const rm::device::DR16::SwitchPosition &old_value, const rm::device::DR16::SwitchPosition &new_value) {
-
-          }));
-  globals->rc_r_switch_watcher.OnValueChange(
-      etl::delegate<void(const rm::device::DR16::SwitchPosition &, const rm::device::DR16::SwitchPosition &)>::create(
-          [&](const rm::device::DR16::SwitchPosition &old_value, const rm::device::DR16::SwitchPosition &new_value) {
-
-          }));
-
-  auto &pids = globals->chassis_controller.pid();
-  pids.lf_wheel.SetKp(2400.f).SetMaxOut(16384.f);
-  pids.rf_wheel.SetKp(2400.f).SetMaxOut(16384.f);
-  pids.lb_wheel.SetKp(2400.f).SetMaxOut(16384.f);
-  pids.rb_wheel.SetKp(2400.f).SetMaxOut(16384.f);
 
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,                                   //
       etl::delegate<void()>::create<MainLoop>()  //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(84 - 1, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
+  mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1);  // 84MHz / 168 / 1000 = 500Hz
   mainloop_1000hz.Start();
 
   for (;;) {
     __WFI();
+  }
+}
+
+void GlobalWarehouse::Init() {
+  buzzer = new Buzzer;
+  led = new LED;
+
+  can1 = new rm::hal::Can{hcan1};
+  dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+
+  imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
+  rc = new rm::device::DR16{*dbus};
+  yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
+      {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+  pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
+      {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+
+  device_rc << rc;                                                 // 遥控器
+  device_gimbal << yaw_motor << pitch_motor;       // 云台电机
+
+  can1->SetFilter(0, 0);
+  can1->Begin();
+  rc->Begin();
+  buzzer->Init();
+  led->Init();
+
+  led_controller.SetPattern<modules::led_pattern::GreenBreath>();
+  buzzer_controller.Play<modules::buzzer_melody::Startup>();
+
+  globals->GimbalPIDInit();
+  gimbal->GimbalInit();
+}
+
+void GlobalWarehouse::GimbalPIDInit() {
+  // 初始化PID
+  // Yaw PID 参数
+  gimbal_controller.pid().yaw_position.SetKp(0.0f);  // 位置环 60.0f 0.0f 2500.0f
+  gimbal_controller.pid().yaw_position.SetKi(0.0f);
+  gimbal_controller.pid().yaw_position.SetKd(0.0f);
+  gimbal_controller.pid().yaw_position.SetMaxOut(10000.0f);
+  gimbal_controller.pid().yaw_position.SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_speed.SetKp(1.6f);  // 速度环 1.8f 0.0f 4.5f
+  gimbal_controller.pid().yaw_speed.SetKi(0.0f);
+  gimbal_controller.pid().yaw_speed.SetKd(4.5f);
+  gimbal_controller.pid().yaw_speed.SetMaxOut(10.0f);
+  gimbal_controller.pid().yaw_speed.SetMaxIout(0.0f);
+  // pitch PID 参数
+  gimbal_controller.pid().pitch_position.SetKp(0.0f);  // 位置环 15.0f 0.0f 1.0f
+  gimbal_controller.pid().pitch_position.SetKi(0.0f);
+  gimbal_controller.pid().pitch_position.SetKd(0.0f);
+  gimbal_controller.pid().pitch_position.SetMaxOut(10000.0f);
+  gimbal_controller.pid().pitch_position.SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(1.6f);  // 速度环 1.6f 0.0f 4.5f
+  gimbal_controller.pid().pitch_speed.SetKi(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKd(4.5f);
+  gimbal_controller.pid().pitch_speed.SetMaxOut(10.0f);
+  gimbal_controller.pid().pitch_speed.SetMaxIout(0.0f);
+}
+
+void GlobalWarehouse::RCStateUpdate() {
+  switch (globals->rc->switch_r()) {
+    case rm::device::DR16::SwitchPosition::kUp:
+      // 右拨杆打到最上侧挡位
+      switch (globals->rc->switch_l()) {
+        case rm::device::DR16::SwitchPosition::kDown:
+        case rm::device::DR16::SwitchPosition::kMid:
+        case rm::device::DR16::SwitchPosition::kUp:
+        default:
+          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+          break;
+      }
+      break;
+
+    case rm::device::DR16::SwitchPosition::kMid:
+      // 右拨杆打到中间挡位
+      switch (globals->rc->switch_l()) {
+        case rm::device::DR16::SwitchPosition::kDown:
+          globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+          gimbal->GimbalMove_ = kGbRemote;
+          break;
+        case rm::device::DR16::SwitchPosition::kMid:
+          globals->StateMachine_ = kTest;
+          gimbal->GimbalMove_ = kGbAimbot;
+          break;
+        case rm::device::DR16::SwitchPosition::kUp:
+        default:
+          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+          break;
+      }
+      break;
+
+    case rm::device::DR16::SwitchPosition::kDown:
+    default:
+      globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
+      break;
+  }
+}
+
+void GlobalWarehouse::SubLoop500Hz() {
+  globals->imu->Update();
+  globals->ahrs.Update(rm::modules::ImuData6Dof{
+      globals->imu->gyro_y(), globals->imu->gyro_z(), globals->imu->gyro_x(),
+      globals->imu->accel_y(), globals->imu->accel_z(), globals->imu->accel_x()});
+  globals->RCStateUpdate();
+  gimbal->GimbalTask();
+  globals->yaw_motor->SetPosition(0, 0, 0, 0, 0);
+  globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
+}
+
+void GlobalWarehouse::SubLoop250Hz() {
+  if (globals->time_ % 2 == 0) {
+    // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+    // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
+  }
+}
+
+void GlobalWarehouse::SubLoop100Hz() {
+  if (globals->time_ % 5 == 0) {
+    GimbalDataSend();
+  }
+}
+
+void GlobalWarehouse::SubLoop50Hz() {
+  if (globals->time_ % 10 == 0) {
+    const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
+    (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
+    buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
+  }
+}
+
+void GlobalWarehouse::SubLoop10Hz() {
+  if (globals->time_ % 50 == 0) {
+    globals->time_ = 0;
   }
 }
