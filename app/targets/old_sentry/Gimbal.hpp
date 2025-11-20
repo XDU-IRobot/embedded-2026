@@ -27,9 +27,9 @@ inline class Gimbal {
     i8 reserve[1];           // 保留位
   };
 
-  f32 gimbal_up_yaw_target_ = 0.0f;  // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
+  f32 gimbal_up_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，0~2pi，左正右负）
-  f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
+  f32 gimbal_pitch_target_ = 0.0f;     // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
 
   f32 gravity_compensation_ = 0.0f;    // 重力补偿值
   f32 k_gravity_compensation_ = 1.0f;  // 重力补偿系数

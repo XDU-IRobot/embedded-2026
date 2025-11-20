@@ -21,9 +21,10 @@ typedef enum {
   kTest,         // 调试模式
   kMatch,        // 比赛模式
 
-  kGbRemote,  // 云台遥控模式
-  kGbScan,    // 扫描模式
-  kGbAimbot,  // 云台自瞄模式
+  kGbRemote,    // 云台遥控模式
+  kGbScan,      // 扫描模式
+  kGbNavigate,  // 云台导航模式
+  kGbAimbot,    // 云台自瞄模式
 
   kCsRemote,    // 底盘遥控模式
   kCsNavigate,  // 底盘导航模式
@@ -35,7 +36,7 @@ inline struct GlobalWarehouse {
   rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
                                 rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error,
                                 rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
-                                rm::modules::buzzer_melody::TheLick>
+                                rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>>
       buzzer_controller;
   LED *led{nullptr};  ///< RGB LED灯
   rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
@@ -82,14 +83,18 @@ inline struct GlobalWarehouse {
   Counter dail_position_counter{0.0, 8191.0f};            ///< 云台 Yaw 下部电机位置计数器
 
   // USB //
-  GimbalDataFrame_SCM_t *GimbalData{nullptr};    ///< IMU数据
-  RefereeDataFrame_SCM_t *RefereeData{nullptr};  ///< 裁判系统数据
-  AimbotFrame_SCM_t *Aimbot{nullptr};            ///< 自瞄数据
-  NucControlFrame_SCM_t *NucControl{nullptr};    ///< NUC控制数据
+  GimbalDataFrame_SCM_t GimbalData;    ///< IMU数据
+  RefereeDataFrame_SCM_t RefereeData;  ///< 裁判系统数据
+  AimbotFrame_SCM_t Aimbot;            ///< 自瞄数据
+  NucControlFrame_SCM_t NucControl;    ///< NUC控制数据
 
-  StateMachineType StateMachine_ = {kNoForce};  // 当前状态
-  int time_ = 0;
-  float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;
+  StateMachineType StateMachine_ = {kNoForce};                                               // 当前状态
+  u_int8_t time = 0;                                                                         // 时间
+  u_int8_t music = false;                                                                    // 控制音乐播放
+  bool USB_selection = false;                                                                // 选择发送不同的usb数据
+  rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
+  rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
+  float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;              // 云台上部Yaw电机的四元数
   const float yaw_gyro_bias_ = 0.0015f;       // 偏航角（角度值）的陀螺仪偏移量
   const float rc_max_value_ = 660.0f;         // 遥控器最大值
   const float GM6020_encoder_max_ = 8191.0f;  // GM6020 电机编码器最大值

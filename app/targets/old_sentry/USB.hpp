@@ -2,6 +2,7 @@
 #define USB_HPP
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct __attribute__((packed)) {
   // 包头
@@ -13,7 +14,7 @@ typedef struct __attribute__((packed)) {
   float q1;
   float q2;
   float q3;
-  float motor_yaw_angle;
+  uint8_t robot_id;
   uint8_t aim_mode;
   // 包尾
   uint8_t _EOF;
@@ -24,13 +25,15 @@ typedef struct __attribute__((packed)) {
   uint8_t _SOF;
   uint8_t ID;
   // 裁判系统数据
-  uint8_t robot_id;
+  uint8_t hurt_armor;  // 受击装甲板 0 1 2 3 4 (0表示未受击)
   uint16_t current_HP;
-  uint16_t maximum_HP;
-  float barrel1_speed;
-  float barrel2_speed;
-  float x;
-  float y;
+  // uint16_t maximum_HP;
+  uint8_t game_progress;   // 比赛阶段 0 1 2 3 4 5（0未开始比赛，1准备阶段，2裁判自检，3五秒倒计时，4比赛中，5结算阶段）
+  uint16_t remain_time;    // 比赛剩余时间（420s）
+  uint16_t remain_bullet;  // 允许发弹量
+  uint8_t robot_id;        // 0为红，1为蓝
+  // float x;
+  // float y;
   // 包尾
   uint8_t _EOF;
 } RefereeDataFrame_SCM_t;
@@ -61,10 +64,10 @@ typedef struct __attribute__((packed)) {
   // nuc控制
   float vx;
   float vy;
-  float w;
   float yaw_speed;
-  uint8_t chassis_mode;
-  // uint32_t sentry_cmd;     // 哨兵自主决策信息
+  float vw;
+  bool scan_mode;  // 0为不扫描，1为扫描
+  // uint8 move_and_shoot_type;  1为移动模式，2为射击模式，3为防御模式
   // 包尾
   uint8_t _EOF;
 } NucControlFrame_SCM_t;

@@ -4,9 +4,9 @@
 
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(10000.0f);
+  chassis->chassis_follow_pid_.SetKp(12000.0f);
   chassis->chassis_follow_pid_.SetKi(0.0f);
-  chassis->chassis_follow_pid_.SetKd(600.0f);
+  chassis->chassis_follow_pid_.SetKd(10000.0f);
   chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
   chassis->chassis_follow_pid_.SetMaxIout(0.0f);
 }
@@ -50,26 +50,68 @@ void Chassis::ChassisStateUpdate() {
 void Chassis::ChassisRCDataUpdate() {
   chassis->down_yaw_delta_ =
       chassis->front_down_yaw_angle_ -
-      rm::modules::Wrap(globals->down_yaw_motor->pos(), -static_cast<f32>(M_PI), M_PI) +
-      rm::modules::Map(gimbal->mid_up_yaw_angle_ - static_cast<f32>(globals->up_yaw_motor->encoder()), 0.0f,
-                       globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
+      rm::modules::Wrap(globals->down_yaw_motor->pos(), -static_cast<f32>(M_PI), M_PI);  //
+      // + rm::modules::Map(gimbal->mid_up_yaw_angle_ - static_cast<f32>(globals->up_yaw_motor->encoder()), 0.0f,
+      //                    globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
-  chassis->chassis_receive_x_ =
-      rm::modules::Map(globals->rc->right_y(), -globals->rc_max_value_, globals->rc_max_value_,
-                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
-  chassis->chassis_receive_y_ =
-      rm::modules::Map(globals->rc->right_x(), -globals->rc_max_value_, globals->rc_max_value_,
-                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+  if (std::abs(globals->rc->right_y()) > 20 || std::abs(globals->rc->right_x()) > 20) {
+    chassis->chassis_receive_x_ =
+        -rm::modules::Map(globals->rc->right_y(), -globals->rc_max_value_, globals->rc_max_value_,
+                          -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+    chassis->chassis_receive_y_ =
+        -rm::modules::Map(globals->rc->right_x(), -globals->rc_max_value_, globals->rc_max_value_,
+                          -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+  } else {
+    chassis->chassis_receive_x_ = 0.0f;
+    chassis->chassis_receive_y_ = 0.0f;
+  }
   chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
                                chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
   chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
                                chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
   if (globals->rc->dial() >= 650) {
-    chassis->chassis_target_w_ = 8000.0f;
+    chassis->chassis_target_w_ = 12000.0f;
   } else {
     chassis->chassis_follow_pid_.Update(0.0f, -chassis->down_yaw_delta_, 1.0f);
     chassis->chassis_target_w_ = chassis->chassis_follow_pid_.out();
   }
+  if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
+    chassis->chassis_target_x_ *= 0.5;
+    chassis->chassis_target_y_ *= 0.5;
+  }
+  if (std::sqrt(std::pow(chassis->chassis_target_x_, 2.0f) + std::pow(chassis->chassis_target_y_, 2.0f)) >
+      chassis->chassis_max_speed_xy_) {
+    chassis->chassis_target_x_ /=
+        std::sqrt(std::pow(chassis->chassis_target_x_, 2.0f) + std::pow(chassis->chassis_target_y_, 2.0f)) /
+        chassis->chassis_max_speed_xy_;
+    chassis->chassis_target_y_ /=
+        std::sqrt(std::pow(chassis->chassis_target_x_, 2.0f) + std::pow(chassis->chassis_target_y_, 2.0f)) /
+        chassis->chassis_max_speed_xy_;
+  }
+  chassis->chassis_target_x_ =
+      rm::modules::Clamp(chassis->chassis_target_x_, -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
+  chassis->chassis_target_y_ =
+      rm::modules::Clamp(chassis->chassis_target_y_, -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
+  chassis->chassis_target_w_ =
+      rm::modules::Clamp(chassis->chassis_target_w_, -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
+}
+
+void Chassis::ChassisNavigateDataUpdate() {
+  chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ - globals->down_yaw_motor->pos();
+  chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
+  chassis->chassis_receive_x_ =
+      rm::modules::Map(-globals->NucControl.vx, -chassis_max_navigate_xy_, chassis_max_navigate_xy_,
+                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+  chassis->chassis_receive_y_ =
+      rm::modules::Map(globals->NucControl.vy, -chassis_max_navigate_xy_, chassis_max_navigate_xy_,
+                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+  chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
+                               chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
+  chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
+                               chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
+  chassis->chassis_target_w_ =
+      rm::modules::Map(globals->NucControl.vw, -chassis->chassis_max_navigate_w_, chassis->chassis_max_navigate_w_,
+                       -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
   if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
     chassis->chassis_target_x_ *= 0.5;
     chassis->chassis_target_y_ *= 0.5;
@@ -110,56 +152,12 @@ void Chassis::ChassisMovePIDUpdate() {
   steer_delta_angle_rf = rm::modules::Wrap(steer_delta_angle_rf, -static_cast<f32>(M_PI), M_PI);
   steer_delta_angle_lb = rm::modules::Wrap(steer_delta_angle_lb, -static_cast<f32>(M_PI), M_PI);
   steer_delta_angle_rb = rm::modules::Wrap(steer_delta_angle_rb, -static_cast<f32>(M_PI), M_PI);
-  globals->chassis_controller.Update(steer_delta_angle_lf, globals->steer_lf->rpm(),  // 舵电机当前值
-                                     steer_delta_angle_rf, globals->steer_rf->rpm(), steer_delta_angle_lb,
-                                     globals->steer_lb->rpm(), steer_delta_angle_rb, globals->steer_rb->rpm(),
+  globals->chassis_controller.Update(steer_delta_angle_lf, globals->steer_lf->rpm(),      // 舵电机当前值
+                                     steer_delta_angle_rf, globals->steer_rf->rpm(),      //
+                                     steer_delta_angle_lb, globals->steer_lb->rpm(),      //
+                                     steer_delta_angle_rb, globals->steer_rb->rpm(),      //
                                      globals->wheel_lf->rpm(), globals->wheel_rf->rpm(),  // 轮电机当前值
                                      globals->wheel_lb->rpm(), globals->wheel_rb->rpm());
-}
-
-void Chassis::ChassisNavigateDataUpdate() {
-  chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ - globals->down_yaw_motor->pos();
-  chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
-  chassis->chassis_target_x_ =
-      rm::modules::Map(globals->NucControl->vx, -chassis->chassis_max_navigate_xy_, chassis->chassis_max_navigate_xy_,
-                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_) *
-          std::cos(chassis->down_yaw_delta_) -
-      rm::modules::Map(globals->NucControl->vy, -chassis->chassis_max_navigate_xy_, chassis->chassis_max_navigate_xy_,
-                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_) *
-          std::sin(chassis->down_yaw_delta_);
-  chassis->chassis_target_y_ =
-      rm::modules::Map(globals->NucControl->vy, -chassis->chassis_max_navigate_xy_, chassis->chassis_max_navigate_xy_,
-                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_) *
-          std::cos(chassis->down_yaw_delta_) +
-      rm::modules::Map(globals->NucControl->vx, -chassis->chassis_max_navigate_xy_, chassis->chassis_max_navigate_xy_,
-                       -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_) *
-          std::sin(chassis->down_yaw_delta_);
-  chassis->chassis_target_w_ =
-      rm::modules::Map(globals->NucControl->w, -chassis->chassis_max_navigate_w_, chassis->chassis_max_navigate_w_,
-                       -chassis->chassis_max_navigate_w_, chassis->chassis_max_navigate_w_) *
-      std::cos(chassis->down_yaw_delta_);
-  if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
-    chassis->chassis_target_x_ *= 0.5;
-    chassis->chassis_target_y_ *= 0.5;
-  }
-  if (std::sqrt(std::pow(chassis->chassis_target_x_, 2.0f) + std::pow(chassis->chassis_target_y_, 2.0f)) >
-      chassis->chassis_max_speed_xy_) {
-    chassis->chassis_target_x_ /=
-        std::sqrt(std::pow(chassis->chassis_target_x_, 2.0f) + std::pow(chassis->chassis_target_y_, 2.0f)) /
-        chassis->chassis_max_speed_xy_;
-    chassis->chassis_target_y_ /=
-        std::sqrt(std::pow(chassis->chassis_target_x_, 2.0f) + std::pow(chassis->chassis_target_y_, 2.0f)) /
-        chassis->chassis_max_speed_xy_;
-  }
-  chassis->chassis_target_x_ =
-      rm::modules::Clamp(chassis->chassis_target_x_, -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
-  chassis->chassis_target_y_ =
-      rm::modules::Clamp(chassis->chassis_target_y_, -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
-  chassis->chassis_target_w_ =
-      rm::modules::Clamp(chassis->chassis_target_w_, -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
-  chassis->chassis_target_x_ = 0.0f;
-  chassis->chassis_target_y_ = 0.0f;
-  chassis->chassis_target_w_ = 0.0f;
 }
 
 void Chassis::ChassisMatchUpdate() {
@@ -178,7 +176,7 @@ void Chassis::ChassisEnableUpdate() {
   } else {
     globals->chassis_controller.Enable(false);
   }
-  // chassis->PowerLimitLoop();
+  chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }
 

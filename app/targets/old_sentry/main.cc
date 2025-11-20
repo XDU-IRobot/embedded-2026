@@ -13,7 +13,7 @@
 using namespace rm;
 
 void MainLoop() {
-  globals->time_++;
+  globals->time++;
   globals->SubLoop500Hz();
   globals->SubLoop250Hz();
   globals->SubLoop100Hz();
@@ -176,22 +176,22 @@ void GlobalWarehouse::ChassisPIDInit() {
   chassis_controller.pid().rb_steer_speed.SetMaxIout(0.0f);
   chassis_controller.pid().lf_wheel.SetKp(4.0f);  // 速度环 0.0f 0.0f 0.0f
   chassis_controller.pid().lf_wheel.SetKi(0.0f);
-  chassis_controller.pid().lf_wheel.SetKd(1.0f);
+  chassis_controller.pid().lf_wheel.SetKd(5.0f);
   chassis_controller.pid().lf_wheel.SetMaxOut(6000.0f);
   chassis_controller.pid().lf_wheel.SetMaxIout(0.0f);
   chassis_controller.pid().rf_wheel.SetKp(4.0f);  // 速度环 0.0f 0.0f 0.0f
   chassis_controller.pid().rf_wheel.SetKi(0.0f);
-  chassis_controller.pid().rf_wheel.SetKd(1.0f);
+  chassis_controller.pid().rf_wheel.SetKd(5.0f);
   chassis_controller.pid().rf_wheel.SetMaxOut(6000.0f);
   chassis_controller.pid().rf_wheel.SetMaxIout(0.0f);
   chassis_controller.pid().lb_wheel.SetKp(4.0f);  // 速度环 0.0f 0.0f 0.0f
   chassis_controller.pid().lb_wheel.SetKi(0.0f);
-  chassis_controller.pid().lb_wheel.SetKd(1.0f);
+  chassis_controller.pid().lb_wheel.SetKd(5.0f);
   chassis_controller.pid().lb_wheel.SetMaxOut(6000.0f);
   chassis_controller.pid().lb_wheel.SetMaxIout(0.0f);
   chassis_controller.pid().rb_wheel.SetKp(4.0f);  // 速度环 0.0f 0.0f 0.0f
   chassis_controller.pid().rb_wheel.SetKi(0.0f);
-  chassis_controller.pid().rb_wheel.SetKd(1.0f);
+  chassis_controller.pid().rb_wheel.SetKd(5.0f);
   chassis_controller.pid().rb_wheel.SetMaxOut(6000.0f);
   chassis_controller.pid().rb_wheel.SetMaxIout(0.0f);
 }
@@ -220,9 +220,9 @@ void GlobalWarehouse::ShootPIDInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  if (!globals->device_rc.all_device_ok()
-      // || globals->referee_data_buffer.data().robot_status.power_management_gimbal_output == 0
-  ) {
+  if (!globals->device_rc.all_device_ok() ||
+      globals->referee_data_buffer->data().robot_status.power_management_gimbal_output == 0 ||
+      globals->referee_data_buffer->data().robot_status.power_management_chassis_output == 0) {
     globals->StateMachine_ = kUnable;
   } else {
     switch (globals->rc->switch_r()) {
@@ -233,7 +233,10 @@ void GlobalWarehouse::RCStateUpdate() {
             globals->StateMachine_ = kMatch;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
           case rm::device::DR16::SwitchPosition::kMid:
-            buzzer_controller.Play<modules::buzzer_melody::Startup>();
+            if (!music) {
+              buzzer_controller.Play<modules::buzzer_melody::SeeUAgain>();
+              music = true;
+            }
           case rm::device::DR16::SwitchPosition::kUp:
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
@@ -251,13 +254,13 @@ void GlobalWarehouse::RCStateUpdate() {
             break;
           case rm::device::DR16::SwitchPosition::kMid:
             globals->StateMachine_ = kTest;
-            gimbal->GimbalMove_ = kGbScan;
+            gimbal->GimbalMove_ = kGbNavigate;
             chassis->ChassisMove_ = kCsNavigate;
             break;
           case rm::device::DR16::SwitchPosition::kUp:
             globals->StateMachine_ = kTest;
             gimbal->GimbalMove_ = kGbAimbot;
-            chassis->ChassisMove_ = kCsNavigate;
+            chassis->ChassisMove_ = kNoForce;
             break;
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
@@ -268,6 +271,7 @@ void GlobalWarehouse::RCStateUpdate() {
       case rm::device::DR16::SwitchPosition::kDown:
       default:
         globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
+        music = false;
         break;
     }
   }
@@ -283,24 +287,34 @@ void GlobalWarehouse::SubLoop500Hz() {
   chassis->ChassisTask();
   rm::device::DjiMotor<>::SendCommand(*can1);
   rm::device::DjiMotor<>::SendCommand(*can2);
+  if (USB_selection) {
+    GimbalDataSend();
+    USB_selection ^= 1;
+  } else {
+    RefereeDataSend();
+    USB_selection ^= 1;
+  }
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
-  if (globals->time_ % 2 == 0) {
+  if (globals->time % 2 == 0) {
     globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
     globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
   }
 }
 
 void GlobalWarehouse::SubLoop100Hz() {
-  if (globals->time_ % 5 == 0) {
-    GimbalDataSend();
-    RefereeDataSend();
+  if (globals->time % 5 == 0) {
+    if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
+      globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
+      globals->last_switch_l = globals->rc->switch_l();
+      globals->last_switch_r = globals->rc->switch_r();
+    }
   }
 }
 
 void GlobalWarehouse::SubLoop50Hz() {
-  if (globals->time_ % 10 == 0) {
+  if (globals->time % 10 == 0) {
     const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
     (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
     buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
@@ -308,7 +322,7 @@ void GlobalWarehouse::SubLoop50Hz() {
 }
 
 void GlobalWarehouse::SubLoop10Hz() {
-  if (globals->time_ % 50 == 0) {
-    globals->time_ = 0;
+  if (globals->time % 50 == 0) {
+    globals->time = 0;
   }
 }
