@@ -12,7 +12,7 @@ inline class Gimbal {
   StateMachineType GimbalMove_ = {kNoForce};  // 云台运动状态
 
  private:
-  f32 gimbal_yaw_target_ = 0.0f;  // 云台yaw轴目标数据（编码器控制，弧度制，-pi~pi，左正右负）
+  f32 gimbal_yaw_target_ = 0.0f;    // 云台yaw轴目标数据（编码器控制，弧度制，-pi~pi，左正右负）
   f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据（编码器控制，弧度制，-0.675f.0~0.615f，下正上负）
 
   bool DM_enable_flag_ = false;  // 4310电机使能标志
