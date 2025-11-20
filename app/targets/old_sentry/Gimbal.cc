@@ -28,11 +28,15 @@ void Gimbal::GimbalStateUpdate() {
           gimbal->ShootDisableUpdate();  // 摩擦轮机构失能计算
           break;
 
-        case kGbAimbot:
         case kGbScan:
         case kGbNavigate:
           gimbal->GimbalEnableUpdate();  // 云台电机使能计算
           gimbal->ShootDisableUpdate();  // 摩擦轮机构使能计算
+          break;
+
+        case kGbAimbot:
+          gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+          gimbal->ShootEnableUpdate();   // 摩擦轮机构使能计算
           break;
 
         default:
