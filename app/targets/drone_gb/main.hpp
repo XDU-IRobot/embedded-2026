@@ -14,7 +14,7 @@
 #include "controllers/gimbal_2dof.hpp"
 #include "controllers/shoot_2firc.hpp"
 
-//freemaster调试变量
+//freeMaster调试变量
 double Ayaw;
 double Apitch;
 double Aroll;
@@ -22,6 +22,7 @@ double Aoutputyaw;
 double Aoutputpitch;
 double Arcyawdata;
 double Arcpitchdata;
+
 class Gimbal
 {
 public:
@@ -85,6 +86,7 @@ public:
     double roll=0;
     double pitch=0;
 
+    //结构体初始化
     void GimbalInit()
     {
         buzzer = new Buzzer;
@@ -150,6 +152,7 @@ public:
         gimbal_controller.pid().pitch_speed.SetMaxOut(20.0f);
         gimbal_controller.pid().pitch_speed.SetMaxIout(10.0f);
     }
+
     //发射机构pid初始化
     void AmmoPIDInit()
     {
@@ -174,6 +177,7 @@ public:
         shoot_controller.pid().loader_speed.SetMaxOut(10000.0f);
         shoot_controller.pid().loader_speed.SetMaxIout(2000.0f);
     }
+
     //遥控器状态更新
     void RCStateUpdate()
     {
@@ -210,6 +214,7 @@ public:
             }
         }
     }
+
     //云台控制
     void GimbalControl()
     {
@@ -271,12 +276,10 @@ public:
         {
 
         }
-
-
     }
 
 
-    void FreemasterDebuge()
+    void FreeMasterDebug()
     {
         Arcyawdata=rc_yaw_data;
         Arcpitchdata=rc_pitch_data;
@@ -312,7 +315,7 @@ public:
         {
             pitch_motor->SetPosition(0, 0, -gimbal_controller.output().pitch, 0, 0);
         }
-        FreemasterDebuge();
+        FreeMasterDebug();
     }
 
   // usb收发数据
@@ -333,6 +336,8 @@ public:
       time_ = 0;
     }
   }
+
+
 };
 
 #endif  // BOARDC_MAIN_HPP
