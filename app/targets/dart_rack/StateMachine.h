@@ -16,17 +16,37 @@ enum class PhaseState : uint8_t {
   kDone       = 1
 };
 
+enum class ModeState : uint8_t {
+  kUnable = 0,
+  kAdd=1,
+  kInit=2,
+  kReload=3,
+  kChamber=4,
+  kAim=5,
+  kFire=6
+};
+
 struct AutoMode {
   AbleState enabled = AbleState::kOff;
 };
 
 struct ManualMode {
   AbleState enabled = AbleState::kOff;
+  ModeState mode = ModeState::kUnable;
   PhaseState init = PhaseState::kUncomplete;
   PhaseState reload = PhaseState::kUncomplete;
   PhaseState chamber = PhaseState::kUncomplete;
   PhaseState aim = PhaseState::kUncomplete;
   PhaseState fire = PhaseState::kUncomplete;
+  void ManualModeClear()//清空所有标志位
+  {
+    mode = ModeState::kUnable;
+    init = PhaseState::kUncomplete;
+    reload = PhaseState::kUncomplete;
+    chamber = PhaseState::kUncomplete;
+    aim = PhaseState::kUncomplete;
+    fire = PhaseState::kUncomplete;
+  }
 };
 
 struct DartState {
@@ -35,6 +55,13 @@ struct DartState {
   ManualMode manual_mode;
 };
 
+inline void DartStateClear(DartState &state)//清空所有状态
+{
+  state.unable = AbleState::kOn;
+  state.auto_mode.enabled = AbleState::kOff;
+  state.manual_mode.enabled = AbleState::kOff;
+  state.manual_mode.ManualModeClear();
+}
 }
 
 #endif // BOARDC_STATEMACHINE_H
