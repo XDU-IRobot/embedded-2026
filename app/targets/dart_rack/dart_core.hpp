@@ -1,7 +1,6 @@
 #ifndef STATE_DEFINITIONS
 #define STATE_DEFINITIONS
 
-#include <cstdint>
 #include <librm.hpp>
 // 状态机变量定义
 
