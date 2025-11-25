@@ -9,8 +9,7 @@ void MainLoop(){
 
 }
 extern "C" [[noreturn]] void AppMain(void) {
-
-dart_rack = new DartRack();
+  dart_rack = new DartRack();
   DartRack::Init();
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{

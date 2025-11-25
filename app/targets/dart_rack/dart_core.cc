@@ -6,11 +6,15 @@
 #include "usart.h"
 DartRack *dart_rack;
 
- void DartRack::Init() {
+void DartRack::Init() {
   dart_rack->can1 = new rm::hal::Can{hcan1};
   dart_rack->state = new DartState;
   dart_rack->dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+<<<<<<< HEAD
    dart_rack->rc = new rm::device::DR16{*dart_rack->dbus};
 
    dart_rack->rc->Begin();
+=======
+  dart_rack->rc = new rm::device::DR16{*dart_rack->dbus};
+>>>>>>> 641202becc57251dbb0633e55fb796d8ef7be73b
 }
