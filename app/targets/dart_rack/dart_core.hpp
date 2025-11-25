@@ -1,5 +1,5 @@
-#ifndef BOARDC_STATEMACHINE_H
-#define BOARDC_STATEMACHINE_H
+#ifndef STATE_DEFINITIONS
+#define STATE_DEFINITIONS
 
 #include <cstdint>
 
