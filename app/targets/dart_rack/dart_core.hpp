@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <librm.hpp>
 // 状态机变量定义
-namespace dart_rack_state {
+
 
 enum class AbleState : uint8_t {
   kOff = 0,
@@ -62,22 +62,28 @@ inline void DartStateClear(DartState &state)//清空所有状态
   state.manual_mode.enabled = AbleState::kOff;
   state.manual_mode.ManualModeClear();
 }
-}
 
-namespace dart_rack {
+
 struct DartRack {
 public:
-  dart_rack_state::DartState state;
-  rm::device::DR16 *rc{nullptr};                                                       ///< 遥控器
+  DartState *state;
+  // 硬件接口指针
+  rm::hal::Can *can1{nullptr};     ///< CAN 总线接口
+  rm::hal::Serial *dbus{nullptr};  ///< 遥控器串口接口
+  rm::device::DR16 *rc{nullptr}; //< 遥控器
+// can设备指针
   rm::device::M3508 *load_motor_r{nullptr};
   rm::device::M3508 *load_motor_l{nullptr};
   rm::device::M2006 *trigger_motor{nullptr};
   rm::device::M2006 *trigger_motor_force{nullptr};
   rm::device::M2006 *yaw_motor{nullptr};
+
 private:
+
+public:
+ static void Init();
 };
 
 
-}
-
-#endif // BOARDC_STATEMACHINE_H
+extern DartRack *dart_rack;
+#endif

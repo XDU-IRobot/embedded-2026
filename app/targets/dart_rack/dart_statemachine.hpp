@@ -8,6 +8,7 @@
 
 #include "dart_core.hpp"
 
-void DartStateMachineUpdate(dart_rack_state::DartState &state);
+void DartStateMachineUpdate(DartState &state);
 
+void DartStateManualUpadte();
 #endif  // BOARDC_DART_STATEMACHINE_HH
