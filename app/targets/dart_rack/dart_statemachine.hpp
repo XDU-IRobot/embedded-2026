@@ -6,6 +6,8 @@
 #ifndef BOARDC_DART_STATEMACHINE_HH
 #define BOARDC_DART_STATEMACHINE_HH
 
-class dart_statemachine {};
+#include "dart_core.hpp"
+
+void DartStateMachineUpdate(dart_rack_state::DartState &state);
 
 #endif  // BOARDC_DART_STATEMACHINE_HH

@@ -2,7 +2,7 @@
 #define STATE_DEFINITIONS
 
 #include <cstdint>
-
+#include <librm.hpp>
 // 状态机变量定义
 namespace dart_rack_state {
 
@@ -62,6 +62,22 @@ inline void DartStateClear(DartState &state)//清空所有状态
   state.manual_mode.enabled = AbleState::kOff;
   state.manual_mode.ManualModeClear();
 }
+}
+
+namespace dart_rack {
+struct DartRack {
+public:
+  dart_rack_state::DartState state;
+  rm::device::DR16 *rc{nullptr};                                                       ///< 遥控器
+  rm::device::M3508 *load_motor_r{nullptr};
+  rm::device::M3508 *load_motor_l{nullptr};
+  rm::device::M2006 *trigger_motor{nullptr};
+  rm::device::M2006 *trigger_motor_force{nullptr};
+  rm::device::M2006 *yaw_motor{nullptr};
+private:
+};
+
+
 }
 
 #endif // BOARDC_STATEMACHINE_H
