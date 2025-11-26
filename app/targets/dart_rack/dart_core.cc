@@ -11,20 +11,20 @@ void DartRack::Init() {
   dart_rack->can1 = new rm::hal::Can{hcan1};
   dart_rack->state = new DartState;
   dart_rack->dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-   dart_rack->rc = new rm::device::DR16{*dart_rack->dbus};
-   dart_rack->rc->Begin();
-  //电机初始化
-  dart_rack->load_motor_l=new rm::device::M3508{*dart_rack->can1, 1};
-  dart_rack->load_motor_r=new rm::device::M3508{*dart_rack->can1, 2};
-  dart_rack->trigger_motor=new rm::device::M2006{*dart_rack->can1, 5};
-  dart_rack->trigger_motor_force=new rm::device::M2006{*dart_rack->can1, 6};
-  dart_rack->yaw_motor=new rm::device::M2006{*dart_rack->can1, 7};
+  dart_rack->rc = new rm::device::DR16{*dart_rack->dbus};
+  dart_rack->rc->Begin();
+  // 电机初始化
+  dart_rack->load_motor_l = new rm::device::M3508{*dart_rack->can1, 1};
+  dart_rack->load_motor_r = new rm::device::M3508{*dart_rack->can1, 2};
+  dart_rack->trigger_motor = new rm::device::M2006{*dart_rack->can1, 5};
+  dart_rack->trigger_motor_force = new rm::device::M2006{*dart_rack->can1, 6};
+  dart_rack->yaw_motor = new rm::device::M2006{*dart_rack->can1, 7};
   dart_rack->can1->SetFilter(0, 0);
 
-  //PID初始化
-  dart_rack->load_motor_l_speed_pid=new rm::modules::PID(5,0,0,10000,0 );
-  dart_rack->load_motor_r_speed_pid=new rm::modules::PID(5,0,0,10000,0 );
-  dart_rack->trigger_motor_speed_pid=new rm::modules::PID(5,0,0,10000,0 );
-  dart_rack->trigger_motor_force_pid=new rm::modules::PID(5,0,0,10000,0 );
-  dart_rack->yaw_motor_speed_pid=new rm::modules::PID(5,0,0,10000,0 );
+  // PID初始化
+  dart_rack->load_motor_l_speed_pid = new rm::modules::PID(5, 0, 0, 10000, 0);
+  dart_rack->load_motor_r_speed_pid = new rm::modules::PID(5, 0, 0, 10000, 0);
+  dart_rack->trigger_motor_speed_pid = new rm::modules::PID(5, 0, 0, 10000, 0);
+  dart_rack->trigger_motor_force_pid = new rm::modules::PID(5, 0, 0, 10000, 0);
+  dart_rack->yaw_motor_speed_pid = new rm::modules::PID(5, 0, 0, 10000, 0);
 }
