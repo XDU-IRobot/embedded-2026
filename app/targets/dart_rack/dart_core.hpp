@@ -54,12 +54,18 @@ struct DartRack {
   rm::hal::Can *can1{nullptr};     ///< CAN 总线接口
   rm::hal::Serial *dbus{nullptr};  ///< 遥控器串口接口
   rm::device::DR16 *rc{nullptr};   //< 遥控器
-                                   // can设备指针
+  // can设备指针
   rm::device::M3508 *load_motor_r{nullptr};
   rm::device::M3508 *load_motor_l{nullptr};
   rm::device::M2006 *trigger_motor{nullptr};
   rm::device::M2006 *trigger_motor_force{nullptr};
   rm::device::M2006 *yaw_motor{nullptr};
+  // PID 控制器
+  rm::modules::PID *load_motor_r_speed_pid;
+  rm::modules::PID *load_motor_l_speed_pid;
+  rm::modules::PID *trigger_motor_speed_pid;
+  rm::modules::PID *trigger_motor_force_pid;
+  rm::modules::PID *yaw_motor_speed_pid;
 
  private:
  public:
