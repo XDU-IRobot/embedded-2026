@@ -192,7 +192,7 @@ void Chassis::ChassisEnableUpdate() {
     chassis->ChassisMovePIDUpdate();
   } else {
     globals->chassis_controller.Enable(false);
-  }
+  } 
   chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }
