@@ -144,12 +144,12 @@ class Shoot3Fric {
   } pid_;
 
   struct {
-    float fric_1_speed;         ///< 摩擦轮1速度
-    float fric_2_speed;         ///< 摩擦轮2速度
-    float fric_3_speed;         ///< 摩擦轮3速度
-    float loader_speed;         ///< 拨盘速度
-    float loader_position;      ///< 拨盘位置
-  } state_{};                   ///< 当前状态
+    float fric_1_speed;     ///< 摩擦轮1速度
+    float fric_2_speed;     ///< 摩擦轮2速度
+    float fric_3_speed;     ///< 摩擦轮3速度
+    float loader_speed;     ///< 拨盘速度
+    float loader_position;  ///< 拨盘位置
+  } state_{};               ///< 当前状态
   struct {
     float fric_speed;       ///< 摩擦轮目标速度
     float loader_speed;     ///< 拨盘目标速度

@@ -16,20 +16,20 @@ inline class Gimbal {
   const f32 mid_up_yaw_angle_ = 2840.0f;  // 云台上部yaw轴中值 2840.0f（编码器值）
 
  private:
-  f32 gimbal_up_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
+  f32 gimbal_up_yaw_target_ = 0.0f;  // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，0~2pi，左正右负）
-  f32 gimbal_pitch_target_ = 0.0f;     // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
+  f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
 
   f32 gravity_compensation_ = 0.0f;    // 重力补偿值
   f32 k_gravity_compensation_ = 1.0f;  // 重力补偿系数
 
-  f32 ammo_speed_ = 7800.0f;      // 摩擦轮速度 9000.0f -> 25m/s 初速度
+  f32 ammo_speed_ = 7800.0f;  // 摩擦轮速度 9000.0f -> 25m/s 初速度
 
   u8 shoot_num_ = 0;                        // 开火次数
   u16 last_remain_bullet_ = 0;              // 上一次剩余子弹数
   f32 shoot_initial_speed_[10] = {};        // 子弹初速度
   f32 shoot_initial_average_speed_ = 0.0f;  // 子弹初速度平均值
-  f32 target_shoot_initial_speed_ = 30.0f;   // 目标子弹初速度
+  f32 target_shoot_initial_speed_ = 30.0f;  // 目标子弹初速度
 
   f32 shoot_frequency_ = 0.0f;
 
@@ -55,7 +55,7 @@ inline class Gimbal {
   const f32 sensitivity_up_yaw_ = 3.0f;      // 云台上部yaw轴灵敏度 3.0f
   const f32 sensitivity_down_yaw_ = 0.004f;  // 云台下部yaw轴灵敏度 0.3f
   const f32 sensitivity_pitch_ = 0.002f;     // 云台pitch轴灵敏度 0.3f
-  const f32 highest_pitch_angle_ = 0.2f;    // 云台pitch轴最高 0.54f（弧度制）
+  const f32 highest_pitch_angle_ = 0.2f;     // 云台pitch轴最高 0.54f（弧度制）
   const f32 lowest_pitch_angle_ = -0.38f;    // 云台pitch轴最低 0.38f（弧度制）
   const f32 max_up_yaw_angle_ = 4050.0f;     // 云台上部yaw轴最大 4050.0f（编码器值）
   const f32 min_up_yaw_angle_ = 1650.0f;     // 云台上部yaw轴最小 1650.0f（编码器值）

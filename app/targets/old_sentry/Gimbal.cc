@@ -105,7 +105,7 @@ void Gimbal::GimbalScanTargetUpdate() {
     gimbal->gimbal_pitch_target_ += 0.003f;
   }
   // if (globals->NucControl.scan_mode) {
-    gimbal->GimbalMove_ = kGbScan;
+  gimbal->GimbalMove_ = kGbScan;
   // } else {
   //   gimbal->GimbalMove_ = kGbNavigate;
   // }
