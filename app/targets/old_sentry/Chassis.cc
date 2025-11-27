@@ -4,7 +4,7 @@
 
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(12000.0f);
+  chassis->chassis_follow_pid_.SetKp(15000.0f);
   chassis->chassis_follow_pid_.SetKi(0.0f);
   chassis->chassis_follow_pid_.SetKd(10000.0f);
   chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
@@ -16,34 +16,36 @@ void Chassis::ChassisTask() {
 }
 
 void Chassis::ChassisStateUpdate() {
-  switch (globals->StateMachine_) {
-    case kNoForce:
-      chassis->ChassisDisableUpdate();  // 底盘电机失能计算
-      break;
+  if (!globals->referee_data_buffer->data().robot_status.power_management_chassis_output ||
+      !globals->device_chassis.all_device_ok()) {
+    chassis->ChassisMove_ = kUnable;
+  } else {
+    switch (globals->StateMachine_) {
+      case kNoForce:
+        chassis->ChassisDisableUpdate();  // 底盘电机失能计算
+        break;
 
-    case kTest:
-      switch (chassis->ChassisMove_) {
-        case kCsRemote:
-        case kCsNavigate:
-          chassis->ChassisEnableUpdate();  // 底盘电机使能计算
-          break;
+      case kTest:
+        switch (chassis->ChassisMove_) {
+          case kCsRemote:
+          case kCsNavigate:
+            chassis->ChassisEnableUpdate();  // 底盘电机使能计算
+            break;
 
-        default:                            // 错误状态，所有电机失能
-          chassis->ChassisDisableUpdate();  // 底盘电机失能计算
-          break;
-      }
-      break;
+          default:                            // 错误状态，所有电机失能
+            chassis->ChassisDisableUpdate();  // 底盘电机失能计算
+            break;
+        }
+        break;
 
-    case kMatch:                      // 比赛模式下，所有电机正常工作
-      chassis->ChassisMatchUpdate();  // 底盘电机使能计算
-      break;
+      case kMatch:                      // 比赛模式下，所有电机正常工作
+        chassis->ChassisMatchUpdate();  // 底盘电机使能计算
+        break;
 
-    default:                            // 错误状态，所有电机失能
-      chassis->ChassisDisableUpdate();  // 底盘电机失能计算
-      break;
-  }
-  if (!globals->device_chassis.all_device_ok()) {
-    chassis->ChassisDisableUpdate();
+      default:                            // 错误状态，所有电机失能
+        chassis->ChassisDisableUpdate();  // 底盘电机失能计算
+        break;
+    }
   }
 }
 
@@ -64,13 +66,19 @@ void Chassis::ChassisRCDataUpdate() {
     chassis->chassis_receive_x_ = 0.0f;
     chassis->chassis_receive_y_ = 0.0f;
   }
-  chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
-                               chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
-  chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
-                               chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
   if (globals->rc->dial() >= 650) {
+    chassis->chassis_target_x_ =
+        chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) -
+        chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
+    chassis->chassis_target_y_ =
+        chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
+        chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
     chassis->chassis_target_w_ = 12000.0f;
   } else {
+    chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
+                                 chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
+    chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
+                                 chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
     chassis->chassis_follow_pid_.Update(0.0f, -chassis->down_yaw_delta_, 1.0f);
     chassis->chassis_target_w_ = chassis->chassis_follow_pid_.out();
   }
@@ -104,13 +112,23 @@ void Chassis::ChassisNavigateDataUpdate() {
   chassis->chassis_receive_y_ =
       rm::modules::Map(globals->NucControl.vy, -chassis_max_navigate_xy_, chassis_max_navigate_xy_,
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
-  chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
-                               chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
-  chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
-                               chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
   chassis->chassis_target_w_ =
       rm::modules::Map(globals->NucControl.vw, -chassis->chassis_max_navigate_w_, chassis->chassis_max_navigate_w_,
                        -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
+  if (std::abs(chassis->chassis_target_w_) > 0) {
+    chassis->chassis_move_delta_angle_ = -0.5f * chassis->chassis_target_w_;
+    chassis->chassis_target_x_ =
+        chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) -
+        chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
+    chassis->chassis_target_y_ =
+        chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
+        chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
+  } else {
+    chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
+                                 chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
+    chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
+                                 chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
+  }
   if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
     chassis->chassis_target_x_ *= 0.5;
     chassis->chassis_target_y_ *= 0.5;
@@ -174,7 +192,7 @@ void Chassis::ChassisEnableUpdate() {
     chassis->ChassisMovePIDUpdate();
   } else {
     globals->chassis_controller.Enable(false);
-  }
+  } 
   chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }

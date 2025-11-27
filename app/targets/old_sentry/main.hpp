@@ -51,12 +51,12 @@ inline struct GlobalWarehouse {
   // 设备 //
   DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
   DeviceManager<3> device_gimbal;
-  DeviceManager<8> device_chassis;
   DeviceManager<3> device_shoot;
+  DeviceManager<8> device_chassis;
   // 云台
+  rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
   rm::device::BMI088 *imu{nullptr};                                                    ///< IMU
   rm::device::DR16 *rc{nullptr};                                                       ///< 遥控器
-  rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
   rm::device::GM6020 *up_yaw_motor{nullptr};                                           ///< 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *down_yaw_motor{nullptr};  ///< 云台 Yaw 下电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};     ///< 云台 Pitch 电机
@@ -83,14 +83,17 @@ inline struct GlobalWarehouse {
   Counter dail_position_counter{0.0, 8191.0f};            ///< 云台 Yaw 下部电机位置计数器
 
   // USB //
-  GimbalDataFrame_SCM_t GimbalData;    ///< IMU数据
-  RefereeDataFrame_SCM_t RefereeData;  ///< 裁判系统数据
-  AimbotFrame_SCM_t Aimbot;            ///< 自瞄数据
-  NucControlFrame_SCM_t NucControl;    ///< NUC控制数据
+  GimbalDataFrame_SCM_t GimbalData{0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0, 0};  ///< IMU数据
+  RefereeDataFrame_SCM_t RefereeData{0, 0, 0, 0, 0, 0, 0, 0, 0};               ///< 裁判系统数据
+  AimbotFrame_SCM_t Aimbot{0, 0, 0, 0, 0.0f, 0.0f, 0.0f, 0};                   ///< 自瞄数据
+  NucControlFrame_SCM_t NucControl{0, 0, 0.0, 0.0, 0.0, 0.0, false, 0};        ///< NUC控制数据
 
   StateMachineType StateMachine_ = {kNoForce};                                               // 当前状态
   u_int8_t time = 0;                                                                         // 时间
-  u_int8_t music = false;                                                                    // 控制音乐播放
+  u_int16_t hurt_time = 0;                                                                   // 受伤小陀螺倒计时
+  u_int8_t music_choice = 0;                                                                // 音乐选择
+  bool music = false;                                                                        // 控制音乐播放
+  bool music_change_flag = false;                                                            // 音乐改动标识位
   bool USB_selection = false;                                                                // 选择发送不同的usb数据
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
@@ -121,6 +124,8 @@ inline struct GlobalWarehouse {
   void ShootPIDInit();
 
   void RCStateUpdate();
+
+  void Music();
 } *globals;
 
 #endif  // MAIN_HPP

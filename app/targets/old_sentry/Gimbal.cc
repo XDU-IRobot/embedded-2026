@@ -1,5 +1,7 @@
 #include "Gimbal.hpp"
 
+float a, b, c, d;
+
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->up_yaw_motor->encoder();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
@@ -8,67 +10,64 @@ void Gimbal::GimbalInit() {
 
 void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
+  gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
+  gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
   f32 yaw = rm::modules::Map(globals->up_yaw_motor->encoder(), 0.0f, globals->GM6020_encoder_max_, 0.0f,
                              2.0f * static_cast<f32>(M_PI));
   yaw = rm::modules::Wrap(yaw, -static_cast<f32>(M_PI), M_PI);
   gimbal->EulerToQuaternion(yaw, -globals->pitch_motor->pos(), 0.0f);
+  a = globals->NucControl.vx;
+  b = globals->NucControl.vy;
+  c = globals->NucControl.vw;
+  d = globals->NucControl.yaw_speed;
 }
 
 void Gimbal::GimbalStateUpdate() {
-  switch (globals->StateMachine_) {
-    case kNoForce:                    // 无力模式下，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      gimbal->ShootDisableUpdate();   // 摩擦轮机构失能计算
-      break;
+  if (!globals->referee_data_buffer->data().robot_status.power_management_gimbal_output ||
+      !globals->device_gimbal.all_device_ok()) {
+    gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+  } else {
+    switch (globals->StateMachine_) {
+      case kNoForce:                    // 无力模式下，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
 
-    case kTest:  // 测试模式下，发射系统与拨盘电机失能
-      switch (gimbal->GimbalMove_) {
-        case kGbRemote:
-          gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-          gimbal->ShootDisableUpdate();  // 摩擦轮机构失能计算
-          break;
+      case kTest:                      // 测试模式下，发射系统与拨盘电机失能
+        gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+        break;
 
-        case kGbScan:
-        case kGbNavigate:
-          gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-          gimbal->ShootDisableUpdate();  // 摩擦轮机构使能计算
-          break;
+      case kMatch:                    // 比赛模式下，所有电机正常工作
+        gimbal->GimbalMatchUpdate();  // 云台电机使能计算
+        break;
 
-        case kGbAimbot:
-          gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-          gimbal->ShootEnableUpdate();   // 摩擦轮机构使能计算
-          break;
-
-        default:
-          gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-          gimbal->ShootDisableUpdate();   // 摩擦轮机构失能计算
-          break;
-      }
-      break;
-
-    case kMatch:                    // 比赛模式下，所有电机正常工作
-      gimbal->GimbalMatchUpdate();  // 云台电机使能计算
-      // gimbal->ShootEnableUpdate();                  // 摩擦轮机构使能计算
-      break;
-
-    default:                          // 错误状态，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      gimbal->ShootDisableUpdate();   // 摩擦轮机构失能计算
-      break;
-  }
-  if (!globals->device_gimbal.all_device_ok()) {
-    gimbal->GimbalDisableUpdate();
+      default:                          // 错误状态，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
+    }
   }
   if (!globals->device_shoot.all_device_ok()) {
-    gimbal->ShootDisableUpdate();
+    gimbal->ShootDisableUpdate();  // 发射机构失能计算
+  } else {
+    switch (globals->StateMachine_) {
+      case kMatch:                    // 比赛模式下，所有电机正常工作
+        gimbal->ShootEnableUpdate();  // 发射机构使能计算
+        break;
+      case kTest:                      // 测试模式下，发射系统与拨盘电机失能
+      case kNoForce:                   // 无力模式下，所有电机失能
+      default:                         // 错误状态，所有电机失能
+        gimbal->ShootDisableUpdate();  // 发射机构失能计算
+        break;
+    }
   }
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
-  //                                                   -globals->rc_max_value_, globals->rc_max_value_,
-  //                                                   -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
-  gimbal->gimbal_up_yaw_target_ = gimbal->mid_up_yaw_angle_;
+  if (gimbal->GimbalMove_ == kGbRemote) {
+    // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
+    //                                                   -globals->rc_max_value_, globals->rc_max_value_,
+    //                                                   -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
+    gimbal->gimbal_up_yaw_target_ = gimbal->mid_up_yaw_angle_;
+  }
   gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
                                                       -globals->rc_max_value_, globals->rc_max_value_,
                                                       -gimbal->sensitivity_down_yaw_, gimbal->sensitivity_down_yaw_);
@@ -91,9 +90,9 @@ void Gimbal::GimbalScanTargetUpdate() {
     gimbal->scan_yaw_flag_ = false;
   }
   if (gimbal->scan_yaw_flag_) {
-    gimbal->gimbal_up_yaw_target_ -= 1.0f;
+    gimbal->gimbal_up_yaw_target_ -= 3.0f;
   } else {
-    gimbal->gimbal_up_yaw_target_ += 1.0f;
+    gimbal->gimbal_up_yaw_target_ += 3.0f;
   }
   if (gimbal->gimbal_pitch_target_ >= gimbal->highest_pitch_angle_) {
     gimbal->scan_pitch_flag_ = true;
@@ -101,19 +100,19 @@ void Gimbal::GimbalScanTargetUpdate() {
     gimbal->scan_pitch_flag_ = false;
   }
   if (gimbal->scan_pitch_flag_) {
-    gimbal->gimbal_pitch_target_ -= 0.0006f;
+    gimbal->gimbal_pitch_target_ -= 0.003f;
   } else {
-    gimbal->gimbal_pitch_target_ += 0.0006f;
+    gimbal->gimbal_pitch_target_ += 0.003f;
   }
-  if (globals->NucControl.scan_mode) {
+  // if (globals->NucControl.scan_mode) {
     gimbal->GimbalMove_ = kGbScan;
-  } else {
-    gimbal->GimbalMove_ = kGbNavigate;
-  }
-  if (globals->StateMachine_ == kMatch || gimbal->GimbalMove_ == kGbNavigate) {
+  // } else {
+  //   gimbal->GimbalMove_ = kGbNavigate;
+  // }
+  if (gimbal->GimbalMove_ == kGbNavigate) {
     gimbal->gimbal_down_yaw_target_ += rm::modules::Map(globals->NucControl.yaw_speed, -1.0f, 1.0f, -0.0005f, 0.0005f);
   } else {
-    gimbal->gimbal_down_yaw_target_ += 0.0005f;
+    gimbal->gimbal_down_yaw_target_ += 0.001f;
   }
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
@@ -127,26 +126,18 @@ void Gimbal::GimbalAimbotTargetUpdate() {
         rm::modules::Wrap(rm::modules::Map(-globals->Aimbot.Pitch, 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
                           -static_cast<f32>(M_PI), M_PI);
   } else {
-    gimbal->gimbal_up_yaw_target_ = globals->up_yaw_motor->encoder();
-    gimbal->gimbal_pitch_target_ = globals->pitch_motor->pos();
+    gimbal->GimbalRCTargetUpdate();
   }
   gimbal->GimbalDownYawFollow();
 }
 
 void Gimbal::GimbalDownYawFollow() {
   if (gimbal->gimbal_up_yaw_target_ > gimbal->down_yaw_move_high_) {
-    gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_high_;
+    // gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_high_;
     gimbal->gimbal_down_yaw_target_ += 0.002f;
-    gimbal->down_yaw_target_refresh_flag_ = true;
   } else if (gimbal->gimbal_up_yaw_target_ < gimbal->down_yaw_move_low_) {
-    gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_low_;
+    // gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_low_;
     gimbal->gimbal_down_yaw_target_ -= 0.002f;
-    gimbal->down_yaw_target_refresh_flag_ = true;
-  } else {
-    if (gimbal->down_yaw_target_refresh_flag_) {
-      gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-      gimbal->down_yaw_target_refresh_flag_ = false;
-    }
   }
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
@@ -164,8 +155,12 @@ void Gimbal::GimbalMovePIDUpdate() {
 }
 
 void Gimbal::GimbalMatchUpdate() {
-  if ((globals->Aimbot.AimbotState >> 0 & 0x01) == 1) {
+  if (globals->Aimbot.AimbotState >> 0 & 0x01) {
     gimbal->GimbalMove_ = kGbAimbot;
+  } else if (globals->NucControl.scan_mode) {
+    gimbal->GimbalMove_ = kGbScan;
+  } else {
+    gimbal->GimbalMove_ = kGbNavigate;
   }
   gimbal->GimbalEnableUpdate();
 }
@@ -222,10 +217,8 @@ void Gimbal::DaMiaoMotorDisable() {
 void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Enable(true);
   globals->shoot_controller.Arm(true);
-  gimbal->AmmoSpeedUpdate();
+  // gimbal->AmmoSpeedUpdate();
   globals->shoot_controller.SetArmSpeed(ammo_speed_);
-  gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
-  gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
   globals->dail_position_counter.IncreaseUpdate(globals->dial_motor->encoder());
   if (globals->rc->dial() <= -650
       // && heat_limit_ - heat_current_ > 100
@@ -236,10 +229,10 @@ void Gimbal::ShootEnableUpdate() {
     } else {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
-  } else if (globals->rc->dial() >= 650) {
+  } else if (globals->rc->dial() >= 650 || globals->Aimbot.AimbotState >> 1 & 0x01) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     // if (heat_limit_ - heat_current_ > 100) {
-    gimbal->shoot_frequency_ = -20.0f;
+    gimbal->shoot_frequency_ = -30.0f;
     // } else if (heat_limit_ - heat_current_ < 40) {
     //     gimbal->shoot_frequency_ = 0.0f;
     // } else {
@@ -257,14 +250,13 @@ void Gimbal::ShootEnableUpdate() {
 
 void Gimbal::ShootDisableUpdate() {
   globals->shoot_controller.SetMode(Shoot3Fric::kStop);
-  if (globals->StateMachine_ == kUnable || globals->StateMachine_ == kNoForce) {
+  if (globals->StateMachine_ == kUnable) {
     globals->shoot_controller.Enable(false);
     globals->shoot_controller.Arm(false);
   } else {
     globals->shoot_controller.Enable(true);
     globals->shoot_controller.SetArmSpeed(0.0f);
   }
-  globals->shoot_controller.Arm(false);
   globals->shoot_controller.Fire();
   globals->dail_position_counter.Init(globals->dial_motor->encoder());
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
@@ -273,8 +265,9 @@ void Gimbal::ShootDisableUpdate() {
 
 void Gimbal::AmmoSpeedUpdate() {
   if (globals->referee_data_buffer->data().shoot_data.initial_speed > 20.0f &&
-      globals->referee_data_buffer->data().shoot_data.initial_speed < 30.0f &&
-      globals->referee_data_buffer->data().shoot_data.initial_speed != gimbal->last_shoot_initial_speed_) {
+      globals->referee_data_buffer->data().shoot_data.initial_speed < 35.0f &&
+      globals->referee_data_buffer->data().projectile_allowance.projectile_allowance_17mm !=
+          gimbal->last_remain_bullet_) {
     if (gimbal->shoot_initial_speed_[0] == 0.0f) {
       for (float &i : gimbal->shoot_initial_speed_) {
         i = globals->referee_data_buffer->data().shoot_data.initial_speed;
@@ -287,38 +280,14 @@ void Gimbal::AmmoSpeedUpdate() {
         shoot_num_ = 0;
       }
     }
+    gimbal->last_remain_bullet_ = globals->referee_data_buffer->data().projectile_allowance.projectile_allowance_17mm;
   }
   gimbal->shoot_initial_average_speed_ /= 10.0f;
   if (gimbal->shoot_initial_speed_[0] == 0.0f) {
     gimbal->ammo_speed_ = gimbal->ammo_init_speed_;
   } else {
-    gimbal->ammo_speed_ = (gimbal->target_shoot_initial_speed_ - gimbal->shoot_initial_average_speed_) /
-                              gimbal->target_shoot_initial_speed_ +
-                          gimbal->ammo_init_speed_;
-  }
-  if (globals->referee_data_buffer->data().shoot_data.initial_speed > 20.0f &&
-      globals->referee_data_buffer->data().shoot_data.initial_speed < 30.0f &&
-      globals->referee_data_buffer->data().shoot_data.initial_speed != gimbal->last_shoot_initial_speed_) {
-    if (gimbal->shoot_initial_speed_[0] == 0.0f) {
-      for (float &i : gimbal->shoot_initial_speed_) {
-        i = globals->referee_data_buffer->data().shoot_data.initial_speed;
-      }
-    } else {
-      gimbal->shoot_initial_speed_[shoot_num_] = globals->referee_data_buffer->data().shoot_data.initial_speed;
-      if (shoot_num_ < 10) {
-        shoot_num_++;
-      } else {
-        shoot_num_ = 0;
-      }
-    }
-  }
-  gimbal->shoot_initial_average_speed_ /= 10.0f;
-  if (gimbal->shoot_initial_speed_[0] == 0.0f) {
-    gimbal->ammo_speed_ = gimbal->ammo_init_speed_;
-  } else {
-    gimbal->ammo_speed_ = (gimbal->target_shoot_initial_speed_ - gimbal->shoot_initial_average_speed_) /
-                              gimbal->target_shoot_initial_speed_ +
-                          gimbal->ammo_init_speed_;
+    gimbal->ammo_speed_ =
+        gimbal->ammo_init_speed_ / gimbal->shoot_initial_average_speed_ * gimbal->target_shoot_initial_speed_;
   }
 }
 
