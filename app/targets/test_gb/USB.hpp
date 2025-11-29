@@ -29,9 +29,6 @@ typedef struct __attribute__((packed)) {
   // 自瞄数据
   float Pitch;
   float Yaw;
-  // 自瞄目标角速度
-  // float TargetPitchSpeed;
-  // float TargetYawSpeed;
   // 时间戳
   float SystemTimer;
   // 包尾
