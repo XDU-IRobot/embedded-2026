@@ -27,7 +27,7 @@ double Agy;
 double Agz;
 float Apitchpose;
 
-class Gimbal{
+class Gimbal {
  public:
   // 状态机
   typedef enum {
@@ -217,10 +217,10 @@ class Gimbal{
         rc_pitch_data = pitch_motor->pos();
       }
       rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
-      rc_yaw_data  = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+      rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
-      rc_pitch_data  = rm::modules::Clamp(rc_pitch_data, 1.6, 2.9);
+      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.9);
 
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
       gimbal_controller.Update(yaw, yaw_motor->rpm(), pitch_motor->pos(), pitch_motor->vel());
@@ -257,7 +257,7 @@ class Gimbal{
     }
   }
 
-  //调试接口函数
+  // 调试接口函数
   void FreeMasterDebug() {
     Arcyawdata = rc_yaw_data;
     Arcpitchdata = rc_pitch_data;
@@ -266,7 +266,7 @@ class Gimbal{
     Aroll = roll;
     Aoutputyaw = gimbal_controller.output().yaw;
     Aoutputpitch = gimbal_controller.output().pitch;
-    Apitchpose=pitch_motor->pos();
+    Apitchpose = pitch_motor->pos();
   }
 
   // 遥控器和imu数据解算+DjiMotor发信息
@@ -279,11 +279,9 @@ class Gimbal{
     imu->Update();
     ahrs.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), -imu->gyro_y(), imu->gyro_z(), -imu->accel_x(),
                                          -imu->accel_y(), imu->accel_z()});
-    roll  = -ahrs.euler_angle().roll  + M_PI;
-    yaw   = -ahrs.euler_angle().yaw   + M_PI;
+    roll = -ahrs.euler_angle().roll + M_PI;
+    yaw = -ahrs.euler_angle().yaw + M_PI;
     pitch = -ahrs.euler_angle().pitch + M_PI;
-
-
   }
 
   // DmMotor电机发信息
@@ -309,10 +307,7 @@ class Gimbal{
   // 总循环
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
-      GimbalImuSend(ahrs.quaternion().w,
-                    ahrs.quaternion().x,
-                    ahrs.quaternion().y,
-                    ahrs.quaternion().z);
+      GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z);
       time_ = 0;
     }
   }
