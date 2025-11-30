@@ -23,6 +23,7 @@
 
 /* USER CODE BEGIN INCLUDE */
 #include "old_sentry/USB.hpp"
+#include "drone_gb/Usb.hpp"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -264,6 +265,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 #ifdef OLD_SENTRY
     USBReceive(Buf, *Len);
+#endif
+#ifdef DRONE_GB
+    UsbReceive(Buf, (uint8_t)*Len);
 #endif
 
     return (USBD_OK);

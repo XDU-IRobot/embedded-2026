@@ -12,6 +12,7 @@
 #include "timer_task.hpp"
 #include "controllers/gimbal_2dof.hpp"
 #include "controllers/shoot_2firc.hpp"
+#include "Usb.hpp"
 
 // freeMaster调试变量
 double Ayaw;
@@ -21,8 +22,12 @@ double Aoutputyaw;
 double Aoutputpitch;
 double Arcyawdata;
 double Arcpitchdata;
+double Agx;
+double Agy;
+double Agz;
+float Apitchpose;
 
-class Gimbal {
+class Gimbal{
  public:
   // 状态机
   typedef enum {
@@ -55,7 +60,7 @@ class Gimbal {
   DeviceManager<3> device_shoot;
 
   rm::device::BMI088 *imu{nullptr};  ///< IMU
-  rm::modules::MahonyAhrs ahrs{1000.0f};
+  rm::modules::MahonyAhrs ahrs{500.0f};
 
   rm::device::DR16 *rc{nullptr};  ///< 遥控器
 
@@ -70,6 +75,7 @@ class Gimbal {
 
   Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
   Shoot2Fric shoot_controller{8, 36.0f};  ///< 三摩擦轮发射机构控制器，8发拨盘
+
   bool DM_is_enable = false;
   int time_ = 0;  // 系统心跳
 
@@ -91,9 +97,9 @@ class Gimbal {
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
     rc = new rm::device::DR16{*dbus};
-    yaw_motor = new rm::device::GM6020{*can1, 2};
+    yaw_motor = new rm::device::GM6020{*can1, 6};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x01, 0x07, 20.0f, 0.2f, 2.0f, std::make_pair(0.0f, 5.0f), std::make_pair(0.0f, 5.0f)}};
+        *can1, {0x01, 0x07, 10.0f, 5.0f, 5.0f, std::make_pair(0.0f, 10.0f), std::make_pair(0.0f, 5.0f)}};
     friction_left = new rm::device::M3508{*can1, 4};
     friction_right = new rm::device::M3508{*can1, 3};
     dial_motor = new rm::device::M2006{*can1, 1};
@@ -121,26 +127,26 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(10.0f);  // 位置环 0.25f 0.0f 0.025f
+    gimbal_controller.pid().yaw_position.SetKp(100.0f);  // 位置环 0.25f 0.0f 0.025f
     gimbal_controller.pid().yaw_position.SetKi(0.0f);
     gimbal_controller.pid().yaw_position.SetKd(0.0f);
-    gimbal_controller.pid().yaw_position.SetMaxOut(20000.0f);
+    gimbal_controller.pid().yaw_position.SetMaxOut(10000.0f);
     gimbal_controller.pid().yaw_position.SetMaxIout(1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(1000.0f);  // 速度环 520.0f 0.0f 50.0f
+    gimbal_controller.pid().yaw_speed.SetKp(500.0f);  // 速度环 520.0f 0.0f 50.0f
     gimbal_controller.pid().yaw_speed.SetKi(0.0f);
-    gimbal_controller.pid().yaw_speed.SetKd(0.0f);
-    gimbal_controller.pid().yaw_speed.SetMaxOut(20000.0f);
+    gimbal_controller.pid().yaw_speed.SetKd(1.0f);
+    gimbal_controller.pid().yaw_speed.SetMaxOut(10000.0f);
     gimbal_controller.pid().yaw_speed.SetMaxIout(1000.0f);
 
-    gimbal_controller.pid().pitch_position.SetKp(0.5f);  // 位置环 15.0f 0.0f 1.0f
+    gimbal_controller.pid().pitch_position.SetKp(8.0f);  // 位置环 15.0f 0.0f 1.0f
     gimbal_controller.pid().pitch_position.SetKi(0.0f);
     gimbal_controller.pid().pitch_position.SetKd(0.0f);
-    gimbal_controller.pid().pitch_position.SetMaxOut(20.0f);
+    gimbal_controller.pid().pitch_position.SetMaxOut(1000.0f);
     gimbal_controller.pid().pitch_position.SetMaxIout(10.0f);
-    gimbal_controller.pid().pitch_speed.SetKp(2.0f);  // 速度环 1.6f 0.0f 4.5f
+    gimbal_controller.pid().pitch_speed.SetKp(0.5f);  // 速度环 1.6f 0.0f 4.5f
     gimbal_controller.pid().pitch_speed.SetKi(0.0f);
     gimbal_controller.pid().pitch_speed.SetKd(0.0f);
-    gimbal_controller.pid().pitch_speed.SetMaxOut(20.0f);
+    gimbal_controller.pid().pitch_speed.SetMaxOut(100.0f);
     gimbal_controller.pid().pitch_speed.SetMaxIout(10.0f);
   }
 
@@ -206,18 +212,18 @@ class Gimbal {
       if (DM_is_enable == false) {  // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
-        rc_yaw_data = yaw;
-        rc_pitch_data = pitch;
         gimbal_controller.Enable(true);
+        rc_yaw_data = yaw;
+        rc_pitch_data = pitch_motor->pos();
       }
-      rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.3f, 0.3f);  // 遥控器映射yaw轴
-      rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 360);                   // 遥控器周期限制
+      rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+      rc_yaw_data  = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-      rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.3f, 0.3f);  // 遥控器映射yaw轴
-      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 150, 190);              // 遥控器周期限制
+      rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
+      rc_pitch_data  = rm::modules::Clamp(rc_pitch_data, 1.6, 2.9);
 
-      gimbal_controller.SetTarget(rc_yaw_data * M_PI / 180.0f, rc_pitch_data * M_PI / 180.0f);
-      gimbal_controller.Update(yaw * M_PI / 180.0f, yaw_motor->rpm(), pitch * M_PI / 180.0f, pitch_motor->vel());
+      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
+      gimbal_controller.Update(yaw, yaw_motor->rpm(), pitch_motor->pos(), pitch_motor->vel());
 
       yaw_motor->SetCurrent(gimbal_controller.output().yaw);
     }
@@ -227,9 +233,9 @@ class Gimbal {
       if (DM_is_enable == false) {  // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
-        rc_yaw_data = yaw;
-        rc_pitch_data = pitch;
         gimbal_controller.Enable(true);
+        rc_yaw_data = yaw;
+        rc_pitch_data = pitch_motor->pos();
       }
     }
 
@@ -251,6 +257,7 @@ class Gimbal {
     }
   }
 
+  //调试接口函数
   void FreeMasterDebug() {
     Arcyawdata = rc_yaw_data;
     Arcpitchdata = rc_pitch_data;
@@ -259,6 +266,7 @@ class Gimbal {
     Aroll = roll;
     Aoutputyaw = gimbal_controller.output().yaw;
     Aoutputpitch = gimbal_controller.output().pitch;
+    Apitchpose=pitch_motor->pos();
   }
 
   // 遥控器和imu数据解算+DjiMotor发信息
@@ -271,17 +279,19 @@ class Gimbal {
     imu->Update();
     ahrs.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), -imu->gyro_y(), imu->gyro_z(), -imu->accel_x(),
                                          -imu->accel_y(), imu->accel_z()});
-    roll = -57.3 * ahrs.euler_angle().roll + 180;  // 云台正向靠近Yaw的0°和360°边界，顺时针从0°增大到360°
-    yaw = -57.3 * ahrs.euler_angle().yaw + 180;  // 云台始终处于Roll的0°和360°边界，顺时针从0°增大到360°(不限位)
-    pitch = -57.3 * ahrs.euler_angle().pitch + 180;  // 云台仰起Pitch增大，低头Pitch减小(有限位))
+    roll  = -ahrs.euler_angle().roll  + M_PI;
+    yaw   = -ahrs.euler_angle().yaw   + M_PI;
+    pitch = -ahrs.euler_angle().pitch + M_PI;
+
+
   }
 
   // DmMotor电机发信息
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
-      pitch_motor->SetPosition(0, 0, -gimbal_controller.output().pitch, 0, 0);
+      pitch_motor->SetPosition(0, 0, gimbal_controller.output().pitch, 0, 0);
+      FreeMasterDebug();
     }
-    FreeMasterDebug();
   }
 
   // usb收发数据
@@ -299,6 +309,10 @@ class Gimbal {
   // 总循环
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
+      GimbalImuSend(ahrs.quaternion().w,
+                    ahrs.quaternion().x,
+                    ahrs.quaternion().y,
+                    ahrs.quaternion().z);
       time_ = 0;
     }
   }
