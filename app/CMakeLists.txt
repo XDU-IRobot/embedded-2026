@@ -9,6 +9,7 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/targets)
 # 无人机云台
 file(GLOB_RECURSE DRONE_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/drone_gb/*.cc)
 add_exe_target(drone_gb "${DRONE_GB_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(drone_gb PRIVATE DRONE_GB)
 
 # 全向轮靶车底盘
 file(GLOB_RECURSE OMNI_TARGET_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/omni_target/*.cc)
