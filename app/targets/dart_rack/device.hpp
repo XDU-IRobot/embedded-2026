@@ -53,17 +53,16 @@ class ME02 final : public CanDevice {
 
   [[nodiscard]] u16 rotations() const { return rotations_; }
 
-
  private:
-  u16 angle_reg_{};        // 原始角度寄存器
-  f32 angle_deg_{};        // 计算得到的角度(度)
+  u16 angle_reg_{};  // 原始角度寄存器
+  f32 angle_deg_{};  // 计算得到的角度(度)
 
-  u16 speed_reg_{};        // 原始角速度寄存器
-  f32 angular_speed_dps_{};// 计算得到的角速度(°/s)
+  u16 speed_reg_{};          // 原始角速度寄存器
+  f32 angular_speed_dps_{};  // 计算得到的角速度(°/s)
 
-  u16 rotations_{};        // 原始转数寄存器
+  u16 rotations_{};  // 原始转数寄存器
 
-  f32 sample_time_s_{};    // 角速度采样时间，秒
+  f32 sample_time_s_{};  // 角速度采样时间，秒
 };
 
 }  // namespace rm::device

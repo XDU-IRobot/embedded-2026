@@ -36,9 +36,10 @@ void DartStateManualUpadte() {
     case ModeState::kInit:
       // 初始化逻辑
       if (dart_rack->state->manual_mode.init == PhaseState::kUncomplete) {
-        if (dart_rack->rc->switch_r() == rm::device::DR16::SwitchPosition::kUp)  //...
-                                                                                 //初始化操作 1.拨杆位于最上方 2.扳机到达初始位置
-                                                                                 //3.上膛机构复位到初始位置
+        if (dart_rack->rc->switch_r() ==
+            rm::device::DR16::SwitchPosition::kUp)  //...
+                                                    // 初始化操作 1.拨杆位于最上方 2.扳机到达初始位置
+                                                    // 3.上膛机构复位到初始位置
         {
           dart_rack->state->manual_mode.init = PhaseState::kDone;  // 初始化完成
         } else {
