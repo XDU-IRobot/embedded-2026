@@ -14,12 +14,13 @@ void DartRack::Init() {
    dart_rack->rc = new rm::device::DR16{*dart_rack->dbus};
    dart_rack->rc->Begin();
   //电机初始化
-  dart_rack->load_motor_l=new rm::device::M3508{*dart_rack->can1, 1};
-  dart_rack->load_motor_r=new rm::device::M3508{*dart_rack->can1, 2};
+  dart_rack->load_motor_l=new rm::device::M3508{*dart_rack->can1, 3};
+  dart_rack->load_motor_r=new rm::device::M3508{*dart_rack->can1, 4};
   dart_rack->trigger_motor=new rm::device::M2006{*dart_rack->can1, 5};
   dart_rack->trigger_motor_force=new rm::device::M2006{*dart_rack->can1, 6};
   dart_rack->yaw_motor=new rm::device::M2006{*dart_rack->can1, 7};
   dart_rack->can1->SetFilter(0, 0);
+  dart_rack->can1->Begin();
 
   //PID初始化
   dart_rack->load_motor_l_speed_pid=new rm::modules::PID(5,0,0,10000,0 );

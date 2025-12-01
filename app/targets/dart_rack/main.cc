@@ -3,8 +3,10 @@
 #include "main.hpp"
 #include "tim.h"
 #include "timer_task.hpp"
-
-void MainLoop() {}
+#include  "dart_statemachine.hpp"
+void MainLoop() {
+  DartStateMachineUpdate( *dart_rack->state) ;
+}
 extern "C" [[noreturn]] void AppMain(void) {
   dart_rack = new DartRack();
   DartRack::Init();
