@@ -28,4 +28,7 @@ void DartRack::Init() {
   dart_rack->trigger_motor_speed_pid=new rm::modules::PID(5,0,0,10000,0 );
   dart_rack->trigger_motor_force_pid=new rm::modules::PID(5,0,0,10000,0 );
   dart_rack->yaw_motor_speed_pid=new rm::modules::PID(5,0,0,10000,0 );
+
+  //编码器初始化
+  dart_rack->yaw_encoder=new rm::device::ME02{*dart_rack->can1, 0x50, 0.1f};
 }

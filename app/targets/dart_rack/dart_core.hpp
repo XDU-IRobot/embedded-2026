@@ -2,6 +2,7 @@
 #define STATE_DEFINITIONS
 
 #include <librm.hpp>
+#include "device.hpp"
 // 状态机变量定义
 
 enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
@@ -60,6 +61,7 @@ struct DartRack {
   rm::device::M2006 *trigger_motor{nullptr};
   rm::device::M2006 *trigger_motor_force{nullptr};
   rm::device::M2006 *yaw_motor{nullptr};
+  rm::device::ME02 *yaw_encoder{nullptr};
   // PID 控制器
   rm::modules::PID *load_motor_r_speed_pid;
   rm::modules::PID *load_motor_l_speed_pid;
