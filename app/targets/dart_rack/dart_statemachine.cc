@@ -70,8 +70,7 @@ void DartStateManualUpadte() {
     case ModeState::kAim:
       if (dart_rack->state->manual_mode.aim==PhaseState::kUncomplete) {
         //... 瞄准操作
-      }
-      else if (dart_rack->state->manual_mode.aim==PhaseState::kDone) {
+      } else if (dart_rack->state->manual_mode.aim == PhaseState::kDone) {
         // 瞄准完成，进入下一个阶段
         dart_rack->state->manual_mode.mode = ModeState::kFire;
       }
@@ -80,8 +79,7 @@ void DartStateManualUpadte() {
       // 发射逻辑
       if (dart_rack->state->manual_mode.fire==PhaseState::kUncomplete) {
         //... 发射操作
-      }
-      else if (dart_rack->state->manual_mode.fire==PhaseState::kDone) {
+      } else if (dart_rack->state->manual_mode.fire == PhaseState::kDone) {
         // 发射完成，返回待机状态
         dart_rack->state->manual_mode.mode = ModeState::kUnable;
       }
