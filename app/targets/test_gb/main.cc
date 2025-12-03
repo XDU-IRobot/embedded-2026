@@ -9,8 +9,6 @@
 #include "main.hpp"
 #include "Gimbal.hpp"
 
-float d, e, f;
-
 using namespace rm;
 
 void MainLoop() {

@@ -1,7 +1,5 @@
 #include "Gimbal.hpp"
 
-float a, b, c;
-
 void Gimbal::GimbalInit() {
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
@@ -49,9 +47,9 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalAimbotTargetUpdate() {
-  if ((globals->Aimbot->AimbotState >> 0) & 0x01) {
-    gimbal->gimbal_yaw_target_ = globals->Aimbot->Yaw;
-    gimbal->gimbal_pitch_target_ = globals->Aimbot->Pitch;
+  if ((globals->Aimbot.AimbotState >> 0) & 0x01) {
+    gimbal->gimbal_yaw_target_ = globals->Aimbot.Yaw;
+    gimbal->gimbal_pitch_target_ = globals->Aimbot.Pitch;
   }
   gimbal->GimbalDownYawFollow();
 }
@@ -68,7 +66,7 @@ void Gimbal::GimbalMovePIDUpdate() {
 void Gimbal::GimbalEnableUpdate() {
   gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
-  globals->GimbalData->aim_mode = 0x01;
+  globals->GimbalData.aim_mode = 0x01;
   if (gimbal->GimbalMove_ == kGbRemote) {
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
@@ -83,7 +81,7 @@ void Gimbal::GimbalEnableUpdate() {
 void Gimbal::GimbalDisableUpdate() {
   gimbal->DaMiaoMotorDisable();
   globals->gimbal_controller.Enable(false);
-  globals->GimbalData->aim_mode = 0x00;
+  globals->GimbalData.aim_mode = 0x00;
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
   gimbal->GimbalMovePIDUpdate();

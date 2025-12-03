@@ -52,8 +52,8 @@ inline struct GlobalWarehouse {
   Gimbal2Dof gimbal_controller;          ///< 二轴双 Yaw 云台控制器
 
   // USB //
-  GimbalDataFrame_SCM_t *GimbalData{nullptr};  ///< IMU数据
-  AimbotFrame_SCM_t *Aimbot{nullptr};          ///< 自瞄数据
+  GimbalDataFrame_SCM_t GimbalData;  ///< IMU数据
+  AimbotFrame_SCM_t Aimbot;          ///< 自瞄数据
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   int time_ = 0;

@@ -47,12 +47,12 @@ void USBSendMessage(uint8_t *address, uint16_t len, uint8_t id) {
  * @brief          发送云台电机数据
  */
 void GimbalDataSend() {
-  globals->GimbalData->TimeStamp = 0;
-  globals->GimbalData->q0 = globals->ahrs.quaternion().w;
-  globals->GimbalData->q1 = globals->ahrs.quaternion().x;
-  globals->GimbalData->q2 = globals->ahrs.quaternion().y;
-  globals->GimbalData->q3 = globals->ahrs.quaternion().z;
-  // globals->GimbalData->robot_id = 0;
+  globals->GimbalData.TimeStamp = 0;
+  globals->GimbalData.q0 = globals->ahrs.quaternion().w;
+  globals->GimbalData.q1 = globals->ahrs.quaternion().x;
+  globals->GimbalData.q2 = globals->ahrs.quaternion().y;
+  globals->GimbalData.q3 = globals->ahrs.quaternion().z;
+  globals->GimbalData.robot_id = 0;
   USBSendMessage(reinterpret_cast<uint8_t *>(&globals->GimbalData), (uint16_t)sizeof(globals->GimbalData), 0x03);
 }
 
