@@ -45,9 +45,8 @@ void GlobalWarehouse::Init() {
   can1 = new rm::hal::Can{hcan1};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
-  imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
   rc = new rm::device::DR16{*dbus};
+  imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
@@ -72,23 +71,23 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(20.0f);  // 位置环 60.0f 0.0f 2500.0f
+  gimbal_controller.pid().yaw_position.SetKp(20.0f);  // 位置环
   gimbal_controller.pid().yaw_position.SetKi(0.0f);
   gimbal_controller.pid().yaw_position.SetKd(3.0f);
   gimbal_controller.pid().yaw_position.SetMaxOut(10000.0f);
   gimbal_controller.pid().yaw_position.SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(0.4f);  // 速度环 1.8f 0.0f 4.5f
+  gimbal_controller.pid().yaw_speed.SetKp(0.4f);  // 速度环
   gimbal_controller.pid().yaw_speed.SetKi(0.0f);
   gimbal_controller.pid().yaw_speed.SetKd(0.2f);
   gimbal_controller.pid().yaw_speed.SetMaxOut(10.0f);
   gimbal_controller.pid().yaw_speed.SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(20.0f);  // 位置环 15.0f 0.0f 1.0f
+  gimbal_controller.pid().pitch_position.SetKp(20.0f);  // 位置环
   gimbal_controller.pid().pitch_position.SetKi(0.0f);
   gimbal_controller.pid().pitch_position.SetKd(2.5f);
   gimbal_controller.pid().pitch_position.SetMaxOut(10000.0f);
   gimbal_controller.pid().pitch_position.SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.4f);  // 速度环 1.6f 0.0f 4.5f
+  gimbal_controller.pid().pitch_speed.SetKp(0.4f);  // 速度环
   gimbal_controller.pid().pitch_speed.SetKi(0.0f);
   gimbal_controller.pid().pitch_speed.SetKd(0.2f);
   gimbal_controller.pid().pitch_speed.SetMaxOut(10.0f);
@@ -141,8 +140,6 @@ void GlobalWarehouse::SubLoop500Hz() {
                                -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
   globals->RCStateUpdate();
   gimbal->GimbalTask();
-  // globals->yaw_motor->SetPosition(0, 0, 0, 0, 0);
-  // globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {

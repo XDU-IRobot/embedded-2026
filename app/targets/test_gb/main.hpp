@@ -45,8 +45,6 @@ inline struct GlobalWarehouse {
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *yaw_motor{nullptr};    ///< 云台 Yaw 电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  ///< 云台 Pitch 电机
 
-  rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
-
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
   Gimbal2Dof gimbal_controller;          ///< 二轴双 Yaw 云台控制器
