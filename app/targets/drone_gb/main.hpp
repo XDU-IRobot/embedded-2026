@@ -99,7 +99,7 @@ class Gimbal {
     rc = new rm::device::DR16{*dbus};
     yaw_motor = new rm::device::GM6020{*can1, 6};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x01, 0x07, 10.0f, 5.0f, 5.0f, std::make_pair(0.0f, 10.0f), std::make_pair(0.0f, 5.0f)}};
+        *can1, {0x01, 0x07, 10.0f, 5.0f, 5.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
     friction_left = new rm::device::M3508{*can1, 4};
     friction_right = new rm::device::M3508{*can1, 3};
     dial_motor = new rm::device::M2006{*can1, 1};
@@ -276,6 +276,7 @@ class Gimbal {
     AmmoControl();    // 发射机构数据更新
     rm::device::DjiMotor<>::SendCommand(*can1);
 
+    // imu处理
     imu->Update();
     ahrs.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), -imu->gyro_y(), imu->gyro_z(), -imu->accel_x(),
                                          -imu->accel_y(), imu->accel_z()});
@@ -288,13 +289,13 @@ class Gimbal {
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
       pitch_motor->SetPosition(0, 0, gimbal_controller.output().pitch, 0, 0);
-      FreeMasterDebug();
     }
   }
 
-  // usb收发数据
+  // 调试
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {
+      FreeMasterDebug();
     }
   }
 

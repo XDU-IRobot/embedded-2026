@@ -1,15 +1,16 @@
 #include "Usb.hpp"
 #include <algorithm>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 AimbotFrame_SCM_t Aimbot;
 GimbalImuFrame_SCM_t GimbalImu;
 uint16_t robot_id = 3;
 uint8_t x[50];
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 // USB接收
 void UsbReceive(uint8_t* rx_data, uint8_t len) {
   // C 风格 for → C++ std::copy
