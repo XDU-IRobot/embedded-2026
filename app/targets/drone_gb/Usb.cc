@@ -1,12 +1,10 @@
 #include "Usb.hpp"
 #include <algorithm>
 
-
 AimbotFrame_SCM_t Aimbot;
 GimbalImuFrame_SCM_t GimbalImu;
 uint16_t robot_id = 3;
 uint8_t x[50];
-
 
 #ifdef __cplusplus
 extern "C" {
