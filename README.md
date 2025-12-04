@@ -11,6 +11,7 @@
 | 舵轮云台      | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_gb.yml) |
 | 无人机云台     | [![build-drone_gb](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml)                            |
 | 2025赛季老哨兵 | [![build-old_sentry](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-old_sentry.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-old_sentry.yml)                      |
+| 镖架        | [![build-dart_rack](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-dart_rack.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-dart_rack.yml)                       |
 
 ## 开发指南
 

@@ -1,6 +1,9 @@
 name: build-drone_gb
 
-on: push
+on:
+  push:
+    branches:
+      - target/drone_gb
 
 env:
   BUILD_TYPE: Release
