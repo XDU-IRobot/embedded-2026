@@ -1,4 +1,4 @@
-name: build-dart_rack.yml
+name: build-dart_rack
 on: push
 
 env:
