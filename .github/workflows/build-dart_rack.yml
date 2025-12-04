@@ -1,0 +1,19 @@
+name: build-dart_rack.yml
+on: push
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          ref: ${{ github.sha }}
+      - uses: ./.github/actions/build-target
+        with:
+          target: dart_rack
+          build_type: ${{ env.BUILD_TYPE }}
+
