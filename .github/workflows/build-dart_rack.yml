@@ -1,5 +1,9 @@
 name: build-dart_rack
-on: push
+
+on:
+  push:
+    branches:
+      - target/dart_rack
 
 env:
   BUILD_TYPE: Release
@@ -16,4 +20,3 @@ jobs:
         with:
           target: dart_rack
           build_type: ${{ env.BUILD_TYPE }}
-

@@ -1,6 +1,9 @@
 name: build-omni_target
 
-on: push
+on:
+  push:
+    branches:
+      - target/omni_target
 
 env:
   BUILD_TYPE: Release

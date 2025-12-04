@@ -1,6 +1,9 @@
 name: build-old_sentry
 
-on: push
+on:
+  push:
+    branches:
+      - target/old_sentry
 
 env:
   BUILD_TYPE: Release
