@@ -31,3 +31,4 @@ target_compile_definitions(old_sentry PRIVATE OLD_SENTRY)
 #飞镖镖架
 file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
 add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(dart_rack PRIVATE DART_RACK)
