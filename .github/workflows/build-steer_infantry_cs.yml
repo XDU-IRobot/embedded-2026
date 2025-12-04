@@ -1,6 +1,9 @@
 name: build-steer_infantry_cs
 
-on: push
+on:
+  push:
+    branches:
+      - target/steer_infantry_cs
 
 env:
   BUILD_TYPE: Release
