@@ -36,7 +36,7 @@ void DartStateMachineUpdate(DartState &state) {
     dart_rack->load_motor_l->SetCurrent(0);
     dart_rack->load_motor_r->SetCurrent(0);
     dart_rack->trigger_motor->SetCurrent(0);
-    dart_rack->trigger_motor->SetCurrent(0);
+    dart_rack->trigger_motor_force->SetCurrent(0);
     return;
   } else if (state.manual_mode.enabled == AbleState::kOn) {
     DartStateManualUpdate();
@@ -166,7 +166,10 @@ void DartStateAdjustUpdate() {
       dart_rack->load_motor_r_speed_pid->Update(-3000.0f, dart_rack->load_motor_r->rpm(), 1.0f);
       dart_rack->load_motor_r->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid->out()));
     } else {
-      dart_rack->load_motor_l->SetCurrent(0);
+      dart_rack->load_motor_l_speed_pid->Update(.0f, dart_rack->load_motor_l->rpm(), 1.0f);
+      dart_rack->load_motor_l->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid->out()));
+      dart_rack->load_motor_r_speed_pid->Update(.0f, dart_rack->load_motor_r->rpm(), 1.0f);
+      dart_rack->load_motor_r->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid->out()));
     }
   } else if (dart_rack->rc->left_y() < -330) {
     if (dart_rack->load_motor_l_odometer->stall_time() <= 100 &&
@@ -176,26 +179,51 @@ void DartStateAdjustUpdate() {
       dart_rack->load_motor_r_speed_pid->Update(3000.0f, dart_rack->load_motor_r->rpm(), 1.0f);
       dart_rack->load_motor_r->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid->out()));
     } else {
-      dart_rack->load_motor_l->SetCurrent(0);
+      dart_rack->load_motor_l_speed_pid->Update(.0f, dart_rack->load_motor_l->rpm(), 1.0f);
+      dart_rack->load_motor_l->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid->out()));
+      dart_rack->load_motor_r_speed_pid->Update(.0f, dart_rack->load_motor_r->rpm(), 1.0f);
+      dart_rack->load_motor_r->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid->out()));
     }
   } else {
-    dart_rack->load_motor_l->SetCurrent(0);
+    dart_rack->load_motor_l_speed_pid->Update(.0f, dart_rack->load_motor_l->rpm(), 1.0f);
+    dart_rack->load_motor_l->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid->out()));
+    dart_rack->load_motor_r_speed_pid->Update(.0f, dart_rack->load_motor_r->rpm(), 1.0f);
+    dart_rack->load_motor_r->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid->out()));
   }
   // 扳机触发调节
   if (dart_rack->rc->left_x() > 330) {
     if (dart_rack->trigger_motor_force_odometer->stall_time() <= 100) {
-      dart_rack->trigger_motor_force_pid->Update(1000.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
-      dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_force_pid->out()));
+      if (dart_rack->trigger_motor_force->encoder()<=8000) {
+        dart_rack->trigger_motor_force_pid->Update(1000.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
+        dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
+      }
+      else {
+        dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
+        dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
+      }
     } else {
-      dart_rack->trigger_motor_force->SetCurrent(0);
+      dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
+      dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
+
     }
 
   } else if (dart_rack->rc->left_x() < -330) {
     if (dart_rack->trigger_motor_force_odometer->stall_time() <= 100) {
-      dart_rack->trigger_motor_force_pid->Update(-1000.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
-      dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_force_pid->out()));
+      if (dart_rack->trigger_motor_force->encoder()>=5000) {
+        dart_rack->trigger_motor_force_pid->Update(-1000.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
+        dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
+      }
+      else {
+        dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
+        dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
+      }
     } else {
-      dart_rack->trigger_motor_force->SetCurrent(0);
+      dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
+      dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
+
     }
+  }
+  else {
+    dart_rack->trigger_motor_force->SetCurrent(0);
   }
 }

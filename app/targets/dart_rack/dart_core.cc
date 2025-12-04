@@ -30,13 +30,14 @@ void DartRack::Init() {
   dart_rack->load_motor_l_speed_pid = new rm::modules::PID(5, 0, 0, 10000, 0);
   dart_rack->load_motor_r_speed_pid = new rm::modules::PID(5, 0, 0, 10000, 0);
   dart_rack->trigger_motor_speed_pid = new rm::modules::PID(5, 0, 0, 16384, 0);
-  dart_rack->trigger_motor_force_pid = new rm::modules::PID(5, 0, 0, 16384, 0);
+  dart_rack->trigger_motor_force_pid = new rm::modules::PID(-5, 0, 0 ,10000, 0);
   dart_rack->yaw_motor_speed_pid = new rm::modules::PID(5, 0, 0, 16384, 0);
 
   // 计圈器初始化
   dart_rack->load_motor_l_odometer = new rm::device::DjiOdometer();
   dart_rack->load_motor_r_odometer = new rm::device::DjiOdometer();
   dart_rack->trigger_motor_odometer = new rm::device::DjiOdometer();
+  dart_rack->trigger_motor_force_odometer=new rm::device::DjiOdometer();
 }
 // 数据更新
 void DartRack::DataUpdate() {
