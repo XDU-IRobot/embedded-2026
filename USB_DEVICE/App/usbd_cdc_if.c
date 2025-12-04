@@ -22,8 +22,8 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-#include "old_sentry/USB.hpp"
 #include "drone_gb/Usb.hpp"
+#include "old_sentry/USB.hpp"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
