@@ -27,3 +27,7 @@ add_exe_target(steer_infantry_gb "${STEER_INFANTRY_GB_SOURCES};${COMMON_SOURCES}
 file(GLOB_RECURSE OLD_SENTRY_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/old_sentry/*.cc)
 add_exe_target(old_sentry "${OLD_SENTRY_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(old_sentry PRIVATE OLD_SENTRY)
+
+#飞镖镖架
+file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
+add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
