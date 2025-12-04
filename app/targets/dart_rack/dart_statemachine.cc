@@ -193,37 +193,32 @@ void DartStateAdjustUpdate() {
   // 扳机触发调节
   if (dart_rack->rc->left_x() > 330) {
     if (dart_rack->trigger_motor_force_odometer->stall_time() <= 100) {
-      if (dart_rack->trigger_motor_force->encoder()<=8000) {
+      if (dart_rack->trigger_motor_force->encoder() <= 8000) {
         dart_rack->trigger_motor_force_pid->Update(1000.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
         dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
-      }
-      else {
+      } else {
         dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
         dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
       }
     } else {
       dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
       dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
-
     }
 
   } else if (dart_rack->rc->left_x() < -330) {
     if (dart_rack->trigger_motor_force_odometer->stall_time() <= 100) {
-      if (dart_rack->trigger_motor_force->encoder()>=5000) {
+      if (dart_rack->trigger_motor_force->encoder() >= 5000) {
         dart_rack->trigger_motor_force_pid->Update(-1000.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
         dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
-      }
-      else {
+      } else {
         dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
         dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
       }
     } else {
       dart_rack->trigger_motor_force_pid->Update(0.0f, dart_rack->trigger_motor_force->rpm(), 1.0f);
       dart_rack->trigger_motor_force->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid->out()));
-
     }
-  }
-  else {
+  } else {
     dart_rack->trigger_motor_force->SetCurrent(0);
   }
 }
