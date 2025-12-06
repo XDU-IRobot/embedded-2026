@@ -9,7 +9,7 @@ enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
 
 enum class PhaseState : uint8_t { kUncomplete = 0, kDone = 1 };
 
-enum class ModeState : uint8_t { kUnable = 0, kAdd = 1, kInit = 2, kReload = 3, kChamber = 4, kAim = 5, kFire = 6 };
+enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kAdd = 2, kload = 3, kAim = 4, kFire = 5 };
 
 struct AutoMode {
   AbleState enabled = AbleState::kOff;
@@ -24,17 +24,22 @@ struct ManualMode {
   ModeState mode = ModeState::kUnable;
   PhaseState init = PhaseState::kUncomplete;
   PhaseState add = PhaseState::kUncomplete;
-  PhaseState reload = PhaseState::kUncomplete;
-  PhaseState chamber = PhaseState::kUncomplete;
+  PhaseState load = PhaseState::kUncomplete;
   PhaseState aim = PhaseState::kUncomplete;
   PhaseState fire = PhaseState::kUncomplete;
 
+
+  //初始化部分标志位
+  bool is_yaw_init_done = false;  // yaw轴初始化完成标志位
+  bool is_load_init_done = false;
+  bool is_trigger_init_done = false;
+  bool is_trigger_force_init_done = false;
   void ManualModeClear()  // 清空所有标志位
   {
     mode = ModeState::kUnable;
     init = PhaseState::kUncomplete;
-    reload = PhaseState::kUncomplete;
-    chamber = PhaseState::kUncomplete;
+    add = PhaseState::kUncomplete;
+    load = PhaseState::kUncomplete;
     aim = PhaseState::kUncomplete;
     fire = PhaseState::kUncomplete;
   }

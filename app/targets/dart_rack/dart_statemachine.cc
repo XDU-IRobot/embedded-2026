@@ -29,11 +29,7 @@ void DartStateMachineUpdate(DartState &state) {
   // 状态机处理逻辑
   if (state.unable == AbleState::kOn) {
     DartStateClear(state);
-    dart_rack->yaw_motor_->SetCurrent(0);
-    dart_rack->load_motor_l_->SetCurrent(0);
-    dart_rack->load_motor_r_->SetCurrent(0);
-    dart_rack->trigger_motor_->SetCurrent(0);
-    dart_rack->trigger_motor_force_->SetCurrent(0);
+    DartStateUnableUpdate() ;
     return;
   } else if (state.manual_mode.enabled == AbleState::kOn) {
     DartStateManualUpdate();
@@ -50,22 +46,19 @@ void DartStateManualUpdate() {
     case ModeState::kUnable:
       // 等待进入初始化阶段
       if (dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
-        dart_rack->state_.manual_mode.mode = ModeState::kInit;
+        dart_rack->state_.manual_mode.mode = ModeState::kAdd;
+      }
+      else {
+
+        DartStateUnableUpdate() ;
       }
       break;
     case ModeState::kInit:
       // 初始化逻辑
       if (dart_rack->state_.manual_mode.init == PhaseState::kUncomplete) {
-        if (dart_rack->rc_->switch_r() ==
-            rm::device::DR16::SwitchPosition::kUp)  //...
-                                                    // 初始化操作 1.拨杆位于最上方 2.扳机到达初始位置
-                                                    // 3.上膛机构复位到初始位置
-        {
-          dart_rack->state_.manual_mode.init = PhaseState::kDone;  // 初始化完成
-        } else {
-          break;
-        }
-      } else if (dart_rack->state_.manual_mode.init == PhaseState::kDone) {
+        DartStateInitUpdate();
+      }
+      else if (dart_rack->state_.manual_mode.init == PhaseState::kDone) {
         // 初始化完成，进入下一个阶段
         if (dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
           dart_rack->state_.manual_mode.mode = ModeState::kAdd;
@@ -78,21 +71,14 @@ void DartStateManualUpdate() {
         // 加弹完成，进入下一个阶段
       }
 
-    case ModeState::kReload:
-      if (dart_rack->state_.manual_mode.reload == PhaseState::kUncomplete) {
+    case ModeState::kload:
+      if (dart_rack->state_.manual_mode.load == PhaseState::kUncomplete) {
         //... 装填操作
-      } else if (dart_rack->state_.manual_mode.reload == PhaseState::kDone) {
+      } else if (dart_rack->state_.manual_mode.load == PhaseState::kDone) {
       }
       // 装填逻辑
       break;
-    case ModeState::kChamber:
-      if (dart_rack->state_.manual_mode.chamber == PhaseState::kUncomplete) {
-        //... 上膛操作
-      } else if (dart_rack->state_.manual_mode.chamber == PhaseState::kDone) {
-        // 上膛完成，进入下一个阶段
-        dart_rack->state_.manual_mode.mode = ModeState::kAim;
-      }
-      break;
+
     case ModeState::kAim:
       if (dart_rack->state_.manual_mode.aim == PhaseState::kUncomplete) {
         //... 瞄准操作
@@ -218,4 +204,28 @@ void DartStateAdjustUpdate() {
   } else {
     dart_rack->trigger_motor_force_->SetCurrent(0);
   }
+}
+
+
+void DartStateUnableUpdate() {
+  dart_rack->yaw_motor_->SetCurrent(0);
+  dart_rack->load_motor_l_->SetCurrent(0);
+  dart_rack->load_motor_r_->SetCurrent(0);
+  dart_rack->trigger_motor_->SetCurrent(0);
+  dart_rack->trigger_motor_force_->SetCurrent(0);
+}
+void DartStateInitUpdate() {
+   //Yaw轴根据是第几发镖初始化
+
+  //如果是第一发镖，首先全部转到限位并清除计圈器
+
+  //根据当前发镖位置确定扳机位置
+
+  //根据扳机位置计算滑台里程
+
+  //打开撒放器
+
+
+
+  //全部检查完成后，初始化完成
 }

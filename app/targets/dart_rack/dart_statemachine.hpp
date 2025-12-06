@@ -12,4 +12,9 @@ void DartStateManualUpdate();
 
 void DartStateAdjustUpdate();
 
+void DartStateUnableUpdate();
+
+void DartStateInitUpdate();
+
+void DartStateChamberUpdate();
 #endif  // BOARDC_DART_STATEMACHINE_HH
