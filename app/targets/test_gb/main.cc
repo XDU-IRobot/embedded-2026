@@ -53,9 +53,9 @@ void GlobalWarehouse::Init() {
   rc = new rm::device::DR16{*dbus};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+      {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+      {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
 
   device_rc << rc;                            // 遥控器
   device_gimbal << yaw_motor << pitch_motor;  // 云台电机

@@ -5,10 +5,9 @@
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
-#include "device_manager.hpp"
 #include "controllers/gimbal_2dof.hpp"
 
-#include "Can.hpp"
+#include "aimbot_comm_can.hpp"
 #include "USB.hpp"
 
 // 状态机
@@ -39,8 +38,8 @@ inline struct GlobalWarehouse {
   rm::device::CanCommunicator *can_communicator{nullptr};   ///< CAN 通信器
 
   // 设备 //
-  DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
-  DeviceManager<3> device_gimbal;
+  rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
+  rm::device::DeviceManager<3> device_gimbal;
   // 云台
   rm::device::BMI088 *imu{nullptr};                                                 ///< IMU
   rm::device::DR16 *rc{nullptr};                                                    ///< 遥控器
