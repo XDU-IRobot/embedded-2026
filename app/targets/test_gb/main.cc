@@ -25,6 +25,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   gimbal = new Gimbal;
   globals->Init();
 
+  for (auto ch : {TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4}) {
+    HAL_TIM_PWM_Start(&htim1, ch);
+  }
+
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,                                   //
@@ -43,6 +47,7 @@ void GlobalWarehouse::Init() {
   led = new LED;
 
   can1 = new rm::hal::Can{hcan1};
+  can2 = new rm::hal::Can{hcan2};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
   rc = new rm::device::DR16{*dbus};
@@ -56,7 +61,9 @@ void GlobalWarehouse::Init() {
   device_gimbal << yaw_motor << pitch_motor;  // 云台电机
 
   can1->SetFilter(0, 0);
+  can2->SetFilter(0, 0);
   can1->Begin();
+  can2->Begin();
   rc->Begin();
   buzzer->Init();
   led->Init();
@@ -138,14 +145,29 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(  //
       rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
                                -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
+  // 硬触发
+  if (globals->can_communicator->NucStartFlag) {
+    globals->can_communicator->imu_count++;
+    globals->time_camera++;
+    if (globals->time_camera == 10) {
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65534);
+      globals->time_camera = 0;
+    }
+    if (globals->time_camera == 5) {
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+    }
+  }
+  if (globals->can_communicator->imu_count >= 10000) {
+    globals->can_communicator->imu_count = 0;
+  }
   globals->RCStateUpdate();
   gimbal->GimbalTask();
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time_ % 2 == 0) {
-    globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-    globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
+    // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+    // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
   }
 }
 

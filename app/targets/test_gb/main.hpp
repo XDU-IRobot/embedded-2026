@@ -8,6 +8,7 @@
 #include "device_manager.hpp"
 #include "controllers/gimbal_2dof.hpp"
 
+#include "Can.hpp"
 #include "USB.hpp"
 
 // 状态机
@@ -33,8 +34,9 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr};     ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};  ///< 遥控器串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};  ///< CAN 总线接口
+  rm::hal::Serial *dbus{nullptr};               ///< 遥控器串口接口
+  rm::device::CanCommunicator *can_communicator{nullptr};   ///< CAN 通信器
 
   // 设备 //
   DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
@@ -55,6 +57,7 @@ inline struct GlobalWarehouse {
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   int time_ = 0;
+  u_int16_t time_camera = 0;
   const float yaw_gyro_bias_ = 0.0015f;       // 偏航角（角度值）的陀螺仪偏移量
   const float rc_max_value_ = 660.0f;         // 遥控器最大值
   const float GM6020_encoder_max_ = 8191.0f;  // GM6020 电机编码器最大值
