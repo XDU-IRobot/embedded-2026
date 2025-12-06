@@ -29,7 +29,7 @@ void DartStateMachineUpdate(DartState &state) {
   // 状态机处理逻辑
   if (state.unable == AbleState::kOn) {
     DartStateClear(state);
-    DartStateUnableUpdate() ;
+    DartStateUnableUpdate();
     return;
   } else if (state.manual_mode.enabled == AbleState::kOn) {
     DartStateManualUpdate();
@@ -47,18 +47,15 @@ void DartStateManualUpdate() {
       // 等待进入初始化阶段
       if (dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
         dart_rack->state_.manual_mode.mode = ModeState::kAdd;
-      }
-      else {
-
-        DartStateUnableUpdate() ;
+      } else {
+        DartStateUnableUpdate();
       }
       break;
     case ModeState::kInit:
       // 初始化逻辑
       if (dart_rack->state_.manual_mode.init == PhaseState::kUncomplete) {
         DartStateInitUpdate();
-      }
-      else if (dart_rack->state_.manual_mode.init == PhaseState::kDone) {
+      } else if (dart_rack->state_.manual_mode.init == PhaseState::kDone) {
         // 初始化完成，进入下一个阶段
         if (dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
           dart_rack->state_.manual_mode.mode = ModeState::kAdd;
@@ -206,7 +203,6 @@ void DartStateAdjustUpdate() {
   }
 }
 
-
 void DartStateUnableUpdate() {
   dart_rack->yaw_motor_->SetCurrent(0);
   dart_rack->load_motor_l_->SetCurrent(0);
@@ -215,17 +211,15 @@ void DartStateUnableUpdate() {
   dart_rack->trigger_motor_force_->SetCurrent(0);
 }
 void DartStateInitUpdate() {
-   //Yaw轴根据是第几发镖初始化
+  // Yaw轴根据是第几发镖初始化
 
-  //如果是第一发镖，首先全部转到限位并清除计圈器
+  // 如果是第一发镖，首先全部转到限位并清除计圈器
 
-  //根据当前发镖位置确定扳机位置
+  // 根据当前发镖位置确定扳机位置
 
-  //根据扳机位置计算滑台里程
+  // 根据扳机位置计算滑台里程
 
-  //打开撒放器
+  // 打开撒放器
 
-
-
-  //全部检查完成后，初始化完成
+  // 全部检查完成后，初始化完成
 }

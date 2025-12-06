@@ -28,8 +28,7 @@ struct ManualMode {
   PhaseState aim = PhaseState::kUncomplete;
   PhaseState fire = PhaseState::kUncomplete;
 
-
-  //初始化部分标志位
+  // 初始化部分标志位
   bool is_yaw_init_done = false;  // yaw轴初始化完成标志位
   bool is_load_init_done = false;
   bool is_trigger_init_done = false;
