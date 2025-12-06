@@ -5,7 +5,6 @@
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
-#include "device_manager.hpp"
 #include "controllers/gimbal_double_yaw.hpp"
 #include "controllers/quad_steering_chassis.hpp"
 #include "controllers/shoot_3fric.hpp"
@@ -49,10 +48,10 @@ inline struct GlobalWarehouse {
   rm::hal::Serial *referee_uart{nullptr};       ///< 裁判系统串口接口
 
   // 设备 //
-  DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
-  DeviceManager<3> device_gimbal;
-  DeviceManager<3> device_shoot;
-  DeviceManager<8> device_chassis;
+  rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
+  rm::device:: DeviceManager<3> device_gimbal;
+  rm::device:: DeviceManager<3> device_shoot;
+  rm::device:: DeviceManager<8> device_chassis;
   // 云台
   rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
   rm::device::BMI088 *imu{nullptr};                                                    ///< IMU

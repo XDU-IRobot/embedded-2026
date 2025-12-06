@@ -55,9 +55,9 @@ void GlobalWarehouse::Init() {
   rc = new rm::device::DR16{*dbus};
   up_yaw_motor = new rm::device::GM6020{*can1, 5};
   down_yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can2, {0x05, 0x04, 12.56637f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+      {*can2, {0x05, 0x04, 12.56637f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can1, {0x03, 0x02, 12.56637f, 30.0f, 10.0f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+      {*can1, {0x03, 0x02, 12.56637f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   friction_left = new rm::device::M3508{*can1, 7};
   friction_right = new rm::device::M3508{*can1, 6};
   dial_motor = new rm::device::M2006{*can1, 8};

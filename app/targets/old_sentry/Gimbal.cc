@@ -263,34 +263,6 @@ void Gimbal::ShootDisableUpdate() {
                                    globals->dail_position_counter.output(), globals->dial_motor->rpm());
 }
 
-void Gimbal::AmmoSpeedUpdate() {
-  if (globals->referee_data_buffer->data().shoot_data.initial_speed > 20.0f &&
-      globals->referee_data_buffer->data().shoot_data.initial_speed < 35.0f &&
-      globals->referee_data_buffer->data().projectile_allowance.projectile_allowance_17mm !=
-          gimbal->last_remain_bullet_) {
-    if (gimbal->shoot_initial_speed_[0] == 0.0f) {
-      for (float &i : gimbal->shoot_initial_speed_) {
-        i = globals->referee_data_buffer->data().shoot_data.initial_speed;
-      }
-    } else {
-      gimbal->shoot_initial_speed_[shoot_num_] = globals->referee_data_buffer->data().shoot_data.initial_speed;
-      if (shoot_num_ < 10) {
-        shoot_num_++;
-      } else {
-        shoot_num_ = 0;
-      }
-    }
-    gimbal->last_remain_bullet_ = globals->referee_data_buffer->data().projectile_allowance.projectile_allowance_17mm;
-  }
-  gimbal->shoot_initial_average_speed_ /= 10.0f;
-  if (gimbal->shoot_initial_speed_[0] == 0.0f) {
-    gimbal->ammo_speed_ = gimbal->ammo_init_speed_;
-  } else {
-    gimbal->ammo_speed_ =
-        gimbal->ammo_init_speed_ / gimbal->shoot_initial_average_speed_ * gimbal->target_shoot_initial_speed_;
-  }
-}
-
 void Gimbal::SetMotorCurrent() {
   globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
   globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));

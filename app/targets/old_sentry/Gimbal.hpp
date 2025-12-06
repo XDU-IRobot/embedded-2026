@@ -94,8 +94,6 @@ inline class Gimbal {
 
   void ShootDisableUpdate();
 
-  void AmmoSpeedUpdate();
-
   void SetMotorCurrent();
 
   void EulerToQuaternion(f32 yaw, f32 pitch, f32 roll);
