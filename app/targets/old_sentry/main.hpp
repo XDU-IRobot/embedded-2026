@@ -49,9 +49,9 @@ inline struct GlobalWarehouse {
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
-  rm::device:: DeviceManager<3> device_gimbal;
-  rm::device:: DeviceManager<3> device_shoot;
-  rm::device:: DeviceManager<8> device_chassis;
+  rm::device::DeviceManager<3> device_gimbal;
+  rm::device::DeviceManager<3> device_shoot;
+  rm::device::DeviceManager<8> device_chassis;
   // 云台
   rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
   rm::device::BMI088 *imu{nullptr};                                                    ///< IMU
@@ -79,7 +79,7 @@ inline struct GlobalWarehouse {
   GimbalDoubleYaw gimbal_controller;                      ///< 二轴双 Yaw 云台控制器
   QuadSteeringChassis chassis_controller{0.0f, 0.4714f};  ///< 四轮转向底盘控制器
   Shoot3Fric shoot_controller{8, 36.0f};                  ///< 三摩擦轮发射机构控制器，8发拨盘
-  EncoderCounter dail_encoder_counter;            ///< 云台 Yaw 下部电机位置计数器
+  EncoderCounter dail_encoder_counter;                    ///< 云台 Yaw 下部电机位置计数器
 
   // USB //
   GimbalDataFrame_SCM_t GimbalData{0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0, 0};  ///< IMU数据
