@@ -5,10 +5,10 @@
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
+#include "encoder_counter.hpp"
 #include "controllers/gimbal_double_yaw.hpp"
 #include "controllers/quad_steering_chassis.hpp"
 #include "controllers/shoot_3fric.hpp"
-#include "controllers/counter.hpp"
 
 #include "USB.hpp"
 #include "Referee.hpp"
@@ -79,7 +79,7 @@ inline struct GlobalWarehouse {
   GimbalDoubleYaw gimbal_controller;                      ///< 二轴双 Yaw 云台控制器
   QuadSteeringChassis chassis_controller{0.0f, 0.4714f};  ///< 四轮转向底盘控制器
   Shoot3Fric shoot_controller{8, 36.0f};                  ///< 三摩擦轮发射机构控制器，8发拨盘
-  Counter dail_position_counter{0.0, 8191.0f};            ///< 云台 Yaw 下部电机位置计数器
+  EncoderCounter dail_encoder_counter;            ///< 云台 Yaw 下部电机位置计数器
 
   // USB //
   GimbalDataFrame_SCM_t GimbalData{0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0, 0};  ///< IMU数据

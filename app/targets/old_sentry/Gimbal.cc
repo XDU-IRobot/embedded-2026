@@ -1,7 +1,5 @@
 #include "Gimbal.hpp"
 
-float a, b, c, d;
-
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->up_yaw_motor->encoder();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
@@ -16,10 +14,6 @@ void Gimbal::GimbalTask() {
                              2.0f * static_cast<f32>(M_PI));
   yaw = rm::modules::Wrap(yaw, -static_cast<f32>(M_PI), M_PI);
   gimbal->EulerToQuaternion(yaw, -globals->pitch_motor->pos(), 0.0f);
-  a = globals->NucControl.vx;
-  b = globals->NucControl.vy;
-  c = globals->NucControl.vw;
-  d = globals->NucControl.yaw_speed;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -219,7 +213,7 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Arm(true);
   // gimbal->AmmoSpeedUpdate();
   globals->shoot_controller.SetArmSpeed(ammo_speed_);
-  globals->dail_position_counter.IncreaseUpdate(globals->dial_motor->encoder());
+  globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
   if (globals->rc->dial() <= -650
       // && heat_limit_ - heat_current_ > 100
   ) {
@@ -244,8 +238,10 @@ void Gimbal::ShootEnableUpdate() {
     single_shoot_flag_ = false;
   }
   globals->shoot_controller.Fire();
-  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
-                                   globals->dail_position_counter.output(), globals->dial_motor->rpm());
+  globals->shoot_controller.Update(
+      globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
+      globals->dail_encoder_counter.revolutions() * 8191 + globals->dail_encoder_counter.last_ecd(),
+      globals->dial_motor->rpm());
 }
 
 void Gimbal::ShootDisableUpdate() {
@@ -258,9 +254,11 @@ void Gimbal::ShootDisableUpdate() {
     globals->shoot_controller.SetArmSpeed(0.0f);
   }
   globals->shoot_controller.Fire();
-  globals->dail_position_counter.Init(globals->dial_motor->encoder());
-  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
-                                   globals->dail_position_counter.output(), globals->dial_motor->rpm());
+  globals->dail_encoder_counter.Reset(globals->dial_motor->encoder());
+  globals->shoot_controller.Update(
+      globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
+      globals->dail_encoder_counter.revolutions() * 8191 + globals->dail_encoder_counter.last_ecd(),
+      globals->dial_motor->rpm());
 }
 
 void Gimbal::SetMotorCurrent() {
