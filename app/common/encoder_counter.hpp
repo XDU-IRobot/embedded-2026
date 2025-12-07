@@ -20,7 +20,7 @@ class EncoderCounter {
     last_ecd_ = value;
     initialized_ = false;  // 下次 Update 会用传入的 ecd 初始化
     stall_time_ = 0;
-    linear_ticks_=0;
+    linear_ticks_ = 0;
   }
 
   /**
@@ -33,7 +33,7 @@ class EncoderCounter {
       last_ecd_ = ecd;
       initialized_ = true;
       stall_time_ = 0;
-      base_ecd_=ecd;
+      base_ecd_ = ecd;
       return;
     }
 
@@ -66,14 +66,14 @@ class EncoderCounter {
 
     // 如果电机几乎没动，则检查堵转情况
     if (rm::modules::IsNear(delta, 0, 1)) {
-      if (current_ma > 1000||current_ma<=-1000) {  // 电流大于1A，认为可能堵转，递增堵转时间计数
+      if (current_ma > 1000 || current_ma <= -1000) {  // 电流大于1A，认为可能堵转，递增堵转时间计数
         ++stall_time_;
       } else {
         stall_time_ = 0;
       }
     }
-    linear_ticks_ = static_cast<int64_t>(revolutions_) * 8192 +
-                (static_cast<int32_t>(last_ecd_) - static_cast<int32_t>(base_ecd_));
+    linear_ticks_ =
+        static_cast<int64_t>(revolutions_) * 8192 + (static_cast<int32_t>(last_ecd_) - static_cast<int32_t>(base_ecd_));
   }
 
   [[nodiscard]] int64_t revolutions() const { return revolutions_; }
@@ -82,10 +82,10 @@ class EncoderCounter {
   [[nodiscard]] int64_t linear_ticks() const { return linear_ticks_; }
 
  private:
-  int revolutions_{0};  ///< 圈数
-  uint16_t last_ecd_{0};///传入的编码器值
-  uint16_t base_ecd_{0};         ///< Reset 时的基准编码器读数
-  int32_t linear_ticks_{0};      ///< 展开的直线里程（以编码器刻度为单位）
-  bool initialized_{false};/// 是否已初始化
-  size_t stall_time_{0};  ///< 堵转时间计数（按调用Update次数）
+  int revolutions_{0};       ///< 圈数
+  uint16_t last_ecd_{0};     /// 传入的编码器值
+  uint16_t base_ecd_{0};     ///< Reset 时的基准编码器读数
+  int32_t linear_ticks_{0};  ///< 展开的直线里程（以编码器刻度为单位）
+  bool initialized_{false};  /// 是否已初始化
+  size_t stall_time_{0};     ///< 堵转时间计数（按调用Update次数）
 };
