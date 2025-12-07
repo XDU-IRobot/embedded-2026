@@ -216,11 +216,53 @@ void DartStateUnableUpdate() {
 }
 void DartStateInitUpdate() {
    //Yaw轴根据是第几发镖初始化
+  if (dart_rack->yaw_encoder_->angle_deg()>= DartRack::kYawEcd[static_cast<uint8_t>(dart_rack->dart_count_)]) {
+    dart_rack->yaw_motor_speed_pid_.Update(-4000.0f,dart_rack->yaw_motor_->rpm(), 1.0f);
+    dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+  } else if (dart_rack->yaw_encoder_->angle_deg()<
+             DartRack::kYawEcd[static_cast<uint8_t>(dart_rack->dart_count_)]) {
+    dart_rack->yaw_motor_speed_pid_.Update(4000.0f,dart_rack->yaw_motor_->rpm(), 1.0f);
+    dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+  } else {
+    dart_rack->yaw_motor_->SetCurrent(0);
+    dart_rack->state_.manual_mode.is_yaw_init_done = true;
+  }
 
   //如果是第一发镖，首先全部转到限位并清除计圈器
-
+//上膛电机初始化
+ if (dart_rack->load_motor_l_odometer_.stall_time()<=100 ||
+     dart_rack->load_motor_r_odometer_.stall_time()<=100) {
+   dart_rack->load_motor_l_speed_pid_.Update(-3000.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
+   dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
+   dart_rack->load_motor_r_speed_pid_.Update(3000.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+   dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
+ }
+ else {
+    dart_rack->load_motor_l_speed_pid_.Update(.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
+    dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
+    dart_rack->load_motor_r_speed_pid_.Update(.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+    dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
+    dart_rack->state_.manual_mode.is_load_init_done = true;
+    dart_rack->load_motor_l_odometer_.Reset();
+    dart_rack->load_motor_r_odometer_.Reset();
+  }
+//扳机位置初始化
+ if (dart_rack->trigger_motor_odometer_.stall_time()<=100&&dart_rack->state_.manual_mode.is_trigger_init_done == false) {
+   dart_rack->trigger_motor_speed_pid_.Update(-8000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
+   dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
+ }
+ else {
+   dart_rack->trigger_motor_->SetCurrent(0);
+   dart_rack->state_.manual_mode.is_trigger_init_done = true;
+   dart_rack->trigger_motor_odometer_.Reset();
+ }
   //根据当前发镖位置确定扳机位置
+if (dart_rack->state_.manual_mode.is_trigger_init_done == true&&dart_rack->state_.manual_mode.is_load_init_done == true) {
 
+
+
+
+}
   //根据扳机位置计算滑台里程
 
   //打开撒放器
