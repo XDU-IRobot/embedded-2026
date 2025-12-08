@@ -30,9 +30,10 @@ struct ManualMode {
 
   // 初始化部分标志位
   bool is_yaw_init_done = false;  // yaw轴初始化完成标志位
-  bool is_load_init_done = false;
-  bool is_trigger_init_done = false;
+  bool is_load_reset_done = false;
+  bool is_trigger_reset_done = false;
   bool is_trigger_force_init_done = false;
+  bool is_trigger_init_done = false;
   void ManualModeClear()  // 清空所有标志位
   {
     mode = ModeState::kUnable;
@@ -97,9 +98,9 @@ struct DartRack {
   static constexpr float kYawEcdMin = 35.5000f;                      //< ME02 编码器最小值
   static constexpr float kYawEcd[4] = {47.0f, 44.0f, 48.0f, 50.0f};  //< ME02 编码器四发镖位置
   // 扳机相关常量
-  static constexpr float kTriggerEcdMax = 8000.0f;
-  static constexpr float kTriggerEcdMin = 5000.0f;
-  static constexpr float kTriggerEcd[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  static constexpr int32_t kTriggerEcdMax = 800000;
+  static constexpr int32_t kTriggerEcdMin =0;
+  static constexpr int32_t kTriggerEcd[4] = {3000, 2000, 4000, 6000};  //< 扳机四发镖位置
   void Init();
   void Update();
 };

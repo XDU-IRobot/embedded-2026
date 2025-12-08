@@ -73,13 +73,13 @@ class EncoderCounter {
       }
     }
     linear_ticks_ =
-        static_cast<int64_t>(revolutions_) * 8192 + (static_cast<int32_t>(last_ecd_) - static_cast<int32_t>(base_ecd_));
+        static_cast<int32_t>(revolutions_) * 8192 + (static_cast<int32_t>(last_ecd_) - static_cast<int32_t>(base_ecd_));
   }
 
   [[nodiscard]] int64_t revolutions() const { return revolutions_; }
   [[nodiscard]] uint16_t last_ecd() const { return last_ecd_; }
   [[nodiscard]] uint32_t stall_time() const { return stall_time_; }
-  [[nodiscard]] int64_t linear_ticks() const { return linear_ticks_; }
+  [[nodiscard]] uint32_t linear_ticks() const { return linear_ticks_; }
 
  private:
   int revolutions_{0};       ///< 圈数
