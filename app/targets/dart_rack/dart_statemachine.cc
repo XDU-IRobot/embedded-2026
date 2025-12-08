@@ -225,8 +225,9 @@ void DartStateInitUpdate() {
 
   // 如果是第一发镖，首先全部转到限位并清除计圈器
   // 上膛电机初始化
-  if (dart_rack->dart_count_==DartCount::kFirst) {
-    if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 || dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
+  if (dart_rack->dart_count_ == DartCount::kFirst) {
+    if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 ||
+        dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
       dart_rack->load_motor_l_speed_pid_.Update(-3000.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
       dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
       dart_rack->load_motor_r_speed_pid_.Update(3000.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
@@ -245,55 +246,52 @@ void DartStateInitUpdate() {
         dart_rack->state_.manual_mode.is_trigger_reset_done == false) {
       dart_rack->trigger_motor_speed_pid_.Update(-8000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
       dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
-        } else {
-          dart_rack->trigger_motor_->SetCurrent(0);
-          dart_rack->state_.manual_mode.is_trigger_reset_done = true;
-          dart_rack->trigger_motor_odometer_.Reset();
-        }
-  }
-  else {
+    } else {
+      dart_rack->trigger_motor_->SetCurrent(0);
+      dart_rack->state_.manual_mode.is_trigger_reset_done = true;
+      dart_rack->trigger_motor_odometer_.Reset();
+    }
+  } else {
     dart_rack->state_.manual_mode.is_load_reset_done = true;
     dart_rack->state_.manual_mode.is_trigger_reset_done = true;
   }
 
-
   // 根据当前发镖数确定扳机位置
   if (dart_rack->state_.manual_mode.is_trigger_reset_done == true &&
       dart_rack->state_.manual_mode.is_load_reset_done == true) {
-    if (dart_rack->trigger_motor_odometer_.linear_ticks()>DartRack::kTriggerEcd[static_cast<uint8_t>(dart_rack->dart_count_)]) {
+    if (dart_rack->trigger_motor_odometer_.linear_ticks() >
+        DartRack::kTriggerEcd[static_cast<uint8_t>(dart_rack->dart_count_)]) {
       dart_rack->trigger_motor_speed_pid_.Update(8000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
       dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
-    }
-    else if  (dart_rack->trigger_motor_odometer_.linear_ticks()<DartRack::kTriggerEcd[static_cast<uint8_t>(dart_rack->dart_count_)])
-    { dart_rack->trigger_motor_speed_pid_.Update(-8000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
+    } else if (dart_rack->trigger_motor_odometer_.linear_ticks() <
+               DartRack::kTriggerEcd[static_cast<uint8_t>(dart_rack->dart_count_)]) {
+      dart_rack->trigger_motor_speed_pid_.Update(-8000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
       dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
     }
 
     else {
       dart_rack->trigger_motor_speed_pid_.Update(.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
       dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
-      dart_rack->state_.manual_mode.is_load_reset_done=true;
+      dart_rack->state_.manual_mode.is_load_reset_done = true;
     }
-
   }
   // 根据扳机位置计算滑台里程
 
   // 打开撒放器
- if (dart_rack->trigger_motor_force_->encoder()>=5000) {
-   dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
-   dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
- }
- else {
-   dart_rack->trigger_motor_force_->SetCurrent(0);
-   dart_rack->state_.manual_mode.is_trigger_force_init_done=true;
- }
+  if (dart_rack->trigger_motor_force_->encoder() >= 5000) {
+    dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+    dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
+  } else {
+    dart_rack->trigger_motor_force_->SetCurrent(0);
+    dart_rack->state_.manual_mode.is_trigger_force_init_done = true;
+  }
   // 全部检查完成后，初始化完成
   if (dart_rack->state_.manual_mode.is_yaw_init_done == true &&
       dart_rack->state_.manual_mode.is_load_reset_done == true &&
       dart_rack->state_.manual_mode.is_trigger_reset_done == true &&
       dart_rack->state_.manual_mode.is_trigger_force_init_done == true) {
     dart_rack->state_.manual_mode.init = PhaseState::kDone;
-    dart_rack->yaw_motor_speed_pid_.Update(.0f,dart_rack->yaw_motor_->rpm(), 1.0f);
+    dart_rack->yaw_motor_speed_pid_.Update(.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
     dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
     dart_rack->load_motor_l_speed_pid_.Update(0.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
     dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));

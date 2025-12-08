@@ -99,7 +99,7 @@ struct DartRack {
   static constexpr float kYawEcd[4] = {47.0f, 44.0f, 48.0f, 50.0f};  //< ME02 编码器四发镖位置
   // 扳机相关常量
   static constexpr int32_t kTriggerEcdMax = 800000;
-  static constexpr int32_t kTriggerEcdMin =0;
+  static constexpr int32_t kTriggerEcdMin = 0;
   static constexpr int32_t kTriggerEcd[4] = {3000, 2000, 4000, 6000};  //< 扳机四发镖位置
   void Init();
   void Update();
