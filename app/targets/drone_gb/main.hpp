@@ -124,12 +124,11 @@ class Gimbal {
     gimbal_controller.Enable(false);
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
-    shoot_controller.Enable(false);    // 开启控制器
-    shoot_controller.Arm(false);       // 摩擦轮武装（允许转动）
+    shoot_controller.Enable(false);                   // 开启控制器
+    shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetShootFrequency(10.0f);        // 15发/秒
     shoot_controller.SetArmSpeed(100.0f);             // 摩擦轮目标线速度(rad/s)
-
   }
 
   // 云台pid初始化
@@ -264,31 +263,23 @@ class Gimbal {
       shoot_controller.Enable(true);
       shoot_controller.Arm(true);
 
-      if (rc->dial()>=550)
-      {
+      if (rc->dial() >= 550) {
         shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-        shoot_controller.SetShootFrequency(20.0f);   // 10 发/s
-      }
-      else if (rc->dial()<=-600)
-      {
+        shoot_controller.SetShootFrequency(20.0f);  // 10 发/s
+      } else if (rc->dial() <= -600) {
         shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-        shoot_controller.SetShootFrequency(-5.0f);   // -2 发/s
-      }
-      else
-      {
+        shoot_controller.SetShootFrequency(-5.0f);  // -2 发/s
+      } else {
         shoot_controller.SetMode(Shoot2Fric::kStop);
       }
 
-
-      shoot_controller.SetArmSpeed(5000.0f);        // 摩擦轮速度
+      shoot_controller.SetArmSpeed(5000.0f);  // 摩擦轮速度
 
       shoot_controller.Fire();
 
-      shoot_controller.Update(
-          friction_left->rpm(),
-          friction_right->rpm(),
-          dial_motor->pos_rad(),   // 拨盘角度
-          dial_motor->rpm()        // 拨盘转速
+      shoot_controller.Update(friction_left->rpm(), friction_right->rpm(),
+                              dial_motor->pos_rad(),  // 拨盘角度
+                              dial_motor->rpm()       // 拨盘转速
       );
 
       friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
@@ -301,13 +292,10 @@ class Gimbal {
       shoot_controller.Enable(true);
       shoot_controller.Arm(true);
 
-      shoot_controller.SetMode(Shoot2Fric::kStop); // ★★ 让拨盘不动
+      shoot_controller.SetMode(Shoot2Fric::kStop);  // ★★ 让拨盘不动
       shoot_controller.SetArmSpeed(5000.0f);
 
-      shoot_controller.Update(
-          friction_left->rpm(), friction_right->rpm(),
-          dial_motor->pos_rad(), dial_motor->rpm()
-      );
+      shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->pos_rad(), dial_motor->rpm());
 
       friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
       friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
@@ -323,7 +311,6 @@ class Gimbal {
       dial_motor->SetCurrent(0);
     }
   }
-
 
   // 调试接口函数
   void FreeMasterDebug() {
