@@ -45,6 +45,14 @@ struct ManualMode {
     load = PhaseState::kUncomplete;
     aim = PhaseState::kUncomplete;
     fire = PhaseState::kUncomplete;
+     is_yaw_init_done = false;  // yaw轴初始化完成标志位
+     is_load_reset_done = false;
+     is_trigger_reset_done = false;
+     is_trigger_force_init_done = false;
+     is_trigger_init_done = false;
+     is_load_down_done = false;
+     is_load_up_done = false;
+     is_trigger_lock_done = false;
   }
 };
 
@@ -61,6 +69,12 @@ inline void DartStateClear(DartState &state)  // 清空所有状态
   state.auto_mode.enabled = AbleState::kOff;
   state.manual_mode.enabled = AbleState::kOff;
   state.manual_mode.ManualModeClear();
+}
+
+inline void DartManualModeClear(ManualMode &mode)  // 清空手动模式状态
+{
+  mode.enabled = AbleState::kOff;
+  mode.ManualModeClear();
 }
 
 enum class DartCount : uint8_t { kFirst = 0, kSecond = 1, kThird = 2, kFourth = 3 };

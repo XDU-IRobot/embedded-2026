@@ -72,7 +72,7 @@ void DartStateManualUpdate() {
 
     case ModeState::kAdd:
       if (dart_rack->state_.manual_mode.add == PhaseState::kUncomplete) {
-        //... 加弹操作
+        DartStateAddUpdate();
       } else if (dart_rack->state_.manual_mode.add == PhaseState::kDone) {
         // 加弹完成，进入下一个阶段
         if (dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
@@ -82,7 +82,7 @@ void DartStateManualUpdate() {
 
     case ModeState::kAim:
       if (dart_rack->state_.manual_mode.aim == PhaseState::kUncomplete) {
-        //... 瞄准操作
+        DartStateAimUpdate();
       } else if (dart_rack->state_.manual_mode.aim == PhaseState::kDone) {
         // 瞄准完成，进入下一个阶段
         dart_rack->state_.manual_mode.mode = ModeState::kFire;
@@ -90,11 +90,12 @@ void DartStateManualUpdate() {
       break;
     case ModeState::kFire:
       // 发射逻辑
-      if (dart_rack->state_.manual_mode.fire == PhaseState::kUncomplete) {
-        //... 发射操作
+      if (dart_rack->state_.manual_mode.fire == PhaseState::kUncomplete&&dart_rack->rc_->left_x()==660&&dart_rack->rc_->right_x()==-660) {
+        DartStateFireUpdate();
       } else if (dart_rack->state_.manual_mode.fire == PhaseState::kDone) {
         // 发射完成，返回待机状态
         dart_rack->state_.manual_mode.mode = ModeState::kUnable;
+        DartManualModeClear(dart_rack->state_.manual_mode);
       }
       break;
     default:
