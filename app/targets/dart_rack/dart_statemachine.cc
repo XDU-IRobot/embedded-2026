@@ -282,7 +282,7 @@ void DartStateInitUpdate() {
   // 根据扳机位置计算滑台里程
 
   // 打开撒放器
-  if (dart_rack->trigger_motor_force_->encoder() >= 5000) {
+  if (dart_rack->trigger_motor_force_->encoder() >= 5000&&dart_rack->state_.manual_mode.is_trigger_force_init_done ==false) {
     dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
     dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
   } else {
@@ -393,4 +393,27 @@ void DartStateLoadUpdate() {
       dart_rack->state_.manual_mode.is_load_down_done == true) {
     dart_rack->state_.manual_mode.load = PhaseState::kDone;
   }
+}
+
+void DartStateAddUpdate() {
+        // 加弹逻辑
+  if (dart_rack->dart_count_==DartCount::kFirst) {
+dart_rack->state_.manual_mode.add = PhaseState::kDone;//第一发不用换弹
+  }
+}
+
+void DartStateAimUpdate() {
+  dart_rack->state_.manual_mode.aim = PhaseState::kDone;//瞄准待实现
+}
+
+void DartStateFireUpdate() {
+  //释放扳机即可
+  if (dart_rack->trigger_motor_force_->encoder() >= 5000&&
+      dart_rack->state_.manual_mode.fire == PhaseState::kUncomplete)  {
+    dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+    dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
+      } else {
+        dart_rack->trigger_motor_force_->SetCurrent(0);
+        dart_rack->state_.manual_mode.fire = PhaseState::kDone;
+      }
 }

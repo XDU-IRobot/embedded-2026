@@ -10,8 +10,10 @@ void DartStateMachineUpdate(DartState &state);
 void DartStateManualUpdate();
 void DartStateAdjustUpdate();
 void DartStateUnableUpdate();
+
 void DartStateInitUpdate();
 void DartStateLoadUpdate();
 void DartStateAddUpdate();
 void DartStateAimUpdate();
+void DartStateFireUpdate();
 #endif  // BOARDC_DART_STATEMACHINE_HH
