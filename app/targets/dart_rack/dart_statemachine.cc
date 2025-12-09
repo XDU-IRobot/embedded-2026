@@ -90,7 +90,8 @@ void DartStateManualUpdate() {
       break;
     case ModeState::kFire:
       // 发射逻辑
-      if (dart_rack->state_.manual_mode.fire == PhaseState::kUncomplete&&dart_rack->rc_->left_x()==660&&dart_rack->rc_->right_x()==-660) {
+      if (dart_rack->state_.manual_mode.fire == PhaseState::kUncomplete && dart_rack->rc_->left_x() == 660 &&
+          dart_rack->rc_->right_x() == -660) {
         DartStateFireUpdate();
       } else if (dart_rack->state_.manual_mode.fire == PhaseState::kDone) {
         // 发射完成，返回待机状态
