@@ -79,7 +79,7 @@ class EncoderCounter {
   [[nodiscard]] int64_t revolutions() const { return revolutions_; }
   [[nodiscard]] uint16_t last_ecd() const { return last_ecd_; }
   [[nodiscard]] uint32_t stall_time() const { return stall_time_; }
-  [[nodiscard]] uint32_t linear_ticks() const { return linear_ticks_; }
+  [[nodiscard]] int32_t linear_ticks() const { return linear_ticks_; }
 
  private:
   int revolutions_{0};       ///< 圈数

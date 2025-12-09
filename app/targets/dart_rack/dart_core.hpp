@@ -9,7 +9,7 @@ enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
 
 enum class PhaseState : uint8_t { kUncomplete = 0, kDone = 1 };
 
-enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kAdd = 2, kload = 3, kAim = 4, kFire = 5 };
+enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kload = 2 ,kAdd = 3, kAim = 4, kFire = 5 };
 
 struct AutoMode {
   AbleState enabled = AbleState::kOff;
@@ -34,6 +34,9 @@ struct ManualMode {
   bool is_trigger_reset_done = false;
   bool is_trigger_force_init_done = false;
   bool is_trigger_init_done = false;
+  bool is_load_down_done = false;
+  bool is_load_up_done = false;
+  bool is_trigger_lock_done = false;
   void ManualModeClear()  // 清空所有标志位
   {
     mode = ModeState::kUnable;

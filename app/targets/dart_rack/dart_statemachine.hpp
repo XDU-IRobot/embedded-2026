@@ -7,14 +7,11 @@
 #include "dart_core.hpp"
 
 void DartStateMachineUpdate(DartState &state);
-
 void DartStateManualUpdate();
-
 void DartStateAdjustUpdate();
-
 void DartStateUnableUpdate();
-
 void DartStateInitUpdate();
-
-void DartStateChamberUpdate();
+void DartStateLoadUpdate();
+void DartStateAddUpdate();
+void DartStateAimUpdate();
 #endif  // BOARDC_DART_STATEMACHINE_HH
