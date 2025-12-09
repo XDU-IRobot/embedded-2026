@@ -9,7 +9,7 @@ enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
 
 enum class PhaseState : uint8_t { kUncomplete = 0, kDone = 1 };
 
-enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kload = 2 ,kAdd = 3, kAim = 4, kFire = 5 };
+enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kload = 2, kAdd = 3, kAim = 4, kFire = 5 };
 
 struct AutoMode {
   AbleState enabled = AbleState::kOff;
@@ -102,7 +102,7 @@ struct DartRack {
   static constexpr float kYawEcd[4] = {47.0f, 44.0f, 48.0f, 50.0f};  //< ME02 编码器四发镖位置
   // 扳机相关常量
   static constexpr int32_t kTriggerEcdMax = 800000;
-  static constexpr int32_t kTriggerEcdMin =0;
+  static constexpr int32_t kTriggerEcdMin = 0;
   static constexpr int32_t kTriggerEcd[4] = {30000, 20000, 40000, 60000};  //< 扳机四发镖位置
 
   static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
