@@ -100,7 +100,14 @@ struct DartRack {
   // 扳机相关常量
   static constexpr int32_t kTriggerEcdMax = 800000;
   static constexpr int32_t kTriggerEcdMin =0;
-  static constexpr int32_t kTriggerEcd[4] = {3000, 2000, 4000, 6000};  //< 扳机四发镖位置
+  static constexpr int32_t kTriggerEcd[4] = {30000, 20000, 40000, 60000};  //< 扳机四发镖位置
+
+  static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
+  /*
+  上膛距离与扳机位置存在一定关系，理论上
+  kLoadEcd[i] = kLoadEcdPerDart + kTriggerEcd[i]/扳机丝杆步长/扳机电机减速比*上膛丝杆步长*上膛电机减速比
+  */
+  static constexpr int32_t kLoadEcd[4] = {665000, 670000, 675000, 680000};  //< 上膛四发镖位置
   void Init();
   void Update();
 };

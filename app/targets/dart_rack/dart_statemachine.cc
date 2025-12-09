@@ -46,7 +46,7 @@ void DartStateManualUpdate() {
     case ModeState::kUnable:
       // 等待进入初始化阶段
       if (dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
-        dart_rack->state_.manual_mode.mode = ModeState::kAdd;
+        dart_rack->state_.manual_mode.mode = ModeState::kInit;
       } else {
         DartStateUnableUpdate();
       }
@@ -225,11 +225,11 @@ void DartStateInitUpdate() {
 
   // 如果是第一发镖，首先全部转到限位并清除计圈器
   // 上膛电机初始化
-  if (dart_rack->dart_count_==DartCount::kFirst) {
+  if (dart_rack->dart_count_==DartCount::kFirst&&dart_rack->state_.manual_mode.is_load_reset_done==false) {
     if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 || dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
-      dart_rack->load_motor_l_speed_pid_.Update(-3000.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
+      dart_rack->load_motor_l_speed_pid_.Update(3000.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
       dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
-      dart_rack->load_motor_r_speed_pid_.Update(3000.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+      dart_rack->load_motor_r_speed_pid_.Update(-3000.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
       dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
     } else {
       dart_rack->load_motor_l_speed_pid_.Update(.0f, dart_rack->load_motor_l_->rpm(), 1.0f);

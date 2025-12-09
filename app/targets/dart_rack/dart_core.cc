@@ -8,8 +8,8 @@ DartRack *dart_rack;
 
 void DartRack::Init() {
   // PID初始化
-  load_motor_l_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
-  load_motor_r_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
+  load_motor_l_speed_pid_.SetKp(5).SetKi(1).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
+  load_motor_r_speed_pid_.SetKp(5).SetKi(1).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
   trigger_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
   trigger_motor_force_pid_.SetKp(-5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
   yaw_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(16384).SetMaxIout(0);
