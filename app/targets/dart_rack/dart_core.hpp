@@ -110,8 +110,7 @@ struct DartRack {
   EncoderCounter trigger_motor_force_odometer_;
   DartCount dart_count_{DartCount::kFirst};
 
-  //视觉结构体
-
+  // 视觉结构体
 
   // yaw轴相关常量
   static constexpr float kYawEcdMax = 52.6000f;                      //< ME02 编码器最大值
