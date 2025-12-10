@@ -4,6 +4,8 @@
 
 #include "dart_core.hpp"
 
+extern USBVisionReceive_SCM_t vision_data_;
+
 DartRack *dart_rack;
 
 void DartRack::Init() {
