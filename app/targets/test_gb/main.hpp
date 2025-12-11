@@ -58,7 +58,7 @@ inline struct GlobalWarehouse {
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   u_int8_t time_ = 0;                           // 主程序计数器
-  u_int8_t aim_mode = 0;                       // 自瞄模式
+  u_int8_t aim_mode = 0;                        // 自瞄模式
   u_int8_t time_camera = 0;                     // 摄像头计数器
   u_int16_t imu_count = 0;                      // IMU计数器
   const float yaw_gyro_bias_ = 0.0015f;         // 偏航角（角度值）的陀螺仪偏移量

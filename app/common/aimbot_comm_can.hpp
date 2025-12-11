@@ -11,11 +11,11 @@ class CanCommunicator final : public CanDevice {
   CanCommunicator() = delete;
   ~CanCommunicator() override = default;
 
-  [[nodiscard]] u8 aimbot_state() const ;
-  [[nodiscard]] u8 aimbot_target() const ;
-  [[nodiscard]] f32 yaw() const ;
-  [[nodiscard]] f32 pitch() const ;
-  [[nodiscard]] u8 nuc_start_flag() const ;
+  [[nodiscard]] u8 aimbot_state() const;
+  [[nodiscard]] u8 aimbot_target() const;
+  [[nodiscard]] f32 yaw() const;
+  [[nodiscard]] f32 pitch() const;
+  [[nodiscard]] u8 nuc_start_flag() const;
 
   void UpdateQuaternion(f32 w, f32 x, f32 y, f32 z);
   void UpdateControlFlag(u8 robot_id, u8 mode, u16 imu_count);
