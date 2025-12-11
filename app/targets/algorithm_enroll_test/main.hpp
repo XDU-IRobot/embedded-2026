@@ -1,6 +1,6 @@
-//2025/12/10
-//该工程是创建给算法招新考核最终任务的工程
-//仅有yaw pitch两个GM6020电机
+// 2025/12/10
+// 该工程是创建给算法招新考核最终任务的工程
+// 仅有yaw pitch两个GM6020电机
 
 #ifndef BOARDC_MAIN_HPP
 #define BOARDC_MAIN_HPP
@@ -32,7 +32,6 @@ float Apitchpose;
 extern AimbotFrame_SCM_t Aimbot;
 extern GimbalImuFrame_SCM_t GimbalImu;
 
-
 class Gimbal {
  public:
   // 状态机
@@ -45,7 +44,6 @@ class Gimbal {
     kReady,  // 准备开火
     kFire    // 开火
   } StateMachineType;
-
 
   Buzzer *buzzer{nullptr};  ///< 蜂鸣器
   rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
@@ -71,16 +69,15 @@ class Gimbal {
 
   rm::device::DR16 *rc{nullptr};  ///< 遥控器
 
-  rm::device::GM6020 *yaw_motor{nullptr};                                           ///< 云台 Yaw 上电机
+  rm::device::GM6020 *yaw_motor{nullptr};  ///< 云台 Yaw 上电机
   rm::device::GM6020 *pitch_motor{nullptr};
-
 
   StateMachineType AmmoState_ = {kNoForce};  // 当前状态
   StateMachineType GimbalState_ = {kStop};   // 云台运动状态
 
-  Gimbal6020Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
+  Gimbal6020Dof gimbal_controller;  ///< 二轴双 Yaw 云台控制器
 
-  AimbotFrame_SCM_t Gimbal_Aimbot;//自瞄结构体
+  AimbotFrame_SCM_t Gimbal_Aimbot;  // 自瞄结构体
 
   bool DM_is_enable = false;
   int time_ = 0;  // 系统心跳
@@ -92,8 +89,7 @@ class Gimbal {
   double roll = 0;
   double pitch = 0;
 
-  int wait_time=0;
-
+  int wait_time = 0;
 
   // 结构体初始化
   void GimbalInit() {
@@ -109,10 +105,8 @@ class Gimbal {
     yaw_motor = new rm::device::GM6020{*can1, 1};
     pitch_motor = new rm::device::GM6020{*can1, 5};
 
-
-    device_rc << rc;                                                // 遥控器
-    device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
-
+    device_rc << rc;                            // 遥控器
+    device_gimbal << yaw_motor << pitch_motor;  // 云台电机
 
     can1->SetFilter(0, 0);
     can1->Begin();
@@ -128,7 +122,6 @@ class Gimbal {
     GimbalPIDInit();
 
     gimbal_controller.Enable(false);
-
   }
 
   // 云台pid初始化
@@ -180,7 +173,7 @@ class Gimbal {
   // 云台控制
   void GimbalControl() {
     // 手动控制
-    if (wait_time>=5000&&(!Gimbal_Aimbot._SOF)) {
+    if (wait_time >= 5000 && (!Gimbal_Aimbot._SOF)) {
       if (DM_is_enable == false) {  // 使达妙电机使能
         DM_is_enable = true;
         gimbal_controller.Enable(true);
@@ -201,7 +194,7 @@ class Gimbal {
     }
 
     // 自瞄控制
-    else if (wait_time>=5000&&Gimbal_Aimbot._SOF) {
+    else if (wait_time >= 5000 && Gimbal_Aimbot._SOF) {
       if (DM_is_enable == false) {  // 使达妙电机使能
         DM_is_enable = true;
         gimbal_controller.Enable(true);
@@ -225,11 +218,9 @@ class Gimbal {
         DM_is_enable = false;
         gimbal_controller.Enable(false);
       }
-      if (wait_time<5000)
-      {
-        wait_time ++;
+      if (wait_time < 5000) {
+        wait_time++;
       }
-
     }
   }
 
@@ -262,7 +253,6 @@ class Gimbal {
   // DmMotor电机发信息
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
-
     }
   }
 
@@ -271,7 +261,7 @@ class Gimbal {
     if (time_ % 5 == 0) {
       // FreeMasterDebug();
       GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z);
-      Gimbal_Aimbot=Aimbot;
+      Gimbal_Aimbot = Aimbot;
     }
   }
 
