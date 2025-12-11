@@ -13,7 +13,7 @@ typedef struct __attribute__((packed)) {
   float q1;
   float q2;
   float q3;
-  float robot_id;
+  uint8_t robot_id;
   uint8_t aim_mode;
   // 包尾
   uint8_t _EOF;

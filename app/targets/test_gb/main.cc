@@ -28,6 +28,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   for (auto ch : {TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4}) {
     HAL_TIM_PWM_Start(&htim1, ch);
   }
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
@@ -49,9 +50,11 @@ void GlobalWarehouse::Init() {
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  imu_uart = new rm::hal::Serial{huart1, 2048, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
   rc = new rm::device::DR16{*dbus};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+  hipnuc_imu = new rm::device::HipnucImu{*globals->imu_uart};
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
@@ -65,6 +68,7 @@ void GlobalWarehouse::Init() {
   can1->Begin();
   can2->Begin();
   rc->Begin();
+  hipnuc_imu->Begin();
   buzzer->Init();
   led->Init();
 
@@ -102,72 +106,88 @@ void GlobalWarehouse::GimbalPIDInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  switch (globals->rc->switch_r()) {
-    case rm::device::DR16::SwitchPosition::kUp:
-      // 右拨杆打到最上侧挡位
-      switch (globals->rc->switch_l()) {
-        case rm::device::DR16::SwitchPosition::kDown:
-        case rm::device::DR16::SwitchPosition::kMid:
-        case rm::device::DR16::SwitchPosition::kUp:
-        default:
-          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
-          break;
-      }
-      break;
+  if (globals->device_rc.all_device_ok()) switch (globals->rc->switch_r()) {
+      case rm::device::DR16::SwitchPosition::kUp:
+        // 右拨杆打到最上侧挡位
+        switch (globals->rc->switch_l()) {
+          case rm::device::DR16::SwitchPosition::kDown:
+          case rm::device::DR16::SwitchPosition::kMid:
+          case rm::device::DR16::SwitchPosition::kUp:
+          default:
+            globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+            break;
+        }
+        break;
 
-    case rm::device::DR16::SwitchPosition::kMid:
-      // 右拨杆打到中间挡位
-      switch (globals->rc->switch_l()) {
-        case rm::device::DR16::SwitchPosition::kDown:
-          globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
-          gimbal->GimbalMove_ = kGbRemote;
-          break;
-        case rm::device::DR16::SwitchPosition::kMid:
-          globals->StateMachine_ = kTest;
-          gimbal->GimbalMove_ = kGbAimbot;
-          break;
-        case rm::device::DR16::SwitchPosition::kUp:
-        default:
-          globals->StateMachine_ = kNoForce;
-          break;
-      }
-      break;
+      case rm::device::DR16::SwitchPosition::kMid:
+        // 右拨杆打到中间挡位
+        switch (globals->rc->switch_l()) {
+          case rm::device::DR16::SwitchPosition::kDown:
+            globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+            gimbal->GimbalMove_ = kGbRemote;
+            break;
+          case rm::device::DR16::SwitchPosition::kMid:
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbAimbot;
+            break;
+          case rm::device::DR16::SwitchPosition::kUp:
+          default:
+            globals->StateMachine_ = kNoForce;
+            break;
+        }
+        break;
 
-    case rm::device::DR16::SwitchPosition::kDown:
-    default:
-      globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
-      break;
-  }
+      case rm::device::DR16::SwitchPosition::kDown:
+      default:
+        globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
+        break;
+    }
 }
 
+void GlobalWarehouse::RxCallback() {}
+
 void GlobalWarehouse::SubLoop500Hz() {
+  // 在线检测
+  globals->device_rc.Update();
+  globals->device_gimbal.Update();
+  // imu 解算
   globals->imu->Update();
   globals->ahrs.Update(  //
       rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
                                -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
+  // 激光
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
   // 硬触发
-  if (globals->can_communicator->NucStartFlag) {
-    globals->can_communicator->imu_count++;
+  if (globals->can_communicator->nuc_start_flag()) {
+    globals->imu_count++;
     globals->time_camera++;
     if (globals->time_camera == 10) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65534);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
       globals->time_camera = 0;
     }
     if (globals->time_camera == 5) {
       __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
     }
+  } else {
+    globals->imu_count = 0;
+    globals->time_camera = 0;
   }
-  if (globals->can_communicator->imu_count >= 10000) {
-    globals->can_communicator->imu_count = 0;
+  if (globals->imu_count >= 10000) {
+    globals->imu_count = 0;
   }
+  // can 通信
+  globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
+                                              globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
+  globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count);
+
   globals->RCStateUpdate();
   gimbal->GimbalTask();
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time_ % 2 == 0) {
-    // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-    // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
+    globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+    globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
   }
 }
 
