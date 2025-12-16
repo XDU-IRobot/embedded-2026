@@ -2,6 +2,7 @@
 #define BOARDC_MAIN_HPP
 
 #include <librm.hpp>
+#include <utility>
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
@@ -69,6 +70,11 @@ class Gimbal {
   rm::device::M3508 *friction_right{nullptr};                                       ///< 右侧摩擦轮电机
   rm::device::M2006 *dial_motor{nullptr};                                           ///< 拨盘电机
 
+  // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
+  bool roll_comp_enable = true;
+  float roll_comp_kp = 0.1f;     ///< 补偿系数，rad_pitch_per_rad_roll
+  float roll_comp_limit = 0.3f;  ///< 最大补偿幅度（rad）
+
   StateMachineType AmmoState_ = {kNoForce};  // 当前状态
   StateMachineType GimbalState_ = {kStop};   // 云台运动状态
 
@@ -84,6 +90,24 @@ class Gimbal {
   double yaw = 0;
   double roll = 0;
   double pitch = 0;
+
+  // 小角度 roll 补偿：将 roll 误差分解到 yaw/pitch
+  std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
+    if (!roll_comp_enable) {
+      return {yaw_target, pitch_target};
+    }
+    // 水平姿态 roll ≈ M_PI（上方 SubLoop500Hz 中做了 +M_PI）
+    double roll_err = roll-6.25;
+    roll_err = rm::modules::Clamp(roll_err, -roll_comp_limit, roll_comp_limit);
+
+    // 近似分解：机体 roll 对于当前朝向 yaw，投影到 yaw/pitch
+    double yaw_correction = roll_comp_kp * roll_err * std::sin(yaw_target);
+    double pitch_correction = -roll_comp_kp * roll_err * std::cos(yaw_target);
+
+    double new_yaw = rm::modules::Wrap(yaw_target + yaw_correction, 0, 2 * M_PI);
+    double new_pitch = rm::modules::Clamp(pitch_target + pitch_correction, 1.6, 2.9);
+    return {new_yaw, new_pitch};
+  }
 
   // 结构体初始化
   void GimbalInit() {
@@ -125,10 +149,10 @@ class Gimbal {
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
-    shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
+    shoot_controller.Arm(false);               // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
-    shoot_controller.SetShootFrequency(10.0f);        // 15发/秒
-    shoot_controller.SetArmSpeed(100.0f);             // 摩擦轮目标线速度(rad/s)
+    shoot_controller.SetShootFrequency(0.0f);        // 15发/秒
+    shoot_controller.SetArmSpeed(0.0f);             // 摩擦轮目标线速度(rad/s)
   }
 
   // 云台pid初始化
@@ -163,11 +187,13 @@ class Gimbal {
     shoot_controller.pid().fric_1_speed.SetKd(0.0f);
     shoot_controller.pid().fric_1_speed.SetMaxOut(2000.0f);
     shoot_controller.pid().fric_1_speed.SetMaxIout(1000.0f);
+
     shoot_controller.pid().fric_2_speed.SetKp(15.0f);  // 速度环 8.0f 0.0f 0.0f
     shoot_controller.pid().fric_2_speed.SetKi(0.0f);
     shoot_controller.pid().fric_2_speed.SetKd(0.0f);
     shoot_controller.pid().fric_2_speed.SetMaxOut(2000.0f);
     shoot_controller.pid().fric_2_speed.SetMaxIout(1000.0f);
+
     shoot_controller.pid().loader_position.SetKp(500.0f);  // 位置环 0.0f 0.0f 0.0f
     shoot_controller.pid().loader_position.SetKi(0.0f);
     shoot_controller.pid().loader_position.SetKd(10.0f);
@@ -221,7 +247,7 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw;
-        rc_pitch_data = pitch_motor->pos();
+        rc_pitch_data = pitch-1.279;  // 使用 IMU pitch 作为初始姿态
       }
       rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
@@ -229,8 +255,10 @@ class Gimbal {
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.9);
 
-      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
-      gimbal_controller.Update(yaw, yaw_motor->rpm(), pitch_motor->pos(), pitch_motor->vel());
+      auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
+
+      gimbal_controller.SetTarget(comp_yaw, comp_pitch);
+      gimbal_controller.Update(yaw, yaw_motor->rpm(), pitch-1.279, pitch_motor->vel());
 
       yaw_motor->SetCurrent(gimbal_controller.output().yaw);
     }
@@ -242,7 +270,7 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw;
-        rc_pitch_data = pitch_motor->pos();
+        rc_pitch_data = pitch-1.279;
       }
     }
 
@@ -292,8 +320,8 @@ class Gimbal {
       shoot_controller.Enable(true);
       shoot_controller.Arm(true);
 
-      shoot_controller.SetMode(Shoot2Fric::kStop);  // ★★ 让拨盘不动
-      shoot_controller.SetArmSpeed(5000.0f);
+      shoot_controller.SetMode(Shoot2Fric::kStop);
+      shoot_controller.SetArmSpeed(0.0f);
 
       shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->pos_rad(), dial_motor->rpm());
 
@@ -317,7 +345,7 @@ class Gimbal {
     Arcyawdata = rc_yaw_data;
     Arcpitchdata = rc_pitch_data;
     Ayaw = yaw;
-    Apitch = pitch;
+    Apitch = pitch-1.279;
     Aroll = roll;
     Aoutputyaw = gimbal_controller.output().yaw;
     Aoutputpitch = gimbal_controller.output().pitch;
@@ -337,7 +365,7 @@ class Gimbal {
                                          -imu->accel_y(), imu->accel_z()});
     roll = -ahrs.euler_angle().roll + M_PI;
     yaw = -ahrs.euler_angle().yaw + M_PI;
-    pitch = -ahrs.euler_angle().pitch + M_PI;
+    pitch = ahrs.euler_angle().pitch + M_PI;
   }
 
   // DmMotor电机发信息

@@ -14,7 +14,7 @@ void UsbReceive(uint8_t* rx_data, uint8_t len) {
   // C 风格 for → C++ std::copy
   std::copy(rx_data, rx_data + len, x);
 
-  if (rx_data[0] == 0x55 && rx_data[len - 1] == 0xFF) {
+  if (rx_data[0] == 0x55 && rx_data[len - 1] == 0xFF && len<=50) {
     switch (rx_data[1]) {
       case AIMBOT_DATA_RECEIVE_ID:
         memcpy(&Aimbot, rx_data, len);
