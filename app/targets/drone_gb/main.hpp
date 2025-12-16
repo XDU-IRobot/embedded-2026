@@ -97,7 +97,7 @@ class Gimbal {
       return {yaw_target, pitch_target};
     }
     // 水平姿态 roll ≈ M_PI（上方 SubLoop500Hz 中做了 +M_PI）
-    double roll_err = roll-6.25;
+    double roll_err = roll - 6.25;
     roll_err = rm::modules::Clamp(roll_err, -roll_comp_limit, roll_comp_limit);
 
     // 近似分解：机体 roll 对于当前朝向 yaw，投影到 yaw/pitch
@@ -149,10 +149,10 @@ class Gimbal {
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
-    shoot_controller.Arm(false);               // 摩擦轮武装（允许转动）
+    shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
-    shoot_controller.SetShootFrequency(0.0f);        // 15发/秒
-    shoot_controller.SetArmSpeed(0.0f);             // 摩擦轮目标线速度(rad/s)
+    shoot_controller.SetShootFrequency(0.0f);         // 15发/秒
+    shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度(rad/s)
   }
 
   // 云台pid初始化
@@ -247,7 +247,7 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw;
-        rc_pitch_data = pitch-1.279;  // 使用 IMU pitch 作为初始姿态
+        rc_pitch_data = pitch - 1.279;  // 使用 IMU pitch 作为初始姿态
       }
       rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
@@ -258,7 +258,7 @@ class Gimbal {
       auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
 
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.Update(yaw, yaw_motor->rpm(), pitch-1.279, pitch_motor->vel());
+      gimbal_controller.Update(yaw, yaw_motor->rpm(), pitch - 1.279, pitch_motor->vel());
 
       yaw_motor->SetCurrent(gimbal_controller.output().yaw);
     }
@@ -270,7 +270,7 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw;
-        rc_pitch_data = pitch-1.279;
+        rc_pitch_data = pitch - 1.279;
       }
     }
 
@@ -345,7 +345,7 @@ class Gimbal {
     Arcyawdata = rc_yaw_data;
     Arcpitchdata = rc_pitch_data;
     Ayaw = yaw;
-    Apitch = pitch-1.279;
+    Apitch = pitch - 1.279;
     Aroll = roll;
     Aoutputyaw = gimbal_controller.output().yaw;
     Aoutputpitch = gimbal_controller.output().pitch;
