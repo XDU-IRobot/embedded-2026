@@ -9,10 +9,13 @@ extern "C" {
     // C 风格 for → C++ std::copy
     std::copy(rx_data, rx_data + len, x);
 
-    if (rx_data[0] == AIMBOT_DATA_RECEIVE_ID && rx_data[len - 1] == 0xFF) {
+    if (rx_data[0] == 0x55 && rx_data[len - 1] == 0xFF) {
       switch (rx_data[1]) {
         case AIMBOT_DATA_RECEIVE_ID:
-          memcpy(&dart_rack->vision_data_, rx_data, len);
+         dart_rack->vision_data_->ID=rx_data[1];
+         dart_rack->vision_data_->Pitch=*((float*)&rx_data[2]);
+         dart_rack->vision_data_->Yaw=*((float*)&rx_data[6]);
+         dart_rack->vision_data_->IsValiLock=*((bool*)&rx_data[10]);
           break;
 
         default:

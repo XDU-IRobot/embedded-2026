@@ -278,7 +278,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
     UsbReceive(Buf, (uint8_t)*Len);
 #endif
 #ifdef DART_RACK
-  UsbReceive(Buf, (uint8_t)                                                                                                                                                                   *Len);
+  UsbReceive(Buf, (uint8_t)*Len);
 #endif
 
     return (USBD_OK);

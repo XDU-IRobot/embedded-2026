@@ -6,7 +6,9 @@
 
 
 DartRack *dart_rack;
-
+float yaw;
+float pitch;
+float dect;
 void DartRack::Init() {
   // PID初始化
   load_motor_l_speed_pid_.SetKp(5).SetKi(1).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
@@ -42,4 +44,7 @@ void DartRack::Update() {
   load_motor_r_odometer_.Update(load_motor_r_->encoder(), load_motor_r_->current());
   trigger_motor_odometer_.Update(trigger_motor_->encoder(), trigger_motor_->current());
   trigger_motor_force_odometer_.Update(trigger_motor_force_->encoder(), trigger_motor_force_->current());
+  yaw= dart_rack->vision_data_->Yaw;
+  pitch= dart_rack->vision_data_->Pitch;
+        dect= dart_rack->vision_data_->IsValiLock;
 }
