@@ -41,5 +41,4 @@ void DartRack::Update() {
   load_motor_r_odometer_.Update(load_motor_r_->encoder(), load_motor_r_->current());
   trigger_motor_odometer_.Update(trigger_motor_->encoder(), trigger_motor_->current());
   trigger_motor_force_odometer_.Update(trigger_motor_force_->encoder(), trigger_motor_force_->current());
-
 }
