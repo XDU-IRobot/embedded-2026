@@ -4,7 +4,6 @@
 
 #include "dart_core.hpp"
 
-extern USBVisionReceive_SCM_t vision_data_;
 
 DartRack *dart_rack;
 
@@ -27,6 +26,8 @@ void DartRack::Init() {
   trigger_motor_ = new rm::device::M2006{*can1_, 5};
   trigger_motor_force_ = new rm::device::M2006{*can1_, 6};
   yaw_motor_ = new rm::device::M2006{*can1_, 7};
+
+  vision_data_= new USBVisionReceive_SCM_t;
 
   // 编码器初始化
   yaw_encoder_ = new rm::device::JyMe02Can{*can1_, 0x50, 1.0f};

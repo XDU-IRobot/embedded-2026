@@ -1,4 +1,10 @@
 #pragma once
+// cpp
+#ifdef __cplusplus
+#include <cstdbool>
+#else
+#include <stdbool.h>
+#endif
 
 #include "usbd_cdc_if.h"
 

@@ -96,6 +96,8 @@ struct DartRack {
   rm::device::M2006 *yaw_motor_{nullptr};            ///< yaw轴调节电机
   rm::device::JyMe02Can *yaw_encoder_{nullptr};      ///< 编码器
 
+  // usb设备
+  USBVisionReceive_SCM_t *vision_data_{nullptr};  ///< 视觉数据
   // PID 控制器
   rm::modules::PID load_motor_r_speed_pid_{};
   rm::modules::PID load_motor_l_speed_pid_{};
