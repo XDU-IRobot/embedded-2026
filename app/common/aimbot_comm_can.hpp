@@ -4,12 +4,12 @@
 #include <librm.hpp>
 
 namespace rm::device {
-class CanCommunicator final : public CanDevice {
+class AimbotCanCommunicator final : public CanDevice {
  public:
-  explicit CanCommunicator(rm::hal::CanInterface &can);
-  CanCommunicator(CanCommunicator &&other) noexcept = default;
-  CanCommunicator() = delete;
-  ~CanCommunicator() override = default;
+  explicit AimbotCanCommunicator(rm::hal::CanInterface &can);
+  AimbotCanCommunicator(AimbotCanCommunicator &&other) noexcept = default;
+  AimbotCanCommunicator() = delete;
+  ~AimbotCanCommunicator() override = default;
 
   [[nodiscard]] u8 aimbot_state() const;
   [[nodiscard]] u8 aimbot_target() const;

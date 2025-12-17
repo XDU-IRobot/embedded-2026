@@ -1,7 +1,6 @@
 #include "Gimbal.hpp"
 
 void Gimbal::GimbalInit() {
-  globals->can_communicator = new rm::device::CanCommunicator(*globals->can2);
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
   // gimbal->gimbal_yaw_target_ = globals->hipnuc_imu->yaw();
@@ -86,6 +85,7 @@ void Gimbal::GimbalEnableUpdate() {
   gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
   if (gimbal->GimbalMove_ == kGbRemote) {
+    globals->GimbalData.aim_mode = 0x00;
     globals->aim_mode = 0x00;
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
@@ -95,6 +95,7 @@ void Gimbal::GimbalEnableUpdate() {
     gimbal->GimbalAimbotTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else {
+    globals->GimbalData.aim_mode = 0x00;
     globals->aim_mode = 0x00;
     globals->gimbal_controller.Enable(false);
   }

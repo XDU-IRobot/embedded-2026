@@ -22,10 +22,11 @@ typedef enum {
 inline struct GlobalWarehouse {
  public:
   Buzzer *buzzer{nullptr};  ///< 蜂鸣器
-  rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
-                                rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error,
-                                rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
-                                rm::modules::buzzer_melody::TheLick>
+  rm::modules::BuzzerController<
+      rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
+      rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
+      rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
+      rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
       buzzer_controller;
   LED *led{nullptr};  ///< RGB LED灯
   rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
@@ -33,14 +34,15 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};             ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};                          ///< 遥控器串口接口
-  rm::device::CanCommunicator *can_communicator{nullptr};  ///< CAN 通信器
-  rm::hal::Serial *imu_uart{nullptr};                      ///< imu串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};                   ///< CAN 总线接口
+  rm::hal::Serial *dbus{nullptr};                                ///< 遥控器串口接口
+  rm::device::AimbotCanCommunicator *can_communicator{nullptr};  ///< CAN 通信器
+  rm::hal::Serial *imu_uart{nullptr};                            ///< imu串口接口
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;
+  rm::device::DeviceManager<1> device_nuc;
   // 云台
   rm::device::BMI088 *imu{nullptr};                                                 ///< IMU
   rm::device::HipnucImu *hipnuc_imu{nullptr};                                       ///< IMU
@@ -58,6 +60,7 @@ inline struct GlobalWarehouse {
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   u_int8_t time_ = 0;                           // 主程序计数器
+  u_int16_t time_offline[3]{};                  // 掉线计数器
   u_int8_t aim_mode = 0;                        // 自瞄模式
   u_int8_t time_camera = 0;                     // 摄像头计数器
   u_int16_t imu_count = 0;                      // IMU计数器
@@ -68,8 +71,6 @@ inline struct GlobalWarehouse {
   // 函数 //
  public:
   void Init();
-
-  void RxCallback();
 
   void SubLoop500Hz();
 

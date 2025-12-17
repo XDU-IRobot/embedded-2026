@@ -39,7 +39,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   mainloop_1000hz.Start();
 
   for (;;) {
-    __WFI();
+    // __WFI();
   }
 }
 
@@ -49,19 +49,17 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
+  can_communicator = new rm::device::AimbotCanCommunicator(*can2);
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  imu_uart = new rm::hal::Serial{huart1, 2048, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  imu_uart = new rm::hal::Serial{huart1, 512, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
   rc = new rm::device::DR16{*dbus};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-  hipnuc_imu = new rm::device::HipnucImu{*globals->imu_uart};
+  hipnuc_imu = new rm::device::HipnucImu{*imu_uart};
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
-
-  device_rc << rc;                            // 遥控器
-  device_gimbal << yaw_motor << pitch_motor;  // 云台电机
 
   can1->SetFilter(0, 0);
   can2->SetFilter(0, 0);
@@ -71,6 +69,37 @@ void GlobalWarehouse::Init() {
   hipnuc_imu->Begin();
   buzzer->Init();
   led->Init();
+
+  device_rc << rc;                            // 遥控器
+  device_gimbal << yaw_motor << pitch_motor;  // 云台电机
+  device_nuc << can_communicator;
+
+  // device_gimbal.OnDeviceFaultOrOffline([&](rm::device::Device *offline_device) {
+  //   if (time_offline[0] == 0) {
+  //     if (offline_device == yaw_motor) {
+  //       buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
+  //     }
+  //     if (offline_device == pitch_motor) {
+  //       buzzer_controller.Play<modules::buzzer_melody::Beeps<2>>();
+  //     }
+  //   }
+  //   time_offline[0]++;
+  //   if (time_offline[0] >= 1000) {
+  //     time_offline[0] = 0;
+  //   }
+  // });
+
+  // device_nuc.OnDeviceFaultOrOffline([&](rm::device::Device *offline_device) {
+  //   if (time_offline[0] == 0) {
+  //     if (offline_device == can_communicator) {
+  //       led_controller.SetPattern<modules::led_pattern::RedFlash>();
+  //     }
+  //   }
+  //   time_offline[0]++;
+  //   if (time_offline[0] >= 1000) {
+  //     time_offline[0] = 0;
+  //   }
+  // });
 
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
   buzzer_controller.Play<modules::buzzer_melody::Startup>();
@@ -82,27 +111,11 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(20.0f);  // 位置环
-  gimbal_controller.pid().yaw_position.SetKi(0.0f);
-  gimbal_controller.pid().yaw_position.SetKd(3.0f);
-  gimbal_controller.pid().yaw_position.SetMaxOut(10000.0f);
-  gimbal_controller.pid().yaw_position.SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(0.4f);  // 速度环
-  gimbal_controller.pid().yaw_speed.SetKi(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKd(0.2f);
-  gimbal_controller.pid().yaw_speed.SetMaxOut(10.0f);
-  gimbal_controller.pid().yaw_speed.SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(3.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(20.0f);  // 位置环
-  gimbal_controller.pid().pitch_position.SetKi(0.0f);
-  gimbal_controller.pid().pitch_position.SetKd(2.5f);
-  gimbal_controller.pid().pitch_position.SetMaxOut(10000.0f);
-  gimbal_controller.pid().pitch_position.SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.4f);  // 速度环
-  gimbal_controller.pid().pitch_speed.SetKi(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKd(0.2f);
-  gimbal_controller.pid().pitch_speed.SetMaxOut(10.0f);
-  gimbal_controller.pid().pitch_speed.SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.0f).SetKd(2.5f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::RCStateUpdate() {
@@ -144,12 +157,7 @@ void GlobalWarehouse::RCStateUpdate() {
     }
 }
 
-void GlobalWarehouse::RxCallback() {}
-
 void GlobalWarehouse::SubLoop500Hz() {
-  // 在线检测
-  globals->device_rc.Update();
-  globals->device_gimbal.Update();
   // imu 解算
   globals->imu->Update();
   globals->ahrs.Update(  //
@@ -158,7 +166,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   // 激光
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
   // 硬触发
-  if (globals->can_communicator->nuc_start_flag()) {
+  if (globals->can_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
     globals->imu_count++;
     globals->time_camera++;
     if (globals->time_camera == 10) {
@@ -186,13 +194,17 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time_ % 2 == 0) {
-    globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-    globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
+    // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+    // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
   }
 }
 
 void GlobalWarehouse::SubLoop100Hz() {
   if (globals->time_ % 5 == 0) {
+    // 在线检测
+    globals->device_rc.Update();
+    globals->device_gimbal.Update();
+    globals->device_nuc.Update();
     GimbalDataSend();
   }
 }
