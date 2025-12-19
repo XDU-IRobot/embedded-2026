@@ -64,6 +64,7 @@ inline struct GlobalWarehouse {
   u_int8_t aim_mode = 0;                        // 自瞄模式
   u_int8_t time_camera = 0;                     // 摄像头计数器
   u_int16_t imu_count = 0;                      // IMU计数器
+  u_int32_t imu_time = 0;                       // INU解算时的时间戳
   const float yaw_gyro_bias_ = 0.0015f;         // 偏航角（角度值）的陀螺仪偏移量
   const float rc_max_value_ = 660.0f;           // 遥控器最大值
   const float GM6020_encoder_max_ = 8191.0f;    // GM6020 电机编码器最大值

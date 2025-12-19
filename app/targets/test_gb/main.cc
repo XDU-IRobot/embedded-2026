@@ -163,6 +163,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(  //
       rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
                                -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
+  imu_time = HAL_GetTick();
   // 激光
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
   // 硬触发
@@ -186,8 +187,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   // can 通信
   globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
                                               globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
-  globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count,
-                                               globals->hipnuc_imu->system_time());
+  globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count, globals->imu_time);
 
   globals->RCStateUpdate();
   gimbal->GimbalTask();
