@@ -51,7 +51,7 @@ void GlobalWarehouse::Init() {
   can2 = new rm::hal::Can{hcan2};
   can_communicator = new rm::device::AimbotCanCommunicator(*can2);
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  imu_uart = new rm::hal::Serial{huart1, 512, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  imu_uart = new rm::hal::Serial{huart1, 1024, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
   rc = new rm::device::DR16{*dbus};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
@@ -114,8 +114,8 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(3.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.0f).SetKd(2.5f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(18.0f).SetKi(0.0f).SetKd(2.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.15f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::RCStateUpdate() {
@@ -186,7 +186,8 @@ void GlobalWarehouse::SubLoop500Hz() {
   // can 通信
   globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
                                               globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
-  globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count);
+  globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count,
+                                               globals->hipnuc_imu->system_time());
 
   globals->RCStateUpdate();
   gimbal->GimbalTask();
@@ -194,8 +195,8 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time_ % 2 == 0) {
-    // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-    // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
+    globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+    globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
   }
 }
 

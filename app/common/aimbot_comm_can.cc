@@ -38,11 +38,15 @@ void AimbotCanCommunicator::UpdateQuaternion(f32 w, f32 x, f32 y, f32 z) {
   this->can_->Write(0x150, tx_buf_, 8);
 }
 
-void AimbotCanCommunicator::UpdateControlFlag(u8 robot_id, u8 mode, u16 imu_count) {
+void AimbotCanCommunicator::UpdateControlFlag(u8 robot_id, u8 mode, u16 imu_count, u32 imu_time) {
   tx_buf_[0] = robot_id;
   tx_buf_[1] = mode;
   tx_buf_[2] = imu_count >> 8;
   tx_buf_[3] = imu_count;
+  tx_buf_[4] = imu_time >> 24;
+  tx_buf_[5] = imu_time >> 16;
+  tx_buf_[6] = imu_time >> 8;
+  tx_buf_[7] = imu_time;
   this->can_->Write(0x160, tx_buf_, 4);
 }
 
