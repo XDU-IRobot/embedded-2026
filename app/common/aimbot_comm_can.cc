@@ -47,7 +47,7 @@ void AimbotCanCommunicator::UpdateControlFlag(u8 robot_id, u8 mode, u16 imu_coun
   tx_buf_[5] = imu_time >> 16;
   tx_buf_[6] = imu_time >> 8;
   tx_buf_[7] = imu_time;
-  this->can_->Write(0x160, tx_buf_, 4);
+  this->can_->Write(0x160, tx_buf_, 8);
 }
 
 }  // namespace rm::device
