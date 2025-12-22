@@ -317,8 +317,8 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   chassis->ChassisTask();
-  rm::device::DjiMotor<>::SendCommand(*can1);
-  rm::device::DjiMotor<>::SendCommand(*can2);
+  // rm::device::DjiMotor<>::SendCommand(*can1);
+  // rm::device::DjiMotor<>::SendCommand(*can2);
   if (USB_selection) {
     GimbalDataSend();
     USB_selection ^= 1;
@@ -330,8 +330,8 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
-    globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
+    // globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
+    // globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
   }
 }
 
