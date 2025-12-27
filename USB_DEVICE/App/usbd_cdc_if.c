@@ -28,6 +28,10 @@
 #ifdef DRONE_GB
 #include "drone_gb/Usb.hpp"
 #endif
+#ifdef TEST_CS
+#include "test_cs/minipc_bridge.h"
+#endif
+
 
 /* USER CODE END INCLUDE */
 
@@ -273,6 +277,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 #endif
 #ifdef DRONE_GB
     UsbReceive(Buf, (uint8_t)*Len);
+#endif
+#ifdef TEST_CS
+   CDCRecvCallback(Buf, *Len);
 #endif
 
     return (USBD_OK);

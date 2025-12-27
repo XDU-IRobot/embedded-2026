@@ -32,3 +32,8 @@ target_compile_definitions(old_sentry PRIVATE OLD_SENTRY)
 file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
 add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)
+
+#测试底盘
+file(GLOB_RECURSE TEST_CS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/test_cs/*.cc)
+add_exe_target(test_cs "${TEST_CS_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(test_cs PRIVATE TEST_CS)
