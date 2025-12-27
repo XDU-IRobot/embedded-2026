@@ -2,7 +2,7 @@
 #pragma once
 
 class Fsm {
-public:
+ public:
   enum class State {
     kNoForce,  // 无力模式
     kManual,   // 遥控器控制
@@ -13,6 +13,6 @@ public:
 
   State mode() const { return mode_; }
 
-private:
+ private:
   State mode_{State::kNoForce};
 };

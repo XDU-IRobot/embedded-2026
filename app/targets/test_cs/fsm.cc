@@ -6,18 +6,18 @@
 
 #include <librm.hpp>
 
-f32 rc1=0.f;
-f32 x_speed_=0.f;
-f32 y_speed_=0.f;
-f32 yaw_speed_=0.f;
-f32 w_speed_=0.f;
+f32 rc1 = 0.f;
+f32 x_speed_ = 0.f;
+f32 y_speed_ = 0.f;
+f32 yaw_speed_ = 0.f;
+f32 w_speed_ = 0.f;
 
-f32 Limit(f32 speed){
-  if(speed > 2.f){
+f32 Limit(f32 speed) {
+  if (speed > 2.f) {
     speed = 2.f;
-  }else if(speed < -2.f){
+  } else if (speed < -2.f) {
     speed = -2.f;
-  }else{
+  } else {
     speed = speed;
   }
 
@@ -40,7 +40,7 @@ void Fsm::Transit(State new_mode) {
 void Fsm::Update() {
   if (!global.rc->device_rc.all_device_ok()) {
     Transit(State::kAuto);
-  }else{
+  } else {
     switch (global.rc->rc->switch_r()) {  ///< right switch
       case DR16::SwitchPosition::kDown: {
         Transit(State::kNoForce);
@@ -62,22 +62,22 @@ void Fsm::Update() {
 
     switch (mode_) {
       case State::kNoForce: {
-        rc1=global.rc->rc->left_y();
+        rc1 = global.rc->rc->left_y();
         break;
       }
       case State::kManual: {
-        rc1=global.rc->rc->left_x();
+        rc1 = global.rc->rc->left_x();
         global.chassis->UpdateTargetSpeed(global.rc->rc->left_x() / 330.f, -global.rc->rc->left_y() / 330.f,
-                                           global.rc->rc->dial() / 200.f );
+                                          global.rc->rc->dial() / 200.f);
         break;
       }
       case State::kAuto: {
         x_speed_ = Limit(global.minipc->rx_buffer_.x_speed);
-        y_speed_ = Limit(global.minipc->rx_buffer_.y_speed );
-        yaw_speed_ = Limit(global.minipc->rx_buffer_.yaw_speed );
+        y_speed_ = Limit(global.minipc->rx_buffer_.y_speed);
+        yaw_speed_ = Limit(global.minipc->rx_buffer_.yaw_speed);
         w_speed_ = Limit(global.minipc->rx_buffer_.w_speed);
 
-        global.chassis->UpdateTargetSpeed(x_speed_ , -y_speed_ , yaw_speed_);
+        global.chassis->UpdateTargetSpeed(x_speed_, -y_speed_, yaw_speed_);
         break;
       }
       default: {
@@ -85,6 +85,6 @@ void Fsm::Update() {
       }
     }
     global.chassis->Update();
-    //device::DjiMotor<>::SendCommand();
+    // device::DjiMotor<>::SendCommand();
   }
 }

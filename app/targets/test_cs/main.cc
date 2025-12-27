@@ -11,11 +11,10 @@ Global global;
 // 实例化RemoteControl对象
 RemoteControl remote_ctrl;
 
-void MainLoop() {
-  global.fsm.Update();
-}
+void MainLoop() { global.fsm.Update(); }
 
-extern "C" {void AppMain(void) {
+extern "C" {
+void AppMain(void) {
   hal::Serial motor_bus{huart1, 100, hal::stm32::UartMode::kDma, hal::stm32::UartMode::kDma};
 
   // 初始化RemoteControl
@@ -23,16 +22,16 @@ extern "C" {void AppMain(void) {
   // 将RemoteControl对象地址赋值给global.rc
   global.rc = &remote_ctrl;
 
-  global.chassis = new Chassis{new device::ZdtStepper{motor_bus, 4 , 0},  //
-                                new device::ZdtStepper{motor_bus, 1 , 1},   //
-                                new device::ZdtStepper{motor_bus, 2 , 0},  //
-                                new device::ZdtStepper{motor_bus, 3,1}};
+  global.chassis = new Chassis{new device::ZdtStepper{motor_bus, 4, 0},  //
+                               new device::ZdtStepper{motor_bus, 1, 1},  //
+                               new device::ZdtStepper{motor_bus, 2, 0},  //
+                               new device::ZdtStepper{motor_bus, 3, 1}};
   global.minipc = new MiniPC;
 
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
-    &htim13,                                   //
-    etl::delegate<void()>::create<MainLoop>()  //
+      &htim13,                                   //
+      etl::delegate<void()>::create<MainLoop>()  //
   };
 
   mainloop_1000hz.Start();
@@ -40,4 +39,5 @@ extern "C" {void AppMain(void) {
   for (;;) {
     __WFI();
   }
-}}
+}
+}

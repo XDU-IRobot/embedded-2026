@@ -8,8 +8,8 @@
 
 struct Global {
   RemoteControl const *rc{nullptr};  ///< 遥控器object
-  Chassis *chassis{nullptr};     ///< 底盘object
-  MiniPC *minipc{nullptr};       ///< minipc object
+  Chassis *chassis{nullptr};         ///< 底盘object
+  MiniPC *minipc{nullptr};           ///< minipc object
 
   Fsm fsm{};  ///< 状态机控制行为模式
 };
