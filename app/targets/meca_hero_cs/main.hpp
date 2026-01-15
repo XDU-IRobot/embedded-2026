@@ -7,5 +7,4 @@
 
 #include <librm.hpp>
 
-
 #endif  // BOARDC_MAIN_HPP
