@@ -40,7 +40,7 @@ void Gimbal::GimbalStateUpdate() {
 
 void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -globals->rc_max_value_, globals->rc_max_value_,
-                                                 -gimbal->sensitivity_, gimbal->sensitivity_);      // 上部yaw轴目标值
+                                                 -gimbal->sensitivity_, gimbal->sensitivity_);  // 上部yaw轴目标值
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -globals->rc_max_value_,  // pitch轴目标值
                                                    globals->rc_max_value_, -gimbal->sensitivity_, gimbal->sensitivity_);
   gimbal->gimbal_yaw_target_ =
@@ -75,8 +75,8 @@ void Gimbal::GimbalMovePIDUpdate() {
   // globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->yaw_motor->vel(),
   //                                   globals->ahrs.euler_angle().pitch, globals->pitch_motor->vel());
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_);
-  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->yaw_motor->vel(),
-                                    globals->hipnuc_imu->roll(), globals->pitch_motor->vel());
+  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->yaw_motor->vel(), globals->hipnuc_imu->roll(),
+                                    globals->pitch_motor->vel());
   // gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->pitch_motor->pos());
   // gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gimbal->gravity_compensation_;
   // gimbal->pitch_torque_ = rm::modules::Clamp(pitch_torque_, -10.0f, 10.0f);
