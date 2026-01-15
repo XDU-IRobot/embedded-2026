@@ -17,7 +17,7 @@ class DeviceManager {
   }
 
   bool all_device_ok() const {
-    return std::all_of(devices_.begin(), devices_.end(), [](rm::device::Device *dev) { return dev->IsAlive(); });
+    return std::all_of(devices_.begin(), devices_.end(), [](rm::device::Device *dev) { return dev->Ok(); });
   }
 
  private:
