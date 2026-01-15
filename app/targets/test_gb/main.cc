@@ -55,7 +55,7 @@ void GlobalWarehouse::Init() {
 
   rc = new rm::device::DR16{*dbus};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-  hipnuc_imu = new rm::device::HipnucImu{*imu_uart};
+  hipnuc_imu = new rm::device::HipnucImuCan{*can2, 8};
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
@@ -66,7 +66,7 @@ void GlobalWarehouse::Init() {
   can1->Begin();
   can2->Begin();
   rc->Begin();
-  hipnuc_imu->Begin();
+  // hipnuc_imu->Begin();
   buzzer->Init();
   led->Init();
 
@@ -159,10 +159,10 @@ void GlobalWarehouse::RCStateUpdate() {
 
 void GlobalWarehouse::SubLoop500Hz() {
   // imu 解算
-  globals->imu->Update();
-  globals->ahrs.Update(  //
-      rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
-                               -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
+  // globals->imu->Update();
+  // globals->ahrs.Update(  //
+  //     rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
+  //                              -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
   imu_time = HAL_GetTick();
   // 激光
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
