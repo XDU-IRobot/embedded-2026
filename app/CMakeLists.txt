@@ -9,6 +9,7 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/targets)
 # 无人机云台
 file(GLOB_RECURSE DRONE_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/drone_gb/*.cc)
 add_exe_target(drone_gb "${DRONE_GB_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(drone_gb PRIVATE DRONE_GB)
 
 # 全向轮靶车底盘
 file(GLOB_RECURSE OMNI_TARGET_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/omni_target/*.cc)
@@ -31,3 +32,8 @@ target_compile_definitions(old_sentry PRIVATE OLD_SENTRY)
 file(GLOB_RECURSE TEST_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/test_gb/*.cc)
 add_exe_target(test_gb "${TEST_GB_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(test_gb PRIVATE TEST_GB)
+
+#飞镖镖架
+file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
+add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(dart_rack PRIVATE DART_RACK)

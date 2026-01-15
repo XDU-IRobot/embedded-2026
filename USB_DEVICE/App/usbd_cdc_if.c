@@ -22,8 +22,16 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#ifdef OLD_SENTRY
 #include "old_sentry/USB.hpp"
+#endif
+#ifdef TEST_GB
 #include "test_gb/USB.hpp"
+#endif
+#ifdef DRONE_GB
+#include "drone_gb/Usb.hpp"
+#endif
+
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -265,6 +273,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 #if defined (OLD_SENTRY) || defined (TEST_GB)
     USBReceive(Buf, *Len);
+#endif
+#ifdef DRONE_GB
+    UsbReceive(Buf, (uint8_t)*Len);
 #endif
 
     return (USBD_OK);

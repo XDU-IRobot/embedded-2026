@@ -1,9 +1,9 @@
-name: build-drone_gb
+name: build-dart_rack
 
 on:
   push:
     branches:
-      - target/drone_gb
+      - target/dart_rack
 
 env:
   BUILD_TYPE: Release
@@ -18,6 +18,5 @@ jobs:
           ref: ${{ github.sha }}
       - uses: ./.github/actions/build-target
         with:
-          target: drone_gb
+          target: dart_rack
           build_type: ${{ env.BUILD_TYPE }}
-

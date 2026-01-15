@@ -12,6 +12,7 @@
 | 无人机云台     | [![build-drone_gb](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-drone_gb.yml)                            |
 | 2025赛季老哨兵 | [![build-old_sentry](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-old_sentry.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-old_sentry.yml)                      |
 | 测试平台云台    | [![build-test_gb](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-test_gb.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-test_gb.yml)                               |
+| 镖架        | [![build-dart_rack](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-dart_rack.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-dart_rack.yml)                       |
 
 ## 开发指南
 

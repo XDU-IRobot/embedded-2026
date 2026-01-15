@@ -1,12 +1,9 @@
 name: build-steer_infantry_gb
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
-      - 'target/steer_infantry_gb'
+      - target/steer_infantry_gb
 
 env:
   BUILD_TYPE: Release

@@ -1,12 +1,9 @@
 name: build-old_sentry
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
-      - 'target/old_sentry'
+      - target/old_sentry
 
 env:
   BUILD_TYPE: Release
