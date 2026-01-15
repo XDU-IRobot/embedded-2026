@@ -32,3 +32,8 @@ target_compile_definitions(old_sentry PRIVATE OLD_SENTRY)
 file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
 add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)
+
+#麦轮英雄底盘
+file(GLOB_RECURSE MECA_HERO_CS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/meca_hero_cs/*.cc)
+add_exe_target(meca_hero_cs "${MECA_HERO_CS_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(meca_hero_cs PRIVATE MECA_HERO_CS)
