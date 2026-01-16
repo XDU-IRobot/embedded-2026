@@ -6,6 +6,11 @@ include(add_target.cmake)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/common)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/targets)
 
+#算法招新测试小云台
+file(GLOB_RECURSE ALGORITHM_ENROLL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/algorithm_enroll_test/*.cc)
+add_exe_target(algorithm_enroll_test "${ALGORITHM_ENROLL_TEST_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(algorithm_enroll_test PRIVATE ALGORITHM_ENROLL_TEST)
+
 # 无人机云台
 file(GLOB_RECURSE DRONE_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/drone_gb/*.cc)
 add_exe_target(drone_gb "${DRONE_GB_SOURCES};${COMMON_SOURCES}")
