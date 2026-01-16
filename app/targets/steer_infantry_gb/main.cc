@@ -104,11 +104,8 @@ void GlobalWarehouse::RCStateUpdate() {
       // 右拨杆打到最上侧挡位
       switch (globals->rc->switch_l()) {
         case rm::device::DR16::SwitchPosition::kDown:
-          globals->StateMachine_ = kTest;
-          gimbal->GimbalMove_ = kGbAimbot;
-          break;
-        case rm::device::DR16::SwitchPosition::kUp:
         case rm::device::DR16::SwitchPosition::kMid:
+        case rm::device::DR16::SwitchPosition::kUp:
         default:
           globals->StateMachine_ = kNoForce;
           gimbal->GimbalMove_ = kGbRemote;
@@ -124,6 +121,9 @@ void GlobalWarehouse::RCStateUpdate() {
           gimbal->GimbalMove_ = kGbRemote;
           break;
         case rm::device::DR16::SwitchPosition::kMid:
+          globals->StateMachine_ = kTest;
+          gimbal->GimbalMove_ = kGbAimbot;
+          break;
         case rm::device::DR16::SwitchPosition::kUp:
         default:
           globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
