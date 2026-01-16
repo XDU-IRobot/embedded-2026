@@ -1,9 +1,13 @@
 name: build-dart_rack
 
 on:
-  push:
+  pull_request:
     branches:
-      - target/dart_rack
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 env:
   BUILD_TYPE: Release

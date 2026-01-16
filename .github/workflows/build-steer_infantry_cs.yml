@@ -1,9 +1,13 @@
 name: build-steer_infantry_cs
 
 on:
-  push:
+  pull_request:
     branches:
-      - target/steer_infantry_cs
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 env:
   BUILD_TYPE: Release
