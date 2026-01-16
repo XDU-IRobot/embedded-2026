@@ -29,8 +29,8 @@ double Agz;
 double Apitchpose;
 double Atotalpitch;
 double Atorque;
-double vofa_pitch=0;
-double vofa_current=0;
+double vofa_pitch = 0;
+double vofa_current = 0;
 
 class Gimbal {
  public:
@@ -80,10 +80,10 @@ class Gimbal {
   float roll_comp_kp = 0.1f;     ///< 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;  ///< 最大补偿幅度（rad）
 
-  //pitch补偿系数
-  float pitch_torque=0.0f; //电机补偿量
-  float pitch_torque_kp = 0.9f; //重力补偿参数
-  //pitch滤波器
+  // pitch补偿系数
+  float pitch_torque = 0.0f;     // 电机补偿量
+  float pitch_torque_kp = 0.9f;  // 重力补偿参数
+  // pitch滤波器
   Biquad pitch_cmd_notch;
   ChirpGenerator pitch_chirp;
 
@@ -242,9 +242,10 @@ class Gimbal {
       auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
 
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.Update(yaw, yaw_motor->rpm(), rm::modules::Wrap(pitch + 1.827, 0, 2 * M_PI), pitch_motor->vel());
+      gimbal_controller.Update(yaw, yaw_motor->rpm(), rm::modules::Wrap(pitch + 1.827, 0, 2 * M_PI),
+                               pitch_motor->vel());
 
-      pitch_torque=-pitch_torque_kp*cos(pitch+0.2);
+      pitch_torque = -pitch_torque_kp * cos(pitch + 0.2);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
       // yaw_motor->SetCurrent(rm::modules::Clamp(gimbal_controller.output().yaw, -16384, 16384));
       yaw_motor->SetCurrent(30000);
@@ -270,7 +271,7 @@ class Gimbal {
         gimbal_controller.Enable(false);
       }
       yaw_motor->SetCurrent(0);
-      pitch_torque=0;
+      pitch_torque = 0;
     }
   }
 
@@ -340,7 +341,7 @@ class Gimbal {
     Aoutputyaw = gimbal_controller.output().yaw;
     Aoutputpitch = gimbal_controller.output().pitch;
     Apitchpose = pitch_motor->pos();
-    Atorque=pitch_torque;
+    Atorque = pitch_torque;
   }
 
   // 遥控器和imu数据解算+DjiMotor发信息
@@ -352,8 +353,8 @@ class Gimbal {
 
     // imu处理
     imu->Update();
-    ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_x(), imu->gyro_y(), imu->gyro_z(), imu->accel_x(),
-                                         imu->accel_y(), imu->accel_z()});
+    ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_x(), imu->gyro_y(), imu->gyro_z(), imu->accel_x(), imu->accel_y(),
+                                         imu->accel_z()});
     roll = -ahrs.euler_angle().pitch + M_PI;
     yaw = -ahrs.euler_angle().yaw + M_PI;
     pitch = ahrs.euler_angle().roll + M_PI;
@@ -368,9 +369,6 @@ class Gimbal {
       //
       raw_cmd = rm::modules::Clamp(raw_cmd, -10.0, 10.0);
       pitch_motor->SetPosition(0, 0, raw_cmd, 0, 0);
-
-
-
 
       // if (GimbalState_ == kManual)
       // {
@@ -400,9 +398,9 @@ class Gimbal {
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {
       FreeMasterDebug();
-      vofa_pitch=Apitchpose;
+      vofa_pitch = Apitchpose;
       uint32_t t_ms = HAL_GetTick();
-      VOFA_SendPitch_Blocking(t_ms,vofa_pitch,vofa_current);
+      VOFA_SendPitch_Blocking(t_ms, vofa_pitch, vofa_current);
     }
   }
 
@@ -421,6 +419,4 @@ class Gimbal {
   }
 };
 
-
-
-#endif //BOARDC_GIMBAL_HPP
+#endif  // BOARDC_GIMBAL_HPP
