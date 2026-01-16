@@ -25,6 +25,9 @@
 #ifdef OLD_SENTRY
 #include "old_sentry/USB.hpp"
 #endif
+#ifdef DRONE_GB
+#include "drone_gb/Usb.hpp"
+#endif
 #ifdef TEST_GB
 #include "test_gb/USB.hpp"
 #endif
