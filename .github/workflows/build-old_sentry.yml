@@ -1,9 +1,13 @@
 name: build-old_sentry
 
 on:
-  push:
+  pull_request:
     branches:
-      - target/old_sentry
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 env:
   BUILD_TYPE: Release

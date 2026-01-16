@@ -1,13 +1,12 @@
-name: build-dart_rack
+name: build-test_gb
 
 on:
   pull_request:
     branches:
       - main
-    types:
-      - opened
-      - synchronize
-      - reopened
+  push:
+    branches:
+      - 'target/test_gb'
 
 env:
   BUILD_TYPE: Release
@@ -22,5 +21,6 @@ jobs:
           ref: ${{ github.sha }}
       - uses: ./.github/actions/build-target
         with:
-          target: dart_rack
+          target: test_gb
           build_type: ${{ env.BUILD_TYPE }}
+
