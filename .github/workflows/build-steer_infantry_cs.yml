@@ -4,7 +4,10 @@ on:
   pull_request:
     branches:
       - main
-  workflow_call:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 env:
   BUILD_TYPE: Release
