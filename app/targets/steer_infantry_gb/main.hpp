@@ -44,6 +44,7 @@ inline struct GlobalWarehouse {
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;
   rm::device::DeviceManager<3> device_shoot;
+  rm::device::DeviceManager<1> device_nuc;
 
   // 云台
   rm::device::BMI088 *imu{nullptr};                                                 ///< IMU
