@@ -1,11 +1,6 @@
 #pragma once
 // cpp
-#ifdef __cplusplus
-#include <cstdbool>
-#else
 #include <stdbool.h>
-#endif
-
 #include "usbd_cdc_if.h"
 
 #define IMU_DATA_SEND_ID 0x1        // 发送数据帧ID 0x1
