@@ -17,7 +17,7 @@ inline class Gimbal {
   f32 gimbal_yaw_target_ = 0.0f;  // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
   f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
 
-  f32 gravity_compensation_ = 0.0f;    // 重力补偿值
+  f32 gravity_compensation_ = 0.0f;     // 重力补偿值
   f32 k_gravity_compensation_ = -0.8f;  // 重力补偿系数
 
   f32 ammo_speed_ = 8000.0f;  // 摩擦轮速度 9000.0f -> 25m/s 初速度
@@ -48,10 +48,10 @@ inline class Gimbal {
   bool DF_state_ = false;  // 大符状态
   bool XF_state_ = false;  // 小符状态
 
-  const f32 sensitivity_yaw_ = 0.01f;      // 云台上部yaw轴灵敏度
-  const f32 sensitivity_pitch_ = 0.01f;     // 云台pitch轴灵敏度
-  const f32 highest_pitch_angle_ = 0.4f;     // 云台pitch轴最高（弧度制）
-  const f32 lowest_pitch_angle_ = -0.6f;    // 云台pitch轴最低（弧度制）
+  const f32 sensitivity_yaw_ = 0.01f;     // 云台上部yaw轴灵敏度
+  const f32 sensitivity_pitch_ = 0.01f;   // 云台pitch轴灵敏度
+  const f32 highest_pitch_angle_ = 0.4f;  // 云台pitch轴最高（弧度制）
+  const f32 lowest_pitch_angle_ = -0.6f;  // 云台pitch轴最低（弧度制）
 
  public:
   void GimbalInit();
