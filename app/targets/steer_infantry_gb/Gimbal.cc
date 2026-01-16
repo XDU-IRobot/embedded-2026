@@ -35,10 +35,13 @@ void Gimbal::GimbalStateUpdate() {
       switch (gimbal->GimbalMove_) {
         case kGbAimbot:
           gimbal->ShootEnableUpdate();  // 发射机构使能计算
+          break;
         case kGbRemote:
         default:
           gimbal->ShootDisableUpdate();  // 发射机构失能计算
+          break;
       }
+      break;
     case kNoForce:                   // 无力模式下，所有电机失能
     default:                         // 错误状态，所有电机失能
       gimbal->ShootDisableUpdate();  // 发射机构失能计算
@@ -56,7 +59,7 @@ void Gimbal::GimbalRCTargetUpdate() {
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->gimbal_yaw_target_ =
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.0f, 2.0f * static_cast<f32>(M_PI));  // yaw轴限位
-  gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
+  gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,          // pitch轴限位
                                                     gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
 }
 
@@ -128,13 +131,17 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Enable(true);
   globals->shoot_controller.Arm(true);
   // gimbal->AmmoSpeedUpdate();
-  globals->shoot_controller.SetArmSpeed(ammo_speed_);
+  globals->shoot_controller.SetArmSpeed(-ammo_speed_);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
   if ((globals->can_communicator->aimbot_state() >> 0 & 0x01 &&
        globals->can_communicator->aimbot_state() >> 1 & 0x01) ||
       globals->rc->dial() >= 650) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
-    gimbal->shoot_frequency_ = 30.0f;
+    gimbal->shoot_frequency_ = 20.0f;
+    globals->shoot_controller.SetShootFrequency(shoot_frequency_);
+  } else if (globals->rc->dial() <= -650) {
+    globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
+    gimbal->shoot_frequency_ = -10.0f;
     globals->shoot_controller.SetShootFrequency(shoot_frequency_);
   } else {
     globals->shoot_controller.SetMode(Shoot3Fric::kStop);

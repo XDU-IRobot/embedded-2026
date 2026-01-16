@@ -55,7 +55,7 @@ void GlobalWarehouse::Init() {
       {*can2, {0x03, 0x02, 12.5f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   friction_left = new rm::device::M3508{*can2, 1};
   friction_right = new rm::device::M3508{*can2, 2};
-  dial_motor = new rm::device::M2006{*can1, 3};
+  dial_motor = new rm::device::M3508{*can1, 3};
 
   device_rc << rc;                                                // 遥控器
   device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
@@ -103,7 +103,7 @@ void GlobalWarehouse::RCStateUpdate() {
         // 右拨杆打到最上侧挡位
         switch (globals->rc->switch_l()) {
           case rm::device::DR16::SwitchPosition::kDown:
-            globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+            globals->StateMachine_ = kTest;
             gimbal->GimbalMove_ = kGbAimbot;
             break;
           case rm::device::DR16::SwitchPosition::kUp:
@@ -183,7 +183,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   rm::device::DjiMotor<>::SendCommand(*can1);
-  // rm::device::DjiMotor<>::SendCommand(*can2);
+  rm::device::DjiMotor<>::SendCommand(*can2);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {

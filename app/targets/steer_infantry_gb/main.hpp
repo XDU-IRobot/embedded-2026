@@ -52,7 +52,7 @@ inline struct GlobalWarehouse {
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  ///< 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                        ///< 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                       ///< 右侧摩擦轮电机
-  rm::device::M2006 *dial_motor{nullptr};                                           ///< 拨盘电机
+  rm::device::M3508 *dial_motor{nullptr};                                           ///< 拨盘电机
 
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};   ///< 姿态解算器
