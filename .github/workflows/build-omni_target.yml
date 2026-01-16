@@ -1,9 +1,10 @@
 name: build-omni_target
 
 on:
-  push:
+  pull_request:
     branches:
-      - target/omni_target
+      - main
+  workflow_call:
 
 env:
   BUILD_TYPE: Release

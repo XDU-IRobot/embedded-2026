@@ -1,9 +1,10 @@
 name: build-drone_gb
 
 on:
-  push:
+  pull_request:
     branches:
-      - target/drone_gb
+      - main
+  workflow_call:
 
 env:
   BUILD_TYPE: Release

@@ -1,9 +1,10 @@
 name: build-dart_rack
 
 on:
-  push:
+  pull_request:
     branches:
-      - target/dart_rack
+      - main
+  workflow_call:
 
 env:
   BUILD_TYPE: Release
