@@ -185,8 +185,8 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count = 0;
   }
   // can 通信
-  globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
-                                              globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
+  globals->can_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
+                                              globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
   globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count, globals->imu_time);
 
   globals->RCStateUpdate();
