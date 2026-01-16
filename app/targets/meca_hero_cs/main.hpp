@@ -73,17 +73,16 @@
 //   }
 // } *globals;
 
-
 // //创建电机对象
 // rm::device::M3508 wheel_motor_1(*(globals->can1),1,false);
 // rm::device::M3508 wheel_motor_2(*(globals->can1),2,false);
 // rm::device::M3508 wheel_motor_3(*(globals->can1),3,false);
 // rm::device::M3508 wheel_motor_4(*(globals->can1),4,false);
 
-//创建PID控制器
-// rm::modules::PID pid_1(5,0,0,30000,0);
-// rm::modules::PID pid_2(5,0,0,30000,0);
-// rm::modules::PID pid_3(5,0,0,30000,0);
-// rm::modules::PID pid_4(5,0,0,30000,0);
+// 创建PID控制器
+//  rm::modules::PID pid_1(5,0,0,30000,0);
+//  rm::modules::PID pid_2(5,0,0,30000,0);
+//  rm::modules::PID pid_3(5,0,0,30000,0);
+//  rm::modules::PID pid_4(5,0,0,30000,0);
 
 #endif  // BOARDC_MAIN_HPP
