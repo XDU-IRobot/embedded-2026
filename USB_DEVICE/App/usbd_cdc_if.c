@@ -32,6 +32,9 @@
 #include "dart_rack/usb.hpp"
 #endif
 
+#ifdef ALGORITHM_ENROLL_TEST
+#include "algorithm_enroll_test/Usb.hpp"
+#endif
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -281,6 +284,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   UsbReceive(Buf, (uint8_t)*Len);
 #endif
 
+#ifdef ALGORITHM_ENROLL_TEST
+  UsbReceive(Buf, (uint8_t)*Len);
+#endif
     return (USBD_OK);
   /* USER CODE END 6 */
 }
