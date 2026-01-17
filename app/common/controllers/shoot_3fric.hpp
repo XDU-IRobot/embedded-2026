@@ -24,7 +24,7 @@ class Shoot3Fric {
     state_.loader_speed = loader_speed;
 
     state_.loader_position = loader_position;
-    if (loader_position >= target_.loader_position - 2000.0f) {
+    if (loader_position >= target_.loader_position - 1000.0f) {
       single_shoot_complete_ = true;
     }
 
@@ -74,7 +74,6 @@ class Shoot3Fric {
       // 单发模式，拨盘转动一个子弹间距
       target_.loader_position =
           state_.loader_position + loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
-      state_.loader_circle_num_ = 0;
       single_shoot_complete_ = false;
     } else if (mode_ == kFullAuto) {
       // 全自动模式，拨盘持续以计算得到的目标速度转动
@@ -145,13 +144,12 @@ class Shoot3Fric {
   } pid_;
 
   struct {
-    float fric_1_speed;         ///< 摩擦轮1速度
-    float fric_2_speed;         ///< 摩擦轮2速度
-    float fric_3_speed;         ///< 摩擦轮3速度
-    float loader_speed;         ///< 拨盘速度
-    float loader_position;      ///< 拨盘位置
-    int loader_circle_num_{0};  ///< 拨盘圈数
-  } state_{};                   ///< 当前状态
+    float fric_1_speed;     ///< 摩擦轮1速度
+    float fric_2_speed;     ///< 摩擦轮2速度
+    float fric_3_speed;     ///< 摩擦轮3速度
+    float loader_speed;     ///< 拨盘速度
+    float loader_position;  ///< 拨盘位置
+  } state_{};               ///< 当前状态
   struct {
     float fric_speed;       ///< 摩擦轮目标速度
     float loader_speed;     ///< 拨盘目标速度
