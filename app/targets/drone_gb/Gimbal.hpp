@@ -16,7 +16,6 @@
 #include "VOFA.hpp"
 #include "FreertosDbug.hpp"
 
-
 extern double Ayaw;
 extern double Apitch;
 extern double Aroll;
@@ -39,31 +38,29 @@ extern void FreemasterDebug();
 
 class Gimbal {
  public:
-
   Buzzer *buzzer{nullptr};  // 蜂鸣器
   rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
                                 rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error,
                                 rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
                                 rm::modules::buzzer_melody::TheLick>
-      buzzer_controller;    // 蜂鸣器控制器
-  LED *led{nullptr};        // RGB LED灯
+      buzzer_controller;  // 蜂鸣器控制器
+  LED *led{nullptr};      // RGB LED灯
   rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
                                 rm::modules::led_pattern::GreenBreath,
                                 rm::modules::led_pattern::RgbFlow>
-      led_controller;       // RGB LED控制器
-  rm::hal::Can *can1{nullptr};                  // CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};               // 遥控器串口接口
-  rm::device::DeviceManager<1> device_rc;       // 遥控管理器，维护所有设备在线状态
-  rm::device::DeviceManager<2> device_gimbal;   // 云台管理器
-  rm::device::DeviceManager<3> device_shoot;    // 发射管理器
-  int time_ = 0;                                // 系统心跳
+      led_controller;                          // RGB LED控制器
+  rm::hal::Can *can1{nullptr};                 // CAN 总线接口
+  rm::hal::Serial *dbus{nullptr};              // 遥控器串口接口
+  rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
+  rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
+  rm::device::DeviceManager<3> device_shoot;   // 发射管理器
+  int time_ = 0;                               // 系统心跳
 
-  rm::device::BMI088 *imu{nullptr};               // IMU
-  rm::modules::MahonyAhrs ahrs{490.0f}; // TODO Mahony滤波控制频率
-  double yaw = 0;               // imu yaw数据
-  double roll = 0;              // imu roll数据
-  double pitch = 0;             // imu pitch数据
-
+  rm::device::BMI088 *imu{nullptr};      // IMU
+  rm::modules::MahonyAhrs ahrs{490.0f};  // TODO Mahony滤波控制频率
+  double yaw = 0;                        // imu yaw数据
+  double roll = 0;                       // imu roll数据
+  double pitch = 0;                      // imu pitch数据
 
   rm::device::GM6020 *yaw_motor{nullptr};                                           // 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  // 云台 Pitch 电机
@@ -71,42 +68,39 @@ class Gimbal {
   rm::device::M3508 *friction_right{nullptr};                                       // 右侧摩擦轮电机
   rm::device::M2006 *dial_motor{nullptr};                                           // 拨盘电机
 
-
-  rm::device::DR16 *rc{nullptr};             // 遥控器
+  rm::device::DR16 *rc{nullptr};  // 遥控器
   typedef enum {
-    kNoForce,        // 无力
-    kManual,         // 手动
-    kAuto,           // 自瞄
+    kNoForce,  // 无力
+    kManual,   // 手动
+    kAuto,     // 自瞄
 
-    kStop,           // 无力
-    kReady,          // 准备开火
-    kFire            // 开火
-  } StateMachineType;// 遥控器状态机
+    kStop,                                   // 无力
+    kReady,                                  // 准备开火
+    kFire                                    // 开火
+  } StateMachineType;                        // 遥控器状态机
   StateMachineType AmmoState_ = {kNoForce};  // 发射机构状态
   StateMachineType GimbalState_ = {kStop};   // 云台运动状态
   double rc_yaw_data = 0;                    // 遥控器yaw数据
   double rc_pitch_data = 0;                  // 遥控器pitch数据
 
-
-  bool DM_is_enable = false;    // 达秒使能标志位
-  Gimbal2Dof gimbal_controller; // 二轴双 Yaw 云台控制器
-  Shoot2Fric shoot_controller;  // 双摩擦轮发射机构控制器
-  float dirl_speet=5000;        // TODO 拨盘转速
-  float redirl_speet=1000;      // TODO 拨盘反转速
-  float friction_speed=5000;    // TODO 摩擦轮转速
-
+  bool DM_is_enable = false;     // 达秒使能标志位
+  Gimbal2Dof gimbal_controller;  // 二轴双 Yaw 云台控制器
+  Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
+  float dirl_speet = 5000;       // TODO 拨盘转速
+  float redirl_speet = 1000;     // TODO 拨盘反转速
+  float friction_speed = 5000;   // TODO 摩擦轮转速
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
   bool roll_comp_enable = true;  // TODO 滚转补偿开关
   float roll_comp_kp = 0.1f;     // TODO 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;  // TODO 最大补偿幅度（rad）
   // imu和电机相位补偿滤波参数
-  int err_buffer_size=8;         // TODO 滤波器大小
-  int err_buffer_ptr=0;          // 滤波器指针
-  double err_imu_pitch=0;        // 滤波器计算误差
-  double err_sum=0;              // 误差和
-  double err_buffer[8]={0};      // 伪环形缓存
-  double err_average=0;          // 误差平均值
+  int err_buffer_size = 8;     // TODO 滤波器大小
+  int err_buffer_ptr = 0;      // 滤波器指针
+  double err_imu_pitch = 0;    // 滤波器计算误差
+  double err_sum = 0;          // 误差和
+  double err_buffer[8] = {0};  // 伪环形缓存
+  double err_average = 0;      // 误差平均值
   // pitch补偿系数
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.9f;  // TODO 重力补偿参数
@@ -115,10 +109,6 @@ class Gimbal {
   // ChirpGenerator pitch_chirp;
 
   rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer;  ///< 裁判系统数据缓冲区
-
-
-
-
 
   // 小角度 roll 补偿：将 roll 误差分解到 yaw/pitch
   std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
@@ -178,7 +168,7 @@ class Gimbal {
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
-    shoot_controller.Arm(false);               // 摩擦轮武装（允许转动）
+    shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
@@ -250,7 +240,7 @@ class Gimbal {
 
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
       gimbal_controller.Update(yaw, yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
-                               pitch_motor->vel(),2.f);
+                               pitch_motor->vel(), 2.f);
 
       pitch_torque = -pitch_torque_kp * cos(pitch + 0.2);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
@@ -283,53 +273,53 @@ class Gimbal {
 
   // 发射机构控制
   void AmmoControl() {
-  // 发射状态
-  if (AmmoState_ == kFire) {
-    shoot_controller.Enable(true);
-    shoot_controller.Arm(true);
+    // 发射状态
+    if (AmmoState_ == kFire) {
+      shoot_controller.Enable(true);
+      shoot_controller.Arm(true);
 
-    if (rc->dial() >= 550) {
-      shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-      shoot_controller.SetLoaderSpeed(dirl_speet);
-    } else if (rc->dial() <= -600) {
-      shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-      shoot_controller.SetLoaderSpeed(-redirl_speet);
-    } else {
-      shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-      shoot_controller.SetLoaderSpeed(0.0f);
+      if (rc->dial() >= 550) {
+        shoot_controller.SetMode(Shoot2Fric::kFullAuto);
+        shoot_controller.SetLoaderSpeed(dirl_speet);
+      } else if (rc->dial() <= -600) {
+        shoot_controller.SetMode(Shoot2Fric::kFullAuto);
+        shoot_controller.SetLoaderSpeed(-redirl_speet);
+      } else {
+        shoot_controller.SetMode(Shoot2Fric::kFullAuto);
+        shoot_controller.SetLoaderSpeed(0.0f);
+      }
+      shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
+      shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
+
+      friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
+      friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
+      dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
     }
-    shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
-    shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
 
-    friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
-    friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
-    dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
+    // 准备状态
+    else if (AmmoState_ == kReady) {
+      shoot_controller.Enable(true);
+      shoot_controller.Arm(true);
+
+      shoot_controller.SetMode(Shoot2Fric::kStop);
+      shoot_controller.SetArmSpeed(0.0f);
+
+      shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
+
+      friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
+      friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
+      dial_motor->SetCurrent(0);
+    }
+
+    // 停止状态
+    else {
+      shoot_controller.Enable(false);
+      shoot_controller.Arm(false);
+      friction_left->SetCurrent(0);
+      friction_right->SetCurrent(0);
+      dial_motor->SetCurrent(0);
+    }
   }
-
-  // 准备状态
-  else if (AmmoState_ == kReady) {
-    shoot_controller.Enable(true);
-    shoot_controller.Arm(true);
-
-    shoot_controller.SetMode(Shoot2Fric::kStop);
-    shoot_controller.SetArmSpeed(0.0f);
-
-    shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
-
-    friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
-    friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
-    dial_motor->SetCurrent(0);
-  }
-
-  // 停止状态
-  else {
-    shoot_controller.Enable(false);
-    shoot_controller.Arm(false);
-    friction_left->SetCurrent(0);
-    friction_right->SetCurrent(0);
-    dial_motor->SetCurrent(0);
-  }
-}
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz() {
@@ -340,12 +330,11 @@ class Gimbal {
 
     // imu处理
     imu->Update();
-    ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_x(), imu->gyro_y(), imu->gyro_z(),
-                                          imu->accel_x(), imu->accel_y(), imu->accel_z()});
+    ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_x(), imu->gyro_y(), imu->gyro_z(), imu->accel_x(), imu->accel_y(),
+                                         imu->accel_z()});
     roll = -ahrs.euler_angle().pitch + M_PI;
     yaw = -ahrs.euler_angle().yaw + M_PI;
     pitch = ahrs.euler_angle().roll + M_PI;
-
   }
 
   // DmMotor电机发信息
@@ -356,12 +345,12 @@ class Gimbal {
       pitch_motor->SetPosition(0, 0, pitch_torque_cmd, 0, 0);
 
       err_sum -= err_buffer[err_buffer_ptr];
-      err_imu_pitch = pitch_motor->pos()-pitch;
+      err_imu_pitch = pitch_motor->pos() - pitch;
       err_imu_pitch = rm::modules::Wrap(err_imu_pitch, 0, 2 * M_PI);
-      err_buffer[err_buffer_ptr]=err_imu_pitch;
+      err_buffer[err_buffer_ptr] = err_imu_pitch;
       err_sum += err_imu_pitch;
-      err_buffer_ptr=(err_buffer_ptr+1)%err_buffer_size;
-      err_average=err_sum/err_buffer_size;
+      err_buffer_ptr = (err_buffer_ptr + 1) % err_buffer_size;
+      err_average = err_sum / err_buffer_size;
       err_average = rm::modules::Wrap(err_average, 0, 2 * M_PI);
       // err_average = rm::modules::Clamp(err_average, 1.83, 2.0);
     }

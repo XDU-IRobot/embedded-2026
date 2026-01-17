@@ -5,4 +5,4 @@
 
 void FreemasterDebug();
 
-#endif //BOARDC_FREERTOSDBUG_HPP
+#endif  // BOARDC_FREERTOSDBUG_HPP
