@@ -51,8 +51,8 @@ struct GlobalWarehouse {
     // PID控制器
     pid_1 = new rm::modules::PID{20, 2, 4, 30000, 2};
     pid_2 = new rm::modules::PID{20, 2, 4, 30000, 2};
-    pid_3 = new rm::modules::PID{30, 2, 4, 30000, 2};
-    pid_4 = new rm::modules::PID{30, 2, 4, 30000, 2};
+    pid_3 = new rm::modules::PID{25, 2, 4, 30000, 2};
+    pid_4 = new rm::modules::PID{25, 2, 4, 30000, 2};
 
     can1->SetFilter(0, 0);
     can1->Begin();
