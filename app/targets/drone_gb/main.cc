@@ -1,6 +1,8 @@
 #include "main.hpp"
 
+
 Gimbal* gimbal = nullptr;
+
 
 void MainLoop() {
   gimbal->time_++;
