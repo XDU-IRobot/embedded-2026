@@ -7,3 +7,5 @@
   - CAN控制模式：一带四
 - 弹仓拨盘：CAN2
   - CAN控制模式：MIT
+# 拨盘电机id
+![img.png](img.png)
