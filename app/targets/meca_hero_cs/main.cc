@@ -11,19 +11,21 @@ rm::i16 Vx, Vy, Vw;
 float target_magz;
 float target_velocity;
 //左摇杆状态
-rm::device::DR16::SwitchPosition l_switch_position_now=rm::device::DR16::SwitchPosition::kUnknown;
-rm::device::DR16::SwitchPosition l_switch_position_last=rm::device::DR16::SwitchPosition::kUnknown;
+rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
+rm::device::DR16::SwitchPosition l_switch_position_last = rm::device::DR16::SwitchPosition::kUnknown;
 
 //扳机状态
-enum class Trigger_state:rm::usize {
-  kOff = 0u,
-  kOn,
-};
+// enum class Trigger_state:rm::usize {
+//   kOff = 0u,
+//   kOn,
+// };
 
-rm::usize trigger_now = 0u;
-rm::usize trigger_last = 0u;
+// rm::usize trigger_now = 0u;
+// rm::usize trigger_last = 0u;
 
 float pos;
+
+int counter = 0;
 
 struct GlobalWarehouse {
   // 硬件接口 //
@@ -41,6 +43,8 @@ struct GlobalWarehouse {
   rm::device::M3508 *wheel_motor_2{nullptr};
   rm::device::M3508 *wheel_motor_3{nullptr};
   rm::device::M3508 *wheel_motor_4{nullptr};
+  rm::device::M3508 *wheel_motor_5{nullptr};
+  rm::device::M3508 *wheel_motor_6{nullptr};
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *magazine_motor{nullptr};
 
   // 创建PID控制器
@@ -66,9 +70,11 @@ struct GlobalWarehouse {
     wheel_motor_2 = new rm::device::M3508{*can1, 2, false};
     wheel_motor_3 = new rm::device::M3508{*can1, 3, false};
     wheel_motor_4 = new rm::device::M3508{*can1, 4, false};
+    wheel_motor_5 = new rm::device::M3508{*can1, 5, false};
+    wheel_motor_6 = new rm::device::M3508{*can1, 6, false};
 
     magazine_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can2, {0x12, 0x03, 12.5f, 10.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
+        *can2, {0x12, 0x03, 3.141593f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
 
     // PID控制器
     pid_1 = new rm::modules::PID{20, 2, 4, 30000, 2};
@@ -76,8 +82,8 @@ struct GlobalWarehouse {
     pid_3 = new rm::modules::PID{25, 2, 4, 30000, 2};
     pid_4 = new rm::modules::PID{25, 2, 4, 30000, 2};
 
-    pid_magz_position = new rm::modules::PID{1, 2, 4, 18, 2};
-    pid_magz_velocity = new rm::modules::PID{1, 2, 4, 18, 2};
+    pid_magz_position = new rm::modules::PID{10, 0.1, 0.4, 20, 1};
+    pid_magz_velocity = new rm::modules::PID{0.3, 0, 0.002, 10, 0};
 
     can1->SetFilter(0, 0);
     can1->Begin();
@@ -109,17 +115,30 @@ void MainLoop() {
   rm::i16 V_wheel_2 = Vy - Vx;
   rm::i16 V_wheel_3 = Vy - 0.5 * Vx;
   rm::i16 V_wheel_4 = -Vy - 0.5 * Vx;
-  // 目标速度PID
-  globals->pid_1->Update(V_wheel_1, rpm_1);
-  globals->pid_2->Update(V_wheel_2, rpm_2);
-  globals->pid_3->Update(V_wheel_3, rpm_3);
-  globals->pid_4->Update(V_wheel_4, rpm_4);
+  if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
+    globals->pid_1->out() == 0;
+    globals->pid_2->out() == 0;
+    globals->pid_3->out() == 0;
+    globals->pid_4->out() == 0;
 
-  // 给底盘电机发送指令
-  globals->wheel_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_1->out()));
-  globals->wheel_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_2->out()));
-  globals->wheel_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_3->out()));
-  globals->wheel_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_4->out()));
+    // 给底盘电机发送指令
+    globals->wheel_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_1->out()));
+    globals->wheel_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_2->out()));
+    globals->wheel_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_3->out()));
+    globals->wheel_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_4->out()));
+  } else {
+    // 目标速度PID
+    globals->pid_1->Update(V_wheel_1, rpm_1);
+    globals->pid_2->Update(V_wheel_2, rpm_2);
+    globals->pid_3->Update(V_wheel_3, rpm_3);
+    globals->pid_4->Update(V_wheel_4, rpm_4);
+
+    // 给底盘电机发送指令
+    globals->wheel_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_1->out()));
+    globals->wheel_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_2->out()));
+    globals->wheel_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_3->out()));
+    globals->wheel_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_4->out()));
+  }
 
   rm::device::DjiMotor<>::SendCommand();
 
@@ -128,32 +147,45 @@ void MainLoop() {
   l_switch_position_now = globals->rc->switch_l();
   if (l_switch_position_now == rm::device::DR16::SwitchPosition::kMid) {
     //初始化射击模式
-    if (l_switch_position_now == rm::device::DR16::SwitchPosition::kMid && l_switch_position_last !=
-        rm::device::DR16::SwitchPosition::kMid) {
+    if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid) {
       globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
       globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kSetZeroPosition);
+      target_magz = 0.0f;
     }
-    //按下扳机
-    if (globals->rc->dial() >= 500 || globals->rc->dial() < -500) {
-      //增加60°
-      target_magz+=1.0472/*（π/3）*/;
-      if (target_magz>=6.2832/*（2π）*/) {
-        target_magz-=6.2832;
+    //按下扳机(延时1s)
+    if (counter == 0) {
+      if (globals->rc->dial() >= 500 || globals->rc->dial() < -500) {
+        //增加60°
+        target_magz -= 1.0472/*（π/3）*/;
+        if (target_magz <= -3.141593/*（π）*/) {
+          target_magz += 3.141593 * 2;
+        }
+        counter = 250;
       }
+    } else {
+      counter--;
     }
     //拨盘电机反馈
     pos = globals->magazine_motor->pos(); // rad
     float vel = globals->magazine_motor->vel(); // rad/s
     //拨盘电机串级PID（开循环）
-    globals->pid_magz_position->SetCircular(true).SetCircularCycle(6.2832);
+    globals->pid_magz_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_magz_position->Update(target_magz, pos, 0.002);
     target_velocity = globals->pid_magz_position->out();
     globals->pid_magz_velocity->Update(target_velocity, vel, 0.002);
-    globals->magazine_motor->SetPosition(0, 0, globals->pid_magz_velocity->out(), 0, 0);
+    //发送CAN
+    if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
+      globals->magazine_motor->SetPosition(0, 0, 0, 0, 0);
+    } else {
+      //
+      globals->magazine_motor->SetPosition(0, 0, globals->pid_magz_velocity->out(), 0, 0);
+    }
   }
   //失能
-  if (l_switch_position_now != rm::device::DR16::SwitchPosition::kMid && l_switch_position_last ==
+  if (l_switch_position_last == rm::device::DR16::SwitchPosition::kMid && l_switch_position_now !=
       rm::device::DR16::SwitchPosition::kMid) {
+    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
   }
 }
@@ -170,7 +202,7 @@ extern "C" [[noreturn]] void AppMain(void) {
       &htim13, //
       etl::delegate<void()>::create<MainLoop>() //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1); // 84MHz / 84 / 1000 = 1kHz
+  mainloop_1000hz.SetPrescalerAndPeriod(168, 1000 - 1); // 84MHz / 84 / 1000 = 1kHz
   mainloop_1000hz.Start(); // 启动定时器
 
   for (;;) {
