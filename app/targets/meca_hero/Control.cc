@@ -1,22 +1,22 @@
 #include "main.hpp"
 
 void MagazineControl() {
-  //拨盘电机逻辑
+  // 拨盘电机逻辑
   l_switch_position_last = l_switch_position_now;
   l_switch_position_now = globals->rc->switch_l();
   if (l_switch_position_now == rm::device::DR16::SwitchPosition::kMid) {
-    //初始化射击模式
+    // 初始化射击模式
     if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid) {
       globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
       globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kSetZeroPosition);
       target_magz = 0.0f;
     }
-    //按下扳机(延时1s)
+    // 按下扳机(延时1s)
     if (counter == 0) {
       if (globals->rc->dial() >= 500 || globals->rc->dial() < -500) {
-        //增加60°
-        target_magz -= 1.0472/*（π/3）*/;
-        if (target_magz <= -3.141593/*（π）*/) {
+        // 增加60°
+        target_magz -= 1.0472 /*（π/3）*/;
+        if (target_magz <= -3.141593 /*（π）*/) {
           target_magz += 3.141593 * 2;
         }
         counter = 250;
@@ -25,12 +25,12 @@ void MagazineControl() {
       counter--;
     }
 
-    //拨盘电机串级PID（开循环）
+    // 拨盘电机串级PID（开循环）
     globals->pid_magz_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_magz_position->Update(target_magz, globals->magazine_motor->pos(), 0.002);
     // target_velocity = globals->pid_magz_position->out();
     // globals->pid_magz_velocity->Update(target_velocity, globals->magazine_motor->vel(), 0.002);
-    //发送CAN
+    // 发送CAN
     if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
       globals->magazine_motor->SetPosition(0, 0, 0, 0, 0);
     } else {
@@ -38,9 +38,9 @@ void MagazineControl() {
       globals->magazine_motor->SetPosition(0, 0, globals->pid_magz_position->out(), 0, 0);
     }
   }
-  //失能
-  if (l_switch_position_last == rm::device::DR16::SwitchPosition::kMid && l_switch_position_now !=
-      rm::device::DR16::SwitchPosition::kMid) {
+  // 失能
+  if (l_switch_position_last == rm::device::DR16::SwitchPosition::kMid &&
+      l_switch_position_now != rm::device::DR16::SwitchPosition::kMid) {
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
@@ -54,9 +54,9 @@ void MagazineControl() {
   }
 }
 /*----------------------------------------------------*/
-//摩擦轮逻辑
+// 摩擦轮逻辑
 void ShooterControl() {
-  //摩擦轮逻辑
+  // 摩擦轮逻辑
   if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
     // 给摩擦轮电机发送指令
     globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
