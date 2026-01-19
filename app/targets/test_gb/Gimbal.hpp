@@ -4,7 +4,6 @@
 #include <librm.hpp>
 #include "main.hpp"
 
-
 using namespace rm;
 
 inline class Gimbal {

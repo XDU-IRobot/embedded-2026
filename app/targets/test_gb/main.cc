@@ -11,7 +11,6 @@
 
 using namespace rm;
 
-
 void MainLoop() {
   globals->time_++;
   globals->SubLoop500Hz();
@@ -63,7 +62,6 @@ void GlobalWarehouse::Init() {
       {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
 
   sine_sweep_yaw = new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 6.0, 500.0);
-
 
   can1->SetFilter(0, 0);
   can2->SetFilter(0, 0);

@@ -28,13 +28,13 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
 
 void AimbotCanCommunicator::UpdateQuaternion(f32 w, f32 x, f32 y, f32 z) {
   tx_buf_[0] = modules::F32ToF16(w) >> 8;
-  tx_buf_[1] = modules::F32ToF16(w) ;
+  tx_buf_[1] = modules::F32ToF16(w);
   tx_buf_[2] = modules::F32ToF16(x) >> 8;
-  tx_buf_[3] = modules::F32ToF16(x) ;
+  tx_buf_[3] = modules::F32ToF16(x);
   tx_buf_[4] = modules::F32ToF16(y) >> 8;
-  tx_buf_[5] = modules::F32ToF16(y) ;
-  tx_buf_[6] = modules::F32ToF16(z)  >> 8;
-  tx_buf_[7] = modules::F32ToF16(z) ;
+  tx_buf_[5] = modules::F32ToF16(y);
+  tx_buf_[6] = modules::F32ToF16(z) >> 8;
+  tx_buf_[7] = modules::F32ToF16(z);
   this->can_->Write(0x150, tx_buf_, 8);
 }
 
