@@ -62,7 +62,7 @@ void GlobalWarehouse::Init() {
       {*can1, {0x03, 0x02, 3.141593, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   friction_left = new rm::device::M3508{*can1, 2};
   friction_right = new rm::device::M3508{*can1, 3};
-  dial_motor = new rm::device::M2006{*can1, 1};
+  dial_motor = new rm::device::M3508{*can1, 1};
 
   referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
 
@@ -99,8 +99,8 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // 上部 Yaw PID 参数
-  gimbal_controller.pid().up_yaw_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(35000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().up_yaw_speed.SetKp(100.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
   gimbal_controller.pid().down_yaw_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);

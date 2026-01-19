@@ -70,12 +70,14 @@ void Gimbal::GimbalRCTargetUpdate() {
                                                    -globals->rc_max_value_, globals->rc_max_value_,
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   // gimbal->GimbalDownYawFollow();
-  if (globals->up_yaw_motor->encoder() > gimbal->max_up_yaw_pos_ && gimbal->max_angle_flag_ == false) {
-    gimbal->gimbal_yaw_max_angle_ = globals->hipnuc_imu->yaw();
-    gimbal->max_angle_flag_ = true;
-  } else if (globals->up_yaw_motor->encoder() < gimbal->min_up_yaw_pos_ && gimbal->min_angle_flag_ == false) {
-    gimbal->gimbal_yaw_min_angle_ = globals->hipnuc_imu->yaw();
-    gimbal->min_angle_flag_ = true;
+  if ((globals->up_yaw_motor->encoder() > gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
+       gimbal->max_min_angle_flag_ == false) ||
+      (globals->up_yaw_motor->encoder() < gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
+       gimbal->max_min_angle_flag_ == false)) {
+    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+    gimbal->max_min_angle_flag_ = true;
+  } else {
+    gimbal->max_min_angle_flag_ = false;
   }
   gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴限位
                                                      gimbal->gimbal_yaw_min_angle_, gimbal->gimbal_yaw_max_angle_);
