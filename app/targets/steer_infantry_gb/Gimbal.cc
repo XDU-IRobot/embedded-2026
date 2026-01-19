@@ -1,7 +1,5 @@
 #include "Gimbal.hpp"
 
-u8 a;
-
 void Gimbal::GimbalInit() {
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = -globals->ahrs.euler_angle().pitch;
