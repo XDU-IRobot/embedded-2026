@@ -57,12 +57,10 @@ void Chassis::ChassisRCDataUpdate() {
   //                    globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
   if (std::abs(globals->rc->right_y()) > 20 || std::abs(globals->rc->right_x()) > 20) {
-    chassis->chassis_receive_x_ =
-        -rm::modules::Map(globals->rc->right_y(), -globals->rc_max_value_, globals->rc_max_value_,
-                          -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
-    chassis->chassis_receive_y_ =
-        -rm::modules::Map(globals->rc->right_x(), -globals->rc_max_value_, globals->rc_max_value_,
-                          -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+    chassis->chassis_receive_x_ = -rm::modules::Map(
+        globals->rc->right_y(), -660, 660, -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+    chassis->chassis_receive_y_ = -rm::modules::Map(
+        globals->rc->right_x(), -660, 660, -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
   } else {
     chassis->chassis_receive_x_ = 0.0f;
     chassis->chassis_receive_y_ = 0.0f;

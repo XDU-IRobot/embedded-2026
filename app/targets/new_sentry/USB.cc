@@ -52,10 +52,10 @@ void USBSendMessage(uint8_t *address, uint16_t len, uint8_t id) {
  */
 void GimbalDataSend() {
   globals->GimbalData.TimeStamp = 0;
-  globals->GimbalData.q0 = globals->up_yaw_qw;
-  globals->GimbalData.q1 = globals->up_yaw_qx;
-  globals->GimbalData.q2 = globals->up_yaw_qy;
-  globals->GimbalData.q3 = globals->up_yaw_qz;
+  globals->GimbalData.q0 = globals->hipnuc_imu->quat_w();
+  globals->GimbalData.q1 = globals->hipnuc_imu->quat_x();
+  globals->GimbalData.q2 = globals->hipnuc_imu->quat_y();
+  globals->GimbalData.q3 = globals->hipnuc_imu->quat_z();
   globals->GimbalData.robot_id = globals->referee_data_buffer->data().robot_status.robot_id > 100 ? 1 : 0;
   USBSendMessage(reinterpret_cast<uint8_t *>(&globals->GimbalData), sizeof(globals->GimbalData), 0x03);
 }

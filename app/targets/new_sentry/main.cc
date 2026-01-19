@@ -62,7 +62,7 @@ void GlobalWarehouse::Init() {
       {*can1, {0x03, 0x02, 3.141593, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   friction_left = new rm::device::M3508{*can1, 2};
   friction_right = new rm::device::M3508{*can1, 3};
-  dial_motor = new rm::device::M2006{*can1, 1};
+  dial_motor = new rm::device::M3508{*can1, 1};
 
   referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
 
@@ -117,10 +117,10 @@ void GlobalWarehouse::ChassisPIDInit() {
 }
 
 void GlobalWarehouse::ShootPIDInit() {
-  shoot_controller.pid().fric_1_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
-  shoot_controller.pid().fric_2_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().fric_1_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().fric_2_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  shoot_controller.pid().loader_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().loader_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::RCStateUpdate() {
@@ -214,6 +214,7 @@ void GlobalWarehouse::Music() {
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
+  const u32 imu_time = HAL_GetTick();
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{
       globals->imu->gyro_x(), globals->imu->gyro_y(), globals->imu->gyro_z() + globals->yaw_gyro_bias_,
@@ -221,24 +222,44 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   chassis->ChassisTask();
-  globals->can_communicator->UpdateQuaternion(0.f, 0.f, 0.f, 0.f);
-  globals->can_communicator->UpdateControlFlag(0, 0, 0, 0);
+  // 硬触发
+  if (globals->can_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
+    globals->imu_count++;
+    globals->time_camera++;
+    if (globals->time_camera == 10) {
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
+      globals->time_camera = 0;
+    }
+    if (globals->time_camera == 5) {
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+    }
+  } else {
+    globals->imu_count = 0;
+    globals->time_camera = 0;
+  }
+  if (globals->imu_count >= 10000) {
+    globals->imu_count = 0;
+  }
+  globals->can_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
+                                              globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
+  globals->can_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
+                                               imu_time, globals->imu_count);
+  rm::device::DjiMotor<device::DjiMotorType::M3508>::SendCommand(*can1);
+  rm::device::DjiMotor<device::DjiMotorType::M2006>::SendCommand(*can1);
   rm::device::DjiMotor<device::DjiMotorType::GM6020>::SendCommand(*can1);
   rm::device::DjiMotor<>::SendCommand(*can2);
   if (selection) {
     GimbalDataSend();
-    rm::device::DjiMotor<device::DjiMotorType::M3508>::SendCommand(*can1);
-    selection ^= 1;
+    selection = false;
   } else {
-    rm::device::DjiMotor<device::DjiMotorType::M2006>::SendCommand(*can1);
     RefereeDataSend();
-    selection ^= 1;
+    selection = true;
   }
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
+    // globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
     globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
   }
 }
