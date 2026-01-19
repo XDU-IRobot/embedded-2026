@@ -5,6 +5,10 @@
 
 #include "boardc.hpp"
 
+f32 gyro_x;
+f32 gyro_y;
+f32 gyro_z;
+
 void BoardC::BoardcInit() {
   buzzer = new Buzzer;
   led = new LED;
@@ -20,18 +24,20 @@ void BoardC::BoardcInit() {
   led->Init();
 
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
-  buzzer_controller.Play<modules::buzzer_melody::TheLick>();
+  buzzer_controller.Play<modules::buzzer_melody::Startup>();
 }
 
 void BoardC::EulerUpdate() {
-  // imu处理
+  gyro_x = imu->gyro_x();
+  gyro_y = imu->gyro_y();
+  gyro_z = imu->gyro_z();
   imu->Update();
-  ahrs.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), -imu->gyro_y(), imu->gyro_z(), -imu->accel_x(),
-                                       -imu->accel_y(), imu->accel_z()});
-  roll = -ahrs.euler_angle().roll + M_PI;
+  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), -imu->gyro_x(), imu->gyro_z(),
+                                      imu->accel_y(),-imu->accel_x(), imu->accel_z()});
+  roll = -ahrs.euler_angle().roll ;
   roll = roll*57.3f;
-  yaw = -ahrs.euler_angle().yaw + M_PI;
+  yaw = -ahrs.euler_angle().yaw ;
   yaw = yaw*57.3f;
-  pitch = -ahrs.euler_angle().pitch + M_PI;
+  pitch = -ahrs.euler_angle().pitch ;
   pitch = pitch*57.3f;
 }

@@ -12,6 +12,7 @@ struct Global {
 
     Fsm fsm{};  ///< 状态机控制行为模式
   public:
+    i16 divide_count=0;
 };
 
 extern Global global;  ///< 全局变量，包含所有设备、算法等实例

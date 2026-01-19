@@ -4,6 +4,7 @@
 
 #include "motor.hpp"
 #include "global.hpp"
+#include "pid_debug.h"
 
 using namespace rm::modules;
 
@@ -12,13 +13,13 @@ void Motor::MotorInit() {
   can2 = new rm::hal::Can{hcan2};
 
   pitch_motor = new DmMotor<DmMotorControlMode::kMit>  //
-      {*can2, {0x00, 0x01, 3.141593f, 45.f, 54.f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+      {*can1, {0x06, 0x05, 3.141593f, 30.f, 10.f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can2, {0x02, 0x03, 3.141593f, 45.f, 54.f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
+      {*can2, {0x04, 0x03, 3.141593f, 30.f, 10.f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
 
-  ammo_left =  new M3508{*can1, 1};
-  ammo_right =  new M3508{*can1, 2};
-  dial_motor = new M2006{*can1, 3};
+  ammo_left =  new M3508{*can1, 7};
+  ammo_right =  new M3508{*can1, 8};
+  dial_motor = new M3508{*can2, 1};
 
   can1->SetFilter(0, 0);
   can1->Begin();
@@ -41,15 +42,15 @@ void Motor::MotorPidInit() {
   gimbal_controller.pid().yaw_speed.SetMaxIout(0.f);
 
   //pitch电机pid
-  gimbal_controller.pid().pitch_position.SetKp(0.f);
-  gimbal_controller.pid().pitch_position.SetKi(0.f);
-  gimbal_controller.pid().pitch_position.SetKd(0.f);
-  gimbal_controller.pid().pitch_position.SetMaxOut(0.f);
+  gimbal_controller.pid().pitch_position.SetKp(pitch_position_kp);
+  gimbal_controller.pid().pitch_position.SetKi(pitch_position_ki);
+  gimbal_controller.pid().pitch_position.SetKd(pitch_position_kd);
+  gimbal_controller.pid().pitch_position.SetMaxOut(200.f);
   gimbal_controller.pid().pitch_position.SetMaxIout(0.f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.1f);
   gimbal_controller.pid().pitch_speed.SetKi(0.f);
   gimbal_controller.pid().pitch_speed.SetKd(0.f);
-  gimbal_controller.pid().pitch_speed.SetMaxOut(0.f);
+  gimbal_controller.pid().pitch_speed.SetMaxOut(3.f);
   gimbal_controller.pid().pitch_speed.SetMaxIout(0.f);
 
   //摩擦轮电机
@@ -78,15 +79,20 @@ void Motor::MotorPidInit() {
   shoot_controller.pid().loader_speed.SetMaxIout(0.f);
 }
 
+/*
+@brief:电机失能或者失能
+*/
 void Motor::DMEnable() {
+  gimbal_controller.Enable(true);
     if (DMEnable_ == 1) {
-      pitch_motor->SendInstruction(DmMotorInstructions::kDisable);  // 使达妙电机失能
-      yaw_motor->SendInstruction(DmMotorInstructions::kDisable);
+      pitch_motor->SendInstruction(DmMotorInstructions::kEnable);  // 使达妙电机使能
+      yaw_motor->SendInstruction(DmMotorInstructions::kEnable);
       DMEnable_ = 0;
     }
 }
 
 void Motor::DMDisable() {
+  gimbal_controller.Enable(false);
   if (DMEnable_ == 0) {
     pitch_motor->SendInstruction(DmMotorInstructions::kDisable);  // 使达妙电机失能
     yaw_motor->SendInstruction(DmMotorInstructions::kDisable);
@@ -94,34 +100,38 @@ void Motor::DMDisable() {
   }
 }
 
-void Motor::ShootEnable(bool enable) {
-  shoot_enabled_ = enable;
-  if (!shoot_enabled_) {
-    gimbal_controller.Enable(false);
-    shoot_controller.Enable(false);
-    shoot_controller.Arm(false);
-  }else {
+void Motor::ShootEnable() {
     gimbal_controller.Enable(true);
     shoot_controller.Enable(true);
     shoot_controller.Arm(true);
-  }
 }
 
-void Motor::DMInit() {
+void Motor::ShootDisable() {
+  gimbal_controller.Enable(false);
+  shoot_controller.Enable(false);
+  shoot_controller.Arm(false);
+}
+
+/*
+@brief:电机控制量更新
+*/
+
+void Motor::DMInitControl() {
   init_count++;
   if (init_count <100) {
     gimbal_controller.SetTarget(global.bc->yaw , pitch_init*57.3f);
     gimbal_controller.Update(global.bc->yaw , yaw_motor->vel(), global.bc->pitch,pitch_motor->vel());
   }else {
     gimbal_controller.SetTarget(yaw_init*57.3f , pitch_init*57.3f);
-    gimbal_controller.Update(global.bc->yaw , yaw_motor->vel(), global.bc->pitch,pitch_motor->vel());
+    gimbal_controller.Update(global.motor->yaw_motor->pos()*57.3f , yaw_motor->vel(), global.bc->pitch,pitch_motor->vel());
   }
+
 }
 void Motor::DMControl() {
-  rc_request_pitch += Map(global.bc->rc->left_y(), -660, 660, -0.2f, 0.2f);
-  rc_request_pitch = Clamp(rc_request_pitch, -12.f , 18.f);
+  rc_request_pitch += Map(global.bc->rc->right_y(), -660, 660, -0.1f, 0.1f);
+  rc_request_pitch = Clamp(rc_request_pitch, -15.f , 22.f);
 
-  rc_request_yaw -= Map(global.bc->rc->left_x() , -660, 660, -0.1f, 0.1f);
+  rc_request_yaw -= Map(global.bc->rc->right_x() , -660, 660, -0.1f, 0.1f);
   rc_request_yaw = Wrap(rc_request_yaw, 0.f , 360.f);
 
   if (reset_yaw_flag == 0) {
@@ -133,10 +143,24 @@ void Motor::DMControl() {
     gimbal_controller.Update(global.bc->yaw, yaw_motor->vel(), global.bc->pitch, pitch_motor->vel());
   }
 
-  pitch_motor->SetPosition(0.f,0.f,gimbal_controller.output().pitch,0.f,0.f);
-  yaw_motor->SetPosition(0.f,0.f,gimbal_controller.output().yaw,0.f,0.f);
 }
 
 void Motor::ShootControl() {
+  ammo_left->SetCurrent(0.f);
+  rm::device::DjiMotor<>::SendCommand(*can1);
+}
+
+/*
+@brief:发送电机信息
+*/
+
+void Motor::SendDMCommand() {
+  pitch_motor->SetPosition(0.f,0.f,gimbal_controller.output().pitch,0.f,0.f);
+  //yaw_motor->SetPosition(0.f,0.f,gimbal_controller.output().yaw,0.f,0.f);
+  //pitch_motor->SetPosition(0.f,0.f,0.f,0.f,0.f);
+  yaw_motor->SetPosition(0.f,0.f,0.f,0.f,0.f);
+}
+
+void Motor::SendDjiCommand() {
 
 }

@@ -9,12 +9,19 @@ class Fsm {
 public:
   enum class State {
     kNoForce,  // 无力模式
-    kInit,    //云台初始化
     kTest,   // 测试
+    kShoot,  //使能发射机构
+
 
   };
   void Transit(State new_mode);
-  void Update();
+  void Update_State();
+  void Update_Control();
+  void Update_500HZ();
+  void Update_250HZ();
+  void Update_100HZ();
+  void Update_25HZ();
+  void Update_10HZ();
 
   State mode() const { return mode_; }
 
