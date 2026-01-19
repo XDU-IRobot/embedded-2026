@@ -4,7 +4,7 @@
 
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(15000.0f);
+  chassis->chassis_follow_pid_.SetKp(4800.0f);
   chassis->chassis_follow_pid_.SetKi(0.0f);
   chassis->chassis_follow_pid_.SetKd(10000.0f);
   chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
@@ -16,7 +16,8 @@ void Chassis::ChassisTask() {
 }
 
 void Chassis::ChassisStateUpdate() {
-  if (!globals->referee_data_buffer->data().robot_status.power_management_chassis_output ||
+  if (
+      // !globals->referee_data_buffer->data().robot_status.power_management_chassis_output ||
       !globals->device_chassis.all_device_ok()) {
     chassis->ChassisMove_ = kUnable;
   } else {
@@ -79,7 +80,7 @@ void Chassis::ChassisRCDataUpdate() {
                                  chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
     chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
                                  chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
-    chassis->chassis_follow_pid_.Update(0.0f, -chassis->down_yaw_delta_, 1.0f);
+    chassis->chassis_follow_pid_.Update(0.0f, chassis->down_yaw_delta_, 1.0f);
     chassis->chassis_target_w_ = chassis->chassis_follow_pid_.out();
   }
   if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
@@ -173,7 +174,7 @@ void Chassis::ChassisEnableUpdate() {
   } else {
     globals->chassis_controller.Enable(false);
   }
-  chassis->PowerLimitLoop();
+  // chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }
 
@@ -204,4 +205,8 @@ void Chassis::SetMotorCurrent() {
       static_cast<i16>(globals->chassis_controller.output().lb_wheel * chassis->k_speed_power_limit_));
   globals->wheel_rb->SetCurrent(
       static_cast<i16>(globals->chassis_controller.output().rb_wheel * chassis->k_speed_power_limit_));
+  // globals->wheel_lf->SetCurrent(0);
+  // globals->wheel_rf->SetCurrent(0);
+  // globals->wheel_lb->SetCurrent(0);
+  // globals->wheel_rb->SetCurrent(0);
 }

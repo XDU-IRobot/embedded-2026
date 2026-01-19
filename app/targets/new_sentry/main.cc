@@ -62,7 +62,7 @@ void GlobalWarehouse::Init() {
       {*can1, {0x03, 0x02, 3.141593, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   friction_left = new rm::device::M3508{*can1, 2};
   friction_right = new rm::device::M3508{*can1, 3};
-  dial_motor = new rm::device::M3508{*can1, 1};
+  dial_motor = new rm::device::M2006{*can1, 1};
 
   referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
 
@@ -82,7 +82,7 @@ void GlobalWarehouse::Init() {
   can2->SetFilter(0, 0);
   can2->Begin();
   rc->Begin();
-  rx_referee->Begin();
+  // rx_referee->Begin();
   buzzer->Init();
   led->Init();
 
@@ -223,14 +223,16 @@ void GlobalWarehouse::SubLoop500Hz() {
   chassis->ChassisTask();
   globals->can_communicator->UpdateQuaternion(0.f, 0.f, 0.f, 0.f);
   globals->can_communicator->UpdateControlFlag(0, 0, 0, 0);
-  rm::device::DjiMotor<>::SendCommand(*can1);
-  // rm::device::DjiMotor<>::SendCommand(*can2);
-  if (USB_selection) {
+  rm::device::DjiMotor<device::DjiMotorType::GM6020>::SendCommand(*can1);
+  rm::device::DjiMotor<>::SendCommand(*can2);
+  if (selection) {
     GimbalDataSend();
-    USB_selection ^= 1;
+    rm::device::DjiMotor<device::DjiMotorType::M3508>::SendCommand(*can1);
+    selection ^= 1;
   } else {
+    rm::device::DjiMotor<device::DjiMotorType::M2006>::SendCommand(*can1);
     RefereeDataSend();
-    USB_selection ^= 1;
+    selection ^= 1;
   }
 }
 
