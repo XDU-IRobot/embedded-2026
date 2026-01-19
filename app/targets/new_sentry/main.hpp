@@ -6,6 +6,7 @@
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
 #include "encoder_counter.hpp"
+#include "aimbot_comm_can.hpp"
 #include "controllers/gimbal_double_yaw.hpp"
 #include "controllers/quad_omni_chassis.hpp"
 #include "controllers/shoot_3fric.hpp"
@@ -43,15 +44,18 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};  ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};               ///< 遥控器串口接口
-  rm::hal::Serial *referee_uart{nullptr};       ///< 裁判系统串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};                   ///< CAN 总线接口
+  rm::device::HipnucImuCan *hipnuc_imu{nullptr};                 ///< IMU
+  rm::device::AimbotCanCommunicator *can_communicator{nullptr};  ///< CAN 通信器
+  rm::hal::Serial *dbus{nullptr};                                ///< 遥控器串口接口
+  rm::hal::Serial *referee_uart{nullptr};                        ///< 裁判系统串口接口
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
+  rm::device::DeviceManager<1> device_nuc;
   rm::device::DeviceManager<3> device_gimbal;
   rm::device::DeviceManager<3> device_shoot;
-  rm::device::DeviceManager<8> device_chassis;
+  rm::device::DeviceManager<4> device_chassis;
   // 云台
   rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
   rm::device::BMI088 *imu{nullptr};                                                    ///< IMU
@@ -95,7 +99,6 @@ inline struct GlobalWarehouse {
   float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;  // 云台上部Yaw电机的四元数
   const float yaw_gyro_bias_ = 0.0015f;       // 偏航角（角度值）的陀螺仪偏移量
   const float rc_max_value_ = 660.0f;         // 遥控器最大值
-  const float GM6020_encoder_max_ = 8191.0f;  // GM6020 电机编码器最大值
 
   // 函数 //
  public:

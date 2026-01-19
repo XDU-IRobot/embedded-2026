@@ -1,43 +1,44 @@
 #include "Gimbal.hpp"
 
 void Gimbal::GimbalInit() {
-  gimbal->gimbal_up_yaw_target_ = globals->up_yaw_motor->encoder();
+  gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->pitch_motor->pos();
+  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->pitch();
+  gimbal->up_yaw_init_delta_angle_ = rm::modules::Map(gimbal->mid_up_yaw_pos_ - globals->pitch_motor->pos(),  //
+                                                      0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
 }
 
 void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
   gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
   gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
-  f32 yaw = rm::modules::Map(globals->up_yaw_motor->encoder(), 0.0f, globals->GM6020_encoder_max_, 0.0f,
-                             2.0f * static_cast<f32>(M_PI));
+  f32 yaw = rm::modules::Map(globals->up_yaw_motor->encoder(), 0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
   yaw = rm::modules::Wrap(yaw, -static_cast<f32>(M_PI), M_PI);
   gimbal->EulerToQuaternion(yaw, -globals->pitch_motor->pos(), 0.0f);
 }
 
 void Gimbal::GimbalStateUpdate() {
-  if (!globals->referee_data_buffer->data().robot_status.power_management_gimbal_output ||
-      !globals->device_gimbal.all_device_ok()) {
-    gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-  } else {
-    switch (globals->StateMachine_) {
-      case kNoForce:                    // 无力模式下，所有电机失能
-        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-        break;
+  // if (!globals->referee_data_buffer->data().robot_status.power_management_gimbal_output ||
+  //     !globals->device_gimbal.all_device_ok()) {
+  //   gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+  // } else {
+  switch (globals->StateMachine_) {
+    case kNoForce:                    // 无力模式下，所有电机失能
+      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+      break;
 
-      case kTest:                      // 测试模式下，发射系统与拨盘电机失能
-        gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-        break;
+    case kTest:                      // 测试模式下，发射系统与拨盘电机失能
+      gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+      break;
 
-      case kMatch:                    // 比赛模式下，所有电机正常工作
-        gimbal->GimbalMatchUpdate();  // 云台电机使能计算
-        break;
+    case kMatch:                    // 比赛模式下，所有电机正常工作
+      gimbal->GimbalMatchUpdate();  // 云台电机使能计算
+      break;
 
-      default:                          // 错误状态，所有电机失能
-        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-        break;
-    }
+    default:                          // 错误状态，所有电机失能
+      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+      break;
+      // }
   }
   if (!globals->device_shoot.all_device_ok()) {
     gimbal->ShootDisableUpdate();  // 发射机构失能计算
@@ -57,10 +58,10 @@ void Gimbal::GimbalStateUpdate() {
 
 void Gimbal::GimbalRCTargetUpdate() {
   if (gimbal->GimbalMove_ == kGbRemote) {
-    // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
-    //                                                   -globals->rc_max_value_, globals->rc_max_value_,
-    //                                                   -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
-    gimbal->gimbal_up_yaw_target_ = gimbal->mid_up_yaw_angle_;
+    gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
+                                                      -globals->rc_max_value_, globals->rc_max_value_,
+                                                      -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
+    // gimbal->gimbal_up_yaw_target_ = gimbal->up_yaw_init_delta_angle_;
   }
   gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
                                                       -globals->rc_max_value_, globals->rc_max_value_,
@@ -69,8 +70,15 @@ void Gimbal::GimbalRCTargetUpdate() {
                                                    -globals->rc_max_value_, globals->rc_max_value_,
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   // gimbal->GimbalDownYawFollow();
+  if (globals->up_yaw_motor->encoder() > gimbal->max_up_yaw_pos_ && gimbal->max_angle_flag_ == false) {
+    gimbal->gimbal_yaw_max_angle_ = globals->hipnuc_imu->yaw();
+    gimbal->max_angle_flag_ = true;
+  } else if (globals->up_yaw_motor->encoder() < gimbal->min_up_yaw_pos_ && gimbal->min_angle_flag_ == false) {
+    gimbal->gimbal_yaw_min_angle_ = globals->hipnuc_imu->yaw();
+    gimbal->min_angle_flag_ = true;
+  }
   gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴限位
-                                                     gimbal->min_up_yaw_angle_, gimbal->max_up_yaw_angle_);
+                                                     gimbal->gimbal_yaw_min_angle_, gimbal->gimbal_yaw_max_angle_);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
@@ -78,9 +86,9 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalScanTargetUpdate() {
-  if (gimbal->gimbal_up_yaw_target_ >= gimbal->max_up_yaw_angle_) {
+  if (gimbal->gimbal_up_yaw_target_ >= gimbal->gimbal_yaw_max_angle_) {
     gimbal->scan_yaw_flag_ = true;
-  } else if (gimbal->gimbal_up_yaw_target_ <= gimbal->min_up_yaw_angle_) {
+  } else if (gimbal->gimbal_up_yaw_target_ <= gimbal->gimbal_yaw_min_angle_) {
     gimbal->scan_yaw_flag_ = false;
   }
   if (gimbal->scan_yaw_flag_) {
@@ -114,8 +122,8 @@ void Gimbal::GimbalScanTargetUpdate() {
 
 void Gimbal::GimbalAimbotTargetUpdate() {
   if (globals->Aimbot.AimbotState >> 0 & 0x01) {
-    gimbal->gimbal_up_yaw_target_ =
-        rm::modules::Map(rm::modules::Wrap(globals->Aimbot.Yaw, 0.0f, 360.0f), 0.0f, 360.0f, 0.0f, 8191.0f);
+    gimbal->gimbal_up_yaw_target_ = rm::modules::Map(rm::modules::Wrap(globals->Aimbot.Yaw, 0.0f, 360.0f),  //
+                                                     0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
     gimbal->gimbal_pitch_target_ =
         rm::modules::Wrap(rm::modules::Map(-globals->Aimbot.Pitch, 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
                           -static_cast<f32>(M_PI), M_PI);
@@ -126,10 +134,11 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 }
 
 void Gimbal::GimbalDownYawFollow() {
-  if (gimbal->gimbal_up_yaw_target_ > gimbal->down_yaw_move_high_) {
+  if (gimbal->gimbal_up_yaw_target_ > gimbal->gimbal_yaw_max_angle_) {
     // gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_high_;
     gimbal->gimbal_down_yaw_target_ += 0.002f;
-  } else if (gimbal->gimbal_up_yaw_target_ < gimbal->down_yaw_move_low_) {
+    gimbal->gimbal_down_yaw_target_ += gimbal->gimbal_up_yaw_target_ - gimbal->gimbal_yaw_max_angle_;
+  } else if (gimbal->gimbal_up_yaw_target_ < gimbal->gimbal_yaw_min_angle_) {
     // gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_low_;
     gimbal->gimbal_down_yaw_target_ -= 0.002f;
   }
@@ -140,10 +149,10 @@ void Gimbal::GimbalDownYawFollow() {
 void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
                                        gimbal->gimbal_pitch_target_);
-  globals->gimbal_controller.Update(globals->up_yaw_motor->encoder(), globals->up_yaw_motor->rpm(),
+  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
                                     globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
-                                    globals->pitch_motor->pos(), globals->pitch_motor->vel());
-  gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->pitch_motor->pos());
+                                    globals->hipnuc_imu->pitch(), globals->pitch_motor->vel());
+  gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->hipnuc_imu->pitch());
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gimbal->gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(pitch_torque_, -10.0f, 10.0f);
 }
@@ -175,6 +184,7 @@ void Gimbal::GimbalEnableUpdate() {
   } else {
     globals->gimbal_controller.Enable(false);
   }
+  globals->up_yaw_motor->SetCurrent(3000);
   gimbal->SetMotorCurrent();
 }
 
@@ -182,12 +192,13 @@ void Gimbal::GimbalDisableUpdate() {
   gimbal->DaMiaoMotorDisable();
   globals->gimbal_controller.Enable(false);
   globals->GimbalData.aim_mode = 0x00;
-  gimbal->gimbal_up_yaw_target_ = globals->up_yaw_motor->encoder();
+  gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->pitch_motor->pos();
+  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->pitch();
   gimbal->gravity_compensation_ = 0.0f;
   gimbal->GimbalMovePIDUpdate();
   gimbal->SetMotorCurrent();
+  globals->up_yaw_motor->SetCurrent(0);
 }
 
 void Gimbal::DaMiaoMotorEnable() {
@@ -239,8 +250,7 @@ void Gimbal::ShootEnableUpdate() {
   }
   globals->shoot_controller.Fire();
   globals->shoot_controller.Update(
-      globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
-      globals->dail_encoder_counter.revolutions() * 8191 + globals->dail_encoder_counter.last_ecd(),
+      globals->friction_left->rpm(), globals->friction_right->rpm(), 0,0,
       globals->dial_motor->rpm());
 }
 
@@ -255,14 +265,12 @@ void Gimbal::ShootDisableUpdate() {
   }
   globals->shoot_controller.Fire();
   globals->dail_encoder_counter.Reset(globals->dial_motor->encoder());
-  globals->shoot_controller.Update(
-      globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
-      globals->dail_encoder_counter.revolutions() * 8191 + globals->dail_encoder_counter.last_ecd(),
-      globals->dial_motor->rpm());
+  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0, 0,
+                                   globals->dial_motor->rpm());
 }
 
 void Gimbal::SetMotorCurrent() {
-  globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
+  // globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
   globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
   globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
   globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));

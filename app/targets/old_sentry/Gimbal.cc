@@ -60,7 +60,7 @@ void Gimbal::GimbalRCTargetUpdate() {
     // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
     //                                                   -globals->rc_max_value_, globals->rc_max_value_,
     //                                                   -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
-    gimbal->gimbal_up_yaw_target_ = gimbal->mid_up_yaw_angle_;
+    gimbal->gimbal_up_yaw_target_ = gimbal->mid_up_yaw_pos_;
   }
   gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
                                                       -globals->rc_max_value_, globals->rc_max_value_,
@@ -70,7 +70,7 @@ void Gimbal::GimbalRCTargetUpdate() {
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   // gimbal->GimbalDownYawFollow();
   gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴限位
-                                                     gimbal->min_up_yaw_angle_, gimbal->max_up_yaw_angle_);
+                                                     gimbal->min_up_yaw_angle_, gimbal->max_up_yaw_pos_);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
@@ -78,7 +78,7 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalScanTargetUpdate() {
-  if (gimbal->gimbal_up_yaw_target_ >= gimbal->max_up_yaw_angle_) {
+  if (gimbal->gimbal_up_yaw_target_ >= gimbal->max_up_yaw_pos_) {
     gimbal->scan_yaw_flag_ = true;
   } else if (gimbal->gimbal_up_yaw_target_ <= gimbal->min_up_yaw_angle_) {
     gimbal->scan_yaw_flag_ = false;
