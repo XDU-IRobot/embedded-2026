@@ -184,7 +184,6 @@ void Gimbal::GimbalEnableUpdate() {
   } else {
     globals->gimbal_controller.Enable(false);
   }
-  globals->up_yaw_motor->SetCurrent(3000);
   gimbal->SetMotorCurrent();
 }
 
@@ -198,7 +197,6 @@ void Gimbal::GimbalDisableUpdate() {
   gimbal->gravity_compensation_ = 0.0f;
   gimbal->GimbalMovePIDUpdate();
   gimbal->SetMotorCurrent();
-  globals->up_yaw_motor->SetCurrent(0);
 }
 
 void Gimbal::DaMiaoMotorEnable() {
@@ -249,9 +247,8 @@ void Gimbal::ShootEnableUpdate() {
     single_shoot_flag_ = false;
   }
   globals->shoot_controller.Fire();
-  globals->shoot_controller.Update(
-      globals->friction_left->rpm(), globals->friction_right->rpm(), 0,0,
-      globals->dial_motor->rpm());
+  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0, 0,
+                                   globals->dial_motor->rpm());
 }
 
 void Gimbal::ShootDisableUpdate() {
