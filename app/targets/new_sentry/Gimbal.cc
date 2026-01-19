@@ -3,9 +3,7 @@
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->pitch();
-  gimbal->up_yaw_init_delta_angle_ = rm::modules::Map(gimbal->mid_up_yaw_pos_ - globals->pitch_motor->pos(),  //
-                                                      0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
+  gimbal->gimbal_pitch_target_ = -globals->hipnuc_imu->roll();
 }
 
 void Gimbal::GimbalTask() {
@@ -70,17 +68,15 @@ void Gimbal::GimbalRCTargetUpdate() {
                                                    -globals->rc_max_value_, globals->rc_max_value_,
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   // gimbal->GimbalDownYawFollow();
-  if ((globals->up_yaw_motor->encoder() > gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
+  if ((globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
        gimbal->max_min_angle_flag_ == false) ||
-      (globals->up_yaw_motor->encoder() < gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
+      (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
        gimbal->max_min_angle_flag_ == false)) {
     gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
     gimbal->max_min_angle_flag_ = true;
   } else {
     gimbal->max_min_angle_flag_ = false;
   }
-  gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴限位
-                                                     gimbal->gimbal_yaw_min_angle_, gimbal->gimbal_yaw_max_angle_);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
@@ -153,9 +149,9 @@ void Gimbal::GimbalMovePIDUpdate() {
                                        gimbal->gimbal_pitch_target_);
   globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
                                     globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
-                                    globals->hipnuc_imu->pitch(), globals->pitch_motor->vel());
-  gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->hipnuc_imu->pitch());
-  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gimbal->gravity_compensation_;
+                                    -globals->hipnuc_imu->roll(), globals->pitch_motor->vel());
+  const f32 gravity_compensation_ = 10.0f * std::cos(-globals->hipnuc_imu->roll() + 0.377f);
+  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(pitch_torque_, -10.0f, 10.0f);
 }
 
@@ -195,8 +191,8 @@ void Gimbal::GimbalDisableUpdate() {
   globals->GimbalData.aim_mode = 0x00;
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->pitch();
-  gimbal->gravity_compensation_ = 0.0f;
+  gimbal->gimbal_pitch_target_ = -globals->hipnuc_imu->roll();
+  gimbal->pitch_torque_ = 0.0f;
   gimbal->GimbalMovePIDUpdate();
   gimbal->SetMotorCurrent();
 }
