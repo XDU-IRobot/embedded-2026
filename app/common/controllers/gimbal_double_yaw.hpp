@@ -8,8 +8,16 @@
 class GimbalDoubleYaw {
  public:
   GimbalDoubleYaw() {
-    pid_.up_yaw_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
-    pid_.down_yaw_position.SetCircular(true).SetCircularCycle(M_PI * 2.0f).SetDiffFirst(false);
+    pid_.up_yaw_position.SetCircular(true)
+        .SetCircularCycle(M_PI * 2.0f)
+        .SetFuzzy(true)
+        .SetFuzzyErrorScale(M_PI)
+        .SetDiffFirst(false);
+    pid_.down_yaw_position.SetCircular(true)
+        .SetCircularCycle(M_PI * 2.0f)
+        .SetFuzzy(true)
+        .SetFuzzyErrorScale(M_PI)
+        .SetDiffFirst(false);
     pid_.pitch_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
   }
 
@@ -104,7 +112,7 @@ class GimbalDoubleYaw {
     float up_yaw_position;
     float down_yaw_position;
     float pitch_position;
-    float yaw_speed_ff;  ///< Yaw 速度前馈
+    float yaw_speed_ff;   ///< Yaw 速度前馈
     float yaw_output_ff;  ///< Yaw 控制量前馈，控制量具体是力矩、电流或者什么，取决于电机驱动
   } target_{};            ///< 目标状态
   struct {

@@ -3,16 +3,13 @@
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = -globals->hipnuc_imu->roll();
+  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->roll();
 }
 
 void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
   gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
   gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
-  f32 yaw = rm::modules::Map(globals->up_yaw_motor->encoder(), 0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
-  yaw = rm::modules::Wrap(yaw, -static_cast<f32>(M_PI), M_PI);
-  gimbal->EulerToQuaternion(yaw, -globals->pitch_motor->pos(), 0.0f);
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -55,28 +52,32 @@ void Gimbal::GimbalStateUpdate() {
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  if (gimbal->GimbalMove_ == kGbRemote) {
+  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
+      globals->rc->left_x() < 0 && !gimbal->down_yaw_move_flag_) {
+    gimbal->down_yaw_move_flag_ = true;
+  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
+             globals->rc->left_x() > 0 && !gimbal->down_yaw_move_flag_) {
+    gimbal->down_yaw_move_flag_ = true;
+  } else {
     gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
                                                       -globals->rc_max_value_, globals->rc_max_value_,
                                                       -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
-    // gimbal->gimbal_up_yaw_target_ = gimbal->up_yaw_init_delta_angle_;
   }
-  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
-                                                      -globals->rc_max_value_, globals->rc_max_value_,
-                                                      -gimbal->sensitivity_down_yaw_, gimbal->sensitivity_down_yaw_);
+  if (gimbal->down_yaw_move_flag_ && globals->rc->left_x() < 0) {
+    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+    gimbal->gimbal_down_yaw_target_ += 0.003;
+  } else if (gimbal->down_yaw_move_flag_ && globals->rc->left_x() > 0) {
+    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+    gimbal->gimbal_down_yaw_target_ -= 0.003;
+  } else {
+    gimbal->down_yaw_move_flag_ = false;
+  }
+  // gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
+  //                                                     -globals->rc_max_value_, globals->rc_max_value_,
+  //                                                     -gimbal->sensitivity_down_yaw_, gimbal->sensitivity_down_yaw_);
   gimbal->gimbal_pitch_target_ += rm::modules::Map(globals->rc->left_y(),  // pitch轴目标值
                                                    -globals->rc_max_value_, globals->rc_max_value_,
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
-  // gimbal->GimbalDownYawFollow();
-  if ((globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
-       gimbal->max_min_angle_flag_ == false) ||
-      (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
-       gimbal->max_min_angle_flag_ == false)) {
-    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
-    gimbal->max_min_angle_flag_ = true;
-  } else {
-    gimbal->max_min_angle_flag_ = false;
-  }
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
@@ -84,9 +85,9 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalScanTargetUpdate() {
-  if (gimbal->gimbal_up_yaw_target_ >= gimbal->gimbal_yaw_max_angle_) {
+  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_) {
     gimbal->scan_yaw_flag_ = true;
-  } else if (gimbal->gimbal_up_yaw_target_ <= gimbal->gimbal_yaw_min_angle_) {
+  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_) {
     gimbal->scan_yaw_flag_ = false;
   }
   if (gimbal->scan_yaw_flag_) {
@@ -120,28 +121,30 @@ void Gimbal::GimbalScanTargetUpdate() {
 
 void Gimbal::GimbalAimbotTargetUpdate() {
   if (globals->Aimbot.AimbotState >> 0 & 0x01) {
-    gimbal->gimbal_up_yaw_target_ = rm::modules::Map(rm::modules::Wrap(globals->Aimbot.Yaw, 0.0f, 360.0f),  //
+    gimbal->gimbal_up_yaw_target_ = rm::modules::Map(rm::modules::Wrap(globals->Aimbot.Yaw, -180.0f, 180.0f),  //
                                                      0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
     gimbal->gimbal_pitch_target_ =
         rm::modules::Wrap(rm::modules::Map(-globals->Aimbot.Pitch, 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
                           -static_cast<f32>(M_PI), M_PI);
+    gimbal->GimbalDownYawFollow();
+    gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
+                                                        -static_cast<f32>(M_PI), M_PI);
+    gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
+                                                      gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
-  gimbal->GimbalDownYawFollow();
 }
 
 void Gimbal::GimbalDownYawFollow() {
-  if (gimbal->gimbal_up_yaw_target_ > gimbal->gimbal_yaw_max_angle_) {
-    // gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_high_;
-    gimbal->gimbal_down_yaw_target_ += 0.002f;
-    gimbal->gimbal_down_yaw_target_ += gimbal->gimbal_up_yaw_target_ - gimbal->gimbal_yaw_max_angle_;
-  } else if (gimbal->gimbal_up_yaw_target_ < gimbal->gimbal_yaw_min_angle_) {
-    // gimbal->gimbal_up_yaw_target_ = gimbal->down_yaw_move_low_;
-    gimbal->gimbal_down_yaw_target_ -= 0.002f;
+  if ((globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
+       gimbal->gimbal_up_yaw_target_ >= globals->hipnuc_imu->yaw()) ||
+      (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
+       gimbal->gimbal_up_yaw_target_ <= globals->hipnuc_imu->yaw())) {
+    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+    gimbal->gimbal_down_yaw_target_ =
+        gimbal->gimbal_up_yaw_target_ - globals->hipnuc_imu->yaw() + globals->ahrs.euler_angle().yaw;
   }
-  gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
-                                                      -static_cast<f32>(M_PI), M_PI);
 }
 
 void Gimbal::GimbalMovePIDUpdate() {
@@ -149,8 +152,8 @@ void Gimbal::GimbalMovePIDUpdate() {
                                        gimbal->gimbal_pitch_target_);
   globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
                                     globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
-                                    -globals->hipnuc_imu->roll(), globals->pitch_motor->vel());
-  const f32 gravity_compensation_ = 10.0f * std::cos(-globals->hipnuc_imu->roll() + 0.377f);
+                                    globals->hipnuc_imu->roll(), globals->pitch_motor->vel());
+  const f32 gravity_compensation_ = 1.1f * std::cos(globals->hipnuc_imu->roll() + 0.377f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(pitch_torque_, -10.0f, 10.0f);
 }
@@ -191,27 +194,31 @@ void Gimbal::GimbalDisableUpdate() {
   globals->GimbalData.aim_mode = 0x00;
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = -globals->hipnuc_imu->roll();
+  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->roll();
   gimbal->pitch_torque_ = 0.0f;
   gimbal->GimbalMovePIDUpdate();
   gimbal->SetMotorCurrent();
 }
 
 void Gimbal::DaMiaoMotorEnable() {
-  if (gimbal->DM_enable_flag_ == false) {
-    // 使达妙电机使能
-    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+  if (gimbal->down_yaw_enable_flag_ == false && gimbal->pitch_enable_flag_ == true) {
     globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-    gimbal->DM_enable_flag_ = true;
+    gimbal->down_yaw_enable_flag_ = true;
+  }
+  if (gimbal->pitch_enable_flag_ == false) {
+    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    gimbal->pitch_enable_flag_ = true;
   }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
-  if (gimbal->DM_enable_flag_ == true) {
-    // 使达妙电机失能
+  if (gimbal->down_yaw_enable_flag_ == true && gimbal->pitch_enable_flag_ == false) {
     globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    gimbal->down_yaw_enable_flag_ = false;
+  }
+  if (gimbal->pitch_enable_flag_ == true) {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    gimbal->DM_enable_flag_ = false;
+    gimbal->pitch_enable_flag_ = false;
   }
 }
 
@@ -269,46 +276,4 @@ void Gimbal::SetMotorCurrent() {
   globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
   globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
   globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
-}
-
-void Gimbal::EulerToQuaternion(f32 yaw, f32 pitch, f32 roll) {
-  // 计算各角度的一半
-  f32 halfYaw = yaw * 0.5f;
-  f32 halfPitch = pitch * 0.5f;
-  f32 halfRoll = roll * 0.5f;
-
-  // 计算各角度一半的正弦和余弦值
-  f32 cosYaw = cos(halfYaw);
-  f32 sinYaw = sin(halfYaw);
-  f32 cosPitch = cos(halfPitch);
-  f32 sinPitch = sin(halfPitch);
-  f32 cosRoll = cos(halfRoll);
-  f32 sinRoll = sin(halfRoll);
-
-  // 根据ZYX旋转顺序计算四元数分量
-  globals->up_yaw_qw = cosYaw * cosPitch * cosRoll + sinYaw * sinPitch * sinRoll;
-  globals->up_yaw_qx = -sinYaw * sinPitch * cosRoll + cosYaw * cosPitch * sinRoll;
-  globals->up_yaw_qy = cosYaw * sinPitch * cosRoll + sinYaw * cosPitch * sinRoll;
-  globals->up_yaw_qz = sinYaw * cosPitch * cosRoll - cosYaw * sinPitch * sinRoll;
-
-  // 归一化四元数
-  // 计算四元数的模长平方
-  f32 norm = globals->up_yaw_qw * globals->up_yaw_qw + globals->up_yaw_qx * globals->up_yaw_qx +
-             globals->up_yaw_qy * globals->up_yaw_qy + globals->up_yaw_qz * globals->up_yaw_qz;
-
-  // 如果模长不为零，则进行归一化
-  if (norm > 0.0f) {
-    // 使用标准库函数计算归一化因子
-    f32 invNorm = 1.0f / sqrt(norm);
-    globals->up_yaw_qw *= invNorm;
-    globals->up_yaw_qx *= invNorm;
-    globals->up_yaw_qy *= invNorm;
-    globals->up_yaw_qz *= invNorm;
-  } else {
-    // 如果模长为零，返回单位四元数
-    globals->up_yaw_qw = 1.0f;
-    globals->up_yaw_qx = 0.0f;
-    globals->up_yaw_qy = 0.0f;
-    globals->up_yaw_qz = 0.0f;
-  }
 }

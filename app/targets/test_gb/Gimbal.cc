@@ -114,19 +114,19 @@ void Gimbal::GimbalDisableUpdate() {
 }
 
 void Gimbal::DaMiaoMotorEnable() {
-  if (gimbal->DM_enable_flag_ == false) {
+  if (gimbal->pitch_enable_flag_ == false) {
     // 使达妙电机使能
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     globals->yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-    gimbal->DM_enable_flag_ = true;
+    gimbal->pitch_enable_flag_ = true;
   }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
-  if (gimbal->DM_enable_flag_ == true) {
+  if (gimbal->pitch_enable_flag_ == true) {
     // 使达妙电机失能
     globals->yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    gimbal->DM_enable_flag_ = false;
+    gimbal->pitch_enable_flag_ = false;
   }
 }

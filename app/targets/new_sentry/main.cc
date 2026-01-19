@@ -102,18 +102,18 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().up_yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
-  gimbal_controller.pid().down_yaw_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().down_yaw_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(3600.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(14.0f).SetKi(0.0f).SetKd(120.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(1.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
-  chassis_controller.pid().lf_wheel.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_wheel.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_wheel.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_wheel.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {
@@ -236,8 +236,8 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    // globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
-    // globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
+    globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
+    globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
   }
 }
 

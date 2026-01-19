@@ -39,7 +39,7 @@ inline class Gimbal {
   bool shoot_flag_ = false;         // 开火标志
   bool single_shoot_flag_ = false;  // 单发标志
 
-  bool DM_enable_flag_ = false;  // 4310电机使能标志
+  bool pitch_enable_flag_ = false;  // 4310电机使能标志
 
   bool down_yaw_target_refresh_flag_ = false;  // 云台下部yaw轴目标数据刷新标志
 
