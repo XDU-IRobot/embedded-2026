@@ -34,10 +34,10 @@ inline class Gimbal {
   bool shoot_flag_ = false;         // 开火标志
   bool single_shoot_flag_ = false;  // 单发标志
 
-  bool pitch_enable_flag_ = false;  // 4310电机使能标志
-  bool down_yaw_enable_flag_ = false;    // 4310电机使能标志
-  bool max_angle_flag_ = false;  // 云台上部yaw轴最大角度标志
-  bool min_angle_flag_ = false;  // 云台上部yaw轴最小角度标志
+  bool pitch_enable_flag_ = false;     // 4310电机使能标志
+  bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
+  bool max_angle_flag_ = false;        // 云台上部yaw轴最大角度标志
+  bool min_angle_flag_ = false;        // 云台上部yaw轴最小角度标志
 
   bool down_yaw_move_flag_ = false;  // 云台下部yaw轴目标数据刷新标志
 

@@ -93,7 +93,7 @@ inline struct GlobalWarehouse {
   u_int8_t music_choice = 0;                    // 音乐选择
   bool music = false;                           // 控制音乐播放
   bool music_change_flag = false;               // 音乐改动标识位
-  bool selection = false;                   // 选择发送不同的usb数据
+  bool selection = false;                       // 选择发送不同的usb数据
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
   float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;  // 云台上部Yaw电机的四元数

@@ -57,7 +57,7 @@ inline class Gimbal {
   const f32 sensitivity_pitch_ = 0.002f;     // 云台pitch轴灵敏度 0.3f
   const f32 highest_pitch_angle_ = 0.2f;     // 云台pitch轴最高 0.54f（弧度制）
   const f32 lowest_pitch_angle_ = -0.38f;    // 云台pitch轴最低 0.38f（弧度制）
-  const f32 max_up_yaw_pos_ = 4050.0f;     // 云台上部yaw轴最大 4050.0f（编码器值）
+  const f32 max_up_yaw_pos_ = 4050.0f;       // 云台上部yaw轴最大 4050.0f（编码器值）
   const f32 min_up_yaw_angle_ = 1650.0f;     // 云台上部yaw轴最小 1650.0f（编码器值）
   const f32 down_yaw_move_high_ = 3700.0f;   // 云台上部yaw轴大于高值，云台下部yaw轴随动
   const f32 down_yaw_move_low_ = 2000.0f;    // 云台上部yaw轴小于低值，云台下部yaw轴随动
