@@ -24,7 +24,6 @@ uint8_t Aid;
 uint8_t Ashoot_hz;
 float Ashoot_speed;
 
-
 // 调试接口函数
 void FreemasterDebug() {
   Arcyawdata = gimbal->rc_yaw_data;
@@ -39,8 +38,8 @@ void FreemasterDebug() {
   Adirlrmp = gimbal->dial_motor->rpm();
   Adirout = gimbal->shoot_controller.output().loader;
   Aerr = gimbal->err_average;
-  Ashooter_17mm_1_barrel_heat=gimbal->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
-  Aid=gimbal->referee_data_buffer.data().robot_status.robot_id;
-  Ashoot_speed=gimbal->referee_data_buffer.data().shoot_data.initial_speed;
-  Ashoot_hz=gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
+  Ashooter_17mm_1_barrel_heat = gimbal->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
+  Aid = gimbal->referee_data_buffer.data().robot_status.robot_id;
+  Ashoot_speed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
+  Ashoot_hz = gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
 }
