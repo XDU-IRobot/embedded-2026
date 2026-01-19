@@ -34,7 +34,6 @@ void MagazineControl() {
     if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
       globals->magazine_motor->SetPosition(0, 0, 0, 0, 0);
     } else {
-      //
       globals->magazine_motor->SetPosition(0, 0, globals->pid_magz_position->out(), 0, 0);
     }
   }
@@ -102,6 +101,11 @@ void ChassisControl() {
     globals->pid_chassis_2->Update(0, globals->chassis_motor_2->rpm());
     globals->pid_chassis_3->Update(0, globals->chassis_motor_3->rpm());
     globals->pid_chassis_4->Update(0, globals->chassis_motor_4->rpm());
+    // 给chassis电机发送指令
+    globals->chassis_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_chassis_1->out()));
+    globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_chassis_2->out()));
+    globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_chassis_3->out()));
+    globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_chassis_4->out()));
   } else {
     // 目标速度PID
     globals->pid_chassis_1->Update(V_wheel_1, globals->chassis_motor_1->rpm());

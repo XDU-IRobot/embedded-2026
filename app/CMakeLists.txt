@@ -44,6 +44,6 @@ add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)
 
 #麦轮英雄底盘
-file(GLOB_RECURSE MECA_HERO_CS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/meca_hero/*.cc)
-add_exe_target(meca_hero_cs "${MECA_HERO_CS_SOURCES};${COMMON_SOURCES}")
-target_compile_definitions(meca_hero_cs PRIVATE MECA_HERO_CS)
+file(GLOB_RECURSE MECA_HERO_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/meca_hero/*.cc)
+add_exe_target(meca_hero "${MECA_HERO_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(meca_hero PRIVATE MECA_HERO)
