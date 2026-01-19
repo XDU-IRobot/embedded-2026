@@ -267,7 +267,7 @@ void Gimbal::ShootDisableUpdate() {
 }
 
 void Gimbal::SetMotorCurrent() {
-  // globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
+  globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
   globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
   globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
   globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
