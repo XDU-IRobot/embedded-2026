@@ -14,7 +14,9 @@
 #include "controllers/shoot_2firc.hpp"
 #include "Usb.hpp"
 #include "VOFA.hpp"
+#include "Referee.hpp"
 #include "FreertosDbug.hpp"
+
 
 extern double Ayaw;
 extern double Apitch;
@@ -34,7 +36,14 @@ extern double vofa_current;
 extern double Adirlrmp;
 extern double Adirout;
 extern double Aerr;
+extern uint16_t Ashooter_17mm_1_barrel_heat;
+extern uint8_t Aid;
+extern uint8_t Ashoot_hz;
+extern float Ashoot_speed;
 extern void FreemasterDebug();
+
+
+extern AimbotFrame_SCM_t Aimbot;
 
 class Gimbal {
  public:
@@ -50,6 +59,8 @@ class Gimbal {
                                 rm::modules::led_pattern::RgbFlow>
       led_controller;                          // RGB LED控制器
   rm::hal::Can *can1{nullptr};                 // CAN 总线接口
+  rm::hal::SerialInterface *referee_uart;
+  rm::device::RxReferee *rx_referee{nullptr};
   rm::hal::Serial *dbus{nullptr};              // 遥控器串口接口
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
@@ -88,18 +99,24 @@ class Gimbal {
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
   float dirl_speet = 5000;       // TODO 拨盘转速
   float redirl_speet = 1000;     // TODO 拨盘反转速
-  float friction_speed = 5000;   // TODO 摩擦轮转速
+  float friction_speed = 6600;   // TODO 摩擦轮转速
+  //拨盘自动反转
+  float auto_reverse_buffer[5]={1.f,2.f,3.f,4.f,5.f};  //TODO 缓存区大小
+  int auto_reverse_time_max=150;     //TODO 反转持续时间
+  int auto_reverse_time=0;           //持续时间变量
+  bool auto_reverse_flag = false;    //反转标志位
+
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
   bool roll_comp_enable = true;  // TODO 滚转补偿开关
   float roll_comp_kp = 0.1f;     // TODO 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;  // TODO 最大补偿幅度（rad）
   // imu和电机相位补偿滤波参数
-  int err_buffer_size = 8;     // TODO 滤波器大小
+  int err_buffer_size = 8;     // TODO 缓存大小
   int err_buffer_ptr = 0;      // 滤波器指针
   double err_imu_pitch = 0;    // 滤波器计算误差
   double err_sum = 0;          // 误差和
-  double err_buffer[8] = {0};  // 伪环形缓存
+  double err_buffer[8] = {0};  // TODO 伪环形缓存
   double err_average = 0;      // 误差平均值
   // pitch补偿系数
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
@@ -109,6 +126,7 @@ class Gimbal {
   // ChirpGenerator pitch_chirp;
 
   rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer;  ///< 裁判系统数据缓冲区
+
 
   // 小角度 roll 补偿：将 roll 误差分解到 yaw/pitch
   std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
@@ -138,6 +156,9 @@ class Gimbal {
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
+    referee_uart = new rm::hal::Serial{huart6, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    rx_referee = new rm::device::RxReferee{*referee_uart};
+
     rc = new rm::device::DR16{*dbus};
     yaw_motor = new rm::device::GM6020{*can1, 6};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
@@ -145,6 +166,7 @@ class Gimbal {
     friction_left = new rm::device::M3508{*can1, 1};
     friction_right = new rm::device::M3508{*can1, 3};
     dial_motor = new rm::device::M2006{*can1, 5};
+
 
     device_rc << rc;                                                // 遥控器
     device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
@@ -155,7 +177,7 @@ class Gimbal {
     rc->Begin();
     buzzer->Init();
     led->Init();
-
+    rx_referee->Begin();
     led_controller.SetPattern<rm::modules::led_pattern::GreenBreath>();
     buzzer_controller.Play<rm::modules::buzzer_melody::TheLick>();
 
@@ -188,9 +210,9 @@ class Gimbal {
 
   // 发射机构pid初始化
   void AmmoPIDInit() {
-    shoot_controller.pid().fric_1_speed.SetKp(35.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(2000.0f).SetMaxIout(1000.0f);
-    shoot_controller.pid().fric_2_speed.SetKp(35.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(2000.0f).SetMaxIout(1000.0f);
-    shoot_controller.pid().loader_speed.SetKp(20.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(2000.0f);
+    shoot_controller.pid().fric_1_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
+    shoot_controller.pid().fric_2_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
+    shoot_controller.pid().loader_speed.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(2000.0f);
   }
 
   // 遥控器状态更新
@@ -255,8 +277,35 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw;
-        rc_pitch_data = rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI);
+        rc_pitch_data = rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
       }
+
+      if (Aimbot.AimbotState)
+      {
+        rc_yaw_data += Aimbot.TargetYawAngle;
+        rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+
+        rc_pitch_data += Aimbot.TargetPitchAngle;
+        rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.9);
+      }
+      else
+      {
+        rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+        rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+
+        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
+        rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.9);
+      }
+
+      auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
+
+      gimbal_controller.SetTarget(comp_yaw, comp_pitch);
+      gimbal_controller.Update(yaw, yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
+                               pitch_motor->vel(), 2.f);
+
+      pitch_torque = -pitch_torque_kp * cos(pitch + 0.2);
+      pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
+      yaw_motor->SetCurrent(rm::modules::Clamp(gimbal_controller.output().yaw, -30000, 30000));
     }
 
     // 无力或遥控器无信号
@@ -277,17 +326,39 @@ class Gimbal {
     if (AmmoState_ == kFire) {
       shoot_controller.Enable(true);
       shoot_controller.Arm(true);
+      shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (rc->dial() >= 550) {
-        shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-        shoot_controller.SetLoaderSpeed(dirl_speet);
-      } else if (rc->dial() <= -600) {
-        shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-        shoot_controller.SetLoaderSpeed(-redirl_speet);
-      } else {
-        shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-        shoot_controller.SetLoaderSpeed(0.0f);
+      if (rc->dial() >= 550)
+      {
+        if (auto_reverse_flag)
+        {
+          shoot_controller.SetLoaderSpeed(-redirl_speet);
+          auto_reverse_time--;
+          auto_reverse_time<1?auto_reverse_flag=false:auto_reverse_flag=true;
+        }
+        else
+        {
+          if (GimbalState_ == kAuto){
+            if (Aimbot.AimbotState&&Aimbot.AutoFire) {shoot_controller.SetLoaderSpeed(dirl_speet);}
+            else if (Aimbot.AimbotState&&!Aimbot.AutoFire) {shoot_controller.SetLoaderSpeed(0.0f);}
+            else {shoot_controller.SetLoaderSpeed(dirl_speet);}
+          }
+          else {shoot_controller.SetLoaderSpeed(dirl_speet);}
+        }
       }
+      else if (rc->dial() <= -600) {shoot_controller.SetLoaderSpeed(-redirl_speet);}
+      else {shoot_controller.SetLoaderSpeed(0.0f);}
+
+      if (shoot_controller.GetLoaderSpeed()==dirl_speet)
+      {
+        auto_reverse_buffer[4]=auto_reverse_buffer[3];
+        auto_reverse_buffer[3]=auto_reverse_buffer[2];
+        auto_reverse_buffer[2]=auto_reverse_buffer[1];
+        auto_reverse_buffer[1]=auto_reverse_buffer[0];
+        auto_reverse_buffer[0]=dial_motor->encoder();
+        if (auto_reverse_buffer[0]==auto_reverse_buffer[4]){auto_reverse_flag=true;auto_reverse_time=auto_reverse_time_max;}
+      }
+
       shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
       shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
 
@@ -320,6 +391,12 @@ class Gimbal {
       dial_motor->SetCurrent(0);
     }
   }
+
+  void Referee_control()
+  {
+
+  }
+
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz() {

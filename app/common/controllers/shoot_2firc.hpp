@@ -8,7 +8,6 @@
  * 接口说明：
  * - Update(fric_1_speed, fric_2_speed, loader_speed, dt)
  *   其中速度单位均为 rpm（与 dial_motor->rpm() / friction->rpm() 保持一致）
- * - SetShootFrequency(frequency) 保留用于兼容（frequency 单位：发/秒）
  * - SetLoaderSpeed(loader_rpm) 直接设置目标转速（rpm）
  */
 class Shoot2Fric {
@@ -46,11 +45,13 @@ class Shoot2Fric {
 
   void SetMode(Mode mode) { mode_ = mode; }
 
-  void SetShootFrequency(float frequency) { target_.loader_speed = frequency; }
-
   void SetLoaderSpeed(float loader_rpm) { target_.loader_speed = loader_rpm; }
 
   void SetArmSpeed(float fric_speed) { target_.fric_speed = fric_speed; }
+
+  float GetLoaderSpeed() const { return target_.loader_speed; }
+
+  float GetArmSpeed() const { return target_.fric_speed; }
 
   void Arm(bool enable) { armed_ = enable; }
 

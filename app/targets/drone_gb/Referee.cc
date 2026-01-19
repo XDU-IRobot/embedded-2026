@@ -1,4 +1,5 @@
 #include "Referee.hpp"
+#include "main.hpp"
 
 namespace rm::device {
 RxReferee::RxReferee(rm::hal::SerialInterface &serial) : serial_(&serial) {

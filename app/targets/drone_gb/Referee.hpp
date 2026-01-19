@@ -2,7 +2,6 @@
 #define BOARDC_REFEREE_HPP
 
 #include <librm.hpp>
-#include "Gimbal.hpp"
 
 using namespace rm;
 
