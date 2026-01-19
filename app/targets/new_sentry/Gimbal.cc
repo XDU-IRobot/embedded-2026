@@ -13,10 +13,11 @@ void Gimbal::GimbalTask() {
 }
 
 void Gimbal::GimbalStateUpdate() {
-  // if (!globals->referee_data_buffer->data().robot_status.power_management_gimbal_output ||
-  //     !globals->device_gimbal.all_device_ok()) {
-  //   gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-  // } else {
+  if (
+    // !globals->referee_data_buffer->data().robot_status.power_management_gimbal_output ||
+      !globals->device_gimbal.all_device_ok()) {
+    gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+  } else {
   switch (globals->StateMachine_) {
     case kNoForce:                    // 无力模式下，所有电机失能
       gimbal->GimbalDisableUpdate();  // 云台电机失能计算
@@ -33,7 +34,7 @@ void Gimbal::GimbalStateUpdate() {
     default:                          // 错误状态，所有电机失能
       gimbal->GimbalDisableUpdate();  // 云台电机失能计算
       break;
-      // }
+      }
   }
   if (!globals->device_shoot.all_device_ok()) {
     gimbal->ShootDisableUpdate();  // 发射机构失能计算
