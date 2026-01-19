@@ -20,21 +20,21 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     ReportStatus(kOk);
     aimbot_state_ = static_cast<u8>(msg->data[0]);
     aimbot_target_ = static_cast<u8>(msg->data[1]);
-    yaw_ = static_cast<f32>(static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3])) / 10000.0f;
-    pitch_ = static_cast<f32>(static_cast<u16>(msg->data[4]) << 8 | static_cast<u16>(msg->data[5])) / 10000.0f;
+    yaw_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[2]) << 8) | msg->data[3]));
+    pitch_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5]));
     nuc_start_flag_ = static_cast<u8>(msg->data[6]);
   }
 }
 
 void AimbotCanCommunicator::UpdateQuaternion(f32 w, f32 x, f32 y, f32 z) {
-  tx_buf_[0] = static_cast<i16>(w * 10000.0f) >> 8;
-  tx_buf_[1] = static_cast<i16>(w * 10000.0f);
-  tx_buf_[2] = static_cast<i16>(x * 10000.0f) >> 8;
-  tx_buf_[3] = static_cast<i16>(x * 10000.0f);
-  tx_buf_[4] = static_cast<i16>(y * 10000.0f) >> 8;
-  tx_buf_[5] = static_cast<i16>(y * 10000.0f);
-  tx_buf_[6] = static_cast<i16>(z * 10000.0f) >> 8;
-  tx_buf_[7] = static_cast<i16>(z * 10000.0f);
+  tx_buf_[0] = modules::F32ToF16(w) >> 8;
+  tx_buf_[1] = modules::F32ToF16(w) ;
+  tx_buf_[2] = modules::F32ToF16(x) >> 8;
+  tx_buf_[3] = modules::F32ToF16(x) ;
+  tx_buf_[4] = modules::F32ToF16(y) >> 8;
+  tx_buf_[5] = modules::F32ToF16(y) ;
+  tx_buf_[6] = modules::F32ToF16(z)  >> 8;
+  tx_buf_[7] = modules::F32ToF16(z) ;
   this->can_->Write(0x150, tx_buf_, 8);
 }
 
