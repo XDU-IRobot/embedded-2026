@@ -8,8 +8,8 @@
 
 f32 debug;
 f32 left_x_debug;
-f32 pitch_debug,yaw_debug,roll_debug;
-f32 pitch_staus,yaw_staus;
+f32 pitch_debug, yaw_debug, roll_debug;
+f32 pitch_staus, yaw_staus;
 void Fsm::Transit(State new_mode) {
   // 输入新状态
   if (new_mode != mode_) {
@@ -19,7 +19,7 @@ void Fsm::Transit(State new_mode) {
       global.motor->ShootDisable();
     } else {
       global.motor->DMEnable();
-      //global.motor->ShootEnable(true);
+      // global.motor->ShootEnable(true);
     }
   }
   // 替换现有状态
@@ -60,7 +60,7 @@ void Fsm::Update_Control() {
       if (init_count_ < 300) {
         init_count_++;
         global.motor->DMInitControl();
-      }else {
+      } else {
         global.motor->DMControl();
       }
     case State::kShoot:
@@ -72,7 +72,7 @@ void Fsm::Update_Control() {
 // 500HZ任务
 void Fsm::Update_500HZ() {
   debug = global.motor->gimbal_controller.output().pitch;
-  //imu更新
+  // imu更新
   global.bc->EulerUpdate();
   pitch_debug = global.bc->pitch;
   yaw_debug = global.bc->yaw;
@@ -81,28 +81,25 @@ void Fsm::Update_500HZ() {
   pitch_staus = global.motor->pitch_motor->status();
   yaw_staus = global.motor->yaw_motor->status();
 
-  //状态更新
+  // 状态更新
   Update_State();
 
-  //控制量更新
+  // 控制量更新
   Update_Control();
 
-  //发送Dji电机信息
+  // 发送Dji电机信息
   global.motor->SendDjiCommand();
 }
 
-  //250HZ任务
+// 250HZ任务
 void Fsm::Update_250HZ() {
-  if (global.divide_count % 2 ==0) {
-    //发送DM电机数据
+  if (global.divide_count % 2 == 0) {
+    // 发送DM电机数据
     global.motor->SendDMCommand();
   }
 }
 
-void Fsm::Update_100HZ() {
-
-}
-
+void Fsm::Update_100HZ() {}
 
 //  25HZ任务
 void Fsm::Update_25HZ() {
