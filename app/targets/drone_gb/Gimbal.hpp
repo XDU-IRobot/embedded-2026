@@ -44,13 +44,10 @@ extern i16 Adrmp;
 extern i16 Armp;
 extern void FreemasterDebug();
 
-
-
 extern AimbotFrame_SCM_t Aimbot;
 
 class Gimbal {
  public:
-
   int abcdefg = 0;
 
   Buzzer *buzzer{nullptr};  // 蜂鸣器
@@ -152,7 +149,6 @@ class Gimbal {
 
   // 结构体初始化
   void GimbalInit() {
-
     buzzer = new Buzzer;
     led = new LED;
 
@@ -456,10 +452,10 @@ class Gimbal {
     if (time_ % 50 == 0) {
       GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z);
 
-      if (abcdefg>=30)abcdefg=0;
-      if (abcdefg>=0&&abcdefg<10) Set_LED(0, 255, 0, 0);
-      if (abcdefg>=10&&abcdefg<20) Set_LED(0, 0, 0, 255);
-      if (abcdefg>=20&&abcdefg<30) Set_LED(0, 0, 255, 0);
+      if (abcdefg >= 30) abcdefg = 0;
+      if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
+      if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
+      if (abcdefg >= 20 && abcdefg < 30) Set_LED(0, 0, 255, 0);
       abcdefg++;
       Set_Brightness(10);
       WS2812_Send();

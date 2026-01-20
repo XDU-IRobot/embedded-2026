@@ -9,10 +9,10 @@
 #define MAX_LED 1
 #define USE_BRIGHTNESS 1
 
-void Set_LED (int LEDnum, int Red, int Green, int Blue);
+void Set_LED(int LEDnum, int Red, int Green, int Blue);
 
-void Set_Brightness (int brightness);
+void Set_Brightness(int brightness);
 
-void WS2812_Send (void);
+void WS2812_Send(void);
 
-#endif //BOARDC_WS2812B_HPP
+#endif  // BOARDC_WS2812B_HPP
