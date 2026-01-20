@@ -39,6 +39,8 @@ extern uint16_t Ashooter_17mm_1_barrel_heat;
 extern uint8_t Aid;
 extern uint8_t Ashoot_hz;
 extern float Ashoot_speed;
+extern i16 Adrmp;
+extern i16 Armp;
 extern void FreemasterDebug();
 
 extern AimbotFrame_SCM_t Aimbot;
