@@ -16,6 +16,7 @@
 #include "VOFA.hpp"
 #include "Referee.hpp"
 #include "FreertosDbug.hpp"
+#include "WS2812b.hpp"
 
 extern double Ayaw;
 extern double Apitch;
@@ -43,10 +44,15 @@ extern i16 Adrmp;
 extern i16 Armp;
 extern void FreemasterDebug();
 
+
+
 extern AimbotFrame_SCM_t Aimbot;
 
 class Gimbal {
  public:
+
+  int abcdefg = 0;
+
   Buzzer *buzzer{nullptr};  // 蜂鸣器
   rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
                                 rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error,
@@ -146,6 +152,7 @@ class Gimbal {
 
   // 结构体初始化
   void GimbalInit() {
+
     buzzer = new Buzzer;
     led = new LED;
 
@@ -448,6 +455,15 @@ class Gimbal {
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
       GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z);
+
+      if (abcdefg>=30)abcdefg=0;
+      if (abcdefg>=0&&abcdefg<10) Set_LED(0, 255, 0, 0);
+      if (abcdefg>=10&&abcdefg<20) Set_LED(0, 0, 0, 255);
+      if (abcdefg>=20&&abcdefg<30) Set_LED(0, 0, 255, 0);
+      abcdefg++;
+      Set_Brightness(10);
+      WS2812_Send();
+
       time_ = 0;
     }
   }
