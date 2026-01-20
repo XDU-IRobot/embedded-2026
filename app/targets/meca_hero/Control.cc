@@ -52,6 +52,7 @@ void MagazineControl() {
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
   }
 }
+
 /*----------------------------------------------------*/
 // 摩擦轮逻辑
 void ShooterControl() {
@@ -64,6 +65,14 @@ void ShooterControl() {
     globals->pid_shooter_4->Update(0, globals->shooter_motor_4->rpm());
     globals->pid_shooter_5->Update(0, globals->shooter_motor_5->rpm());
     globals->pid_shooter_6->Update(0, globals->shooter_motor_6->rpm());
+
+    // 给shooter电机发送指令
+    globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_shooter_1->out()));
+    globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_shooter_2->out()));
+    globals->shooter_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_shooter_3->out()));
+    globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_shooter_4->out()));
+    globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(globals->pid_shooter_5->out()));
+    globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(globals->pid_shooter_6->out()));
   } else {
     // 目标速度PID
     globals->pid_shooter_1->Update(V_shooter_1, globals->shooter_motor_1->rpm());
@@ -83,18 +92,22 @@ void ShooterControl() {
   }
   rm::device::DjiMotor<>::SendCommand();
 }
+
 /*----------------------------------------------------*/
 void ChassisControl() {
   // 遥控器输入底盘速度
-  Vx = globals->rc->left_x() * 15000 / 660;
-  Vy = globals->rc->left_y() * 15000 / 660;
+  Vx = globals->rc->left_x() * 10000 / 660;
+  Vy = globals->rc->left_y() * 10000 / 660;
   // Vw = globals->rc->dial() * 30000 / 660;
 
   // 移动逻辑
-  rm::i16 V_wheel_1 = -Vy - Vx;
-  rm::i16 V_wheel_2 = Vy - Vx;
-  rm::i16 V_wheel_3 = Vy - 0.5 * Vx;
-  rm::i16 V_wheel_4 = -Vy - 0.5 * Vx;
+  // if (Vy < -100) {
+  //   Vx = -Vx;
+  // }
+  rm::i16 V_wheel_1 = -Vy + Vx;
+  rm::i16 V_wheel_2 = Vy + Vx;
+  rm::i16 V_wheel_3 = Vy + 0.5*Vx;
+  rm::i16 V_wheel_4 = -Vy +0.5* Vx;
   if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
     // 给底盘电机发送指令
     globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());

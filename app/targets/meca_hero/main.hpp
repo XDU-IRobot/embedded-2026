@@ -80,8 +80,8 @@ inline struct GlobalWarehouse {
     // PID控制器
     pid_chassis_1 = new rm::modules::PID{20, 2, 4, 18000, 2};
     pid_chassis_2 = new rm::modules::PID{20, 2, 4, 18000, 2};
-    pid_chassis_3 = new rm::modules::PID{25, 2, 4, 18000, 2};
-    pid_chassis_4 = new rm::modules::PID{25, 2, 4, 18000, 2};
+    pid_chassis_3 = new rm::modules::PID{20, 2, 4, 18000, 2};
+    pid_chassis_4 = new rm::modules::PID{20, 2, 4, 18000, 2};
 
     pid_shooter_1 = new rm::modules::PID{25, 2, 4, 18000, 2};  // 20
     pid_shooter_2 = new rm::modules::PID{25, 2, 4, 18000, 2};  // 20
