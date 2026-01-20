@@ -44,6 +44,6 @@ void FreemasterDebug() {
   Aid = gimbal->referee_data_buffer.data().robot_status.robot_id;
   Ashoot_speed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
   Ashoot_hz = gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
-  Adrmp=gimbal->friction_left->rpm()+gimbal->friction_right->rpm();
-  Armp=gimbal->friction_left->rpm();
+  Adrmp = gimbal->friction_left->rpm() + gimbal->friction_right->rpm();
+  Armp = gimbal->friction_left->rpm();
 }
