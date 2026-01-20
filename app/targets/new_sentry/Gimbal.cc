@@ -63,29 +63,33 @@ void Gimbal::GimbalStateUpdate() {
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
-      globals->rc->left_x() < 0 && !gimbal->down_yaw_move_flag_) {
-    gimbal->down_yaw_move_flag_ = true;
-  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
-             globals->rc->left_x() > 0 && !gimbal->down_yaw_move_flag_) {
-    gimbal->down_yaw_move_flag_ = true;
-  } else {
-    gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  // 上部yaw轴目标值
-                                                      -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
-  }
-  if (gimbal->down_yaw_move_flag_ && globals->rc->left_x() < 0) {
-    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
-    gimbal->gimbal_down_yaw_target_ += 0.003;
-  } else if (gimbal->down_yaw_move_flag_ && globals->rc->left_x() > 0) {
-    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
-    gimbal->gimbal_down_yaw_target_ -= 0.003;
-  } else {
-    gimbal->down_yaw_move_flag_ = false;
-  }
-  // gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  // 上部yaw轴目标值
-  //                                                     -gimbal->sensitivity_down_yaw_, gimbal->sensitivity_down_yaw_);
+  // if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
+  //     globals->rc->left_x() < 0 && !gimbal->down_yaw_move_flag_) {
+  //   gimbal->down_yaw_move_flag_ = true;
+  // } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000
+  // &&
+  //            globals->rc->left_x() > 0 && !gimbal->down_yaw_move_flag_) {
+  //   gimbal->down_yaw_move_flag_ = true;
+  // } else {
+  //   gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  // 上部yaw轴目标值
+  //                                                     -gimbal->sensitivity_up_yaw_, gimbal->sensitivity_up_yaw_);
+  // }
+  // if (gimbal->down_yaw_move_flag_ && globals->rc->left_x() < 0) {
+  //   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+  //   gimbal->gimbal_down_yaw_target_ += 0.003;
+  // } else if (gimbal->down_yaw_move_flag_ && globals->rc->left_x() > 0) {
+  //   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+  //   gimbal->gimbal_down_yaw_target_ -= 0.003;
+  // } else {
+  //   gimbal->down_yaw_move_flag_ = false;
+  // }
+  gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660,  // 上部yaw轴目标值
+                                                      -gimbal->sensitivity_down_yaw_, gimbal->sensitivity_down_yaw_);
   gimbal->gimbal_pitch_target_ += rm::modules::Map(globals->rc->left_y(), -660, 660,  // pitch轴目标值
                                                    -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
+  gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴周期限制
+                                                    -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
@@ -93,33 +97,42 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalScanTargetUpdate() {
-  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_) {
+  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000) {
     gimbal->scan_yaw_flag_ = true;
-  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_) {
+  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000) {
     gimbal->scan_yaw_flag_ = false;
   }
   if (gimbal->scan_yaw_flag_) {
-    gimbal->gimbal_up_yaw_target_ -= 3.0f;
+    gimbal->gimbal_up_yaw_target_ -= 0.002f;
   } else {
-    gimbal->gimbal_up_yaw_target_ += 3.0f;
+    gimbal->gimbal_up_yaw_target_ += 0.002f;
   }
-  if (gimbal->gimbal_pitch_target_ >= gimbal->highest_pitch_angle_) {
+  if (gimbal->GimbalMove_ == kGbNavigate) {
+    gimbal->gimbal_up_yaw_target_ +=
+        rm::modules::Map(rm::modules::Clamp(globals->NucControl.yaw_speed, -1.0f, 1.0f), -1.0f, 1.0f, -0.01f, 0.01f);
+  } else {
+    gimbal->gimbal_up_yaw_target_ += 0.001f;
+  }
+  gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴周期限制
+                                                    -static_cast<f32>(M_PI), M_PI);
+  if (gimbal->gimbal_pitch_target_ >= gimbal->highest_aimbot_pitch_angle_) {
     gimbal->scan_pitch_flag_ = true;
   } else if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_pitch_angle_) {
     gimbal->scan_pitch_flag_ = false;
   }
   if (gimbal->scan_pitch_flag_) {
-    gimbal->gimbal_pitch_target_ -= 0.003f;
+    gimbal->gimbal_pitch_target_ -= 0.004f;
   } else {
-    gimbal->gimbal_pitch_target_ += 0.003f;
+    gimbal->gimbal_pitch_target_ += 0.004f;
   }
-  // if (globals->NucControl.scan_mode) {
-  gimbal->GimbalMove_ = kGbScan;
-  // } else {
-  //   gimbal->GimbalMove_ = kGbNavigate;
-  // }
+  if (globals->NucControl.scan_mode) {
+    gimbal->GimbalMove_ = kGbScan;
+  } else {
+    gimbal->GimbalMove_ = kGbNavigate;
+  }
   if (gimbal->GimbalMove_ == kGbNavigate) {
-    gimbal->gimbal_down_yaw_target_ += rm::modules::Map(globals->NucControl.yaw_speed, -1.0f, 1.0f, -0.0005f, 0.0005f);
+    gimbal->gimbal_down_yaw_target_ +=
+        rm::modules::Map(rm::modules::Clamp(globals->NucControl.yaw_speed, -1.0f, 1.0f), -1.0f, 1.0f, -0.01f, 0.01f);
   } else {
     gimbal->gimbal_down_yaw_target_ += 0.001f;
   }

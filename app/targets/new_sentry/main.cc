@@ -99,10 +99,10 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // 上部 Yaw PID 参数
-  gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().up_yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(500.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_speed.SetKp(400.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
-  gimbal_controller.pid().down_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(3600.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(2600.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(14.0f).SetKi(0.0f).SetKd(120.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
@@ -110,10 +110,10 @@ void GlobalWarehouse::GimbalPIDInit() {
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
-  chassis_controller.pid().lf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {
@@ -193,22 +193,22 @@ void GlobalWarehouse::Music() {
   }
   if (globals->rc->dial() <= -650 && !globals->music_change_flag) {
     globals->music_choice++;
+    if (globals->music_choice == 3) {
+      globals->music_choice = 0;
+    }
     globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
     globals->music_change_flag = true;
-  } else if (globals->rc->dial() >= 0) {
-    globals->music_change_flag = false;
   }
-  if (globals->music_choice == 3) {
-    globals->music_choice = 0;
+  if (globals->rc->dial() >= -650 && globals->rc->dial() <= 650) {
+    globals->music_change_flag = false;
+    globals->music = false;
   }
   if (music) {
     if (globals->music_choice == 1) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SeeUAgain>();
-      globals->music = false;
     }
     if (globals->music_choice == 2) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SuperMario>();
-      globals->music = false;
     }
   }
 }
@@ -244,22 +244,23 @@ void GlobalWarehouse::SubLoop500Hz() {
                                               globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
   globals->can_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
                                                imu_time, globals->imu_count);
-  rm::device::DjiMotor<device::DjiMotorType::M3508>::SendCommand(*can1);
-  rm::device::DjiMotor<device::DjiMotorType::M2006>::SendCommand(*can1);
-  rm::device::DjiMotor<device::DjiMotorType::GM6020>::SendCommand(*can1);
+  // rm::device::DjiMotor<device::DjiMotorType::M3508>::SendCommand(*can1);
+  // rm::device::DjiMotor<device::DjiMotorType::M2006>::SendCommand(*can1);
+  // rm::device::DjiMotor<device::DjiMotorType::GM6020>::SendCommand(*can1);
+  rm::device::DjiMotor<>::SendCommand(*can1);
   rm::device::DjiMotor<>::SendCommand(*can2);
-  if (selection) {
-    GimbalDataSend();
-    selection = false;
-  } else {
-    RefereeDataSend();
-    selection = true;
-  }
+  // if (selection) {
+  //   GimbalDataSend();
+  //   selection = false;
+  // } else {
+  // RefereeDataSend();
+  //   selection = true;
+  // }
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    // globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
+    globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
     globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
   }
 }
