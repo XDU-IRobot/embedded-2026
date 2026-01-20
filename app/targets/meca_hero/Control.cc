@@ -134,3 +134,48 @@ void ChassisControl() {
   }
   rm::device::DjiMotor<>::SendCommand();
 }
+/*----------------------------------------------------*/
+void GimbalControl() {
+  //IMU解算
+  globals->imu->Update();
+  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(),   //
+                                                -globals->imu->gyro_x(),   //
+                                                -globals->imu->gyro_z(),   //
+                                                -globals->imu->accel_y(),  //
+                                                -globals->imu->accel_x(),  //
+                                                -globals->imu->accel_z()});
+  // 云台电机逻辑
+  l_switch_position_last = l_switch_position_now;
+  l_switch_position_now = globals->rc->switch_l();
+  if (l_switch_position_now == rm::device::DR16::SwitchPosition::kMid || l_switch_position_now ==
+      rm::device::DR16::SwitchPosition::kUp) {
+    // 初始化云台模式
+    if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid) {
+      globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+      globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+    }
+    // 遥控器输入云台角度
+    pos_yaw -= globals->rc->right_x();
+    pos_pitch += globals->rc->right_y();
+    //yaw限位
+    if (pos_yaw < -1.85) {
+      pos_yaw = -1.85;
+    } else if (pos_yaw > 1.64) {
+      pos_yaw = 1.64;
+    }
+    //pitch限位
+    // if (pos_pitch) {
+    // } else if () {
+    // }
+    // PID计算
+    if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
+      globals->pid_yaw_position->Update(0, globals->gimbal_motor_yaw->pos(), 0.002);
+      globals->pid_pitch_position->Update(0, globals->gimbal_motor_pitch->rpm(), 0.002);
+    } else {
+      globals->pid_yaw_position->Update(pos_yaw, globals->gimbal_motor_yaw->pos(), 0.002);
+      // globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(),globals->gimbal_motor_yaw->vel(),0.002);
+
+      globals->pid_pitch_velocity->Update(globals->ahrs.euler_angle().pitch, 0.002);
+    }
+      }
+}

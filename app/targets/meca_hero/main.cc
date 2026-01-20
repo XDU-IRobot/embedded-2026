@@ -1,7 +1,8 @@
 #include "main.hpp"
 #include "timer_task.hpp"
 #include "tim.h"
-
+rm::f32 pitch;
+rm::f32 yaw;
 // 定频循环
 void MainLoop() {
   // 底盘逻辑
@@ -10,6 +11,8 @@ void MainLoop() {
   ShooterControl();
   // 拨盘电机逻辑
   MagazineControl();
+  //云台控制逻辑
+  // GimbalControl();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
