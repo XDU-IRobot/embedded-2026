@@ -8,8 +8,8 @@ void MagazineControl() {
     // 初始化射击模式
     if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid) {
       globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-      globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kSetZeroPosition);
-      target_magz = 0.0f;
+      // globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kSetZeroPosition);
+      // target_magz = 0.0f;
     }
     // 按下扳机(延时1s)
     if (counter == 0) {
@@ -40,16 +40,9 @@ void MagazineControl() {
   // 失能
   if (l_switch_position_last == rm::device::DR16::SwitchPosition::kMid &&
       l_switch_position_now != rm::device::DR16::SwitchPosition::kMid) {
+    HAL_Delay(0);
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    HAL_Delay(0);
   }
 }
 
@@ -67,13 +60,13 @@ void ShooterControl() {
     globals->pid_shooter_6->Update(0, globals->shooter_motor_6->rpm());
 
     // 给shooter电机发送指令
-    globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_shooter_1->out()));
-    globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_shooter_2->out()));
-    globals->shooter_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_shooter_3->out()));
-    globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_shooter_4->out()));
-    globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(globals->pid_shooter_5->out()));
-    globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(globals->pid_shooter_6->out()));
-  } else {
+    globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(0));
+    globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(0));
+    globals->shooter_motor_3->SetCurrent(static_cast<int16_t>(0));
+    globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(0));
+    globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(0));
+    globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(0));
+  } else if (globals->rc->switch_r()==rm::device::DR16::SwitchPosition::kMid){
     // 目标速度PID
     globals->pid_shooter_1->Update(V_shooter_1, globals->shooter_motor_1->rpm());
     globals->pid_shooter_2->Update(V_shooter_1, globals->shooter_motor_2->rpm());
@@ -106,8 +99,8 @@ void ChassisControl() {
   // }
   rm::i16 V_wheel_1 = -Vy + Vx;
   rm::i16 V_wheel_2 = Vy + Vx;
-  rm::i16 V_wheel_3 = Vy + 0.5*Vx;
-  rm::i16 V_wheel_4 = -Vy +0.5* Vx;
+  rm::i16 V_wheel_3 = Vy + 0.5 * Vx;
+  rm::i16 V_wheel_4 = -Vy + 0.5 * Vx;
   if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
     // 给底盘电机发送指令
     globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());
@@ -134,28 +127,30 @@ void ChassisControl() {
   }
   rm::device::DjiMotor<>::SendCommand();
 }
+
 /*----------------------------------------------------*/
 void GimbalControl() {
   //IMU解算
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(),   //
-                                                -globals->imu->gyro_x(),   //
-                                                -globals->imu->gyro_z(),   //
-                                                -globals->imu->accel_y(),  //
-                                                -globals->imu->accel_x(),  //
+  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(),
+                                                -globals->imu->gyro_x(),
+                                                -globals->imu->gyro_z(),
+                                                -globals->imu->accel_y(),
+                                                -globals->imu->accel_x(),
                                                 -globals->imu->accel_z()});
-  // 云台电机逻辑
-  l_switch_position_last = l_switch_position_now;
-  l_switch_position_now = globals->rc->switch_l();
+  // // 云台电机逻辑
+  // l_switch_position_last = l_switch_position_now;
+  // l_switch_position_now = globals->rc->switch_l();
   if (l_switch_position_now == rm::device::DR16::SwitchPosition::kMid || l_switch_position_now ==
       rm::device::DR16::SwitchPosition::kUp) {
     // 初始化云台模式
-    if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid) {
+    if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid && l_switch_position_last !=
+      rm::device::DR16::SwitchPosition::kUp) {
       globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-      globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+      // globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kClearError);
     }
     // 遥控器输入云台角度
-    pos_yaw -= globals->rc->right_x();
+    pos_yaw -= static_cast<float>(globals->rc->right_x())*0.000005 ; //45° per s / 660.0
     pos_pitch += globals->rc->right_y();
     //yaw限位
     if (pos_yaw < -1.85) {
@@ -168,14 +163,24 @@ void GimbalControl() {
     // } else if () {
     // }
     // PID计算
-    if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
-      globals->pid_yaw_position->Update(0, globals->gimbal_motor_yaw->pos(), 0.002);
-      globals->pid_pitch_position->Update(0, globals->gimbal_motor_pitch->rpm(), 0.002);
-    } else {
+    if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
       globals->pid_yaw_position->Update(pos_yaw, globals->gimbal_motor_yaw->pos(), 0.002);
-      // globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(),globals->gimbal_motor_yaw->vel(),0.002);
+      globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(),globals->gimbal_motor_yaw->vel(),0.002);
 
-      globals->pid_pitch_velocity->Update(globals->ahrs.euler_angle().pitch, 0.002);
+      // globals->pid_pitch_velocity->Update(globals->ahrs.euler_angle().pitch, 0.002);
+      globals->gimbal_motor_yaw->SetPosition(0, 0, globals->pid_yaw_velocity->out(), 0, 0);
+      HAL_Delay(0);
+    } else {
+
+      globals->gimbal_motor_yaw->SetPosition(0, 0, 0, 0, 0);
     }
-      }
+
+
+  }
+  if (l_switch_position_last == rm::device::DR16::SwitchPosition::kMid &&
+      l_switch_position_now != rm::device::DR16::SwitchPosition::kMid) {
+    HAL_Delay(0);
+    globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    HAL_Delay(0);
+  }
 }

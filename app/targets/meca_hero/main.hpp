@@ -60,7 +60,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_pitch_velocity{nullptr};
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{1000.f};  ///< mahony 姿态解算器，频率 1000Hz
+  rm::modules::MahonyAhrs ahrs{500.0f};  ///< mahony 姿态解算器，频率 1000Hz
 
   void Init() {
     can1 = new rm::hal::Can{hcan1};
@@ -68,6 +68,8 @@ inline struct GlobalWarehouse {
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     // 遥控
     rc = new rm::device::DR16{*dbus}; // 设置了遥控器以及用了串口
+    //IMU
+    imu=new rm::device::BMI088{hspi1,CS1_ACCEL_GPIO_Port,CS1_ACCEL_Pin,CS1_GYRO_GPIO_Port,CS1_GYRO_Pin};
     /*------*/
     // 电机
     chassis_motor_1 = new rm::device::M3508{*can2, 1, false};
@@ -95,18 +97,18 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{20, 2, 4, 18000, 2};
     pid_chassis_4 = new rm::modules::PID{20, 2, 4, 18000, 2};
 
-    pid_shooter_1 = new rm::modules::PID{25, 2, 4, 18000, 2};  // 20
-    pid_shooter_2 = new rm::modules::PID{25, 2, 4, 18000, 2};  // 20
-    pid_shooter_3 = new rm::modules::PID{25, 2, 4, 18000, 2};
-    pid_shooter_4 = new rm::modules::PID{25, 2, 4, 18000, 2};
-    pid_shooter_5 = new rm::modules::PID{25, 2, 4, 18000, 2};
-    pid_shooter_6 = new rm::modules::PID{25, 2, 4, 18000, 2};
+    pid_shooter_1 = new rm::modules::PID{25, 2, 4, 10000, 2};  // 20
+    pid_shooter_2 = new rm::modules::PID{25, 2, 4, 10000, 2};  // 20
+    pid_shooter_3 = new rm::modules::PID{25, 2, 4, 10000, 2};
+    pid_shooter_4 = new rm::modules::PID{25, 2, 4, 10000, 2};
+    pid_shooter_5 = new rm::modules::PID{25, 2, 4, 10000, 2};
+    pid_shooter_6 = new rm::modules::PID{25, 2, 4, 10000, 2};
 
-    pid_magz_position = new rm::modules::PID{2.25, 0.001, 0.149, 6, 0};
+    pid_magz_position = new rm::modules::PID{20, 0.001, 0.4, 6, 0};
     // pid_magz_velocity = new rm::modules::PID{0.17, 0, 0.0002, 6.4, 0};
 
-    pid_yaw_position = new rm::modules::PID{2.25, 0.001, 0.149, 1, 0};
-    pid_yaw_velocity = new rm::modules::PID{0.17, 0, 0.0002, 1, 0};
+    pid_yaw_position = new rm::modules::PID{0, 0.001, 0.0, 8, 0};
+    pid_yaw_velocity = new rm::modules::PID{200, 0, 0.001, 6, 0};
     pid_pitch_position = new rm::modules::PID{10, 0, 0, 1000, 0};
     pid_pitch_velocity = new rm::modules::PID{10, 0, 0, 1000, 0};
 
@@ -122,7 +124,7 @@ inline struct GlobalWarehouse {
 // 底盘速度
 inline rm::i16 Vx, Vy, Vw;
 //云台角度
-inline rm::i16 pos_yaw,pos_pitch;
+inline double pos_yaw,pos_pitch;
 // 拨盘增加角度
 inline float target_magz;
 inline float target_velocity;
@@ -135,8 +137,8 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -6000;
-inline rm::i16 V_shooter_2 = -5500;
+inline rm::i16 V_shooter_1 = -600;
+inline rm::i16 V_shooter_2 = -550;
 
 /*----------------------------------------------
  *执行函数

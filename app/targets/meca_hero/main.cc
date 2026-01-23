@@ -12,7 +12,7 @@ void MainLoop() {
   // 拨盘电机逻辑
   MagazineControl();
   //云台控制逻辑
-  // GimbalControl();
+  GimbalControl();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
