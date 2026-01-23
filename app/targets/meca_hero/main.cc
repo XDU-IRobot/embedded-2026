@@ -11,7 +11,7 @@ void MainLoop() {
   ShooterControl();
   // 拨盘电机逻辑
   MagazineControl();
-  //云台控制逻辑
+  // 云台控制逻辑
   GimbalControl();
 }
 
