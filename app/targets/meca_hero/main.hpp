@@ -107,7 +107,7 @@ inline struct GlobalWarehouse {
     pid_magz_position = new rm::modules::PID{20, 0.001, 0.4, 6, 0};
     // pid_magz_velocity = new rm::modules::PID{0.17, 0, 0.0002, 6.4, 0};
 
-    pid_yaw_position = new rm::modules::PID{0, 0.001, 0.0, 8, 0};
+    pid_yaw_position = new rm::modules::PID{80, 0.001, 2, 8, 0};
     pid_yaw_velocity = new rm::modules::PID{200, 0, 0.001, 6, 0};
     pid_pitch_position = new rm::modules::PID{10, 0, 0, 1000, 0};
     pid_pitch_velocity = new rm::modules::PID{10, 0, 0, 1000, 0};
