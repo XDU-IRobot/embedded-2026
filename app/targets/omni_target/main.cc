@@ -1,3 +1,5 @@
+#include "SineSweep.hpp"
+
 #include <librm.hpp>
 
 #include "can.h"
@@ -8,9 +10,7 @@
 #include "buzzer.hpp"
 #include "timer_task.hpp"
 #include "sparse_value_watcher.hpp"
-#include "device_manager.hpp"
 #include "controllers/quad_omni_chassis.hpp"
-
 struct GlobalWarehouse {
   AsyncBuzzer *buzzer{nullptr};  ///< 蜂鸣器
   LED *led{nullptr};             ///< RGB LED灯
@@ -20,11 +20,11 @@ struct GlobalWarehouse {
   rm::hal::Serial *dbus{nullptr};  ///< 遥控器串口接口
 
   // 设备 //
-  DeviceManager<10> device_manager;  ///< 设备管理器，维护所有设备在线状态
+  rm::device::DeviceManager<10> device_manager;  ///< 设备管理器，维护所有设备在线状态
   rm::device::DR16 *rc{nullptr};     ///< 遥控器
   rm::device::M3508 *lf_motor{nullptr}, *rf_motor{nullptr}, *lb_motor{nullptr}, *rb_motor{nullptr};  ///< 四个底盘电机
   rm::device::BMI088 *imu{nullptr};
-
+  MultiFreqSine *Sine;
   // 控制器 //
   QuadOmniChassis chassis_controller;
   SparseValueWatcher<rm::device::DR16::SwitchPosition> rc_l_switch_watcher, rc_r_switch_watcher;
@@ -35,6 +35,7 @@ struct GlobalWarehouse {
     kNormal,
     kHoldSpin,
     kHeadless,
+    kSineTarget,
   } control_mode;
   ;
   float hold_spin_speed = 0.f;
@@ -53,7 +54,7 @@ struct GlobalWarehouse {
     lb_motor = new rm::device::M3508{*can2, 3};
     rb_motor = new rm::device::M3508{*can2, 2};
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-
+    Sine= new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 10.0, 1000.0);
     device_manager << rc << lf_motor << rf_motor << lb_motor << rb_motor;
 
     can2->SetFilter(0, 0);
@@ -69,7 +70,7 @@ void MainLoop() {
     (*globals->led)(0xff00ff00);  // 绿灯代表所有设备在线
   } else {
     (*globals->led)(0xffff0000);  // 红灯代表有设备离线
-    globals->chassis_controller.Enable(false);
+    globals->chassis_controller.Enable(true);
   }
 
   globals->imu->Update();
@@ -97,7 +98,12 @@ void MainLoop() {
     float vy_rotated = vx * sin_theta + vy * cos_theta;
     globals->chassis_controller.SetTarget(vx_rotated, vy_rotated,
                                           globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f);
-  } else {
+  }else if (globals->control_mode==GlobalWarehouse::ControlMode::kSineTarget) {
+    globals->chassis_controller.SetTarget(0,0,globals->Sine->Next()
+                                       );
+
+  }
+  else {
     globals->chassis_controller.SetTarget(globals->rc->left_x() / 660.f * 20.f, globals->rc->left_y() / 660.f * 20.f,
                                           globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f);
   }
@@ -125,6 +131,10 @@ extern "C" [[noreturn]] void AppMain(void) {
                 globals->buzzer->Beep(2, 35);
                 globals->hold_spin_speed = globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f;
                 globals->control_mode = GlobalWarehouse::ControlMode::kHoldSpin;
+              }
+              else if (new_value == rm::device::DR16::SwitchPosition::kMid) {
+                globals->buzzer->Beep(2, 35);
+                globals->control_mode = GlobalWarehouse::ControlMode::kSineTarget;
               }
             }
           }));
