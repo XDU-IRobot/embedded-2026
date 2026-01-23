@@ -67,29 +67,29 @@ inline struct GlobalWarehouse {
     can2 = new rm::hal::Can{hcan2};
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     // 遥控
-    rc = new rm::device::DR16{*dbus}; // 设置了遥控器以及用了串口
-    //IMU
-    imu=new rm::device::BMI088{hspi1,CS1_ACCEL_GPIO_Port,CS1_ACCEL_Pin,CS1_GYRO_GPIO_Port,CS1_GYRO_Pin};
+    rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及用了串口
+    // IMU
+    imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     /*------*/
     // 电机
     chassis_motor_1 = new rm::device::M3508{*can2, 1, false};
     chassis_motor_2 = new rm::device::M3508{*can2, 2, false};
     chassis_motor_3 = new rm::device::M3508{*can2, 3, false};
     chassis_motor_4 = new rm::device::M3508{*can2, 4, false};
-    //摩擦轮电机
+    // 摩擦轮电机
     shooter_motor_1 = new rm::device::M3508{*can1, 1, false};
     shooter_motor_2 = new rm::device::M3508{*can1, 2, false};
     shooter_motor_3 = new rm::device::M3508{*can1, 3, false};
     shooter_motor_4 = new rm::device::M3508{*can1, 4, false};
     shooter_motor_5 = new rm::device::M3508{*can1, 5, false};
     shooter_motor_6 = new rm::device::M3508{*can1, 6, false};
-    //拨盘电机
+    // 拨盘电机
     magazine_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x12, 0x03, 3.141593f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
-    //云台电机
+    // 云台电机
     gimbal_motor_yaw = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can2, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
-    gimbal_motor_pitch=new rm::device::M3508{*can2,5,false};
+    gimbal_motor_pitch = new rm::device::M3508{*can2, 5, false};
     /*--------*/
     // PID控制器
     pid_chassis_1 = new rm::modules::PID{20, 2, 4, 18000, 2};
@@ -116,15 +116,15 @@ inline struct GlobalWarehouse {
     can1->Begin();
     can2->SetFilter(0, 0);
     can2->Begin();
-    rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
   }
 } *globals;
 ;
 
 // 底盘速度
 inline rm::i16 Vx, Vy, Vw;
-//云台角度
-inline double pos_yaw,pos_pitch;
+// 云台角度
+inline double pos_yaw, pos_pitch;
 // 拨盘增加角度
 inline float target_magz;
 inline float target_velocity;
@@ -149,6 +149,6 @@ void MagazineControl();
 void ShooterControl();
 // 底盘逻辑
 void ChassisControl();
-//云台逻辑
+// 云台逻辑
 void GimbalControl();
 #endif  // BOARDC_MAIN_HPP
