@@ -103,7 +103,7 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(300.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().up_yaw_speed.SetKp(300.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
-  gimbal_controller.pid().down_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(2600.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(2000).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(14.0f).SetKi(0.0f).SetKd(120.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
@@ -111,10 +111,10 @@ void GlobalWarehouse::GimbalPIDInit() {
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
-  chassis_controller.pid().lf_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {

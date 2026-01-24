@@ -4,7 +4,7 @@
 
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(10000.0f);
+  chassis->chassis_follow_pid_.SetKp(9000.0f);
   chassis->chassis_follow_pid_.SetKi(0.0f);
   chassis->chassis_follow_pid_.SetKd(600000.0f);
   chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
