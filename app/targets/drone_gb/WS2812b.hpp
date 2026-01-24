@@ -2,7 +2,6 @@
 #define BOARDC_WS2812B_HPP
 
 #include "main.h"
-#include "Stdbool.h"
 #include <string.h>
 #include <math.h>
 
