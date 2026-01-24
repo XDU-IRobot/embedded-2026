@@ -215,8 +215,4 @@ void Chassis::SetMotorCurrent() {
       static_cast<i16>(globals->chassis_controller.output().lb_wheel * chassis->k_speed_power_limit_));
   globals->wheel_rb->SetCurrent(
       static_cast<i16>(globals->chassis_controller.output().rb_wheel * chassis->k_speed_power_limit_));
-  // globals->wheel_lf->SetCurrent(0);
-  // globals->wheel_rf->SetCurrent(0);
-  // globals->wheel_lb->SetCurrent(0);
-  // globals->wheel_rb->SetCurrent(0);
 }

@@ -47,6 +47,7 @@ void GlobalWarehouse::Init() {
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
   can_communicator = new rm::device::AimbotCanCommunicator(*can1);
+  // navigate_communicator = new rm::device::NavigateCanCommunicator(*can1);
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
 
@@ -99,8 +100,8 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // 上部 Yaw PID 参数
-  gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(500.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().up_yaw_speed.SetKp(400.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(300.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_speed.SetKp(300.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
   gimbal_controller.pid().down_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(2600.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
@@ -110,17 +111,17 @@ void GlobalWarehouse::GimbalPIDInit() {
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
-  chassis_controller.pid().lf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_wheel.SetKp(1.0f).SetKi(0.0f).SetKd(20.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_wheel.SetKp(4.0f).SetKi(0.0f).SetKd(5.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {
   shoot_controller.pid().fric_1_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().fric_2_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  shoot_controller.pid().loader_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().loader_speed.SetKp(3.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::RCStateUpdate() {

@@ -36,9 +36,9 @@ void Gimbal::GimbalStateUpdate() {
         break;
     }
   }
-  if (!globals->device_shoot.all_device_ok()) {
-    gimbal->ShootDisableUpdate();  // 发射机构失能计算
-  } else {
+  // if (!globals->device_shoot.all_device_ok()) {
+  //   gimbal->ShootDisableUpdate();  // 发射机构失能计算
+  // } else {
     switch (globals->StateMachine_) {
       case kMatch:                    // 比赛模式下，发射系统与拨盘电使能
         gimbal->ShootEnableUpdate();  // 发射机构使能计算
@@ -59,7 +59,7 @@ void Gimbal::GimbalStateUpdate() {
         gimbal->ShootDisableUpdate();  // 发射机构失能计算
         break;
     }
-  }
+  // }
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
