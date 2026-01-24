@@ -1,7 +1,9 @@
-// SineSweep.cc
-#include "SineSweep.hpp"
+
+#include "sine_sweep.hpp"
+
 #include <cmath>
 #include <algorithm>
+
 SineSweep::SineSweep(double amp_min, double amp_max, double f_start, double f_end, double duration, double sample_rate)
     : amp_min_(amp_min),
       amp_max_(amp_max),

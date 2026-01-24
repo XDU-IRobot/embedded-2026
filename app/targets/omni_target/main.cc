@@ -1,4 +1,3 @@
-#include "SineSweep.hpp"
 
 #include <librm.hpp>
 
@@ -10,7 +9,9 @@
 #include "buzzer.hpp"
 #include "timer_task.hpp"
 #include "sparse_value_watcher.hpp"
+#include "sine_sweep.hpp"
 #include "controllers/quad_omni_chassis.hpp"
+
 struct GlobalWarehouse {
   AsyncBuzzer *buzzer{nullptr};  ///< 蜂鸣器
   LED *led{nullptr};             ///< RGB LED灯
@@ -24,7 +25,7 @@ struct GlobalWarehouse {
   rm::device::DR16 *rc{nullptr};                 ///< 遥控器
   rm::device::M3508 *lf_motor{nullptr}, *rf_motor{nullptr}, *lb_motor{nullptr}, *rb_motor{nullptr};  ///< 四个底盘电机
   rm::device::BMI088 *imu{nullptr};
-  MultiFreqSine *Sine;
+  MultiFreqSine *sine;
   // 控制器 //
   QuadOmniChassis chassis_controller;
   SparseValueWatcher<rm::device::DR16::SwitchPosition> rc_l_switch_watcher, rc_r_switch_watcher;
@@ -54,7 +55,7 @@ struct GlobalWarehouse {
     lb_motor = new rm::device::M3508{*can2, 3};
     rb_motor = new rm::device::M3508{*can2, 2};
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-    Sine = new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 10.0, 1000.0);
+    sine = new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 10.0, 1000.0);
     device_manager << rc << lf_motor << rf_motor << lb_motor << rb_motor;
 
     can2->SetFilter(0, 0);
@@ -99,7 +100,7 @@ void MainLoop() {
     globals->chassis_controller.SetTarget(vx_rotated, vy_rotated,
                                           globals->rc->right_x() / 660.f * 23.f - globals->rc->dial() / 660.f * 23.f);
   } else if (globals->control_mode == GlobalWarehouse::ControlMode::kSineTarget) {
-    globals->chassis_controller.SetTarget(0, 0, globals->Sine->Next());
+    globals->chassis_controller.SetTarget(0, 0, globals->sine->Next());
 
   } else {
     globals->chassis_controller.SetTarget(globals->rc->left_x() / 660.f * 20.f, globals->rc->left_y() / 660.f * 20.f,

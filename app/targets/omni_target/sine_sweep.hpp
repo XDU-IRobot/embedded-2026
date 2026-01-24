@@ -1,10 +1,7 @@
-//
-// Created by 34236 on 2026/1/16.
-//
+#pragma once
 
-#ifndef BOARDC_SINESWEEP_HPP
-#define BOARDC_SINESWEEP_HPP
 #include <vector>
+
 class SineSweep {
  public:
   // amp_min, amp_max: 振幅范围（输出大约在 [-amp, +amp]）
@@ -57,4 +54,3 @@ class MultiFreqSine {
   size_t idx_;
   bool finished_;
 };
-#endif  // BOARDC_SINESWEEP_HPP
