@@ -190,7 +190,7 @@ class Gimbal {
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
-    shoot_controller.Arm(false);               // 摩擦轮武装（允许转动）
+    shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
@@ -201,8 +201,10 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);//200
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);//250
+    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(
+        1000.0f);  // 200
+    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(
+        1000.0f);  // 250
 
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
@@ -256,7 +258,7 @@ class Gimbal {
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
-      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.7);//1.6 2.9
+      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.7);  // 1.6 2.9
 
       auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
 
@@ -319,7 +321,8 @@ class Gimbal {
         rc_yaw_data = Aimbot.TargetYawAngle;
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-        rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_pitch_data =
+            rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.7);
       } else {
         rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
@@ -339,7 +342,6 @@ class Gimbal {
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
       yaw_motor->SetCurrent(rm::modules::Clamp(gimbal_controller.output().yaw, -30000, 30000));
     }
-
 
     // 无力或遥控器无信号
     else {
@@ -488,7 +490,6 @@ class Gimbal {
   // 总循环
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
-
       if (abcdefg >= 30) abcdefg = 0;
       if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
       if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
