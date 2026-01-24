@@ -186,3 +186,7 @@ void GimbalControl() {
     HAL_Delay(0);
   }
 }
+/*------------*/
+void VOFA() {
+  rm::modules::VofaPlotter
+}
