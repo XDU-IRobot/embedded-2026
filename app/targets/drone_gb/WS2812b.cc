@@ -1,4 +1,4 @@
-#include "ws2812b.hpp"
+#include "WS2812b.hpp"
 
 extern TIM_HandleTypeDef htim1;
 extern DMA_HandleTypeDef hdma_tim1_ch1;
