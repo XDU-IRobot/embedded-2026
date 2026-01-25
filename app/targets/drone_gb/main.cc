@@ -15,6 +15,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   gimbal = new Gimbal();
   gimbal->GimbalInit();
 
+  // HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{&htim13, etl::delegate<void()>::create<MainLoop>()};
   mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1);  // 84MHz / 168 / 1000 = 500Hz
