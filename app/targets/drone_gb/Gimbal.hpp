@@ -54,8 +54,6 @@ extern void FreemasterDebug();
 extern float Aautopitch;
 extern float Aautoyaw;
 
-
-
 extern AimbotFrame_SCM_t Aimbot;
 
 class Gimbal {
@@ -82,13 +80,13 @@ class Gimbal {
   rm::device::DeviceManager<3> device_shoot;   // 发射管理器
   int time_ = 0;                               // 系统心跳
 
-  rm::device::BMI088 *imu{nullptr};      // IMU
-  rm::modules::MahonyAhrs ahrs{490.0f};  // TODO Mahony滤波控制频率
+  rm::device::BMI088 *imu{nullptr};           // IMU
+  rm::modules::MahonyAhrs ahrs{490.0f};       // TODO Mahony滤波控制频率
   rm::modules::MahonyAhrs ahrs_auto{490.0f};  // TODO Mahony滤波控制频率
 
-  double yaw = 0;                        // imu yaw数据
-  double roll = 0;                       // imu roll数据
-  double pitch = 0;                      // imu pitch数据
+  double yaw = 0;    // imu yaw数据
+  double roll = 0;   // imu roll数据
+  double pitch = 0;  // imu pitch数据
 
   rm::device::GM6020 *yaw_motor{nullptr};                                           // 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  // 云台 Pitch 电机
@@ -114,16 +112,16 @@ class Gimbal {
   bool DM_is_enable = false;     // 达秒使能标志位
   Gimbal2Dof gimbal_controller;  // 二轴双 Yaw 云台控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
-  i16 encoder_dirl=0;
-  bool single_shoot_mode=true;   //TODO 是否打开单发模式
-  int single_shoot_time=28;    //TODO 单发时间
+  i16 encoder_dirl = 0;
+  bool single_shoot_mode = true;  // TODO 是否打开单发模式
+  int single_shoot_time = 28;     // TODO 单发时间
   // int single_shoot_time=56;    //TODO 单发时间
-  int single_shoot_mid=0;        //单发中间变量
-  bool single_flag=0;            //单发射击标志位
-  float dirl_speed = 5000;       // TODO 拨盘转速
+  int single_shoot_mid = 0;  // 单发中间变量
+  bool single_flag = 0;      // 单发射击标志位
+  float dirl_speed = 5000;   // TODO 拨盘转速
   // float dirl_speed = 2500;
-  float redirl_speed = 1000;     // TODO 拨盘反转速
-  float friction_speed = 6600;   // TODO 摩擦轮转速
+  float redirl_speed = 1000;    // TODO 拨盘反转速
+  float friction_speed = 6600;  // TODO 摩擦轮转速
   // 拨盘自动反转
   float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
   int auto_reverse_time_max = 150;                           // TODO 反转持续时间
@@ -222,8 +220,10 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);  // 200
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);  // 250
+    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(
+        1000.0f);  // 200
+    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(
+        1000.0f);  // 250
 
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
@@ -285,7 +285,7 @@ class Gimbal {
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
 
-      pitch_torque = pitch_torque_kp * sin(pitch-3.7);
+      pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
 
@@ -356,7 +356,7 @@ class Gimbal {
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
 
-      pitch_torque = pitch_torque_kp * sin(pitch-3.7);
+      pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
     }
@@ -381,32 +381,25 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (single_shoot_mode)//单发模式逻辑
+      if (single_shoot_mode)  // 单发模式逻辑
       {
-        if (encoder_dirl<550&&rc->dial()>=550)single_flag=true;
-        encoder_dirl=rc->dial();
+        if (encoder_dirl < 550 && rc->dial() >= 550) single_flag = true;
+        encoder_dirl = rc->dial();
 
-        if (single_flag)
-        {
-          if (single_shoot_mid>=single_shoot_time)
-          {
+        if (single_flag) {
+          if (single_shoot_mid >= single_shoot_time) {
             single_flag = false;
-            single_shoot_mid=0;
-          }
-          else
-          {
+            single_shoot_mid = 0;
+          } else {
             shoot_controller.SetLoaderSpeed(dirl_speed);
             single_shoot_mid++;
           }
-        }
-        else
-        {
+        } else {
           shoot_controller.SetLoaderSpeed(0);
         }
-      }
-      else //连发模式逻辑
+      } else  // 连发模式逻辑
       {
-        //正常控制逻辑
+        // 正常控制逻辑
         if (rc->dial() >= 550) {
           if (auto_reverse_flag) {
             shoot_controller.SetLoaderSpeed(-redirl_speed);
@@ -431,7 +424,7 @@ class Gimbal {
           shoot_controller.SetLoaderSpeed(0.0f);
         }
 
-        //自动反转逻辑
+        // 自动反转逻辑
         if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
           auto_reverse_buffer[4] = auto_reverse_buffer[3];
           auto_reverse_buffer[3] = auto_reverse_buffer[2];
@@ -491,15 +484,14 @@ class Gimbal {
     // imu处理
     imu->Update();
 
-    ahrs_auto.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z(), imu->accel_y(), imu->accel_x(),
-                                     -imu->accel_z()});
+    ahrs_auto.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z(), imu->accel_y(),
+                                              imu->accel_x(), -imu->accel_z()});
     pitch = ahrs_auto.euler_angle().pitch + M_PI;
     yaw = ahrs_auto.euler_angle().yaw + M_PI;
     roll = ahrs_auto.euler_angle().roll + M_PI;
 
-    GimbalImuSend(ahrs_auto.quaternion().w, ahrs_auto.quaternion().x, ahrs_auto.quaternion().y, ahrs_auto.quaternion().z);
-
-
+    GimbalImuSend(ahrs_auto.quaternion().w, ahrs_auto.quaternion().x, ahrs_auto.quaternion().y,
+                  ahrs_auto.quaternion().z);
   }
 
   // DmMotor电机发信息
