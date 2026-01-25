@@ -58,8 +58,11 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_pitch_position{nullptr};
   rm::modules::PID *pid_pitch_velocity{nullptr};
 
+  //底盘随动
+  rm::modules::PID *pid_chassis_follow{nullptr};
+
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{500.0f};  ///< mahony 姿态解算器，频率 1000Hz
+  rm::modules::MahonyAhrs ahrs{1000.0f};  ///< mahony 姿态解算器，频率 1000Hz
 
   void Init() {
     can1 = new rm::hal::Can{hcan1};
@@ -69,7 +72,6 @@ inline struct GlobalWarehouse {
     rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及用了串口
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-
     /*------*/
     // 电机
     chassis_motor_1 = new rm::device::M3508{*can2, 1, false};
@@ -89,7 +91,7 @@ inline struct GlobalWarehouse {
     // 云台电机
     gimbal_motor_yaw = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can2, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}, true};
-    gimbal_motor_pitch = new rm::device::M3508{*can2, 5, false};
+    gimbal_motor_pitch = new rm::device::M3508{*can2, 5, true};
     /*--------*/
     // PID控制器
     pid_chassis_1 = new rm::modules::PID{20, 2, 4, 18000, 2};
@@ -107,10 +109,13 @@ inline struct GlobalWarehouse {
     pid_magz_position = new rm::modules::PID{20, 0.001, 0.4, 6, 0};
     // pid_magz_velocity = new rm::modules::PID{0.17, 0, 0.0002, 6.4, 0};
 
-    pid_yaw_position = new rm::modules::PID{80, 0.001, 2, 8, 0};
-    pid_yaw_velocity = new rm::modules::PID{200, 0, 0.001, 6, 0};
-    pid_pitch_position = new rm::modules::PID{10, 0, 0, 1000, 0};
-    pid_pitch_velocity = new rm::modules::PID{10, 0, 0, 1000, 0};
+    pid_yaw_position = new rm::modules::PID{100, 0.01, 10, 8, 0};
+    pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
+    pid_pitch_position = new rm::modules::PID{3, 0, 0, 1, 0};
+    pid_pitch_velocity = new rm::modules::PID{12000,100, 80, 8000,0};
+
+    //底盘随动
+    pid_chassis_follow = new rm::modules::PID{20, 0, 0, 2000, 0};
 
     can1->SetFilter(0, 0);
     can1->Begin();
@@ -127,6 +132,8 @@ inline rm::i16 Vx, Vy, Vw;
 inline float target_pos_yaw, target_pos_pitch;
 // 云台当前角度
 inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
+//imu陀螺仪
+inline float Gy,Gz,Gx;
 // 拨盘增加角度
 inline float target_magz;
 inline float target_velocity;
@@ -143,7 +150,11 @@ inline rm::i16 V_shooter_1 = -600;
 inline rm::i16 V_shooter_2 = -550;
 // PIDerror
 inline float error;
-
+//pitch_out
+inline float pitch_out;
+inline float yaw_out;
+//电机状态
+inline uint8_t yaw_state;
 /*----------------------------------------------
  *执行函数
  */

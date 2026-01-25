@@ -27,7 +27,7 @@ extern "C" [[noreturn]] void AppMain(void) {
       &htim13,
       etl::delegate<void()>::create<MainLoop>()  //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(164, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
+  mainloop_1000hz.SetPrescalerAndPeriod(84, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
   mainloop_1000hz.Start();                               // 启动定时器
 
   for (;;) {
