@@ -42,7 +42,19 @@ extern uint8_t Ashoot_hz;
 extern float Ashoot_speed;
 extern i16 Adrmp;
 extern i16 Armp;
+
+extern f32 Ax;
+extern f32 Ay;
+extern f32 Az;
+extern f32 Gx;
+extern f32 Gy;
+extern f32 Gz;
+
 extern void FreemasterDebug();
+extern float Aautopitch;
+extern float Aautoyaw;
+
+
 
 extern AimbotFrame_SCM_t Aimbot;
 
@@ -72,6 +84,8 @@ class Gimbal {
 
   rm::device::BMI088 *imu{nullptr};      // IMU
   rm::modules::MahonyAhrs ahrs{490.0f};  // TODO Mahony滤波控制频率
+  rm::modules::MahonyAhrs ahrs_auto{490.0f};  // TODO Mahony滤波控制频率
+
   double yaw = 0;                        // imu yaw数据
   double roll = 0;                       // imu roll数据
   double pitch = 0;                      // imu pitch数据
@@ -100,8 +114,15 @@ class Gimbal {
   bool DM_is_enable = false;     // 达秒使能标志位
   Gimbal2Dof gimbal_controller;  // 二轴双 Yaw 云台控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
-  float dirl_speet = 5000;       // TODO 拨盘转速
-  float redirl_speet = 1000;     // TODO 拨盘反转速
+  i16 encoder_dirl=0;
+  bool single_shoot_mode=true;   //TODO 是否打开单发模式
+  int single_shoot_time=28;    //TODO 单发时间
+  // int single_shoot_time=56;    //TODO 单发时间
+  int single_shoot_mid=0;        //单发中间变量
+  bool single_flag=0;            //单发射击标志位
+  float dirl_speed = 5000;       // TODO 拨盘转速
+  // float dirl_speed = 2500;
+  float redirl_speed = 1000;     // TODO 拨盘反转速
   float friction_speed = 6600;   // TODO 摩擦轮转速
   // 拨盘自动反转
   float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
@@ -123,7 +144,7 @@ class Gimbal {
   // pitch补偿系数
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.9f;  // TODO 重力补偿参数
-  // // pitch滤波器（有bug，未启用）
+  // // pitch滤波器（效果不好，未启用）
   // Biquad pitch_cmd_notch;
   // ChirpGenerator pitch_chirp;
 
@@ -201,10 +222,8 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(
-        1000.0f);  // 200
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(
-        1000.0f);  // 250
+    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);  // 200
+    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);  // 250
 
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
@@ -254,21 +273,21 @@ class Gimbal {
         rc_yaw_data = yaw;
         rc_pitch_data = rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
       }
-      rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
-      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.7);  // 1.6 2.9
+      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.75);
 
       auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
-
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.Update(yaw, yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
+
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
 
-      pitch_torque = -pitch_torque_kp * cos(pitch + 0.2);
+      pitch_torque = pitch_torque_kp * sin(pitch-3.7);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
-      yaw_motor->SetCurrent(rm::modules::Clamp(gimbal_controller.output().yaw, -25000, 25000));
+      yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
 
     }
 
@@ -302,12 +321,12 @@ class Gimbal {
     //   gimbal_controller.Update(yaw, yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
     //                            pitch_motor->vel(), 2.f);
     //
-    //   pitch_torque = -pitch_torque_kp * cos(pitch + 0.2);
+    //   pitch_torque = -pitch_torque_kp * sin(pitch -3.7);
     //   pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
     //   yaw_motor->SetCurrent(rm::modules::Clamp(gimbal_controller.output().yaw, -30000, 30000));
     // }
 
-    // 自瞄控制
+    // 自瞄控制 直接控制
     else if (GimbalState_ == kAuto) {
       if (DM_is_enable == false) {  // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
@@ -321,26 +340,25 @@ class Gimbal {
         rc_yaw_data = Aimbot.TargetYawAngle;
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-        rc_pitch_data =
-            rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
-        rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.7);
+        rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average, 0, 2 * M_PI);
+        rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.75);
       } else {
-        rc_yaw_data += rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+        rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
         rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
-        rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.7);
+        rc_pitch_data = rm::modules::Clamp(rc_pitch_data, 1.6, 2.75);
       }
 
       auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
-
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.Update(yaw, yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
+
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
 
-      pitch_torque = -pitch_torque_kp * cos(pitch + 0.2);
+      pitch_torque = pitch_torque_kp * sin(pitch-3.7);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
-      yaw_motor->SetCurrent(rm::modules::Clamp(gimbal_controller.output().yaw, -30000, 30000));
+      yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
     }
 
     // 无力或遥控器无信号
@@ -363,39 +381,67 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (rc->dial() >= 550) {
-        if (auto_reverse_flag) {
-          shoot_controller.SetLoaderSpeed(-redirl_speet);
-          auto_reverse_time--;
-          auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
-        } else {
-          if (GimbalState_ == kAuto) {
-            if (Aimbot.AimbotState && Aimbot.AutoFire) {
-              shoot_controller.SetLoaderSpeed(dirl_speet);
-            } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
-              shoot_controller.SetLoaderSpeed(0.0f);
-            } else {
-              shoot_controller.SetLoaderSpeed(dirl_speet);
-            }
-          } else {
-            shoot_controller.SetLoaderSpeed(dirl_speet);
+      if (single_shoot_mode)//单发模式逻辑
+      {
+        if (encoder_dirl<550&&rc->dial()>=550)single_flag=true;
+        encoder_dirl=rc->dial();
+
+        if (single_flag)
+        {
+          if (single_shoot_mid>=single_shoot_time)
+          {
+            single_flag = false;
+            single_shoot_mid=0;
+          }
+          else
+          {
+            shoot_controller.SetLoaderSpeed(dirl_speed);
+            single_shoot_mid++;
           }
         }
-      } else if (rc->dial() <= -600) {
-        shoot_controller.SetLoaderSpeed(-redirl_speet);
-      } else {
-        shoot_controller.SetLoaderSpeed(0.0f);
+        else
+        {
+          shoot_controller.SetLoaderSpeed(0);
+        }
       }
+      else //连发模式逻辑
+      {
+        //正常控制逻辑
+        if (rc->dial() >= 550) {
+          if (auto_reverse_flag) {
+            shoot_controller.SetLoaderSpeed(-redirl_speed);
+            auto_reverse_time--;
+            auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
+          } else {
+            if (GimbalState_ == kAuto) {
+              if (Aimbot.AimbotState && Aimbot.AutoFire) {
+                shoot_controller.SetLoaderSpeed(dirl_speed);
+              } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
+                shoot_controller.SetLoaderSpeed(0.0f);
+              } else {
+                shoot_controller.SetLoaderSpeed(dirl_speed);
+              }
+            } else {
+              shoot_controller.SetLoaderSpeed(dirl_speed);
+            }
+          }
+        } else if (rc->dial() <= -600) {
+          shoot_controller.SetLoaderSpeed(-redirl_speed);
+        } else {
+          shoot_controller.SetLoaderSpeed(0.0f);
+        }
 
-      if (shoot_controller.GetLoaderSpeed() == dirl_speet) {
-        auto_reverse_buffer[4] = auto_reverse_buffer[3];
-        auto_reverse_buffer[3] = auto_reverse_buffer[2];
-        auto_reverse_buffer[2] = auto_reverse_buffer[1];
-        auto_reverse_buffer[1] = auto_reverse_buffer[0];
-        auto_reverse_buffer[0] = dial_motor->encoder();
-        if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
-          auto_reverse_flag = true;
-          auto_reverse_time = auto_reverse_time_max;
+        //自动反转逻辑
+        if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
+          auto_reverse_buffer[4] = auto_reverse_buffer[3];
+          auto_reverse_buffer[3] = auto_reverse_buffer[2];
+          auto_reverse_buffer[2] = auto_reverse_buffer[1];
+          auto_reverse_buffer[1] = auto_reverse_buffer[0];
+          auto_reverse_buffer[0] = dial_motor->encoder();
+          if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
+            auto_reverse_flag = true;
+            auto_reverse_time = auto_reverse_time_max;
+          }
         }
       }
 
@@ -405,6 +451,7 @@ class Gimbal {
       friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
       friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
       dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
+
     }
 
     // 准备状态
@@ -443,13 +490,16 @@ class Gimbal {
 
     // imu处理
     imu->Update();
-    ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_x(), imu->gyro_y(), imu->gyro_z(), imu->accel_x(), imu->accel_y(),
-                                         imu->accel_z()});
-    GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z);
 
-    roll = -ahrs.euler_angle().pitch + M_PI;
-    yaw = -ahrs.euler_angle().yaw + M_PI;
-    pitch = ahrs.euler_angle().roll + M_PI;
+    ahrs_auto.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z(), imu->accel_y(), imu->accel_x(),
+                                     -imu->accel_z()});
+    pitch = ahrs_auto.euler_angle().pitch + M_PI;
+    yaw = ahrs_auto.euler_angle().yaw + M_PI;
+    roll = ahrs_auto.euler_angle().roll + M_PI;
+
+    GimbalImuSend(ahrs_auto.quaternion().w, ahrs_auto.quaternion().x, ahrs_auto.quaternion().y, ahrs_auto.quaternion().z);
+
+
   }
 
   // DmMotor电机发信息
@@ -467,7 +517,6 @@ class Gimbal {
       err_buffer_ptr = (err_buffer_ptr + 1) % err_buffer_size;
       err_average = err_sum / err_buffer_size;
       err_average = rm::modules::Wrap(err_average, 0, 2 * M_PI);
-      // err_average = rm::modules::Clamp(err_average, 1.83, 2.0);
     }
   }
 
@@ -475,9 +524,9 @@ class Gimbal {
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {
       FreemasterDebug();
-      vofa_pitch = Apitchpose;
-      uint32_t t_ms = HAL_GetTick();
-      VOFA_SendPitch_Blocking(t_ms, vofa_pitch, vofa_current);
+      // vofa_pitch = Apitchpose;
+      // uint32_t t_ms = HAL_GetTick();
+      // VOFA_SendPitch_Blocking(t_ms, vofa_pitch, vofa_current);
     }
   }
 
