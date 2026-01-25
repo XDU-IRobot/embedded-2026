@@ -58,7 +58,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_pitch_position{nullptr};
   rm::modules::PID *pid_pitch_velocity{nullptr};
 
-  //底盘随动
+  // 底盘随动
   rm::modules::PID *pid_chassis_follow{nullptr};
 
   // 控制器 //
@@ -112,9 +112,9 @@ inline struct GlobalWarehouse {
     pid_yaw_position = new rm::modules::PID{100, 0.01, 10, 8, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
     pid_pitch_position = new rm::modules::PID{3, 0, 0, 1, 0};
-    pid_pitch_velocity = new rm::modules::PID{12000,100, 80, 8000,0};
+    pid_pitch_velocity = new rm::modules::PID{12000, 100, 80, 8000, 0};
 
-    //底盘随动
+    // 底盘随动
     pid_chassis_follow = new rm::modules::PID{6000, 0, 0, 10000, 0};
 
     can1->SetFilter(0, 0);
@@ -132,8 +132,8 @@ inline rm::i16 Vx, Vy, Vw;
 inline float target_pos_yaw, target_pos_pitch;
 // 云台当前角度
 inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
-//imu陀螺仪
-inline float Gy,Gz,Gx;
+// imu陀螺仪
+inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz;
 inline float target_velocity;
@@ -153,10 +153,10 @@ inline rm::i16 V_shooter_1 = -6000;
 inline rm::i16 V_shooter_2 = -5500;
 // PIDerror
 inline float error;
-//pitch_out
+// pitch_out
 inline float pitch_out;
 inline float yaw_out;
-//电机状态
+// 电机状态
 inline uint8_t yaw_state;
 /*----------------------------------------------
  *执行函数
