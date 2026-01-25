@@ -3,16 +3,15 @@
 #include <cmath>
 #include <algorithm>
 SineSweep::SineSweep(double amp_min, double amp_max, double f_start, double f_end, double duration, double sample_rate)
-  : amp_min_(amp_min),
-    amp_max_(amp_max),
-    f0_(f_start),
-    f1_(f_end),
-    duration_(duration),
-    fs_(sample_rate),
-    t_(0.0),
-    phase_(0.0),
-    finished_(false)
-{
+    : amp_min_(amp_min),
+      amp_max_(amp_max),
+      f0_(f_start),
+      f1_(f_end),
+      duration_(duration),
+      fs_(sample_rate),
+      t_(0.0),
+      phase_(0.0),
+      finished_(false) {
   dt_ = (fs_ > 0.0) ? (1.0 / fs_) : 0.0;
   finished_ = (duration_ <= 0.0) || (fs_ <= 0.0);
 }
@@ -31,25 +30,16 @@ double SineSweep::Next() {
   return out;
 }
 
-bool SineSweep::Finished() const {
-  return finished_;
-}
+bool SineSweep::Finished() const { return finished_; }
 
 void SineSweep::Reset() {
   t_ = 0.0;
   phase_ = 0.0;
   finished_ = (duration_ <= 0.0) || (fs_ <= 0.0);
 }
-MultiFreqSine::MultiFreqSine(const std::vector<double> &freqs,
-                             int cycles_per_freq,
-                             double amplitude,
+MultiFreqSine::MultiFreqSine(const std::vector<double> &freqs, int cycles_per_freq, double amplitude,
                              double sample_rate)
-  : amplitude_(amplitude),
-    fs_(sample_rate),
-    phase_(0.0),
-    idx_(0),
-    finished_(false)
-{
+    : amplitude_(amplitude), fs_(sample_rate), phase_(0.0), idx_(0), finished_(false) {
   items_.clear();
   if (freqs.empty() || cycles_per_freq <= 0 || fs_ <= 0.0) {
     finished_ = true;
@@ -97,9 +87,7 @@ double MultiFreqSine::Next() {
   return out;
 }
 
-bool MultiFreqSine::Finished() const {
-  return finished_;
-}
+bool MultiFreqSine::Finished() const { return finished_; }
 
 void MultiFreqSine::Reset() {
   phase_ = 0.0;

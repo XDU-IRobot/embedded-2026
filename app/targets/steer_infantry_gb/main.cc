@@ -187,9 +187,9 @@ void GlobalWarehouse::SubLoop500Hz() {
 
   imu_time = HAL_GetTick();
   yaw_set = globals->can_communicator->yaw();
-        pitch_set = globals->can_communicator->pitch();
-  yaw_ecd=globals->ahrs.euler_angle().yaw;
-  pitch_ecd=globals->ahrs.euler_angle().pitch;
+  pitch_set = globals->can_communicator->pitch();
+  yaw_ecd = globals->ahrs.euler_angle().yaw;
+  pitch_ecd = globals->ahrs.euler_angle().pitch;
   // 激光
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
   // 硬触发
@@ -212,8 +212,8 @@ void GlobalWarehouse::SubLoop500Hz() {
   }
   // can 通信
   globals->can_communicator->UpdateControl(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
-                                  globals->ahrs.quaternion().y, globals->ahrs.quaternion().z,
-                                  103, 0, globals->imu_count,22.0f);
+                                           globals->ahrs.quaternion().y, globals->ahrs.quaternion().z, 103, 0,
+                                           globals->imu_count, 22.0f);
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   rm::device::DjiMotor<>::SendCommand(*can1);
