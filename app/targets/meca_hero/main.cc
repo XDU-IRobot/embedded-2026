@@ -6,7 +6,7 @@ rm::f32 yaw;
 // 定频循环
 void MainLoop() {
   // 底盘逻辑
-  // ChassisControl();
+  ChassisControl();
   // 摩擦轮电机逻辑
   ShooterControl();
   // 拨盘电机逻辑
