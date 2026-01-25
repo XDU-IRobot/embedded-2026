@@ -115,7 +115,7 @@ inline struct GlobalWarehouse {
     pid_pitch_velocity = new rm::modules::PID{12000,100, 80, 8000,0};
 
     //底盘随动
-    pid_chassis_follow = new rm::modules::PID{20, 0, 0, 2000, 0};
+    pid_chassis_follow = new rm::modules::PID{6000, 0, 0, 10000, 0};
 
     can1->SetFilter(0, 0);
     can1->Begin();
@@ -140,14 +140,17 @@ inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
 inline rm::device::DR16::SwitchPosition l_switch_position_last = rm::device::DR16::SwitchPosition::kUnknown;
+// 右摇杆状态
+inline rm::device::DR16::SwitchPosition r_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
+inline rm::device::DR16::SwitchPosition r_switch_position_last = rm::device::DR16::SwitchPosition::kUnknown;
 // 拨盘反馈值
 inline float pos;
 inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -600;
-inline rm::i16 V_shooter_2 = -550;
+inline rm::i16 V_shooter_1 = -6000;
+inline rm::i16 V_shooter_2 = -5500;
 // PIDerror
 inline float error;
 //pitch_out

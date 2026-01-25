@@ -5,6 +5,11 @@ rm::f32 pitch;
 rm::f32 yaw;
 // 定频循环
 void MainLoop() {
+  //遥控器输入值
+  l_switch_position_last=l_switch_position_now;
+  l_switch_position_now=globals->rc->switch_l();
+  r_switch_position_last=r_switch_position_now;
+  r_switch_position_now=globals->rc->switch_r();
   // 底盘逻辑
   ChassisControl();
   // 摩擦轮电机逻辑

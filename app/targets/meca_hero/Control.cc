@@ -1,98 +1,98 @@
 #include "main.hpp"
 
 void MagazineControl() {
-  // 拨盘电机逻辑
-  l_switch_position_last = l_switch_position_now;
-  l_switch_position_now = globals->rc->switch_l();
-  if (l_switch_position_now == rm::device::DR16::SwitchPosition::kMid) {
-    // 初始化射击模式
-    if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid) {
-      globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-      // globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kSetZeroPosition);
-      // target_magz = 0.0f;
-    }
-    // 按下扳机(延时1s)
-    if (counter == 0) {
-      if (globals->rc->dial() >= 500 || globals->rc->dial() < -500) {
-        // 增加60°
-        target_magz -= 1.0472 /*（π/3）*/;
-        if (target_magz <= -3.141593 /*（π）*/) {
-          target_magz += 3.141593 * 2;
-        }
-        counter = 500;
-      }
-    } else {
-      counter--;
-    }
-
-    // 发送CAN
-    if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kDown) {
-      globals->magazine_motor->SetPosition(0, 0, 0, 0, 0);
-    } else {
-      // 拨盘电机串级PID（开循环）
-      globals->pid_magz_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
-      globals->pid_magz_position->Update(target_magz, globals->magazine_motor->pos(), 0.001);
-      // target_velocity = globals->pid_magz_position->out();
-      // globals->pid_magz_velocity->Update(target_velocity, globals->magazine_motor->vel(), 0.002);
-      globals->magazine_motor->SetPosition(0, 0, globals->pid_magz_position->out(), 0, 0);
-    }
-  }
+  // l_switch_position_last = l_switch_position_now;
+  // l_switch_position_now = globals->rc->switch_l();
   // 失能
-  if (l_switch_position_last == rm::device::DR16::SwitchPosition::kMid &&
-      l_switch_position_now != rm::device::DR16::SwitchPosition::kMid) {
+  if ((l_switch_position_now!= rm::device::DR16::SwitchPosition::kMid &&l_switch_position_now!=
+       rm::device::DR16::SwitchPosition::kUp) || r_switch_position_now == rm::device::DR16::SwitchPosition::kDown||r_switch_position_now== rm::device::DR16::SwitchPosition::kUnknown) {
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     // HAL_Delay(0);
+    return;
   }
+  //使能
+  if (l_switch_position_last==rm::device::DR16::SwitchPosition::kDown) {
+    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+  }
+
+  // 拨盘电机逻辑
+  // 按下扳机(延时1s)
+  if (counter == 0) {
+    if (globals->rc->dial() >= 500 || globals->rc->dial() < -500) {
+      // 增加60°
+      target_magz -= 1.0472 /*（π/3）*/;
+      if (target_magz <= -3.141593 /*（π）*/) {
+        target_magz += 3.141593 * 2;
+      }
+      counter = 500;
+    }
+  } else {
+    counter--;
+  }
+  // 拨盘电机串级PID（开循环）
+  globals->pid_magz_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
+  globals->pid_magz_position->Update(target_magz, globals->magazine_motor->pos(), 0.001);
+  // target_velocity = globals->pid_magz_position->out();
+  // globals->pid_magz_velocity->Update(target_velocity, globals->magazine_motor->vel(), 0.002);
+  globals->magazine_motor->SetPosition(0, 0, globals->pid_magz_position->out(), 0, 0);
 }
+
 
 /*----------------------------------------------------*/
 // 摩擦轮逻辑
 void ShooterControl() {
-  // 摩擦轮逻辑
-  if (globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kMid && globals->rc->switch_r() !=
-      rm::device::DR16::SwitchPosition::kUp) {
+  // 失能
+  if ((l_switch_position_now != rm::device::DR16::SwitchPosition::kMid &&l_switch_position_now !=
+       rm::device::DR16::SwitchPosition::kUp) || r_switch_position_now == rm::device::DR16::SwitchPosition::kDown||r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     // 给shooter电机发送指令
-    globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(0));
-    globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(0));
-    globals->shooter_motor_3->SetCurrent(static_cast<int16_t>(0));
-    globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(0));
-    globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(0));
-    globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(0));
-  } else /*if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid)*/ {
-    // 目标速度PID
-    globals->pid_shooter_1->Update(V_shooter_1, globals->shooter_motor_1->rpm());
-    globals->pid_shooter_2->Update(V_shooter_1, globals->shooter_motor_2->rpm());
-    globals->pid_shooter_3->Update(V_shooter_1, globals->shooter_motor_3->rpm());
-    globals->pid_shooter_4->Update(V_shooter_2, globals->shooter_motor_4->rpm());
-    globals->pid_shooter_5->Update(V_shooter_2, globals->shooter_motor_5->rpm());
-    globals->pid_shooter_6->Update(V_shooter_2, globals->shooter_motor_6->rpm());
+    globals->shooter_motor_1->SetCurrent(0);
+    globals->shooter_motor_2->SetCurrent(0);
+    globals->shooter_motor_3->SetCurrent(0);
+    globals->shooter_motor_4->SetCurrent(0);
+    globals->shooter_motor_5->SetCurrent(0);
+    globals->shooter_motor_6->SetCurrent(0);
 
-    // 给shooter电机发送指令
-    globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_shooter_1->out()));
-    globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_shooter_2->out()));
-    globals->shooter_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_shooter_3->out()));
-    globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_shooter_4->out()));
-    globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(globals->pid_shooter_5->out()));
-    globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(globals->pid_shooter_6->out()));
+    // // 目标速度PID
+    // globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
+    // globals->pid_shooter_2->Update(0, globals->shooter_motor_2->rpm());
+    // globals->pid_shooter_3->Update(0, globals->shooter_motor_3->rpm());
+    // globals->pid_shooter_4->Update(0, globals->shooter_motor_4->rpm());
+    // globals->pid_shooter_5->Update(0, globals->shooter_motor_5->rpm());
+    // globals->pid_shooter_6->Update(0, globals->shooter_motor_6->rpm());
+    // // 给shooter电机发送指令
+    // globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_shooter_1->out()));
+    // globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_shooter_2->out()));
+    // globals->shooter_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_shooter_3->out()));
+    // globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_shooter_4->out()));
+    // globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(globals->pid_shooter_5->out()));
+    // globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(globals->pid_shooter_6->out()));
+    return;
   }
+  // 摩擦轮逻辑
+
+  // 目标速度PID
+  globals->pid_shooter_1->Update(V_shooter_1, globals->shooter_motor_1->rpm());
+  globals->pid_shooter_2->Update(V_shooter_1, globals->shooter_motor_2->rpm());
+  globals->pid_shooter_3->Update(V_shooter_1, globals->shooter_motor_3->rpm());
+  globals->pid_shooter_4->Update(V_shooter_2, globals->shooter_motor_4->rpm());
+  globals->pid_shooter_5->Update(V_shooter_2, globals->shooter_motor_5->rpm());
+  globals->pid_shooter_6->Update(V_shooter_2, globals->shooter_motor_6->rpm());
+
+  // 给shooter电机发送指令
+  globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_shooter_1->out()));
+  globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_shooter_2->out()));
+  globals->shooter_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_shooter_3->out()));
+  globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_shooter_4->out()));
+  globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(globals->pid_shooter_5->out()));
+  globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(globals->pid_shooter_6->out()));
+
   rm::device::DjiMotor<>::SendCommand();
 }
 
 /*----------------------------------------------------*/
 void ChassisControl() {
-  //底盘随动
-
-  // 遥控器输入底盘速度
-  Vx = globals->rc->left_x() * 10000 / 660;
-  Vy = globals->rc->left_y() * 10000 / 660;
-  Vw = globals->pid_chassis_follow->out();
-
-  rm::i16 V_wheel_1 = -Vy + Vx+Vw;
-  rm::i16 V_wheel_2 = Vy + Vx+Vw;
-  rm::i16 V_wheel_3 = Vy + 0.5 * Vx+Vw;
-  rm::i16 V_wheel_4 = -Vy + 0.5 * Vx+Vw;
-  if (globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kMid && globals->rc->switch_r() !=
-      rm::device::DR16::SwitchPosition::kUp) {
+  //失能
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown||r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     // 给底盘电机发送指令
     globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());
     globals->pid_chassis_2->Update(0, globals->chassis_motor_2->rpm());
@@ -103,19 +103,37 @@ void ChassisControl() {
     globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_chassis_2->out()));
     globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_chassis_3->out()));
     globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_chassis_4->out()));
-  } else {
-    // 目标速度PID
-    globals->pid_chassis_1->Update(V_wheel_1, globals->chassis_motor_1->rpm());
-    globals->pid_chassis_2->Update(V_wheel_2, globals->chassis_motor_2->rpm());
-    globals->pid_chassis_3->Update(V_wheel_3, globals->chassis_motor_3->rpm());
-    globals->pid_chassis_4->Update(V_wheel_4, globals->chassis_motor_4->rpm());
-
-    // 给chassis电机发送指令
-    globals->chassis_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_chassis_1->out()));
-    globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_chassis_2->out()));
-    globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_chassis_3->out()));
-    globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_chassis_4->out()));
+    return;
   }
+  //底盘随动
+  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
+    globals->pid_chassis_follow->Update(0, globals->gimbal_motor_yaw->pos(), 0.001);
+    Vw = -globals->pid_chassis_follow->out();
+  } else {
+    Vw = 0;
+  }
+
+  // 遥控器输入底盘速度
+  Vx = globals->rc->left_x() * 10000 / 660;
+  Vy = globals->rc->left_y() * 10000 / 660;
+
+  rm::i16 V_wheel_1 = -Vy + Vx + Vw;
+  rm::i16 V_wheel_2 = Vy + Vx + Vw;
+  rm::i16 V_wheel_3 = Vy + 0.3 * Vx + 0.3 * Vw;
+  rm::i16 V_wheel_4 = -Vy + 0.3 * Vx + 0.3 * Vw;
+
+  // 目标速度PID
+  globals->pid_chassis_1->Update(V_wheel_1, globals->chassis_motor_1->rpm());
+  globals->pid_chassis_2->Update(V_wheel_2, globals->chassis_motor_2->rpm());
+  globals->pid_chassis_3->Update(V_wheel_3, globals->chassis_motor_3->rpm());
+  globals->pid_chassis_4->Update(V_wheel_4, globals->chassis_motor_4->rpm());
+
+  // 给chassis电机发送指令
+  globals->chassis_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_chassis_1->out()));
+  globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_chassis_2->out()));
+  globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_chassis_3->out()));
+  globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_chassis_4->out()));
+  //发送CAN信号
   rm::device::DjiMotor<>::SendCommand();
 }
 
@@ -129,82 +147,81 @@ void GimbalControl() {
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
-  //监测imu
-  Gy = globals->imu->gyro_y();
-  Gz = globals->imu->gyro_z();
-  Gx = globals->imu->gyro_x();
-  // 云台电机逻辑
-  if (l_switch_position_now == rm::device::DR16::SwitchPosition::kMid ||
-      l_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {
-    // 使能
-    if (l_switch_position_last != rm::device::DR16::SwitchPosition::kMid &&
-        l_switch_position_last != rm::device::DR16::SwitchPosition::kUp) {
-      // 启动云台
-      globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-      globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-    }
-    // 遥控器输入云台角度
-    target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
-    target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
-    // yaw限位
-    // if (target_pos_yaw < -1.85) {
-    //   target_pos_yaw = -1.85;
-    // } else if (target_pos_yaw > 1.64) {
-    //   target_pos_yaw = 1.64;
-    // }
-    // pitch限位
-    if (target_pos_pitch < 0) {
-      target_pos_pitch = 0;
-    } else if (target_pos_pitch > 0.5236) {
-      target_pos_pitch = 0.5236;
-    }
-
-    // PID计算
-    // if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
-    //   globals->pid_yaw_position->Update(target_pos_yaw, globals->gimbal_motor_yaw->pos(), 0.002);
-    //   // globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(), globals->gimbal_motor_yaw->vel(),
-    //   0.002);
-    //   // globals->pid_pitch_velocity->Update(globals->ahrs.euler_angle().pitch, 0.002);
-    //   globals->gimbal_motor_yaw->SetPosition(0, 0, globals->pid_yaw_position->out(), 0, 0);
-    //   HAL_Delay(0);
-    // } else {
-    //   globals->gimbal_motor_yaw->SetPosition(0, 0, 0, 0, 0);
-    // }
-    /*---------*/
-
-    // PID计算（使用IMU）
-    if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
-      //yawPID计算（双环）
-      globals->pid_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
-      globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw, 0.001);
-      globals->pid_yaw_velocity->Update(globals->pid_yaw_velocity->out(), -globals->imu->gyro_z(), 0.002);
-      //pitchPID计算
-      globals->pid_pitch_position->Update(target_pos_pitch, -globals->ahrs.euler_angle().pitch, 0.001);
-      globals->pid_pitch_velocity->Update(globals->pid_pitch_position->out(), -globals->imu->gyro_y(),
-                                          0.001);
-
-      //发送CAN
-      globals->gimbal_motor_yaw->SetPosition(0, 0, globals->pid_yaw_position->out(), 0, 0);
-      globals->gimbal_motor_pitch->SetCurrent(static_cast<int16_t>(globals->pid_pitch_velocity->out()+3000)/*+out_feedforward*/);
-      // HAL_Delay(0);
-    } else {
-      globals->gimbal_motor_yaw->SetPosition(0, 0, 0, 0, 0);
-      globals->gimbal_motor_pitch->SetCurrent(0);
-    }
-    // 监测pid
-    pitch_out = globals->pid_pitch_velocity->out();
-    yaw_out = globals->pid_yaw_position->out();
-    error = globals->pid_yaw_position->error()[1];
-    yaw_state = globals->gimbal_motor_yaw->status();
-  }
-
-  if (l_switch_position_now != rm::device::DR16::SwitchPosition::kMid) {
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown||r_switch_position_now== rm::device::DR16::SwitchPosition::kUnknown) {
     globals->gimbal_motor_yaw->SetPosition(0, 0, 0, 0, 0);
     globals->gimbal_motor_pitch->SetCurrent(0);
     globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     // HAL_Delay(0);
+    return;
   }
+  //监测imu
+  Gy = globals->imu->gyro_y();
+  Gz = globals->imu->gyro_z();
+  Gx = globals->imu->gyro_x();
+
+  // 云台电机逻辑
+
+  // 启动云台
+  if (r_switch_position_last==rm::device::DR16::SwitchPosition::kDown) {
+    globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+    globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+  }
+
+  // 遥控器输入云台角度
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
+  target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
+  // yaw限位
+  // if (target_pos_yaw < -1.85) {
+  //   target_pos_yaw = -1.85;
+  // } else if (target_pos_yaw > 1.64) {
+  //   target_pos_yaw = 1.64;
+  // }
+  // pitch限位
+  if (target_pos_pitch < 0) {
+    target_pos_pitch = 0;
+  } else if (target_pos_pitch > 0.5236) {
+    target_pos_pitch = 0.5236;
+  }
+
+  // PID计算
+  // if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
+  //   globals->pid_yaw_position->Update(target_pos_yaw, globals->gimbal_motor_yaw->pos(), 0.002);
+  //   // globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(), globals->gimbal_motor_yaw->vel(),
+  //   0.002);
+  //   // globals->pid_pitch_velocity->Update(globals->ahrs.euler_angle().pitch, 0.002);
+  //   globals->gimbal_motor_yaw->SetPosition(0, 0, globals->pid_yaw_position->out(), 0, 0);
+  //   HAL_Delay(0);
+  // } else {
+  //   globals->gimbal_motor_yaw->SetPosition(0, 0, 0, 0, 0);
+  // }
+  /*---------*/
+
+  // PID计算（使用IMU）
+
+  //yawPID计算（双环）
+  globals->pid_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
+  globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw, 0.001);
+  globals->pid_yaw_velocity->Update(globals->pid_yaw_velocity->out(), -globals->imu->gyro_z(), 0.002);
+  //pitchPID计算
+  globals->pid_pitch_position->Update(target_pos_pitch, -globals->ahrs.euler_angle().pitch, 1);
+  globals->pid_pitch_velocity->Update(globals->pid_pitch_position->out(), -globals->imu->gyro_y(),
+                                      0.001);
+
+  //发送CAN
+  globals->gimbal_motor_yaw->SetPosition(0, 0, globals->pid_yaw_position->out(), 0, 0);
+  globals->gimbal_motor_pitch->SetCurrent(
+      static_cast<int16_t>(globals->pid_pitch_velocity->out() + 3000)/*+out_feedforward*/);
+  // HAL_Delay(0);
+
+  // 监测pid
+  pitch_out = globals->pid_pitch_velocity->out();
+  yaw_out = globals->pid_yaw_position->out();
+  error = globals->pid_yaw_position->error()[1];
+  yaw_state = globals->gimbal_motor_yaw->status();
 }
+
+
+
 
 /*------------*/
 // void VOFA() {
