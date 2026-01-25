@@ -65,18 +65,25 @@ void Gimbal::GimbalRCTargetUpdate() {
 
 void Gimbal::GimbalAimbotTargetUpdate() {
   if (globals->can_communicator->aimbot_state() >> 0 & 0x01) {
-    gimbal->gimbal_yaw_target_ = rm::modules::Map(rm::modules::Wrap(globals->can_communicator->yaw(), 0.0f, 360.0f),
-                                                  0.0f, 360.0f, 0.0f, 8191.0f);
-    gimbal->gimbal_pitch_target_ = rm::modules::Wrap(
-        rm::modules::Map(-globals->can_communicator->pitch(), 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-        -static_cast<f32>(M_PI), M_PI);
+    gimbal->gimbal_yaw_target_ = globals->can_communicator->yaw();
+    gimbal->gimbal_pitch_target_ = globals->can_communicator->pitch();
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
 }
 
+float yaw_speed_ff=0;
+float last_yaw_target=0;
+float yaw_target=0;
+float Ts=0.002f;
+float Kf=1;
+
 void Gimbal::GimbalMovePIDUpdate() {
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_);
+  yaw_target=gimbal->gimbal_yaw_target_;
+  yaw_speed_ff=Kf*(yaw_target-last_yaw_target)/Ts;
+  last_yaw_target=yaw_target;
+
+  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_,yaw_speed_ff);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->yaw_motor->rpm(),
                                     -globals->ahrs.euler_angle().pitch, globals->pitch_motor->vel());
   gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->ahrs.euler_angle().pitch);
