@@ -49,8 +49,8 @@ void MagazineControl() {
 // 摩擦轮逻辑
 void ShooterControl() {
   // 摩擦轮逻辑
-  if (globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kMid && globals->rc->switch_r() !=
-      rm::device::DR16::SwitchPosition::kUp) {
+  if (globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kMid &&
+      globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUp) {
     // 给shooter电机发送指令
     globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(0));
     globals->shooter_motor_2->SetCurrent(static_cast<int16_t>(0));
@@ -80,19 +80,19 @@ void ShooterControl() {
 
 /*----------------------------------------------------*/
 void ChassisControl() {
-  //底盘随动
+  // 底盘随动
 
   // 遥控器输入底盘速度
   Vx = globals->rc->left_x() * 10000 / 660;
   Vy = globals->rc->left_y() * 10000 / 660;
   Vw = globals->pid_chassis_follow->out();
 
-  rm::i16 V_wheel_1 = -Vy + Vx+Vw;
-  rm::i16 V_wheel_2 = Vy + Vx+Vw;
-  rm::i16 V_wheel_3 = Vy + 0.5 * Vx+Vw;
-  rm::i16 V_wheel_4 = -Vy + 0.5 * Vx+Vw;
-  if (globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kMid && globals->rc->switch_r() !=
-      rm::device::DR16::SwitchPosition::kUp) {
+  rm::i16 V_wheel_1 = -Vy + Vx + Vw;
+  rm::i16 V_wheel_2 = Vy + Vx + Vw;
+  rm::i16 V_wheel_3 = Vy + 0.5 * Vx + Vw;
+  rm::i16 V_wheel_4 = -Vy + 0.5 * Vx + Vw;
+  if (globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kMid &&
+      globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUp) {
     // 给底盘电机发送指令
     globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());
     globals->pid_chassis_2->Update(0, globals->chassis_motor_2->rpm());
@@ -129,7 +129,7 @@ void GimbalControl() {
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
-  //监测imu
+  // 监测imu
   Gy = globals->imu->gyro_y();
   Gz = globals->imu->gyro_z();
   Gx = globals->imu->gyro_x();
@@ -144,7 +144,7 @@ void GimbalControl() {
       globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     }
     // 遥控器输入云台角度
-    target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
+    target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001;  //
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
     // yaw限位
     // if (target_pos_yaw < -1.85) {
@@ -174,18 +174,18 @@ void GimbalControl() {
 
     // PID计算（使用IMU）
     if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
-      //yawPID计算（双环）
+      // yawPID计算（双环）
       globals->pid_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
       globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw, 0.001);
       globals->pid_yaw_velocity->Update(globals->pid_yaw_velocity->out(), -globals->imu->gyro_z(), 0.002);
-      //pitchPID计算
+      // pitchPID计算
       globals->pid_pitch_position->Update(target_pos_pitch, -globals->ahrs.euler_angle().pitch, 0.001);
-      globals->pid_pitch_velocity->Update(globals->pid_pitch_position->out(), -globals->imu->gyro_y(),
-                                          0.001);
+      globals->pid_pitch_velocity->Update(globals->pid_pitch_position->out(), -globals->imu->gyro_y(), 0.001);
 
-      //发送CAN
+      // 发送CAN
       globals->gimbal_motor_yaw->SetPosition(0, 0, globals->pid_yaw_position->out(), 0, 0);
-      globals->gimbal_motor_pitch->SetCurrent(static_cast<int16_t>(globals->pid_pitch_velocity->out()+3000)/*+out_feedforward*/);
+      globals->gimbal_motor_pitch->SetCurrent(
+          static_cast<int16_t>(globals->pid_pitch_velocity->out() + 3000) /*+out_feedforward*/);
       // HAL_Delay(0);
     } else {
       globals->gimbal_motor_yaw->SetPosition(0, 0, 0, 0, 0);
