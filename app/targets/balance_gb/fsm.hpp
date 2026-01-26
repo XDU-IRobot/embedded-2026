@@ -11,11 +11,14 @@ public:
     kNoForce,  // 无力模式
     kTest,   // 测试
     kShoot,  //使能发射机构
+    kHigh,   //高腿长
 
 
   };
   void Transit(State new_mode);
   void Update_State();
+  void Update_Chassis_Request();
+  void Update_Test();
   void Update_Control();
   void Update_500HZ();
   void Update_250HZ();
@@ -25,8 +28,12 @@ public:
 
   State mode() const { return mode_; }
 
-private:
+  i16 init_count_{0};
+
   State mode_{State::kNoForce};
 
-  i16 init_count_{0};
+private:
+
+
+
 };

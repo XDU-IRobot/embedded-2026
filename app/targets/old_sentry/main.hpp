@@ -48,10 +48,10 @@ inline struct GlobalWarehouse {
   rm::hal::Serial *referee_uart{nullptr};       ///< 裁判系统串口接口
 
   // 设备 //
-  DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
-  DeviceManager<3> device_gimbal;
-  DeviceManager<8> device_chassis;
-  DeviceManager<3> device_shoot;
+  ::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
+  ::DeviceManager<3> device_gimbal;
+  ::DeviceManager<8> device_chassis;
+  ::DeviceManager<3> device_shoot;
   // 云台
   rm::device::BMI088 *imu{nullptr};                                                    ///< IMU
   rm::device::DR16 *rc{nullptr};                                                       ///< 遥控器

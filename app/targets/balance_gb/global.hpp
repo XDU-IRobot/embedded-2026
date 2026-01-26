@@ -4,11 +4,15 @@
 #include "fsm.hpp"
 #include "boardc.hpp"
 #include "motor.hpp"
+#include "communiate.hpp"
+#include "minipc.hpp"
 
 struct Global {
   public:
     BoardC *bc{nullptr};  ///< c板object
     Motor *motor{nullptr};     ///< 电机object
+    ChassisController *chassis_controller;   ///<  底盘控制器object
+    MiniPC  *minipc{nullptr};    ///< minipc object
 
     Fsm fsm{};  ///< 状态机控制行为模式
   public:

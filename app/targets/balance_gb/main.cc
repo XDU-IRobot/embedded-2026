@@ -6,6 +6,8 @@
 #include "global.hpp"
 Global global;
 
+extern rm::hal::Can *can2;
+
 void MainLoop() {
   // 分频计数增加
   global.divide_count++;
@@ -20,11 +22,13 @@ void MainLoop() {
 extern "C" {void AppMain(void) {
   global.bc = new BoardC;
   global.motor = new Motor;
+  global.minipc = new MiniPC;
 
   //初始化
   global.bc->BoardcInit();
   global.motor->MotorInit();
   global.motor->MotorPidInit();
+  global.chassis_controller = new ChassisController{*global.motor->can2};
 
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
