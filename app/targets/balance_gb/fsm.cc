@@ -7,8 +7,8 @@
 #include "usart.h"
 
 f32 left_x_debug;
-f32 pitch_debug,yaw_debug,roll_debug;
-f32 pitch_staus,yaw_staus;
+f32 pitch_debug, yaw_debug, roll_debug;
+f32 pitch_staus, yaw_staus;
 f32 pitch_aim;
 Fsm::State state;
 void Fsm::Transit(State new_mode) {
@@ -18,10 +18,10 @@ void Fsm::Transit(State new_mode) {
     if (new_mode == State::kNoForce) {
       global.motor->DMDisable();
       global.motor->ShootDisable();
-    } else if (new_mode == State::kShoot){
+    } else if (new_mode == State::kShoot) {
       global.motor->DMEnable();
       global.motor->ShootEnable();
-    }else {
+    } else {
       global.motor->DMEnable();
       global.motor->ShootDisable();
     }
@@ -44,7 +44,7 @@ void Fsm::Update_State() {
       case DR16::SwitchPosition::kMid:
         if (global.bc->rc->switch_l() == DR16::SwitchPosition::kMid) {
           Transit(State::kHigh);
-        }else {
+        } else {
           Transit(State::kTest);
         }
         break;
@@ -59,77 +59,76 @@ void Fsm::Update_State() {
 }
 
 void Fsm::Update_Test() {
-  global.chassis_controller->request_state.ChassisStateRequest= 0x01; //正常起立状态
-  global.chassis_controller->request_state.L0Change = 0x01;    //正常腿长
+  global.chassis_controller->request_state.ChassisStateRequest = 0x01;  // 正常起立状态
+  global.chassis_controller->request_state.L0Change = 0x01;             // 正常腿长
 
-      //控制腿的状态
-      if (global.bc->rc->right_x() > 650) {
-        global.chassis_controller->jump_flag=true;
-      }else if (global.bc->rc->right_x() == -660) {
-        global.chassis_controller->request_state.L0Change = 0x00;   //低腿长
-        global.chassis_controller->jump_flag=false;
+  // 控制腿的状态
+  if (global.bc->rc->right_x() > 650) {
+    global.chassis_controller->jump_flag = true;
+  } else if (global.bc->rc->right_x() == -660) {
+    global.chassis_controller->request_state.L0Change = 0x00;  // 低腿长
+    global.chassis_controller->jump_flag = false;
+    global.chassis_controller->jump_count = 0;
+  } else {
+    if (global.chassis_controller->jump_flag && global.bc->rc->right_x() < 650) {
+      // 跳跃计时增加
+      global.chassis_controller->jump_count++;
+      // 跳跃腿长控制
+      if (global.chassis_controller->jump_count < 24) {
+        global.chassis_controller->request_state.L0Change = 0x02;  // 跳跃时先下蹲
+      } else if (global.chassis_controller->jump_count < 50) {
+        global.chassis_controller->request_state.L0Change = 0x03;  // 伸腿
+      } else if (global.chassis_controller->jump_count < 95) {
+        global.chassis_controller->request_state.L0Change = 0x04;  // 收腿
+      } else {
+        // 重置状态
+        global.chassis_controller->jump_flag = false;
         global.chassis_controller->jump_count = 0;
-      }else {
-        if (global.chassis_controller->jump_flag && global.bc->rc->right_x() < 650) {
-          //跳跃计时增加
-          global.chassis_controller->jump_count++;
-          //跳跃腿长控制
-          if (global.chassis_controller->jump_count < 24) {
-            global.chassis_controller->request_state.L0Change = 0x02;   //跳跃时先下蹲
-          }else if (global.chassis_controller->jump_count < 50) {
-            global.chassis_controller->request_state.L0Change = 0x03;   //伸腿
-          }else if (global.chassis_controller->jump_count < 95) {
-            global.chassis_controller->request_state.L0Change = 0x04;   //收腿
-          }else {
-            //重置状态
-            global.chassis_controller->jump_flag=false;
-            global.chassis_controller->jump_count = 0;
-          }
-        }else {
-          global.chassis_controller->request_state.L0Change = 0x01;    //正常腿长
-          global.chassis_controller->jump_flag=false;
-          global.chassis_controller->jump_count = 0;
-        }
       }
+    } else {
+      global.chassis_controller->request_state.L0Change = 0x01;  // 正常腿长
+      global.chassis_controller->jump_flag = false;
+      global.chassis_controller->jump_count = 0;
+    }
+  }
 
-      //判断是否小陀螺
-      if (global.bc->rc->dial() == 660) {
-        global.chassis_controller->request_state.L0Change= 0x07;  //小陀螺正转
-      }else if (global.bc->rc->dial() == -660) {
-        global.chassis_controller->request_state.L0Change= 0x08;  //小陀螺反转
-      }else {
-      }
+  // 判断是否小陀螺
+  if (global.bc->rc->dial() == 660) {
+    global.chassis_controller->request_state.L0Change = 0x07;  // 小陀螺正转
+  } else if (global.bc->rc->dial() == -660) {
+    global.chassis_controller->request_state.L0Change = 0x08;  // 小陀螺反转
+  } else {
+  }
 
-      //控制遥控器输入量
-      global.chassis_controller->request_state.ChassisMoveYRequest = global.bc->rc->left_y();
+  // 控制遥控器输入量
+  global.chassis_controller->request_state.ChassisMoveYRequest = global.bc->rc->left_y();
 }
 
 void Fsm::Update_Chassis_Request() {
   switch (mode_) {
     case State::kNoForce:
-      global.chassis_controller->request_state.ChassisMoveYRequest= 0;
-      global.chassis_controller->request_state.ChassisStateRequest= 0x00;
-      global.chassis_controller->request_state.L0Change= 0x01;
+      global.chassis_controller->request_state.ChassisMoveYRequest = 0;
+      global.chassis_controller->request_state.ChassisStateRequest = 0x00;
+      global.chassis_controller->request_state.L0Change = 0x01;
       break;
     case State::kTest:
       Update_Test();
       break;
     case State::kShoot:
       Update_Test();
-      global.chassis_controller->request_state.ChassisStateRequest= 0x00; //正常起立状态
+      global.chassis_controller->request_state.ChassisStateRequest = 0x00;  // 正常起立状态
       break;
     case State::kHigh:
       Update_Test();
-      global.chassis_controller->request_state.L0Change = 0x06;   //伸腿
+      global.chassis_controller->request_state.L0Change = 0x06;  // 伸腿
       break;
-     default:
-      global.chassis_controller->request_state.ChassisMoveYRequest= 0;
-      global.chassis_controller->request_state.ChassisStateRequest= 0x00;
-      global.chassis_controller->request_state.L0Change= 0x01;
+    default:
+      global.chassis_controller->request_state.ChassisMoveYRequest = 0;
+      global.chassis_controller->request_state.ChassisStateRequest = 0x00;
+      global.chassis_controller->request_state.L0Change = 0x01;
       break;
   }
 }
-
 
 //  根据状态控制电机
 void Fsm::Update_Control() {
@@ -137,17 +136,17 @@ void Fsm::Update_Control() {
   switch (mode_) {
     case State::kNoForce:
       init_count_ = 0;
-      global.motor->reset_yaw_flag=0;
+      global.motor->reset_yaw_flag = 0;
       break;
     case State::kTest:
       global.motor->CalcYawPos(global.motor->yaw_motor->pos());
-       if (init_count_ < 300 ) {
-         init_count_++;
+      if (init_count_ < 300) {
+        init_count_++;
         global.motor->DMInitControl();
-       }else {
-         global.motor->DMControl();
-         //global.motor->DMInitControl();
-       }
+      } else {
+        global.motor->DMControl();
+        // global.motor->DMInitControl();
+      }
       break;
     case State::kHigh:
       global.motor->DMControl();
@@ -156,14 +155,13 @@ void Fsm::Update_Control() {
       global.motor->DMControl();
       global.motor->ShootControl();
       break;
-
   }
 }
 
 // 500HZ任务
 void Fsm::Update_500HZ() {
   pitch_aim = global.motor->rc_request_pitch;
-  //imu更新
+  // imu更新
   global.bc->EulerUpdate();
   pitch_debug = global.bc->pitch;
   yaw_debug = global.bc->yaw;
@@ -172,33 +170,31 @@ void Fsm::Update_500HZ() {
   pitch_staus = global.motor->pitch_motor->status();
   yaw_staus = global.motor->yaw_motor->status();
 
-  //状态更新
+  // 状态更新
   Update_State();
 
-  //控制量更新
+  // 控制量更新
   Update_Control();
 
-  //发送Dji电机信息
+  // 发送Dji电机信息
   global.motor->SendDjiCommand();
-
 }
 
-  //250HZ任务
+// 250HZ任务
 void Fsm::Update_250HZ() {
-  if (global.divide_count % 2 ==0) {
-    //发送DM电机数据
+  if (global.divide_count % 2 == 0) {
+    // 发送DM电机数据
     global.motor->SendDMCommand();
   }
 }
 
 void Fsm::Update_100HZ() {
-  if (global.divide_count % 5 ==0) {
-    //更新向底盘发送的数据
+  if (global.divide_count % 5 == 0) {
+    // 更新向底盘发送的数据
     Update_Chassis_Request();
     global.chassis_controller->SendChassisCommand();
   }
 }
-
 
 //  25HZ任务
 void Fsm::Update_25HZ() {

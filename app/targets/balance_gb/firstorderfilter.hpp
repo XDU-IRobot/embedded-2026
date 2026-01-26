@@ -5,7 +5,7 @@
 using namespace rm;
 
 class FirstOrderFilter {
-public:
+ public:
   FirstOrderFilter(f32 frame_period, f32 num) {
     frame_period_ = frame_period;
     num_ = num;
@@ -20,7 +20,7 @@ public:
     out_ = num_ / (num_ + frame_period_) * out_ + frame_period_ / (num_ + frame_period_) * input;
   }
 
-private:
+ private:
   f32 input_;
   f32 out_;
   f32 num_;

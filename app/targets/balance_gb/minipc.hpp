@@ -7,7 +7,7 @@
 #include "usbd_cdc_if.h"
 
 class MiniPC {
-public:
+ public:
   struct __attribute__((packed)) VisionToGimbal {
     uint8_t SOF;
     uint8_t ID;
@@ -21,7 +21,7 @@ public:
 
   static_assert(sizeof(VisionToGimbal) <= 64);  ///< 确保能在USBCDC的一帧里发出去
 
-public:
+ public:
   void RxCallback(uint8_t *buf, uint32_t len) {
     if (len == sizeof(VisionToGimbal)) {
       const auto *rx_data = reinterpret_cast<const VisionToGimbal *>(buf);
@@ -29,6 +29,5 @@ public:
     }
   }
 };
-
 
 #endif  // GIMBAL_TEST_MINIPC_HPP

@@ -30,14 +30,14 @@ void BoardC::BoardcInit() {
 
 void BoardC::EulerUpdate() {
   imu->Update();
-  g_zfilter.Update(imu->gyro_z()-0.001f);
+  g_zfilter.Update(imu->gyro_z() - 0.001f);
   g_z = g_zfilter.value();
-  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), -imu->gyro_x(), g_z,
-                                      imu->accel_y(),-imu->accel_x(), imu->accel_z()});
-  roll = -ahrs.euler_angle().roll ;
-  roll = roll*57.3f;
-  yaw = -ahrs.euler_angle().yaw ;
-  yaw = yaw*57.3f;
-  pitch = -ahrs.euler_angle().pitch ;
-  pitch = pitch*57.3f;
+  ahrs.Update(
+      rm::modules::ImuData6Dof{imu->gyro_y(), -imu->gyro_x(), g_z, imu->accel_y(), -imu->accel_x(), imu->accel_z()});
+  roll = -ahrs.euler_angle().roll;
+  roll = roll * 57.3f;
+  yaw = -ahrs.euler_angle().yaw;
+  yaw = yaw * 57.3f;
+  pitch = -ahrs.euler_angle().pitch;
+  pitch = pitch * 57.3f;
 }

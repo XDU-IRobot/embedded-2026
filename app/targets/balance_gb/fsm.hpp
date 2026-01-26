@@ -6,13 +6,12 @@
 using namespace rm;
 
 class Fsm {
-public:
+ public:
   enum class State {
     kNoForce,  // 无力模式
-    kTest,   // 测试
-    kShoot,  //使能发射机构
-    kHigh,   //高腿长
-
+    kTest,     // 测试
+    kShoot,    // 使能发射机构
+    kHigh,     // 高腿长
 
   };
   void Transit(State new_mode);
@@ -32,8 +31,5 @@ public:
 
   State mode_{State::kNoForce};
 
-private:
-
-
-
+ private:
 };

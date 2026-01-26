@@ -2,7 +2,7 @@
 extern "C" {
 #endif
 
-  void CDCRecvCallback(uint8_t *buf, uint32_t len);
+void CDCRecvCallback(uint8_t *buf, uint32_t len);
 
 #ifdef __cplusplus
 }
