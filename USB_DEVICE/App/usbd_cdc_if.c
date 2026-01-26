@@ -25,14 +25,23 @@
 #ifdef OLD_SENTRY
 #include "old_sentry/USB.hpp"
 #endif
+#ifdef TEST_GB
+#include "test_gb/USB.hpp"
+#endif
 #ifdef DRONE_GB
 #include "drone_gb/Usb.hpp"
+#endif
+#ifdef DART_RACK
+#include "dart_rack/usb.hpp"
 #endif
 #ifdef BALANCE_GB
 #include "balance_gb/minipc_bridge.h"
 #endif
 
 
+#ifdef ALGORITHM_ENROLL_TEST
+#include "algorithm_enroll_test/Usb.hpp"
+#endif
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -272,7 +281,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
     USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-#ifdef OLD_SENTRY
+#if defined (OLD_SENTRY) || defined (TEST_GB)
     USBReceive(Buf, *Len);
 #endif
 #ifdef DRONE_GB
@@ -283,6 +292,13 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 #endif
 
 
+#ifdef DART_RACK
+  UsbReceive(Buf, (uint8_t)*Len);
+#endif
+
+#ifdef ALGORITHM_ENROLL_TEST
+  UsbReceive(Buf, (uint8_t)*Len);
+#endif
     return (USBD_OK);
   /* USER CODE END 6 */
 }
