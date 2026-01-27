@@ -58,7 +58,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_pitch_position{nullptr};
   rm::modules::PID *pid_pitch_velocity{nullptr};
 
-  //底盘随动
+  // 底盘随动
   rm::modules::PID *pid_chassis_follow{nullptr};
 
   // 控制器 //
@@ -112,9 +112,9 @@ inline struct GlobalWarehouse {
     pid_yaw_position = new rm::modules::PID{80, 0.01, 8, 6.5, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
     pid_pitch_position = new rm::modules::PID{11, 0, 0, 1, 0};
-    pid_pitch_velocity = new rm::modules::PID{5000,15, 0, 8000,2000};
+    pid_pitch_velocity = new rm::modules::PID{5000, 15, 0, 8000, 2000};
 
-    //底盘随动
+    // 底盘随动
     pid_chassis_follow = new rm::modules::PID{11000, 0, 100, 10000, 0};
 
     can1->SetFilter(0, 0);
@@ -132,10 +132,10 @@ inline rm::i16 Vx, Vy, Vw;
 inline float target_pos_yaw, target_pos_pitch;
 // 云台当前角度
 inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
-//imu陀螺仪
-inline float Gy,Gz,Gx;
+// imu陀螺仪
+inline float Gy, Gz, Gx;
 // 拨盘增加角度
-inline float target_magz=0;
+inline float target_magz = 0;
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -151,29 +151,29 @@ inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -600;
 inline rm::i16 V_shooter_2 = -550;
-//摩擦轮速度监测
+// 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;
 inline rm::i16 shooter_3;
 inline rm::i16 shooter_4;
 inline rm::i16 shooter_5;
 inline rm::i16 shooter_6;
-//底盘速度监测
+// 底盘速度监测
 inline rm::i16 chassis_1;
 inline rm::i16 chassis_2;
 inline rm::i16 chassis_3;
 inline rm::i16 chassis_4;
 // PIDerror
 inline float error;
-//pitch_out
+// pitch_out
 inline float pitch_out;
 inline float yaw_out;
-//电机状态
+// 电机状态
 inline uint8_t yaw_state;
-//拨盘补偿标志
+// 拨盘补偿标志
 inline bool magz_compensation_flag{false};
 inline int magz_compensation_count{0};
-inline float magz_compensation=0;
+inline float magz_compensation = 0;
 /*----------------------------------------------
  *执行函数
  */
