@@ -36,9 +36,9 @@ inline class Gimbal {
   bool shoot_flag_ = false;         // 开火标志
   bool single_shoot_flag_ = false;  // 单发标志
 
-  bool pitch_enable_flag_ = false;     // 4310电机使能标志
-  bool max_angle_flag_ = false;        // 云台上部yaw轴最大角度标志
-  bool min_angle_flag_ = false;        // 云台上部yaw轴最小角度标志
+  bool pitch_enable_flag_ = false;  // 4310电机使能标志
+  bool max_angle_flag_ = false;     // 云台上部yaw轴最大角度标志
+  bool min_angle_flag_ = false;     // 云台上部yaw轴最小角度标志
 
   bool down_yaw_move_flag_ = false;  // 云台下部yaw轴目标数据刷新标志
 
@@ -50,17 +50,17 @@ inline class Gimbal {
   bool DF_state_ = false;  // 大符状态
   bool XF_state_ = false;  // 小符状态
 
-  const f32 ammo_init_speed_ = 7800.0f;      // 摩擦轮初始速度
-  const f32 sensitivity_up_yaw_ = 0.004f;    // 云台上部yaw轴灵敏度
-  const f32 sensitivity_down_yaw_ = 0.004f;  // 云台下部yaw轴灵敏度
-  const f32 sensitivity_pitch_ = 0.004f;     // 云台pitch轴灵敏度
-  const f32 highest_aimbot_pitch_angle_ = 0.1f;      // 云台上部yaw轴最大（弧度制）
-  const f32 highest_pitch_angle_ = 0.4f;     // 云台pitch轴最高（弧度制）
-  const f32 lowest_pitch_angle_ = -0.7f;     // 云台pitch轴最低（弧度制）
-  const u16 max_up_yaw_pos_ = 4100;          // 云台上部yaw轴最大（编码器值）
-  const u16 min_up_yaw_pos_ = 2000;          // 云台上部yaw轴最小（编码器值）
-  const f32 down_yaw_move_high_ = 3700.0f;   // 云台上部yaw轴大于高值，云台下部yaw轴随动
-  const f32 down_yaw_move_low_ = 2000.0f;    // 云台上部yaw轴小于低值，云台下部yaw轴随动
+  const f32 ammo_init_speed_ = 7800.0f;          // 摩擦轮初始速度
+  const f32 sensitivity_up_yaw_ = 0.004f;        // 云台上部yaw轴灵敏度
+  const f32 sensitivity_down_yaw_ = 0.004f;      // 云台下部yaw轴灵敏度
+  const f32 sensitivity_pitch_ = 0.004f;         // 云台pitch轴灵敏度
+  const f32 highest_aimbot_pitch_angle_ = 0.1f;  // 云台上部yaw轴最大（弧度制）
+  const f32 highest_pitch_angle_ = 0.4f;         // 云台pitch轴最高（弧度制）
+  const f32 lowest_pitch_angle_ = -0.7f;         // 云台pitch轴最低（弧度制）
+  const u16 max_up_yaw_pos_ = 4100;              // 云台上部yaw轴最大（编码器值）
+  const u16 min_up_yaw_pos_ = 2000;              // 云台上部yaw轴最小（编码器值）
+  const f32 down_yaw_move_high_ = 3700.0f;       // 云台上部yaw轴大于高值，云台下部yaw轴随动
+  const f32 down_yaw_move_low_ = 2000.0f;        // 云台上部yaw轴小于低值，云台下部yaw轴随动
 
  public:
   void GimbalInit();

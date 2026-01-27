@@ -39,26 +39,26 @@ void Gimbal::GimbalStateUpdate() {
   // if (!globals->device_shoot.all_device_ok()) {
   //   gimbal->ShootDisableUpdate();  // 发射机构失能计算
   // } else {
-    switch (globals->StateMachine_) {
-      case kMatch:                    // 比赛模式下，发射系统与拨盘电使能
-        gimbal->ShootEnableUpdate();  // 发射机构使能计算
-        break;
-      case kTest:
-        switch (gimbal->GimbalMove_) {
-          case kGbAimbot:
-            gimbal->ShootEnableUpdate();  // 发射机构使能计算
-            break;
-          case kGbRemote:
-          default:
-            gimbal->ShootDisableUpdate();  // 发射机构失能计算
-            break;
-        }
-        break;
-      case kNoForce:                   // 无力模式下，所有电机失能
-      default:                         // 错误状态，所有电机失能
-        gimbal->ShootDisableUpdate();  // 发射机构失能计算
-        break;
-    }
+  switch (globals->StateMachine_) {
+    case kMatch:                    // 比赛模式下，发射系统与拨盘电使能
+      gimbal->ShootEnableUpdate();  // 发射机构使能计算
+      break;
+    case kTest:
+      switch (gimbal->GimbalMove_) {
+        case kGbAimbot:
+          gimbal->ShootEnableUpdate();  // 发射机构使能计算
+          break;
+        case kGbRemote:
+        default:
+          gimbal->ShootDisableUpdate();  // 发射机构失能计算
+          break;
+      }
+      break;
+    case kNoForce:                   // 无力模式下，所有电机失能
+    default:                         // 错误状态，所有电机失能
+      gimbal->ShootDisableUpdate();  // 发射机构失能计算
+      break;
+  }
   // }
 }
 
