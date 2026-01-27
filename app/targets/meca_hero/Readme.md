@@ -32,3 +32,15 @@
 ## 底盘功率控制
 ## 弹速控制
 ## 
+# 拨盘
+- 上电
+  - 不能动
+  - target = now
+  - next找到最近的大于now的限位
+- 拨动扳机
+  - 堵转检测
+    - 堵住target>now
+      - next不动，target=now-2°
+    - 未堵住
+      - target=next
+      - next+60

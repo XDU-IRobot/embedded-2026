@@ -7,25 +7,39 @@ void MagazineControl() {
       r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    // 检测当前角度，防止大幅转动
-    while (target_magz > globals->magazine_motor->pos()) {
-      target_magz -= 1.0472 /*（π/3）*/;
-    }
-    while (target_magz < globals->magazine_motor->pos() - 0.03 && target_magz > globals->magazine_motor->pos() + 0.03) {
-      target_magz += 1.0472 /*（π/3）*/;
-    }
     // HAL_Delay(0);
     return;
   }
   // 启动
   if (l_switch_position_last == rm::device::DR16::SwitchPosition::kDown) {
+    target_magz=globals->magazine_motor->pos();
     // 检测当前角度，防止大幅转动
-    while (target_magz > globals->magazine_motor->pos()) {
-      target_magz -= 1.0472 /*（π/3）*/;
+    while (next_target_magz< globals->magazine_motor->pos()) {
+      next_target_magz += 1.0472 /*（π/3）*/;
     }
-    while (target_magz < globals->magazine_motor->pos() - 0.3) {
-      target_magz += 1.0472 /*（π/3）*/;
+    while (next_target_magz > globals->magazine_motor->pos()) {
+      next_target_magz -= 1.0472 /*（π/3）*/;
     }
+    if (next_target_magz < -3.141593) {
+      next_target_magz += 2 * 3.141593;
+    }
+    //---
+    // if (globals->magazine_motor->pos()-target_magz   < -3.141593 / 6) {
+    //   target_magz -= 3.141593 / 3;
+    //   if (target_magz < -3.141593) {
+    //     target_magz += 2 * 3.141593;
+    //   }
+    //   next_target_magz = target_magz - 3.141593 / 3;
+    //   if (next_target_magz < -3.141593) {
+    //     next_target_magz += 2 * 3.141593;
+    //   }
+    // } else {
+    //   next_target_magz = target_magz - 3.141593 / 3;
+    //   if (next_target_magz > 3.141593) {
+    //     next_target_magz += 2 * 3.141593;
+    //   }
+    //   target_magz = globals->magazine_motor->pos();
+    // }
     // 使能
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
   }
@@ -34,30 +48,41 @@ void MagazineControl() {
   // if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593/18) {
   //   target_magz = globals->magazine_motor->pos() +3.141593 / 90;
   // }
-  if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -(3.141593 / 36)) {
-    magz_compensation_count++;
-    if (magz_compensation_count == 500) {
-      magz_compensation += target_magz - globals->magazine_motor->pos();
-      target_magz = globals->magazine_motor->pos();
-    }
-  } else {
-    magz_compensation_count = 0;
-  }
+  //堵转检测
+  // if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -(3.141593 / 36)) {
+  //   magz_compensation_count++;
+  //   if (magz_compensation_count == 500) {
+  //     magz_compensation += target_magz - globals->magazine_motor->pos();
+  //     target_magz = globals->magazine_motor->pos();
+  //   }
+  // } else {
+  //   magz_compensation_count = 0;
+  // }
 
   // 按下扳机(延时1s)
   if (counter == 0) {
-    if (globals->rc->dial() >= 500 || globals->rc->dial() < -500) {
-      // 增加60°
-      target_magz -= 1.0472 + magz_compensation /*（π/3）*/;
-      if (target_magz <= -3.141593 /*（π）*/) {
-        target_magz += 3.141593 * 2;
+    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500) && shooter_4 < -400) {
+      // 堵转检测
+      if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
+        target_magz = globals->magazine_motor->pos() + 3.141593 / 90;
+      } else {
+        target_magz=next_target_magz;
+        next_target_magz-=3.141593/3;
+        if (next_target_magz < -3.141593) {
+          next_target_magz += 2 * 3.141593;
+        }
       }
+      // target_magz -= 1.0472 + magz_compensation /*（π/3）*/;
+      // if (target_magz <= -3.141593 /*（π）*/) {
+      //   target_magz += 3.141593 * 2;
+      // }
       counter = 500;
-      magz_compensation = 0;
+      // magz_compensation = 0;
     }
   } else {
     counter--;
   }
+
   // 拨盘电机串级PID（开循环）
   globals->pid_magz_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
   globals->pid_magz_position->Update(target_magz, globals->magazine_motor->pos(), 0.001);
@@ -81,8 +106,9 @@ void ShooterControl() {
        l_switch_position_now != rm::device::DR16::SwitchPosition::kUp) ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+    globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
     // 给shooter电机发送指令
-    globals->shooter_motor_1->SetCurrent(0);
+    globals->shooter_motor_1->SetCurrent(globals->pid_shooter_1->out());
     globals->shooter_motor_2->SetCurrent(0);
     globals->shooter_motor_3->SetCurrent(0);
     globals->shooter_motor_4->SetCurrent(0);
@@ -91,7 +117,7 @@ void ShooterControl() {
     rm::device::DjiMotor<>::SendCommand();
 
     // // 目标速度PID
-    // globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
+
     // globals->pid_shooter_2->Update(0, globals->shooter_motor_2->rpm());
     // globals->pid_shooter_3->Update(0, globals->shooter_motor_3->rpm());
     // globals->pid_shooter_4->Update(0, globals->shooter_motor_4->rpm());
@@ -151,8 +177,8 @@ void ChassisControl() {
   // 底盘随动
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow->Update(-1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001);  // 云台正位为电机编码器的-90°
-    Vw = -globals->pid_chassis_follow->out();
+                                        0.001); // 云台正位为电机编码器的-90°
+    Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
   }
@@ -185,12 +211,17 @@ void ChassisControl() {
 void GimbalControl() {
   // IMU解算
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(), globals->imu->gyro_z(),
+  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
+                                                globals->imu->gyro_z()+static_cast<float>(0.000088),
                                                 globals->imu->accel_x(), globals->imu->accel_y(),
                                                 globals->imu->accel_z()});
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
+  // 监测imu
+  Gy = globals->imu->gyro_y();
+  Gz = globals->imu->gyro_z();
+  Gx = globals->imu->gyro_x();
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->gimbal_motor_yaw->SetMitCommand(0, 0, 0, 0, 0);
@@ -200,10 +231,7 @@ void GimbalControl() {
     // HAL_Delay(0);
     return;
   }
-  // 监测imu
-  Gy = globals->imu->gyro_y();
-  Gz = globals->imu->gyro_z();
-  Gx = globals->imu->gyro_x();
+
 
   // 云台电机逻辑
 
@@ -214,7 +242,7 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001;  //
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
   target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
   // yaw限位
   // if (target_pos_yaw < -1.85) {
