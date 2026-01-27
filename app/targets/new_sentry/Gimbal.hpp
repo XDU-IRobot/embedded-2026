@@ -13,6 +13,8 @@ inline class Gimbal {
 
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
+  bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
+
  private:
   f32 gimbal_up_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据（编码器控制，弧度制，左正右负）
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，左正右负）
@@ -35,7 +37,6 @@ inline class Gimbal {
   bool single_shoot_flag_ = false;  // 单发标志
 
   bool pitch_enable_flag_ = false;     // 4310电机使能标志
-  bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
   bool max_angle_flag_ = false;        // 云台上部yaw轴最大角度标志
   bool min_angle_flag_ = false;        // 云台上部yaw轴最小角度标志
 

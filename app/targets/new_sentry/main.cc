@@ -215,7 +215,7 @@ void GlobalWarehouse::Music() {
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
-  const u32 imu_time = HAL_GetTick();
+  // const u32 imu_time = HAL_GetTick();
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{
       globals->imu->gyro_x(), globals->imu->gyro_y(), globals->imu->gyro_z() + globals->yaw_gyro_bias_,
@@ -245,11 +245,8 @@ void GlobalWarehouse::SubLoop500Hz() {
   //                                             globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
   // globals->can_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
   //                                              imu_time, globals->imu_count);
-  // rm::device::DjiMotor<device::DjiMotorType::M3508>::SendCommand(*can1);
-  // rm::device::DjiMotor<device::DjiMotorType::M2006>::SendCommand(*can1);
-  // rm::device::DjiMotor<device::DjiMotorType::GM6020>::SendCommand(*can1);
-  rm::device::DjiMotor<>::SendCommand(*can1);
-  rm::device::DjiMotor<>::SendCommand(*can2);
+  rm::device::DjiMotorBase::SendCommand(*can1);
+  rm::device::DjiMotorBase::SendCommand(*can2);
   // if (selection) {
   //   GimbalDataSend();
   //   selection = false;
@@ -261,8 +258,8 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    globals->down_yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
-    globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
+    globals->down_yaw_motor->SetMitCommand(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
+    globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
   }
 }
 
