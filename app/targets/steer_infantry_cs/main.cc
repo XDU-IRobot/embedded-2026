@@ -1,8 +1,6 @@
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
-#include "polling_timer.hpp"
-#include "device_manager.hpp"
 #include "timer_task.hpp"
 
 #include "controllers/quad_steering_chassis.hpp"

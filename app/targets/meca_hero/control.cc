@@ -63,7 +63,7 @@ void MagazineControl() {
   globals->pid_magz_position->Update(target_magz, globals->magazine_motor->pos(), 0.001);
   // target_velocity = globals->pid_magz_position->out();
   // globals->pid_magz_velocity->Update(target_velocity, globals->magazine_motor->vel(), 0.002);
-  globals->magazine_motor->SetPosition(0, 0, globals->pid_magz_position->out(), 0, 0);
+  globals->magazine_motor->SetMitCommand(0, 0, globals->pid_magz_position->out(), 0, 0);
 }
 
 /*----------------------------------------------------*/
@@ -253,7 +253,7 @@ void GimbalControl() {
   globals->pid_pitch_velocity->Update(globals->pid_pitch_position->out(), -globals->imu->gyro_y(), 0.001);
 
   // 发送CAN
-  globals->gimbal_motor_yaw->SetPosition(0, 0, globals->pid_yaw_position->out(), 0, 0);
+  globals->gimbal_motor_yaw->SetMitCommand(0, 0, globals->pid_yaw_position->out(), 0, 0);
   globals->gimbal_motor_pitch->SetCurrent(
       static_cast<int16_t>(globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
   // HAL_Delay(0);
