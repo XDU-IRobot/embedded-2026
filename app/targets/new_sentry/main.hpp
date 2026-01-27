@@ -6,8 +6,10 @@
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
 #include "encoder_counter.hpp"
+#include "aimbot_comm_can.hpp"
+#include "navigate_comm_can.hpp"
 #include "controllers/gimbal_double_yaw.hpp"
-#include "controllers/quad_steering_chassis.hpp"
+#include "controllers/quad_omni_chassis.hpp"
 #include "controllers/shoot_3fric.hpp"
 
 #include "USB.hpp"
@@ -43,15 +45,19 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};  ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};               ///< 遥控器串口接口
-  rm::hal::Serial *referee_uart{nullptr};       ///< 裁判系统串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};                          ///< CAN 总线接口
+  rm::device::HipnucImuCan *hipnuc_imu{nullptr};                        ///< IMU
+  rm::device::AimbotCanCommunicator *can_communicator{nullptr};      ///< CAN 通信器
+  // rm::device::NavigateCanCommunicator *navigate_communicator{nullptr};  ///< CAN 通信器
+  rm::hal::Serial *dbus{nullptr};                                       ///< 遥控器串口接口
+  rm::hal::Serial *referee_uart{nullptr};                               ///< 裁判系统串口接口
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
+  rm::device::DeviceManager<1> device_nuc;
   rm::device::DeviceManager<3> device_gimbal;
   rm::device::DeviceManager<3> device_shoot;
-  rm::device::DeviceManager<8> device_chassis;
+  rm::device::DeviceManager<4> device_chassis;
   // 云台
   rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
   rm::device::BMI088 *imu{nullptr};                                                    ///< IMU
@@ -61,25 +67,21 @@ inline struct GlobalWarehouse {
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};     ///< 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                           ///< 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                          ///< 右侧摩擦轮电机
-  rm::device::M2006 *dial_motor{nullptr};                                              ///< 拨盘电机
+  rm::device::M3508 *dial_motor{nullptr};                                              ///< 拨盘电机
   // 底盘
-  rm::device::GM6020 *steer_lf{nullptr};  ///< 左前舵电机
-  rm::device::GM6020 *steer_rf{nullptr};  ///< 右前舵电机
-  rm::device::GM6020 *steer_lb{nullptr};  ///< 左后舵电机
-  rm::device::GM6020 *steer_rb{nullptr};  ///< 右后舵电机
-  rm::device::M3508 *wheel_lf{nullptr};   ///< 左前轮电机
-  rm::device::M3508 *wheel_rf{nullptr};   ///< 右前轮电机
-  rm::device::M3508 *wheel_lb{nullptr};   ///< 左后轮电机
-  rm::device::M3508 *wheel_rb{nullptr};   ///< 右后轮电机
+  rm::device::M3508 *wheel_lf{nullptr};  ///< 左前轮电机
+  rm::device::M3508 *wheel_rf{nullptr};  ///< 右前轮电机
+  rm::device::M3508 *wheel_lb{nullptr};  ///< 左后轮电机
+  rm::device::M3508 *wheel_rb{nullptr};  ///< 右后轮电机
 
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{500.0f};                   ///< 姿态解算器
-  GimbalDoubleYaw gimbal_controller;                      ///< 二轴双 Yaw 云台控制器
-  QuadSteeringChassis chassis_controller{0.0f, 0.4714f};  ///< 四轮转向底盘控制器
-  Shoot3Fric shoot_controller{8, 36.0f};                  ///< 三摩擦轮发射机构控制器，8发拨盘
-  EncoderCounter dail_encoder_counter;                    ///< 云台 Yaw 下部电机位置计数器
+  rm::modules::MahonyAhrs ahrs{500.0f};   ///< 姿态解算器
+  GimbalDoubleYaw gimbal_controller;      ///< 二轴双 Yaw 云台控制器
+  QuadOmniChassis chassis_controller;     ///< 四轮转向底盘控制器
+  Shoot3Fric shoot_controller{8, 36.0f};  ///< 三摩擦轮发射机构控制器，8发拨盘
+  EncoderCounter dail_encoder_counter;    ///< 云台 Yaw 下部电机位置计数器
 
   // USB //
   GimbalDataFrame_SCM_t GimbalData{0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0, 0};  ///< IMU数据
@@ -90,16 +92,17 @@ inline struct GlobalWarehouse {
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   u_int8_t time = 0;                            // 时间
   u_int16_t hurt_time = 0;                      // 受伤小陀螺倒计时
+  u_int8_t time_camera = 0;                     // 摄像头计数器
+  u_int16_t imu_count = 0;                      // IMU计数器
+  u_int8_t aim_mode = 0;                        // 自瞄模式
   u_int8_t music_choice = 0;                    // 音乐选择
   bool music = false;                           // 控制音乐播放
   bool music_change_flag = false;               // 音乐改动标识位
   bool selection = false;                       // 选择发送不同的usb数据
+  const float yaw_gyro_bias_ = 0.0015f;         // 偏航角（角度值）的陀螺仪偏移量
+
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
-  float up_yaw_qw = 0.0f, up_yaw_qx = 0.0f, up_yaw_qy = 0.0f, up_yaw_qz = 0.0f;  // 云台上部Yaw电机的四元数
-  const float yaw_gyro_bias_ = 0.0015f;       // 偏航角（角度值）的陀螺仪偏移量
-  const float rc_max_value_ = 660.0f;         // 遥控器最大值
-  const float GM6020_encoder_max_ = 8191.0f;  // GM6020 电机编码器最大值
 
   // 函数 //
  public:

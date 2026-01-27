@@ -25,6 +25,9 @@
 #ifdef OLD_SENTRY
 #include "old_sentry/USB.hpp"
 #endif
+#ifdef NEW_SENTRY
+#include "old_sentry/USB.hpp"
+#endif
 #ifdef TEST_GB
 #include "test_gb/USB.hpp"
 #endif
@@ -277,7 +280,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
     USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-#if defined (OLD_SENTRY) || defined (TEST_GB)
+#if defined (OLD_SENTRY) || defined (TEST_GB) || defined (NEW_SENTRY)
     USBReceive(Buf, *Len);
 #endif
 #ifdef DRONE_GB

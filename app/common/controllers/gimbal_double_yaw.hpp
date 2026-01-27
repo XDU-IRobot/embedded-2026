@@ -8,8 +8,16 @@
 class GimbalDoubleYaw {
  public:
   GimbalDoubleYaw() {
-    pid_.up_yaw_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
-    pid_.down_yaw_position.SetCircular(true).SetCircularCycle(M_PI * 2.0f).SetDiffFirst(false);
+    pid_.up_yaw_position.SetCircular(true)
+        .SetCircularCycle(M_PI * 2.0f)
+        .SetFuzzy(true)
+        .SetFuzzyErrorScale(M_PI)
+        .SetDiffFirst(false);
+    pid_.down_yaw_position.SetCircular(true)
+        .SetCircularCycle(M_PI * 2.0f)
+        .SetFuzzy(true)
+        .SetFuzzyErrorScale(M_PI)
+        .SetDiffFirst(false);
     pid_.pitch_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
   }
 
