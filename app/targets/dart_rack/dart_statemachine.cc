@@ -179,13 +179,8 @@ void DartStateAdjustUpdate() {
   // 扳机触发调节
   if (dart_rack->rc_->left_x() > 330) {
     if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 100) {
-      if (dart_rack->trigger_motor_force_->encoder() <= 8000) {
         dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
         dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
-      } else {
-        dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
-        dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
-      }
     } else {
       dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
       dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
@@ -193,19 +188,16 @@ void DartStateAdjustUpdate() {
 
   } else if (dart_rack->rc_->left_x() < -330) {
     if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 100) {
-      if (dart_rack->trigger_motor_force_->encoder() >= 5000) {
         dart_rack->trigger_motor_force_pid_.Update(-1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
         dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
-      } else {
-        dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
-        dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
       }
-    } else {
+    else {
       dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
       dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
     }
   } else {
-    dart_rack->trigger_motor_force_->SetCurrent(0);
+    dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+    dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
   }
 }
 
@@ -284,12 +276,12 @@ void DartStateInitUpdate() {
   // 根据扳机位置计算滑台里程
 
   // 打开撒放器
-  if (dart_rack->trigger_motor_force_->encoder() >= 5000 &&
-      dart_rack->state_.manual_mode.is_trigger_force_init_done == false) {
+  if (dart_rack->state_.manual_mode.is_trigger_force_init_done == false) {
     dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
     dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
   } else {
-    dart_rack->trigger_motor_force_->SetCurrent(0);
+    dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+    dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
     dart_rack->state_.manual_mode.is_trigger_force_init_done = true;
   }
   // 全部检查完成后，初始化完成
@@ -340,6 +332,10 @@ void DartStateLoadUpdate() {
     dart_rack->state_.manual_mode.is_load_down_done = false;
 
   } else {
+    dart_rack->load_motor_l_speed_pid_.Update(.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
+    dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
+    dart_rack->load_motor_r_speed_pid_.Update(.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+    dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
     dart_rack->state_.manual_mode.is_load_down_done = true;
   }
 
