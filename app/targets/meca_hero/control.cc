@@ -193,7 +193,7 @@ void GimbalControl() {
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
-    globals->gimbal_motor_yaw->SetPosition(0, 0, 0, 0, 0);
+    globals->gimbal_motor_yaw->SetMitCommand(0, 0, 0, 0, 0);
     globals->gimbal_motor_pitch->SetCurrent(0);
     globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     target_pos_yaw = -globals->ahrs.euler_angle().yaw;
