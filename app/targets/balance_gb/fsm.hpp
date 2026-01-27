@@ -12,6 +12,7 @@ class Fsm {
     kTest,     // 测试
     kShoot,    // 使能发射机构
     kHigh,     // 高腿长
+    kAutoaim,  // 自瞄模式
 
   };
   void Transit(State new_mode);

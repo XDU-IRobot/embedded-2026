@@ -11,6 +11,7 @@ f32 pitch_debug, yaw_debug, roll_debug;
 f32 pitch_staus, yaw_staus;
 f32 pitch_aim;
 Fsm::State state;
+f32 pitch_con,yaw_con,pitch_ecd,yaw_ecd;
 void Fsm::Transit(State new_mode) {
   // 输入新状态
   if (new_mode != mode_) {
@@ -21,7 +22,11 @@ void Fsm::Transit(State new_mode) {
     } else if (new_mode == State::kShoot) {
       global.motor->DMEnable();
       global.motor->ShootEnable();
-    } else {
+    } else if (new_mode == State::kAutoaim) {
+      global.motor->DMEnable();
+      global.motor->ShootDisable();
+    }
+    else {
       global.motor->DMEnable();
       global.motor->ShootDisable();
     }
@@ -33,7 +38,7 @@ void Fsm::Transit(State new_mode) {
 // 根据遥控器切换状态
 void Fsm::Update_State() {
   left_x_debug = global.bc->rc->left_x();
-
+  global.bc->device_rc.Update();
   if (!global.bc->device_rc.all_device_ok()) {
     Transit(State::kNoForce);
   } else {
@@ -49,7 +54,13 @@ void Fsm::Update_State() {
         }
         break;
       case DR16::SwitchPosition::kUp:
-        Transit(State::kShoot);
+        if (global.bc->rc->switch_l() == DR16::SwitchPosition::kMid) {
+          Transit(State::kShoot);
+
+        }
+        else if (global.bc->rc->switch_l() == DR16::SwitchPosition::kUp) {
+          Transit(State::kAutoaim) ;
+        }
         break;
       default:
         Transit(State::kNoForce);
@@ -155,11 +166,18 @@ void Fsm::Update_Control() {
       global.motor->DMControl();
       global.motor->ShootControl();
       break;
+        case State::kAutoaim:
+      global.motor->DMAutoControl();
+      break;
   }
 }
 
 // 500HZ任务
 void Fsm::Update_500HZ() {
+  yaw_ecd= global.bc->ahrs.euler_angle().yaw;
+  yaw_con= global.motor->aimbot_comm->yaw();
+  pitch_con= global.motor->aimbot_comm->pitch();
+  pitch_ecd= global.bc->ahrs.euler_angle().pitch;
   pitch_aim = global.motor->rc_request_pitch;
   // imu更新
   global.bc->EulerUpdate();
@@ -170,6 +188,25 @@ void Fsm::Update_500HZ() {
   pitch_staus = global.motor->pitch_motor->status();
   yaw_staus = global.motor->yaw_motor->status();
 
+
+   //自瞄更新
+ // global.bc->AimbotUpdate();
+  if (1) {
+    global.bc->imu_count++;
+    global.bc->time_camera++;
+    if (global.bc->time_camera == 10) {
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
+      global.bc->time_camera = 0;
+    }
+    if (global.bc->time_camera == 5) {
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+    }
+  }
+  if (global.bc->imu_count >= 10000) {
+   global.bc-> imu_count = 0;
+  }
+    global.motor->aimbot_comm->UpdateControl(global.bc->ahrs.quaternion().w, global.bc->ahrs.quaternion().x, global.bc->ahrs.quaternion().y, global.bc->ahrs.quaternion().z, 1, 0,
+                                 global.bc->imu_count, 20.0f);
   // 状态更新
   Update_State();
 

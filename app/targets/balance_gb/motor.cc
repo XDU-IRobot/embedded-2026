@@ -30,6 +30,7 @@ void Motor::MotorInit() {
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can2, {0x04, 0x03, 3.141593f, 30.f, 10.f, std::make_pair(0.0f, 500.0f), std::make_pair(0.0f, 5.0f)}};
 
+  aimbot_comm = new device::AimbotCanCommunicator(*can1);
   ammo_left = new M3508{*can1, 7};
   ammo_right = new M3508{*can1, 8};
   dial_motor = new M3508{*can2, 1};
@@ -128,6 +129,32 @@ void Motor::DMControl() {
   if (reset_yaw_flag == 1) {
     gimbal_controller.SetTarget((reset_yaw - rc_request_yaw) / 57.3f, rc_request_pitch / 57.3f);
     gimbal_controller.Update(global.bc->yaw / 57.3f, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
+  }
+}
+void Motor::DMAutoControl() {
+
+
+  if (reset_yaw_flag == 0) {
+    reset_yaw = global.bc->yaw;
+    rc_request_yaw = 0.f;
+    reset_yaw_flag = 1;
+  }
+  if (aimbot_comm->aimbot_state()==0) {
+    rc_request_pitch += Map(global.bc->rc->right_y(), -660, 660, -0.11f, 0.11f);
+    rc_request_pitch = Clamp(rc_request_pitch, -15.f, 22.f);
+
+    rc_request_yaw -= Map(global.bc->rc->left_x(), -660, 660, -0.18f, 0.18f);
+    rc_request_yaw = Wrap(rc_request_yaw, -180.f, 180.f);
+    gimbal_controller.SetTarget((reset_yaw - rc_request_yaw) / 57.3f, rc_request_pitch / 57.3f);
+    gimbal_controller.Update(global.bc->yaw / 57.3f, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
+  }
+  else {
+    rc_request_pitch=aimbot_comm->pitch();
+    rc_request_pitch = Clamp(rc_request_pitch, -15.f/57.3f, 22.f/57.3f);
+    rc_request_yaw=aimbot_comm->yaw();
+    rc_request_yaw = Wrap(rc_request_yaw, -std::numbers::pi, std::numbers::pi);
+    gimbal_controller.SetTarget((reset_yaw ) / 57.3f, rc_request_pitch / 57.3f);
+    gimbal_controller.Update(global.bc->yaw  , yaw_motor->vel(), global.bc->pitch, pitch_motor->vel());
   }
 }
 

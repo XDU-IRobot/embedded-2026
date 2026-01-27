@@ -7,7 +7,7 @@
 #include "firstorderfilter.hpp"
 
 static FirstOrderFilter g_zfilter(1.f / 500.f, 0.02f);
-
+extern rm::hal::Can *can1;
 f32 g_z;
 
 void BoardC::BoardcInit() {
@@ -17,15 +17,17 @@ void BoardC::BoardcInit() {
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   rc = new rm::device::DR16{*dbus};
-
   device_rc << rc;
-
   rc->Begin();
   buzzer->Init();
   led->Init();
-
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
   buzzer_controller.Play<modules::buzzer_melody::Startup>();
+
+  for (auto ch : {TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4}) {
+    HAL_TIM_PWM_Start(&htim1, ch);
+  }
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 }
 
 void BoardC::EulerUpdate() {

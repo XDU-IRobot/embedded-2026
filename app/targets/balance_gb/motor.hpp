@@ -1,7 +1,7 @@
 #pragma once
 
 #include <librm.hpp>
-
+#include "aimbot_comm_can.hpp"
 #include "controllers/gimbal_2dof.hpp"
 #include "controllers/shoot_2firc.hpp"
 #include "communiate.hpp"
@@ -18,7 +18,7 @@ class Motor {
   M3508 *dial_motor{nullptr};
   M3508 *ammo_left{nullptr};  ///< 左侧摩擦轮电机
   M3508 *ammo_right{nullptr};
-
+  device::AimbotCanCommunicator *aimbot_comm{nullptr};
   Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
   Shoot2Fric shoot_controller{8, 36.0f};  ///< 摩擦轮
 
@@ -40,7 +40,7 @@ class Motor {
 
   void DMInitControl();  ///< 达妙电机初始化控制
   void DMControl();      ///< 达妙电机正常控制更新
-
+  void DMAutoControl();
   void ShootControl();  ///< 发射机构正常控制更新
 
   void SendDMCommand();   ///<  发送达妙电机控制量
