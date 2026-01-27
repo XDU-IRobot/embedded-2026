@@ -106,16 +106,16 @@ inline struct GlobalWarehouse {
     pid_shooter_5 = new rm::modules::PID{25, 2, 4, 10000, 2};
     pid_shooter_6 = new rm::modules::PID{25, 2, 4, 10000, 2};
 
-    pid_magz_position = new rm::modules::PID{20, 0.001, 0.4, 6, 0};
+    pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
     // pid_magz_velocity = new rm::modules::PID{0.17, 0, 0.0002, 6.4, 0};
 
-    pid_yaw_position = new rm::modules::PID{100, 0.01, 10, 8, 0};
+    pid_yaw_position = new rm::modules::PID{80, 0.01, 8, 6.5, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
-    pid_pitch_position = new rm::modules::PID{3, 0, 0, 1, 0};
-    pid_pitch_velocity = new rm::modules::PID{12000,100, 80, 8000,0};
+    pid_pitch_position = new rm::modules::PID{11, 0, 0, 1, 0};
+    pid_pitch_velocity = new rm::modules::PID{5000,15, 0, 8000,2000};
 
     //底盘随动
-    pid_chassis_follow = new rm::modules::PID{6000, 0, 0, 10000, 0};
+    pid_chassis_follow = new rm::modules::PID{11000, 0, 100, 10000, 0};
 
     can1->SetFilter(0, 0);
     can1->Begin();
@@ -135,7 +135,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 //imu陀螺仪
 inline float Gy,Gz,Gx;
 // 拨盘增加角度
-inline float target_magz;
+inline float target_magz=0;
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -149,8 +149,20 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -6000;
-inline rm::i16 V_shooter_2 = -5500;
+inline rm::i16 V_shooter_1 = -600;
+inline rm::i16 V_shooter_2 = -550;
+//摩擦轮速度监测
+inline rm::i16 shooter_1;
+inline rm::i16 shooter_2;
+inline rm::i16 shooter_3;
+inline rm::i16 shooter_4;
+inline rm::i16 shooter_5;
+inline rm::i16 shooter_6;
+//底盘速度监测
+inline rm::i16 chassis_1;
+inline rm::i16 chassis_2;
+inline rm::i16 chassis_3;
+inline rm::i16 chassis_4;
 // PIDerror
 inline float error;
 //pitch_out
@@ -158,6 +170,10 @@ inline float pitch_out;
 inline float yaw_out;
 //电机状态
 inline uint8_t yaw_state;
+//拨盘补偿标志
+inline bool magz_compensation_flag{false};
+inline int magz_compensation_count{0};
+inline float magz_compensation=0;
 /*----------------------------------------------
  *执行函数
  */
