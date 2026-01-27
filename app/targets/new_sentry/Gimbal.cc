@@ -63,11 +63,10 @@ void Gimbal::GimbalStateUpdate() {
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  // if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
+  // if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ &&
   //     globals->rc->left_x() < 0 && !gimbal->down_yaw_move_flag_) {
   //   gimbal->down_yaw_move_flag_ = true;
-  // } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000
-  // &&
+  // } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos &&
   //            globals->rc->left_x() > 0 && !gimbal->down_yaw_move_flag_) {
   //   gimbal->down_yaw_move_flag_ = true;
   // } else {
@@ -97,9 +96,9 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalScanTargetUpdate() {
-  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000) {
+  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_) {
     gimbal->scan_yaw_flag_ = true;
-  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000) {
+  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_) {
     gimbal->scan_yaw_flag_ = false;
   }
   if (gimbal->scan_yaw_flag_) {

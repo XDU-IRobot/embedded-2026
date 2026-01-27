@@ -241,10 +241,10 @@ void GlobalWarehouse::SubLoop500Hz() {
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }
-  globals->can_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
-                                              globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
-  globals->can_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
-                                               imu_time, globals->imu_count);
+  // globals->can_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
+  //                                             globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
+  // globals->can_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
+  //                                              imu_time, globals->imu_count);
   // rm::device::DjiMotor<device::DjiMotorType::M3508>::SendCommand(*can1);
   // rm::device::DjiMotor<device::DjiMotorType::M2006>::SendCommand(*can1);
   // rm::device::DjiMotor<device::DjiMotorType::GM6020>::SendCommand(*can1);

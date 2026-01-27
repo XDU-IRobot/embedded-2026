@@ -56,7 +56,7 @@ inline class Gimbal {
   const f32 highest_aimbot_pitch_angle_ = 0.1f;      // 云台上部yaw轴最大（弧度制）
   const f32 highest_pitch_angle_ = 0.4f;     // 云台pitch轴最高（弧度制）
   const f32 lowest_pitch_angle_ = -0.7f;     // 云台pitch轴最低（弧度制）
-  const u16 max_up_yaw_pos_ = 4250;          // 云台上部yaw轴最大（编码器值）
+  const u16 max_up_yaw_pos_ = 4100;          // 云台上部yaw轴最大（编码器值）
   const u16 min_up_yaw_pos_ = 2000;          // 云台上部yaw轴最小（编码器值）
   const f32 down_yaw_move_high_ = 3700.0f;   // 云台上部yaw轴大于高值，云台下部yaw轴随动
   const f32 down_yaw_move_low_ = 2000.0f;    // 云台上部yaw轴小于低值，云台下部yaw轴随动
