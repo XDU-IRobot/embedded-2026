@@ -51,26 +51,35 @@ void USBSendMessage(uint8_t *address, uint16_t len, uint8_t id) {
  * @brief          发送云台电机数据
  */
 void GimbalDataSend() {
-  globals->GimbalData->TimeStamp = 0;
-  // globals->GimbalData->q0 = ;
-  // globals->GimbalData->q1 = ;
-  // globals->GimbalData->q2 = ;
-  // globals->GimbalData->q3 = ;
-  globals->GimbalData->motor_yaw_angle = globals->down_yaw_motor->pos();
-  USBSendMessage(reinterpret_cast<uint8_t *>(&globals->GimbalData), (uint16_t)sizeof(globals->GimbalData), 0x03);
+  globals->GimbalData.TimeStamp = 0;
+  globals->GimbalData.q0 = globals->up_yaw_qw;
+  globals->GimbalData.q1 = globals->up_yaw_qx;
+  globals->GimbalData.q2 = globals->up_yaw_qy;
+  globals->GimbalData.q3 = globals->up_yaw_qz;
+  globals->GimbalData.robot_id = globals->referee_data_buffer->data().robot_status.robot_id > 100 ? 1 : 0;
+  USBSendMessage(reinterpret_cast<uint8_t *>(&globals->GimbalData), sizeof(globals->GimbalData), 0x03);
 }
 
 /**
  * @brief          发送自瞄所需裁判系统数据
  */
 void RefereeDataSend() {
-  globals->RefereeData->robot_id = globals->referee_data_buffer->data().robot_status.robot_id;
-  globals->RefereeData->current_HP = globals->referee_data_buffer->data().robot_status.current_HP;
-  globals->RefereeData->maximum_HP = globals->referee_data_buffer->data().robot_status.maximum_HP;
-  globals->RefereeData->barrel1_speed = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
-  globals->RefereeData->barrel2_speed = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_2_barrel_heat;
-  globals->RefereeData->x = globals->referee_data_buffer->data().robot_pos.x;
-  globals->RefereeData->y = globals->referee_data_buffer->data().robot_pos.y;
+  if (globals->referee_data_buffer->data().robot_status.current_HP < globals->RefereeData.current_HP &&
+      globals->referee_data_buffer->data().hurt_data.HP_deduction_reason == 0) {
+    globals->RefereeData.hurt_armor = globals->referee_data_buffer->data().hurt_data.armor_id + 1;
+    globals->hurt_time = 2500;
+  } else if (globals->hurt_time <= 0) {
+    globals->RefereeData.hurt_armor = 0;
+    globals->hurt_time = 0;
+  } else {
+    globals->hurt_time--;
+  }
+  globals->RefereeData.current_HP = globals->referee_data_buffer->data().robot_status.current_HP;
+  globals->RefereeData.game_progress = globals->referee_data_buffer->data().game_status.game_progress;
+  globals->RefereeData.remain_time = globals->referee_data_buffer->data().game_status.stage_remain_time;
+  globals->RefereeData.remain_bullet =
+      globals->referee_data_buffer->data().projectile_allowance.projectile_allowance_17mm;
+  globals->RefereeData.robot_id = globals->referee_data_buffer->data().robot_status.robot_id > 100 ? 1 : 0;
   USBSendMessage(reinterpret_cast<uint8_t *>(&globals->RefereeData), sizeof(globals->RefereeData), 0x07);
 }
 

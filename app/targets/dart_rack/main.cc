@@ -8,6 +8,7 @@
 #include "dart_statemachine.hpp"
 
 void MainLoop() {
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
   DartStateMachineUpdate(dart_rack->state_);
   dart_rack->Update();
   rm::device::DjiMotor<>::SendCommand();
@@ -16,6 +17,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   dart_rack = new DartRack();
   dart_rack->Init();
   // 创建主循环定时任务，定频1khz
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
   TimerTask mainloop_1000hz{
       &htim13,                                   //
       etl::delegate<void()>::create<MainLoop>()  //
