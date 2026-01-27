@@ -21,21 +21,22 @@ class BoardC {
                             rm::modules::led_pattern::GreenBreath, rm::modules::led_pattern::RgbFlow>
       led_controller;  ///< RGB LED控制器
 
-  hal::Serial *dbus{nullptr};        ///< 遥控器串口接口
-  device::DR16 *rc{nullptr};         ///< 遥控器
-  device::BMI088 *imu{nullptr};      ///< bmi088
-  modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
+  hal::Serial *dbus{nullptr};              ///< 遥控器串口接口
+  device::DR16 *rc{nullptr};               ///< 遥控器
+  device::BMI088 *imu{nullptr};            ///< bmi088
+  modules::MahonyAhrs ahrs{500.0f};        ///< 姿态解算器
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
   ///< 姿态解算角
   f32 pitch = 0.f;
   f32 roll = 0.f;
   f32 yaw = 0.f;
-  u_int8_t time_camera = 0;                     // 摄像头计数器
-  u_int16_t imu_count = 0;                      // IMU计数器
+  u_int8_t time_camera = 0;  // 摄像头计数器
+  u_int16_t imu_count = 0;   // IMU计数器
   void BoardcInit();
 
   void EulerUpdate();
 
   void AimbotUpdate();
+
  private:
 };
