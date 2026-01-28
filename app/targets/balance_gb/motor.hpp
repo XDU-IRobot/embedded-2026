@@ -23,8 +23,8 @@ class Motor {
   Shoot2Fric shoot_controller{8, 36.0f};  ///< 摩擦轮
 
   enum class InitFlag {
-    kNormal,     //正常模式
-    kOpposite   //倒地自启时头向不会撞枪管的一面初始化
+    kNormal,   // 正常模式
+    kOpposite  // 倒地自启时头向不会撞枪管的一面初始化
   };
 
   InitFlag init_mode{InitFlag::kNormal};

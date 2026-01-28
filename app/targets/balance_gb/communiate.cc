@@ -22,6 +22,4 @@ void ChassisCommunicator::SendChassisCommand() {
   this->can_->Write(0x111, tx_buf_, 4);
 }
 
-extern "C" {
-
-}
+extern "C" {}

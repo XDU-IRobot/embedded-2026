@@ -27,7 +27,7 @@ class ChassisCommunicator final : public CanDevice {
   TxGimbalData request_state;
 
   struct RxChassisData {
-    u8 GimbalInitFlag;      //倒地自启云台控制
+    u8 GimbalInitFlag;  // 倒地自启云台控制
   };
 
   RxChassisData chassis_data_rx;

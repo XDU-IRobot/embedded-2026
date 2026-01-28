@@ -154,7 +154,8 @@ void Fsm::Update_Control() {
       break;
     case State::kTest:
       global.motor->CalcYawPos(global.motor->yaw_motor->pos());
-      global.motor->Transit_initmode(static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
+      global.motor->Transit_initmode(
+          static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
       switch (global.motor->init_mode) {
         case Motor::InitFlag::kNormal:
           global.motor->yaw_init = 0.f;
@@ -167,11 +168,11 @@ void Fsm::Update_Control() {
           break;
         case Motor::InitFlag::kOpposite:
           global.motor->yaw_init = -3.1f;
-          yaw_aim =  global.motor->yaw_init;
+          yaw_aim = global.motor->yaw_init;
           global.motor->DMInitControl();
           init_count_ = 0;
           break;
-         default:
+        default:
           break;
       }
       break;

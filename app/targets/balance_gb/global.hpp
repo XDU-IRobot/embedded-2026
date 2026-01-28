@@ -9,11 +9,11 @@
 
 struct Global {
  public:
-  BoardC *bc{nullptr};                    ///< c板object
-  Motor *motor{nullptr};                  ///< 电机object
+  BoardC *bc{nullptr};                        ///< c板object
+  Motor *motor{nullptr};                      ///< 电机object
   ChassisCommunicator *chassis_communicator;  ///<  底盘控制器object
-  ChassisCommunicator * chassis_receive;   ///<接受底盘指令
-  MiniPC *minipc{nullptr};                ///< minipc object
+  ChassisCommunicator *chassis_receive;       ///< 接受底盘指令
+  MiniPC *minipc{nullptr};                    ///< minipc object
 
   Fsm fsm{};  ///< 状态机控制行为模式
  public:
