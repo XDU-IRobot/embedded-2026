@@ -2,11 +2,10 @@
 
 #include "tim.h"
 #include "timer_task.hpp"
+#include "communiate.hpp"
 
 #include "global.hpp"
 Global global;
-
-extern rm::hal::Can *can2;
 
 void MainLoop() {
   // 分频计数增加
@@ -29,8 +28,8 @@ void AppMain(void) {
   global.bc->BoardcInit();
   global.motor->MotorInit();
   global.motor->MotorPidInit();
-  global.chassis_controller = new ChassisController{*global.motor->can2};
-
+  global.chassis_receive = new ChassisCommunicator(*global.motor->can2);
+  global.chassis_communicator = new ChassisCommunicator{*global.motor->can2};
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{&htim13, etl::delegate<void()>::create<MainLoop>()};
   // 降频到500hz并启动

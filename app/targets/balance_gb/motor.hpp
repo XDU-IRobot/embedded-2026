@@ -22,6 +22,13 @@ class Motor {
   Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
   Shoot2Fric shoot_controller{8, 36.0f};  ///< 摩擦轮
 
+  enum class InitFlag {
+    kNormal,     //正常模式
+    kOpposite   //倒地自启时头向不会撞枪管的一面初始化
+  };
+
+  InitFlag init_mode{InitFlag::kNormal};
+
  public:
   f32 rc_request_pitch = 0.f;
   f32 rc_request_yaw = 0.f;
@@ -50,9 +57,12 @@ class Motor {
 
   void CalcYawPos(f32 pos);
 
+  void Transit_initmode(InitFlag new_mode);
+
+  f32 yaw_init = 0.f;
+
  private:
   f32 pitch_init = 0.f;
-  f32 yaw_init = 0.f;
   f32 reset_yaw = 0.f;
 
   f32 shoot_frequency = 0.f;

@@ -6,6 +6,7 @@
 #include "global.hpp"
 #include "pid_debug.h"
 
+
 using namespace rm::modules;
 
 rm::hal::Can *can1;
@@ -18,6 +19,7 @@ i16 debug;
 f32 rpm_left, rpm_right;
 f32 left_x;
 u8 status;
+
 
 extern Debug pid_debug;
 
@@ -108,11 +110,13 @@ void Motor::DMInitControl() {
   rc_request_yaw = yaw_init;
   gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch);
   gimbal_controller.Update(yaw_motor_pos, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
-  if (yaw_motor_pos > -1.8f || yaw_motor_pos < -2.4f) {
+  if (yaw_motor_pos > rc_request_yaw+0.03f || yaw_motor_pos < rc_request_yaw-0.03f) {
     global.fsm.init_count_ = 0;
+    global.fsm.inited_ = true;
   }
 }
 void Motor::DMControl() {
+
   left_x = global.bc->rc->left_x();
 
   rc_request_pitch += Map(global.bc->rc->right_y(), -660, 660, -0.11f, 0.11f);
@@ -151,7 +155,7 @@ void Motor::DMAutoControl() {
     rc_request_yaw = aimbot_comm->yaw();
     rc_request_yaw = Wrap(rc_request_yaw, -std::numbers::pi, std::numbers::pi);
     gimbal_controller.SetTarget((reset_yaw) / 57.3f, rc_request_pitch / 57.3f);
-    gimbal_controller.Update(global.bc->yaw, yaw_motor->vel(), global.bc->pitch, pitch_motor->vel());
+    gimbal_controller.Update(global.bc->yaw/ 57.3f, yaw_motor->vel(), global.bc->pitch/ 57.3f, pitch_motor->vel());
   }
 }
 
@@ -176,7 +180,7 @@ void Motor::ShootControl() {
 
 void Motor::SendDMCommand() {
   status = yaw_motor->status();
-  yaw_pos = yaw_motor->pos();
+  yaw_pos = yaw_motor_pos;
   yaw_pid_debug = gimbal_controller.output().yaw;
   pitch_pid_debug = gimbal_controller.output().pitch;
   gravity_compensation_ = 1.f * std::cos(global.bc->pitch / 57.3f);
@@ -205,3 +209,13 @@ void Motor::SendDjiCommand() {
   rm::device::DjiMotor<>::SendCommand(*can1);
   rm::device::DjiMotor<>::SendCommand(*can2);
 }
+
+void Motor::Transit_initmode(InitFlag new_mode) {
+  if (new_mode != init_mode) {
+    global.bc->buzzer_controller.Play<modules::buzzer_melody::Success>();
+  }
+  // 替换现有状态
+  init_mode = new_mode;
+
+}
+

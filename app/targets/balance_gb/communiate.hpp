@@ -6,25 +6,31 @@
 using namespace rm;
 using namespace rm::device;
 
-class ChassisController final : public CanDevice {
+class ChassisCommunicator final : public CanDevice {
  public:
   // ChassisController(rm::hal::CanInterface &can, uint32_t rx_std_id) : CanDevice{can, rx_std_id} {}
 
-  explicit ChassisController(hal::CanInterface &can);
-  ChassisController() = delete;
-  ~ChassisController() override = default;
+  explicit ChassisCommunicator(hal::CanInterface &can);
+  ChassisCommunicator() = delete;
+  ~ChassisCommunicator() override = default;
 
   void RxCallback(const hal::CanFrame *msg) override;
   void SendChassisCommand();
 
-  struct GimbalRequestState {
+  struct TxGimbalData {
     i16 ChassisMoveYRequest;  // y轴运动控制
     u8 ChassisStateRequest;   // 状态
     u8 L0Change; /* 腿长变换  0x00 低腿长  0x01  正常腿长   0x02  跳跃时先下蹲  0x03  伸腿  0x04  收腿  0x05  跳跃缓冲
                     0x06  测试高腿长*/
   };
 
-  GimbalRequestState request_state;
+  TxGimbalData request_state;
+
+  struct RxChassisData {
+    u8 GimbalInitFlag;      //倒地自启云台控制
+  };
+
+  RxChassisData chassis_data_rx;
 
   bool jump_flag = false;
   i16 jump_count = 0;
