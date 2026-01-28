@@ -67,7 +67,7 @@ inline struct GlobalWarehouse {
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};     ///< 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                           ///< 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                          ///< 右侧摩擦轮电机
-  rm::device::M3508 *dial_motor{nullptr};                                              ///< 拨盘电机
+  rm::device::M2006 *dial_motor{nullptr};                                              ///< 拨盘电机
   // 底盘
   rm::device::M3508 *wheel_lf{nullptr};  ///< 左前轮电机
   rm::device::M3508 *wheel_rf{nullptr};  ///< 右前轮电机
@@ -80,7 +80,7 @@ inline struct GlobalWarehouse {
   rm::modules::MahonyAhrs ahrs{500.0f};   ///< 姿态解算器
   GimbalDoubleYaw gimbal_controller;      ///< 二轴双 Yaw 云台控制器
   QuadOmniChassis chassis_controller;     ///< 四轮转向底盘控制器
-  Shoot3Fric shoot_controller{8, 36.0f};  ///< 三摩擦轮发射机构控制器，8发拨盘
+  Shoot3Fric shoot_controller{8, 36.0f, false};  ///< 三摩擦轮发射机构控制器，8发拨盘
   EncoderCounter dail_encoder_counter;    ///< 云台 Yaw 下部电机位置计数器
 
   // USB //

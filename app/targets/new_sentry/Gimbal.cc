@@ -287,7 +287,9 @@ void Gimbal::ShootEnableUpdate() {
     single_shoot_flag_ = false;
   }
   globals->shoot_controller.Fire();
-  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0, 0,
+  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
+                                   static_cast<f32>(globals->dail_encoder_counter.revolutions()) * 8191.0f +
+                                       static_cast<f32>(globals->dail_encoder_counter.last_ecd()),
                                    globals->dial_motor->rpm());
 }
 
@@ -301,8 +303,10 @@ void Gimbal::ShootDisableUpdate() {
     globals->shoot_controller.SetArmSpeed(0.0f);
   }
   globals->shoot_controller.Fire();
-  globals->dail_encoder_counter.Reset(globals->dial_motor->encoder());
-  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0, 0,
+  globals->dail_encoder_counter.Reset(0, globals->dial_motor->encoder());
+  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
+                                   static_cast<f32>(globals->dail_encoder_counter.revolutions()) * 8191.0f +
+                                       static_cast<f32>(globals->dail_encoder_counter.last_ecd()),
                                    globals->dial_motor->rpm());
 }
 
