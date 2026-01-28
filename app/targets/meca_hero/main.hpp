@@ -112,10 +112,10 @@ inline struct GlobalWarehouse {
     pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
     pid_pitch_position = new rm::modules::PID{16, 0, 0.8, 1, 0};
-    pid_pitch_velocity = new rm::modules::PID{6000, 40000, 1, 15000, 7000};
+    pid_pitch_velocity = new rm::modules::PID{6000, 7000, 1, 15000, 4000};
 
     // 底盘随动
-    pid_chassis_follow = new rm::modules::PID{1000, 0, 100, 10000, 0};
+    pid_chassis_follow = new rm::modules::PID{11000, 0, 100, 10000, 0};
 
     can1->SetFilter(0, 0);
     can1->Begin();
@@ -150,8 +150,8 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -6000;
-inline rm::i16 V_shooter_2 = -5500;
+inline rm::i16 V_shooter_1 = -600;
+inline rm::i16 V_shooter_2 = -550;
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;

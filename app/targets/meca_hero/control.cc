@@ -176,7 +176,8 @@ void ChassisControl() {
   }
   // 底盘随动
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
-    globals->pid_chassis_follow->Update(-1.5708, globals->gimbal_motor_yaw->pos(),
+    globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
+    globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
                                         0.001); // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
@@ -274,7 +275,7 @@ void GimbalControl() {
 
   // yawPID计算（双环）
   globals->pid_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
-  globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw, 0.001);
+  globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw-0.005, 0.001);
   globals->pid_yaw_velocity->Update(globals->pid_yaw_velocity->out(), -globals->imu->gyro_z(), 0.002);
   // pitchPID计算
   globals->pid_pitch_position->Update(target_pos_pitch, -globals->ahrs.euler_angle().pitch, 1);
@@ -288,7 +289,7 @@ void GimbalControl() {
 
   // 监测pid
   pitch_out = globals->pid_pitch_velocity->out();
-  yaw_out = globals->pid_yaw_position->out();
+  yaw_out = globals->gimbal_motor_yaw->pos();
   error = globals->pid_yaw_position->error()[1];
   yaw_state = globals->gimbal_motor_yaw->status();
 }
