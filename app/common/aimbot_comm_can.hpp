@@ -1,5 +1,5 @@
-#ifndef CAN_HPP
-#define CAN_HPP
+#ifndef AIMBOT_CAN_HPP
+#define AIMBOT_CAN_HPP
 
 #include <librm.hpp>
 
@@ -33,4 +33,4 @@ class AimbotCanCommunicator final : public CanDevice {
 };
 }  // namespace rm::device
 
-#endif  // CAN_HPP
+#endif  // AIMBOT_CAN_HPP

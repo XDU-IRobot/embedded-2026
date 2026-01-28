@@ -1,5 +1,5 @@
-#ifndef CAN_HPP
-#define CAN_HPP
+#ifndef NAVIGATE_CAN_HPP
+#define NAVIGATE_CAN_HPP
 
 #include <librm.hpp>
 
@@ -32,4 +32,4 @@ class NavigateCanCommunicator final : public CanDevice {
 };
 }  // namespace rm::device
 
-#endif  // CAN_HPP
+#endif  // NAVIGATE_CAN_HPP

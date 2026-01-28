@@ -77,11 +77,11 @@ inline struct GlobalWarehouse {
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{500.0f};   ///< 姿态解算器
-  GimbalDoubleYaw gimbal_controller;      ///< 二轴双 Yaw 云台控制器
-  QuadOmniChassis chassis_controller;     ///< 四轮转向底盘控制器
+  rm::modules::MahonyAhrs ahrs{500.0f};          ///< 姿态解算器
+  GimbalDoubleYaw gimbal_controller;             ///< 二轴双 Yaw 云台控制器
+  QuadOmniChassis chassis_controller;            ///< 四轮转向底盘控制器
   Shoot3Fric shoot_controller{8, 36.0f, false};  ///< 三摩擦轮发射机构控制器，8发拨盘
-  EncoderCounter dail_encoder_counter;    ///< 云台 Yaw 下部电机位置计数器
+  EncoderCounter dail_encoder_counter;           ///< 云台 Yaw 下部电机位置计数器
 
   // USB //
   GimbalDataFrame_SCM_t GimbalData{0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0, 0};  ///< IMU数据
