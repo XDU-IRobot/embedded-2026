@@ -103,34 +103,33 @@ class Gimbal {
     kManual,   // 手动
     kAuto,     // 自瞄
 
-    kStop,     // 无力
-    kReady,    // 准备开火
-    kFire      // 开火
+    kStop,                                   // 无力
+    kReady,                                  // 准备开火
+    kFire                                    // 开火
   } StateMachineType;                        // 遥控器状态机
   StateMachineType AmmoState_ = {kNoForce};  // 发射机构状态
   StateMachineType GimbalState_ = {kStop};   // 云台运动状态
   double rc_yaw_data = 0;                    // 遥控器yaw数据
   double rc_pitch_data = 0;                  // 遥控器pitch数据
-  int auto_flag_last=0;
+  int auto_flag_last = 0;
 
   bool DM_is_enable = false;     // 达秒使能标志位
   Gimbal2Dof gimbal_controller;  // 二轴双 Yaw 云台控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
 
 #if NEW_DRONE_GB
-  float pitch_min_pos=1.6;       //TODO pitch电机最小限位
-  float pitch_max_pos=2.75;      //TODO pitch电机最大限位
+  float pitch_min_pos = 1.6;   // TODO pitch电机最小限位
+  float pitch_max_pos = 2.75;  // TODO pitch电机最大限位
 #else
-  float pitch_min_pos=-1.3;       //TODO pitch电机最小限位
-  float pitch_max_pos=-0.4;      //TODO pitch电机最大限位
+  float pitch_min_pos = -1.3;  // TODO pitch电机最小限位
+  float pitch_max_pos = -0.4;  // TODO pitch电机最大限位
 #endif
 
-
   i16 encoder_dirl = 0;
-  int single_shoot_time = 28;     // TODO 单发时间
-  int single_shoot_mid = 0;  // 单发中间变量
-  bool single_flag = 0;      // 单发射击标志位
-  float dirl_speed = 5000;   // TODO 拨盘转速
+  int single_shoot_time = 28;   // TODO 单发时间
+  int single_shoot_mid = 0;     // 单发中间变量
+  bool single_flag = 0;         // 单发射击标志位
+  float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
   float friction_speed = 6600;  // TODO 摩擦轮转速
   // 拨盘自动反转
@@ -195,11 +194,11 @@ class Gimbal {
 #if NEW_DRONE_GB
     yaw_motor = new rm::device::GM6020{*can1, 6};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-      *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 #else
     yaw_motor = new rm::device::GM6020{*can1, 2};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-      *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 #endif
 
     friction_left = new rm::device::M3508{*can1, 1};
@@ -228,7 +227,7 @@ class Gimbal {
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
-    shoot_controller.Arm(false);               // 摩擦轮武装（允许转动）
+    shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
@@ -311,10 +310,10 @@ class Gimbal {
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
 
 #if NEW_DRONE_GB
-      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2*M_PI),
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
 #else
-      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2*M_PI)-M_PI,
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI) - M_PI,
                                pitch_motor->vel(), 2.f);
 #endif
 
@@ -335,15 +334,14 @@ class Gimbal {
       }
 
       if (Aimbot.AimbotState) {
-        rc_yaw_data = Aimbot.TargetYawAngle+M_PI;
+        rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-        rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average+M_PI, 0, 2 * M_PI);
+        rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average + M_PI, 0, 2 * M_PI);
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
-        auto_flag_last=Aimbot.AimbotState;
+        auto_flag_last = Aimbot.AimbotState;
       } else {
-        if (auto_flag_last!=Aimbot.AimbotState)
-        {
+        if (auto_flag_last != Aimbot.AimbotState) {
           rc_yaw_data = yaw;
           rc_pitch_data = rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         }
@@ -386,58 +384,58 @@ class Gimbal {
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
 #if SINGLE_SHOOT_MOOD
-        if (Aimbot.AimbotState&(0x1<<3)||(encoder_dirl < 550 && rc->dial() >= 550)) single_flag = true;
-        encoder_dirl = rc->dial();
+      if (Aimbot.AimbotState & (0x1 << 3) || (encoder_dirl < 550 && rc->dial() >= 550)) single_flag = true;
+      encoder_dirl = rc->dial();
 
-        if (single_flag) {
-          if (single_shoot_mid >= single_shoot_time) {
-            single_flag = false;
-            single_shoot_mid = 0;
-          } else {
-            shoot_controller.SetLoaderSpeed(dirl_speed);
-            single_shoot_mid++;
-          }
+      if (single_flag) {
+        if (single_shoot_mid >= single_shoot_time) {
+          single_flag = false;
+          single_shoot_mid = 0;
         } else {
-          shoot_controller.SetLoaderSpeed(0);
+          shoot_controller.SetLoaderSpeed(dirl_speed);
+          single_shoot_mid++;
         }
+      } else {
+        shoot_controller.SetLoaderSpeed(0);
+      }
 #else
-        if (rc->dial() >= 550) {
-          if (auto_reverse_flag) {
-            shoot_controller.SetLoaderSpeed(-redirl_speed);
-            auto_reverse_time--;
-            auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
-          } else {
-            if (GimbalState_ == kAuto) {
-              if (Aimbot.AimbotState && Aimbot.AutoFire) {
-                shoot_controller.SetLoaderSpeed(dirl_speed);
-              } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
-                shoot_controller.SetLoaderSpeed(0.0f);
-              } else {
-                shoot_controller.SetLoaderSpeed(dirl_speed);
-              }
+      if (rc->dial() >= 550) {
+        if (auto_reverse_flag) {
+          shoot_controller.SetLoaderSpeed(-redirl_speed);
+          auto_reverse_time--;
+          auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
+        } else {
+          if (GimbalState_ == kAuto) {
+            if (Aimbot.AimbotState && Aimbot.AutoFire) {
+              shoot_controller.SetLoaderSpeed(dirl_speed);
+            } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
+              shoot_controller.SetLoaderSpeed(0.0f);
             } else {
               shoot_controller.SetLoaderSpeed(dirl_speed);
             }
+          } else {
+            shoot_controller.SetLoaderSpeed(dirl_speed);
           }
-        } else if (rc->dial() <= -600) {
-          shoot_controller.SetLoaderSpeed(-redirl_speed);
-        } else {
-          shoot_controller.SetLoaderSpeed(0.0f);
         }
+      } else if (rc->dial() <= -600) {
+        shoot_controller.SetLoaderSpeed(-redirl_speed);
+      } else {
+        shoot_controller.SetLoaderSpeed(0.0f);
+      }
 
-        // 自动反转逻辑
-        if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
-          auto_reverse_buffer[4] = auto_reverse_buffer[3];
-          auto_reverse_buffer[3] = auto_reverse_buffer[2];
-          auto_reverse_buffer[2] = auto_reverse_buffer[1];
-          auto_reverse_buffer[1] = auto_reverse_buffer[0];
-          auto_reverse_buffer[0] = dial_motor->encoder();
-          if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
-            auto_reverse_flag = true;
-            auto_reverse_time = auto_reverse_time_max;
-          }
+      // 自动反转逻辑
+      if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
+        auto_reverse_buffer[4] = auto_reverse_buffer[3];
+        auto_reverse_buffer[3] = auto_reverse_buffer[2];
+        auto_reverse_buffer[2] = auto_reverse_buffer[1];
+        auto_reverse_buffer[1] = auto_reverse_buffer[0];
+        auto_reverse_buffer[0] = dial_motor->encoder();
+        if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
+          auto_reverse_flag = true;
+          auto_reverse_time = auto_reverse_time_max;
         }
       }
+    }
 #endif
       shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
       shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
@@ -487,10 +485,10 @@ class Gimbal {
 
 #if NEW_DRONE_GB
     ahrs_auto.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z(), imu->accel_y(),
-                                          imu->accel_x(), -imu->accel_z()});
+                                              imu->accel_x(), -imu->accel_z()});
 #else
-    ahrs_auto.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), imu->gyro_y(), -imu->gyro_z(), -imu->accel_x(),
-                                          imu->accel_y(), -imu->accel_z()});
+  ahrs_auto.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), imu->gyro_y(), -imu->gyro_z(), -imu->accel_x(),
+                                            imu->accel_y(), -imu->accel_z()});
 #endif
 
     pitch = ahrs_auto.euler_angle().pitch + M_PI;
