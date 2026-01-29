@@ -76,26 +76,20 @@ void Gimbal::GimbalAimbotTargetUpdate() {
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,    // pitch轴限位
                                                     gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
 }
-
-float target_yaw = 0;
-float last_target_yaw = 0;
-float Ts = 0.002;
-float yaw_speed_ff;
-float yaw_real;
-float K = 1;
-float t = 0;
-float pitch_target = 0;
-float pitch_real = 0;
+  float target=0;
+float kp=0;
+float ki=0;
+float kd=0;
+float real=0;
 void Gimbal::GimbalMovePIDUpdate() {
-  yaw_real = globals->ahrs.euler_angle().yaw;
-  target_yaw = gimbal->gimbal_yaw_target_;
-  // yaw_speed_ff=0;
-  yaw_speed_ff = (target_yaw - last_target_yaw) / Ts * K;
-  pitch_real = globals->ahrs.euler_angle().pitch;
-  pitch_target = globals->can_communicator->pitch();
-  last_target_yaw = target_yaw;
+  target=gimbal_yaw_target_;
+  real=globals->ahrs.euler_angle().yaw;
+  kp=globals->gimbal_controller.pid().yaw_position.kp();
+  ki=globals->gimbal_controller.pid().yaw_position.ki();
+  kd=globals->gimbal_controller.pid().yaw_position.kd();
 
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ff);
+  globals->yaw_speed_feedforward->Update(gimbal_yaw_target_);
+  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_,globals->yaw_speed_feedforward->GetYawSpeedFeedforward());
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->yaw_motor->vel(),
                                     globals->ahrs.euler_angle().pitch, globals->pitch_motor->vel());
   // globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_);

@@ -106,9 +106,9 @@ std::vector<double> MultiFreqSine::DefaultFrequencies() {
   // 50:10:120
   for (double f = 50.0; f <= 120.0001; f += 10.0) v.push_back(f);
   // append discrete values
-  v.push_back(200.0);
-  v.push_back(250.0);
-  v.push_back(333.0);
-  v.push_back(500.0);
+  // v.push_back(200.0);
+  // v.push_back(250.0);
+  // v.push_back(333.0);
+  // v.push_back(500.0);
   return v;
 }
