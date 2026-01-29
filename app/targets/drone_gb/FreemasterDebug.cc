@@ -40,9 +40,8 @@ f32 Gz;
 void FreemasterDebug() {
   Arcyawdata = gimbal->rc_yaw_data;
   Arcpitchdata = gimbal->rc_pitch_data;
-  Ayaw = gimbal->yaw;
-  // Apitch = rm::modules::Wrap(gimbal->pitch + gimbal->err_average, 0, 2 * M_PI);
-  Apitch = gimbal->pitch;
+  // Ayaw = gimbal->yaw;
+  Apitch = rm::modules::Wrap(gimbal->pitch + gimbal->err_average, 0, 2 * M_PI);
   Aroll = gimbal->roll;
   Aoutputyaw = gimbal->gimbal_controller.output().yaw;
   Aoutputpitch = gimbal->gimbal_controller.output().pitch;
