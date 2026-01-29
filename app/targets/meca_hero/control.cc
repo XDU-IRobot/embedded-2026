@@ -172,7 +172,7 @@ void ChassisControl() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001);  // 云台正位为电机编码器的-90°
+                                        0.001); // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
@@ -235,7 +235,7 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001;  //
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
   target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
   // yaw限位
   // if (target_pos_yaw < -1.85) {
@@ -275,8 +275,13 @@ void GimbalControl() {
 
   // 发送CAN
   globals->gimbal_motor_yaw->SetMitCommand(0, 0, globals->pid_yaw_position->out(), 0, 0);
-  globals->gimbal_motor_pitch->SetCurrent(
-      static_cast<int16_t>(globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {//爬坡模式
+    globals->gimbal_motor_pitch->SetCurrent(0);
+  } else {
+    globals->gimbal_motor_pitch->SetCurrent(
+        static_cast<int16_t>(globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
+  }
+
   // HAL_Delay(0);
 
   // 监测pid
@@ -293,10 +298,6 @@ void GimbalControl() {
 /*-----------*/
 
 void ChassisPower() {
-  chassis_1 = globals->chassis_motor[0]->rpm();
-  chassis_2 = globals->chassis_motor[1]->rpm();
-  chassis_3 = globals->chassis_motor[2]->rpm();
-  chassis_4 = globals->chassis_motor[3]->rpm();
   // 失能
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
@@ -316,15 +317,15 @@ void ChassisPower() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001);  // 云台正位为电机编码器的-90°
+                                        0.001); // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
   }
 
   // 遥控器输入底盘速度
-  Vx = globals->rc->left_x() * 5000 / 660;
-  Vy = globals->rc->left_y() * 5000 / 660;
+  Vx = globals->rc->left_x() * 10000 / 660;
+  Vy = globals->rc->left_y() * 10000 / 660;
 
   rm::i16 V_wheel[4];
 
@@ -342,12 +343,25 @@ void ChassisPower() {
     (*globals->motor_states)[i].give_current = initial_currents[i];
     (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
   }
-  power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {
+    power_limit = 60000;
+  } else {
+    power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
                     ? 50
                     : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+  }
+
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
   for (int i = 0; i < 4; i++) {
     globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
   }
   rm::device::DjiMotorBase::SendCommand();
+  P_chassis_1 = output_currents[0];
+  P_chassis_2 = output_currents[1];
+  P_chassis_3 = output_currents[2];
+  P_chassis_4 = output_currents[3];
+  V_chassis_1 = globals->chassis_motor[0]->rpm();
+  V_chassis_2 = globals->chassis_motor[1]->rpm();
+  V_chassis_3 = globals->chassis_motor[2]->rpm();
+  V_chassis_4 = globals->chassis_motor[3]->rpm();
 }

@@ -120,15 +120,15 @@ inline struct GlobalWarehouse {
     pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
     pid_pitch_position = new rm::modules::PID{16, 0, 0.8, 1, 0};
-    pid_pitch_velocity = new rm::modules::PID{6000, 7000, 1, 15000, 4000};
+    pid_pitch_velocity = new rm::modules::PID{9000, 7000, 5, 15000, 4000};
 
     // 底盘随动
-    pid_chassis_follow = new rm::modules::PID{30000, 0, 500, 10000, 0};
-
-    // 底盘功率检测
+    pid_chassis_follow = new rm::modules::PID{27000, 5, 510, 12000, 5000};
+    //底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
     }
+    // 底盘功率检测
     for (int i = 0; i < 2; i++) {
       velocity_pids[i] = new rm::modules::PID(10, 0.5, 0, 16384, 5000);
     }
@@ -170,8 +170,8 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -600;
-inline rm::i16 V_shooter_2 = -550;
+inline rm::i16 V_shooter_1 = -6000;
+inline rm::i16 V_shooter_2 = -5500;
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;
@@ -179,11 +179,16 @@ inline rm::i16 shooter_3;
 inline rm::i16 shooter_4;
 inline rm::i16 shooter_5;
 inline rm::i16 shooter_6;
-// 底盘速度监测
-inline rm::i16 chassis_1;
-inline rm::i16 chassis_2;
-inline rm::i16 chassis_3;
-inline rm::i16 chassis_4;
+// 底盘力矩监测
+inline rm::i16 P_chassis_1;
+inline rm::i16 P_chassis_2;
+inline rm::i16 P_chassis_3;
+inline rm::i16 P_chassis_4;
+//底盘速度监测
+inline rm::i16 V_chassis_1;
+inline rm::i16 V_chassis_2;
+inline rm::i16 V_chassis_3;
+inline rm::i16 V_chassis_4;
 // PIDerror
 inline float error;
 // pitch_out
