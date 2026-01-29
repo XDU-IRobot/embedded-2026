@@ -2,10 +2,9 @@
 
 void MagazineControl() {
   // 失能
-  if (
-    l_switch_position_now != rm::device::DR16::SwitchPosition::kUp ||
-    r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
-    r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+  if (l_switch_position_now != rm::device::DR16::SwitchPosition::kUp ||
+      r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
+      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     // HAL_Delay(0);
     return;
@@ -102,10 +101,9 @@ void ShooterControl() {
   shooter_5 = globals->shooter_motor_5->rpm();
   shooter_6 = globals->shooter_motor_6->rpm();
   // 失能
-  if (
-    l_switch_position_now != rm::device::DR16::SwitchPosition::kUp ||
-    r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
-    r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+  if (l_switch_position_now != rm::device::DR16::SwitchPosition::kUp ||
+      r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
+      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
     // 给shooter电机发送指令
     globals->shooter_motor_1->SetCurrent(globals->pid_shooter_1->out());
@@ -174,7 +172,7 @@ void ChassisControl() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001); // 云台正位为电机编码器的-90°
+                                        0.001);  // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
@@ -237,7 +235,7 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001;  //
   target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
   // yaw限位
   // if (target_pos_yaw < -1.85) {
@@ -318,7 +316,7 @@ void ChassisPower() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001); // 云台正位为电机编码器的-90°
+                                        0.001);  // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
@@ -345,10 +343,9 @@ void ChassisPower() {
     (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
   }
   power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                  ? 50
-                  : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
-  power_model.DistributePower<4>(*globals->motor_states, initial_currents,
-                                 power_limit, output_currents);
+                    ? 50
+                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+  power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
   for (int i = 0; i < 4; i++) {
     globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
   }

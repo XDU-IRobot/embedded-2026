@@ -24,7 +24,6 @@ void MainLoop() {
   rm::device::DjiMotorBase::SendCommand();
 }
 
-
 extern "C" [[noreturn]] void AppMain(void) {
   /*启动CAN总线
    *启动遥控器
@@ -49,10 +48,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>() //
+      etl::delegate<void()>::create<MainLoop>()  //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(100, 1000 - 1); // 84MHz / 84 / 1000 = 1kHz
-  mainloop_1000hz.Start(); // 启动定时器
+  mainloop_1000hz.SetPrescalerAndPeriod(100, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
+  mainloop_1000hz.Start();                               // 启动定时器
   for (;;) {
     __WFI();
   }
