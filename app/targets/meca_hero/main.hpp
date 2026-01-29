@@ -124,7 +124,7 @@ inline struct GlobalWarehouse {
 
     // 底盘随动
     pid_chassis_follow = new rm::modules::PID{27000, 5, 510, 12000, 5000};
-    //底盘电机
+    // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
     }
@@ -184,7 +184,7 @@ inline rm::i16 P_chassis_1;
 inline rm::i16 P_chassis_2;
 inline rm::i16 P_chassis_3;
 inline rm::i16 P_chassis_4;
-//底盘速度监测
+// 底盘速度监测
 inline rm::i16 V_chassis_1;
 inline rm::i16 V_chassis_2;
 inline rm::i16 V_chassis_3;

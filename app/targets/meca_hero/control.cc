@@ -172,7 +172,7 @@ void ChassisControl() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001); // 云台正位为电机编码器的-90°
+                                        0.001);  // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
@@ -235,7 +235,7 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001;  //
   target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
   // yaw限位
   // if (target_pos_yaw < -1.85) {
@@ -275,7 +275,7 @@ void GimbalControl() {
 
   // 发送CAN
   globals->gimbal_motor_yaw->SetMitCommand(0, 0, globals->pid_yaw_position->out(), 0, 0);
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {//爬坡模式
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {  // 爬坡模式
     globals->gimbal_motor_pitch->SetCurrent(0);
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
@@ -317,7 +317,7 @@ void ChassisPower() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001); // 云台正位为电机编码器的-90°
+                                        0.001);  // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
@@ -347,8 +347,8 @@ void ChassisPower() {
     power_limit = 60000;
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                    ? 50
-                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                      ? 50
+                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
