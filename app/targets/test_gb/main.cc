@@ -60,7 +60,7 @@ void GlobalWarehouse::Init() {
       {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
-  yaw_speed_feedforward=new YawSpeedFeedforward(0.002,1);
+  yaw_speed_feedforward = new YawSpeedFeedforward(0.002, 1);
   sine_sweep_yaw = new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 6.0, 500.0);
 
   can1->SetFilter(0, 0);
@@ -109,7 +109,6 @@ void GlobalWarehouse::Init() {
   globals->GimbalPIDInit();
   gimbal->GimbalInit();
 }
-
 
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
@@ -162,7 +161,7 @@ void GlobalWarehouse::RCStateUpdate() {
         break;
     }
 }
-float torque=0;
+float torque = 0;
 void GlobalWarehouse::SubLoop500Hz() {
   // imu 解算
   globals->imu->Update();
@@ -198,17 +197,13 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->RCStateUpdate();
   gimbal->GimbalTask();
 
-    torque=globals->gimbal_controller.output().yaw;
-   globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-   globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
-
+  torque = globals->gimbal_controller.output().yaw;
+  globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+  globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
 }
-
-
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time_ % 2 == 0) {
-
   }
 }
 

@@ -4,22 +4,21 @@
 #define BOARDC_YAW_SPEED_FEEDFORWARD_HPP
 
 class YawSpeedFeedforward {
-  public:
-    YawSpeedFeedforward() = default;
+ public:
+  YawSpeedFeedforward() = default;
 
-    YawSpeedFeedforward(float Ts,float k_ff);
+  YawSpeedFeedforward(float Ts, float k_ff);
 
-    void Update(float target_yaw);
+  void Update(float target_yaw);
 
-    float GetYawSpeedFeedforward();
+  float GetYawSpeedFeedforward();
 
-  private:
-    float yaw_speed_feedforward_ = 0.f;
-    float target_yaw_ = 0.f;
-    float last_target_yaw_ = 0.f;
-    float k_ff_=0.f;
-    float Ts_=0.f;
+ private:
+  float yaw_speed_feedforward_ = 0.f;
+  float target_yaw_ = 0.f;
+  float last_target_yaw_ = 0.f;
+  float k_ff_ = 0.f;
+  float Ts_ = 0.f;
 };
-
 
 #endif  // BOARDC_YAW_SPEED_FEEDFORWARD_HPP
