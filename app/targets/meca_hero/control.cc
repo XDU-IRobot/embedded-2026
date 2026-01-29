@@ -149,10 +149,10 @@ void ShooterControl() {
 
 /*----------------------------------------------------*/
 void ChassisControl() {
-  chassis_1 = globals->chassis_motor_1->rpm();
-  chassis_2 = globals->chassis_motor_2->rpm();
-  chassis_3 = globals->chassis_motor_3->rpm();
-  chassis_4 = globals->chassis_motor_4->rpm();
+  // chassis_1 = globals->chassis_motor_1->rpm();
+  // chassis_2 = globals->chassis_motor_2->rpm();
+  // chassis_3 = globals->chassis_motor_3->rpm();
+  // chassis_4 = globals->chassis_motor_4->rpm();
   // 失能
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
@@ -323,8 +323,8 @@ void ChassisPower() {
   }
 
   // 遥控器输入底盘速度
-  Vx = globals->rc->left_x() * 10000 / 660;
-  Vy = globals->rc->left_y() * 10000 / 660;
+  Vx = globals->rc->left_x() * 5000 / 660;
+  Vy = globals->rc->left_y() * 5000 / 660;
 
   rm::i16 V_wheel[4];
 

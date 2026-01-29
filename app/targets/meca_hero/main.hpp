@@ -129,8 +129,11 @@ inline struct GlobalWarehouse {
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 2; i++) {
       velocity_pids[i] = new rm::modules::PID(10, 0.5, 0, 16384, 5000);
+    }
+    for (int i = 2; i < 4; i++) {
+      velocity_pids[i] = new rm::modules::PID(20, 0.5, 0, 16384, 5000);
     }
     motor_states = new std::array<rm::modules::M3508PowerModel::MotorState, 4>();
 
