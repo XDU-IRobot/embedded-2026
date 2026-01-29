@@ -2,16 +2,16 @@
 
 void MagazineControl() {
   // 失能
-  if ((l_switch_position_now != rm::device::DR16::SwitchPosition::kMid &&
-       l_switch_position_now != rm::device::DR16::SwitchPosition::kUp) ||
-      r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
-      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+  if (
+    l_switch_position_now != rm::device::DR16::SwitchPosition::kUp ||
+    r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
+    r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     // HAL_Delay(0);
     return;
   }
   // 启动
-  if (l_switch_position_last == rm::device::DR16::SwitchPosition::kDown) {
+  if (l_switch_position_last != rm::device::DR16::SwitchPosition::kUp) {
     target_magz = globals->magazine_motor->pos();
     // 检测当前角度，防止大幅转动
     while (next_target_magz < globals->magazine_motor->pos()) {
@@ -102,10 +102,10 @@ void ShooterControl() {
   shooter_5 = globals->shooter_motor_5->rpm();
   shooter_6 = globals->shooter_motor_6->rpm();
   // 失能
-  if ((l_switch_position_now != rm::device::DR16::SwitchPosition::kMid &&
-       l_switch_position_now != rm::device::DR16::SwitchPosition::kUp) ||
-      r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
-      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+  if (
+    l_switch_position_now != rm::device::DR16::SwitchPosition::kUp ||
+    r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
+    r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
     // 给shooter电机发送指令
     globals->shooter_motor_1->SetCurrent(globals->pid_shooter_1->out());
@@ -114,8 +114,6 @@ void ShooterControl() {
     globals->shooter_motor_4->SetCurrent(0);
     globals->shooter_motor_5->SetCurrent(0);
     globals->shooter_motor_6->SetCurrent(0);
-    rm::device::DjiMotor<>::SendCommand();
-
     // // 目标速度PID
 
     // globals->pid_shooter_2->Update(0, globals->shooter_motor_2->rpm());
@@ -149,8 +147,6 @@ void ShooterControl() {
   globals->shooter_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_shooter_4->out()));
   globals->shooter_motor_5->SetCurrent(static_cast<int16_t>(globals->pid_shooter_5->out()));
   globals->shooter_motor_6->SetCurrent(static_cast<int16_t>(globals->pid_shooter_6->out()));
-
-  rm::device::DjiMotor<>::SendCommand();
 }
 
 /*----------------------------------------------------*/
@@ -178,7 +174,7 @@ void ChassisControl() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001);  // 云台正位为电机编码器的-90°
+                                        0.001); // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
@@ -205,7 +201,7 @@ void ChassisControl() {
   globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_chassis_3->out()));
   globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_chassis_4->out()));
   // 发送CAN信号
-  rm::device::DjiMotor<>::SendCommand();
+  rm::device::DjiMotorBase::SendCommand();
 }
 
 /*----------------------------------------------------*/
@@ -241,7 +237,7 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001;  //
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
   target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
   // yaw限位
   // if (target_pos_yaw < -1.85) {
@@ -296,3 +292,65 @@ void GimbalControl() {
 // void VOFA() {
 //   rm::modules::VofaPlotter
 // }
+/*-----------*/
+
+void ChassisPower() {
+  chassis_1 = globals->chassis_motor[0]->rpm();
+  chassis_2 = globals->chassis_motor[1]->rpm();
+  chassis_3 = globals->chassis_motor[2]->rpm();
+  chassis_4 = globals->chassis_motor[3]->rpm();
+  // 失能
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
+      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+    // // 给底盘电机发送指令
+    // globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());
+    // globals->pid_chassis_2->Update(0, globals->chassis_motor_2->rpm());
+    // globals->pid_chassis_3->Update(0, globals->chassis_motor_3->rpm());
+    // globals->pid_chassis_4->Update(0, globals->chassis_motor_4->rpm());
+    // 给chassis电机发送指令
+    for (int i = 0; i < 4; i++) {
+      globals->chassis_motor[i]->SetCurrent(0);
+    }
+    return;
+  }
+
+  // 底盘随动
+  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
+    globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
+    globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
+                                        0.001); // 云台正位为电机编码器的-90°
+    Vw = globals->pid_chassis_follow->out();
+  } else {
+    Vw = 0;
+  }
+
+  // 遥控器输入底盘速度
+  Vx = globals->rc->left_x() * 10000 / 660;
+  Vy = globals->rc->left_y() * 10000 / 660;
+
+  rm::i16 V_wheel[4];
+
+  V_wheel[0] = -Vy + Vx + 0.8 * Vw;
+  V_wheel[1] = Vy + Vx + 0.8 * Vw;
+  V_wheel[2] = Vy - 0.6 * Vx + 0.3 * Vw;
+  V_wheel[3] = -Vy - 0.6 * Vx + 0.3 * Vw;
+
+  for (int i = 0; i < 4; i++) {
+    globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());
+    initial_currents[i] = globals->velocity_pids[i]->out();
+
+    // 构建电机状态
+    (*globals->motor_states)[i].speed_rpm = globals->chassis_motor[i]->rpm();
+    (*globals->motor_states)[i].give_current = initial_currents[i];
+    (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
+  }
+  power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
+                  ? 50
+                  : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+  power_model.DistributePower<4>(*globals->motor_states, initial_currents,
+                                 power_limit, output_currents);
+  for (int i = 0; i < 4; i++) {
+    globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
+  }
+  rm::device::DjiMotorBase::SendCommand();
+}

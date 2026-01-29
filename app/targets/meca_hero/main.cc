@@ -3,6 +3,7 @@
 #include "tim.h"
 rm::f32 pitch;
 rm::f32 yaw;
+
 // 定频循环
 void MainLoop() {
   // 遥控器输入值
@@ -11,14 +12,18 @@ void MainLoop() {
   r_switch_position_last = r_switch_position_now;
   r_switch_position_now = globals->rc->switch_r();
   // 底盘逻辑
-  ChassisControl();
+  // ChassisControl();
+  ChassisPower();
   // 摩擦轮电机逻辑
   ShooterControl();
   // 拨盘电机逻辑
   MagazineControl();
   // 云台控制逻辑
   GimbalControl();
+  // 发送DjiCAN信号
+  rm::device::DjiMotorBase::SendCommand();
 }
+
 
 extern "C" [[noreturn]] void AppMain(void) {
   /*启动CAN总线
@@ -27,14 +32,27 @@ extern "C" [[noreturn]] void AppMain(void) {
   globals = new GlobalWarehouse;
   globals->Init();
 
+  // globals->ref.AttachCallback([&](uint16_t cmd_id, uint8_t seq) {
+  //   if (cmd_id == rm::device::RefereeCmdId<rm::device::RefereeRevision::kV170>::kRobotStatus) {
+  //     power_limit = globals->ref.data().robot_status.chassis_power_limit;
+  //   }
+  // });
+  // 启动 DMA 接收
+  rm::hal::SerialRxCallbackFunction ref_rx_callback = [&](const std::vector<uint8_t> &data, uint16_t len) {
+    for (int i = 0; i < len; i++) {
+      globals->ref << data[i];
+    }
+  };
+  globals->uart6->AttachRxCallback(ref_rx_callback);
+  globals->uart6->Begin();
+
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>()  //
+      etl::delegate<void()>::create<MainLoop>() //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(84, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
-  mainloop_1000hz.Start();                              // 启动定时器
-
+  mainloop_1000hz.SetPrescalerAndPeriod(100, 1000 - 1); // 84MHz / 84 / 1000 = 1kHz
+  mainloop_1000hz.Start(); // 启动定时器
   for (;;) {
     __WFI();
   }
