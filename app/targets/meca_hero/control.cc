@@ -60,7 +60,7 @@ void MagazineControl() {
 
   // 按下扳机(延时1s)
   if (counter == 0) {
-    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500) && shooter_4 < -400) {
+    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500) && shooter_4 < -4000) {
       // 堵转检测
       if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
         target_magz = globals->magazine_motor->pos() + 3.141593 / 90;
@@ -148,7 +148,7 @@ void ShooterControl() {
 }
 
 /*----------------------------------------------------*/
-void ChassisControl() {
+void ChassisControl_deprecated() {
   // chassis_1 = globals->chassis_motor_1->rpm();
   // chassis_2 = globals->chassis_motor_2->rpm();
   // chassis_3 = globals->chassis_motor_3->rpm();
@@ -207,7 +207,7 @@ void GimbalControl() {
   // IMU解算
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{
-      globals->imu->gyro_x(), globals->imu->gyro_y(), globals->imu->gyro_z() + static_cast<float>(0.000088),
+      globals->imu->gyro_x(), globals->imu->gyro_y(), gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z())/*globals->imu->gyro_z() - static_cast<float>(-0.00053263375)*/,
       globals->imu->accel_x(), globals->imu->accel_y(), globals->imu->accel_z()});
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
@@ -301,12 +301,6 @@ void ChassisPower() {
   // 失能
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
-    // // 给底盘电机发送指令
-    // globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());
-    // globals->pid_chassis_2->Update(0, globals->chassis_motor_2->rpm());
-    // globals->pid_chassis_3->Update(0, globals->chassis_motor_3->rpm());
-    // globals->pid_chassis_4->Update(0, globals->chassis_motor_4->rpm());
-    // 给chassis电机发送指令
     for (int i = 0; i < 4; i++) {
       globals->chassis_motor[i]->SetCurrent(0);
     }
@@ -317,34 +311,37 @@ void ChassisPower() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001); // 云台正位为电机编码器的-90°
-    Vw = globals->pid_chassis_follow->out();
+                                        0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+    Vw = static_cast<rm::i16>(globals->pid_chassis_follow->out());
   } else {
     Vw = 0;
   }
+  follow=Vw;
 
   // 遥控器输入底盘速度
   Vx = globals->rc->left_x() * 10000 / 660;
   Vy = globals->rc->left_y() * 10000 / 660;
-
   rm::i16 V_wheel[4];
-
-  V_wheel[0] = -Vy + Vx + 0.8 * Vw;
-  V_wheel[1] = Vy + Vx + 0.8 * Vw;
-  V_wheel[2] = Vy - 0.6 * Vx + 0.3 * Vw;
-  V_wheel[3] = -Vy - 0.6 * Vx + 0.3 * Vw;
+  V_wheel[0] = -Vy + Vx + 1.6 * Vw;
+  V_wheel[1] = Vy + Vx + 1.6 * Vw;
+  V_wheel[2] = Vy - 0.6 * Vx + 0.6 * Vw;
+  V_wheel[3] = -Vy - 0.6 * Vx + 0.6 * Vw;
 
   for (int i = 0; i < 4; i++) {
     globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());
     initial_currents[i] = globals->velocity_pids[i]->out();
-
     // 构建电机状态
     (*globals->motor_states)[i].speed_rpm = globals->chassis_motor[i]->rpm();
     (*globals->motor_states)[i].give_current = initial_currents[i];
     (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
   }
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp&&r_switch_position_last!=rm::device::DR16::SwitchPosition::kUp) {
+    overpower_count=252;
+  }
+  float buffer_energy = globals->ref.data().buff.remaining_energy;
+  if (overpower_count>0) {//超功率
     power_limit = 60000;
+    overpower_count--;
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
                     ? 50

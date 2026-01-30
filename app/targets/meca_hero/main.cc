@@ -31,11 +31,6 @@ extern "C" [[noreturn]] void AppMain(void) {
   globals = new GlobalWarehouse;
   globals->Init();
 
-  // globals->ref.AttachCallback([&](uint16_t cmd_id, uint8_t seq) {
-  //   if (cmd_id == rm::device::RefereeCmdId<rm::device::RefereeRevision::kV170>::kRobotStatus) {
-  //     power_limit = globals->ref.data().robot_status.chassis_power_limit;
-  //   }
-  // });
   // 启动 DMA 接收
   rm::hal::SerialRxCallbackFunction ref_rx_callback = [&](const std::vector<uint8_t> &data, uint16_t len) {
     for (int i = 0; i < len; i++) {
@@ -52,6 +47,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   };
   mainloop_1000hz.SetPrescalerAndPeriod(100, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
   mainloop_1000hz.Start();                               // 启动定时器
+  globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
   for (;;) {
     __WFI();
   }

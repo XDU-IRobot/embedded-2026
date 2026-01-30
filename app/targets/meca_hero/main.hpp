@@ -6,6 +6,7 @@
 #include "usart.h"
 #include "spi.h"
 #include "timer_task.hpp"
+#include "buzzer_controller.hpp"
 /*-------------------------------------------------
  *变量
  */
@@ -71,6 +72,8 @@ inline struct GlobalWarehouse {
   rm::device::Referee<rm::device::RefereeRevision::kV170> ref;
   uint8_t rx_buffer[128]{0};
 
+  rm::modules::LowPassFilterConstDt<float> gyro_z_filter;
+
   void Init() {
     can1 = new rm::hal::Can{hcan1};
     can2 = new rm::hal::Can{hcan2};
@@ -119,8 +122,8 @@ inline struct GlobalWarehouse {
 
     pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
-    pid_pitch_position = new rm::modules::PID{16, 0.1, 1.1, 1, 0.1};
-    pid_pitch_velocity = new rm::modules::PID{7000, 3000, 10, 15000, 2000};
+    pid_pitch_position = new rm::modules::PID{16, 0.1, 1.1, 1, 0.01};
+    pid_pitch_velocity = new rm::modules::PID{9000, 3000, 10, 15000, 500};
 
     // 底盘随动
     pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
@@ -206,8 +209,12 @@ inline rm::modules::M3508PowerModel power_model;
 inline float initial_currents[4];
 // 输出电流
 inline float output_currents[4];
-
+//输出功率限额
 inline float power_limit = 50.0;
+//超功率倒计时
+inline int overpower_count=0;
+
+inline float gyro_z;
 /*----------------------------------------------
  *执行函数
  */
@@ -223,4 +230,6 @@ void GimbalControl();
 void ChassisPower();
 // 裁判系统
 void Referee();
+//随动监测
+inline int follow;
 #endif  // BOARDC_MAIN_HPP
