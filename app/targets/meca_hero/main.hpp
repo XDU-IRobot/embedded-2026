@@ -119,8 +119,8 @@ inline struct GlobalWarehouse {
 
     pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
-    pid_pitch_position = new rm::modules::PID{16, 0, 0.8, 1, 0};
-    pid_pitch_velocity = new rm::modules::PID{9000, 7000, 5, 15000, 4000};
+    pid_pitch_position = new rm::modules::PID{16, 0.1, 1.1, 1, 0.1};
+    pid_pitch_velocity = new rm::modules::PID{7000, 3000, 10, 15000, 2000};
 
     // 底盘随动
     pid_chassis_follow = new rm::modules::PID{27000, 5, 510, 12000, 5000};
