@@ -123,7 +123,7 @@ inline struct GlobalWarehouse {
     pid_pitch_velocity = new rm::modules::PID{7000, 3000, 10, 15000, 2000};
 
     // 底盘随动
-    pid_chassis_follow = new rm::modules::PID{27000, 5, 510, 12000, 5000};
+    pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
     //底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
