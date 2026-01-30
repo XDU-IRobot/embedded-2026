@@ -113,8 +113,8 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.05f).SetKd(3.0f).SetMaxOut(10000.0f).SetMaxIout(0.25f);
-  gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.05f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.1f);
+  gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.f).SetKd(3.0f).SetMaxOut(10000.0f).SetMaxIout(0.f);
+  gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(18.0f).SetKi(0.0f).SetKd(2.0f).SetMaxOut(10000.0f).SetMaxIout(0.f);
   gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.15f).SetMaxOut(10.0f).SetMaxIout(0.f);
