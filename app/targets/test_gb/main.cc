@@ -49,16 +49,16 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  can_communicator = new rm::device::AimbotCanCommunicator(*can2);
+  can_communicator = new device::AimbotCanCommunicator(*can2);
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   imu_uart = new rm::hal::Serial{huart1, 1024, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
-  rc = new rm::device::DR16{*dbus};
-  imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-  hipnuc_imu = new rm::device::HipnucImuCan{*can2, 8};
-  yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
+  rc = new device::DR16{*dbus};
+  imu = new device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+  hipnuc_imu = new device::HipnucImuCan{*can2, 8};
+  yaw_motor = new device::DmMotor<device::DmMotorControlMode::kMit>  //
       {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
-  pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
+  pitch_motor = new device::DmMotor<device::DmMotorControlMode::kMit>  //
       {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   yaw_speed_feedforward = new YawSpeedFeedforward(0.002, 1);
   sine_sweep_yaw = new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 6.0, 500.0);
@@ -76,7 +76,7 @@ void GlobalWarehouse::Init() {
   device_gimbal << yaw_motor << pitch_motor;  // 云台电机
   device_nuc << can_communicator;
 
-  // device_gimbal.OnDeviceFaultOrOffline([&](rm::device::Device *offline_device) {
+  // device_gimbal.OnDeviceFaultOrOffline([&](device::Device *offline_device) {
   //   if (time_offline[0] == 0) {
   //     if (offline_device == yaw_motor) {
   //       buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
@@ -91,7 +91,7 @@ void GlobalWarehouse::Init() {
   //   }
   // });
 
-  // device_nuc.OnDeviceFaultOrOffline([&](rm::device::Device *offline_device) {
+  // device_nuc.OnDeviceFaultOrOffline([&](device::Device *offline_device) {
   //   if (time_offline[0] == 0) {
   //     if (offline_device == can_communicator) {
   //       led_controller.SetPattern<modules::led_pattern::RedFlash>();
@@ -121,45 +121,44 @@ void GlobalWarehouse::GimbalPIDInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  if (globals->device_rc.all_device_ok()) switch (globals->rc->switch_r()) {
-      case rm::device::DR16::SwitchPosition::kUp:
+  if (globals->device_rc.all_device_ok()) {
+    switch (globals->rc->switch_r()) {
+      case device::DR16::SwitchPosition::kUp:
         // 右拨杆打到最上侧挡位
         switch (globals->rc->switch_l()) {
-          case rm::device::DR16::SwitchPosition::kDown:
-          case rm::device::DR16::SwitchPosition::kMid:
-          case rm::device::DR16::SwitchPosition::kUp:
+          case device::DR16::SwitchPosition::kDown:
+          case device::DR16::SwitchPosition::kMid:
+          case device::DR16::SwitchPosition::kUp:
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
         }
         break;
 
-      case rm::device::DR16::SwitchPosition::kMid:
+      case device::DR16::SwitchPosition::kMid:
         // 右拨杆打到中间挡位
         switch (globals->rc->switch_l()) {
-          case rm::device::DR16::SwitchPosition::kDown:
+          case device::DR16::SwitchPosition::kDown:
             globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
             gimbal->GimbalMove_ = kGbRemote;
             break;
-          case rm::device::DR16::SwitchPosition::kMid:
+          case device::DR16::SwitchPosition::kMid:
             globals->StateMachine_ = kTest;
             gimbal->GimbalMove_ = kGbAimbot;
             break;
-          case rm::device::DR16::SwitchPosition::kUp:
-            globals->StateMachine_ = kSineSweepYaw;
-            gimbal->GimbalMove_ = kGbRemote;
-            break;
+          case device::DR16::SwitchPosition::kUp:
           default:
             globals->StateMachine_ = kNoForce;
             break;
         }
         break;
 
-      case rm::device::DR16::SwitchPosition::kDown:
+      case device::DR16::SwitchPosition::kDown:
       default:
         globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
         break;
     }
+  }
 }
 float torque = 0;
 void GlobalWarehouse::SubLoop500Hz() {
