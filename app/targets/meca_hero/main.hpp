@@ -127,7 +127,7 @@ inline struct GlobalWarehouse {
 
     // 底盘随动
     pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
-    //底盘电机
+    // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
     }
@@ -187,7 +187,7 @@ inline rm::i16 P_chassis_1;
 inline rm::i16 P_chassis_2;
 inline rm::i16 P_chassis_3;
 inline rm::i16 P_chassis_4;
-//底盘速度监测
+// 底盘速度监测
 inline rm::i16 V_chassis_1;
 inline rm::i16 V_chassis_2;
 inline rm::i16 V_chassis_3;
@@ -209,10 +209,10 @@ inline rm::modules::M3508PowerModel power_model;
 inline float initial_currents[4];
 // 输出电流
 inline float output_currents[4];
-//输出功率限额
+// 输出功率限额
 inline float power_limit = 50.0;
-//超功率倒计时
-inline int overpower_count=0;
+// 超功率倒计时
+inline int overpower_count = 0;
 
 inline float gyro_z;
 /*----------------------------------------------
@@ -230,6 +230,6 @@ void GimbalControl();
 void ChassisPower();
 // 裁判系统
 void Referee();
-//随动监测
+// 随动监测
 inline int follow;
 #endif  // BOARDC_MAIN_HPP

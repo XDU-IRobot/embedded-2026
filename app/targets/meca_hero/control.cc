@@ -172,7 +172,7 @@ void ChassisControl_deprecated() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001); // 云台正位为电机编码器的-90°
+                                        0.001);  // 云台正位为电机编码器的-90°
     Vw = globals->pid_chassis_follow->out();
   } else {
     Vw = 0;
@@ -207,7 +207,9 @@ void GimbalControl() {
   // IMU解算
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{
-      globals->imu->gyro_x(), globals->imu->gyro_y(), gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z())/*globals->imu->gyro_z() - static_cast<float>(-0.00053263375)*/,
+      globals->imu->gyro_x(), globals->imu->gyro_y(),
+      gyro_z = globals->gyro_z_filter.apply(
+          globals->imu->gyro_z()) /*globals->imu->gyro_z() - static_cast<float>(-0.00053263375)*/,
       globals->imu->accel_x(), globals->imu->accel_y(), globals->imu->accel_z()});
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
@@ -235,7 +237,7 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001;  //
   target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
   // yaw限位
   // if (target_pos_yaw < -1.85) {
@@ -275,7 +277,7 @@ void GimbalControl() {
 
   // 发送CAN
   globals->gimbal_motor_yaw->SetMitCommand(0, 0, globals->pid_yaw_position->out(), 0, 0);
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {//爬坡模式
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp) {  // 爬坡模式
     globals->gimbal_motor_pitch->SetCurrent(0);
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
@@ -311,12 +313,12 @@ void ChassisPower() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+                                        0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow->out());
   } else {
     Vw = 0;
   }
-  follow=Vw;
+  follow = Vw;
 
   // 遥控器输入底盘速度
   Vx = globals->rc->left_x() * 10000 / 660;
@@ -335,17 +337,18 @@ void ChassisPower() {
     (*globals->motor_states)[i].give_current = initial_currents[i];
     (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
   }
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp&&r_switch_position_last!=rm::device::DR16::SwitchPosition::kUp) {
-    overpower_count=252;
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
+      r_switch_position_last != rm::device::DR16::SwitchPosition::kUp) {
+    overpower_count = 252;
   }
   float buffer_energy = globals->ref.data().buff.remaining_energy;
-  if (overpower_count>0) {//超功率
+  if (overpower_count > 0) {  // 超功率
     power_limit = 60000;
     overpower_count--;
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                    ? 50
-                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                      ? 50
+                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
