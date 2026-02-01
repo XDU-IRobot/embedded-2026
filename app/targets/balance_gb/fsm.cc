@@ -70,75 +70,85 @@ void Fsm::Update_State() {
 }
 
 void Fsm::Update_Test() {
-  global.chassis_communicator->request_state.ChassisStateRequest = 0x01;  // 正常起立状态
-  global.chassis_communicator->request_state.L0Change = 0x01;             // 正常腿长
+  global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x01;  // 正常起立状态
+  global.chassis_communicator->gimbal_data_tx.L0Change = 0x01;             // 正常腿长
 
   // 控制腿的状态
-  if (global.bc->rc->right_x() > 650) {
+  if (//global.bc->rc->right_x() > 650 ||
+    global.bc->tcremote.data().keyboard_key >> 9 ==1) {
     global.chassis_communicator->jump_flag = true;
-  } else if (global.bc->rc->right_x() == -660) {
-    global.chassis_communicator->request_state.L0Change = 0x00;  // 低腿长
+  } else if (//global.bc->rc->right_x() == -660 ||
+    global.bc->tcremote.data().keyboard_key >> 10 ==1) {
+    global.chassis_communicator->gimbal_data_tx.L0Change = 0x00;  // 低腿长
     global.chassis_communicator->jump_flag = false;
     global.chassis_communicator->jump_count = 0;
   } else {
-    if (global.chassis_communicator->jump_flag && global.bc->rc->right_x() < 650) {
+    if (global.chassis_communicator->jump_flag &&
+      //global.bc->rc->right_x() < 650
+      global.bc->tcremote.data().keyboard_key >> 9 ==0) {
       // 跳跃计时增加
       global.chassis_communicator->jump_count++;
       // 跳跃腿长控制
       if (global.chassis_communicator->jump_count < 24) {
-        global.chassis_communicator->request_state.L0Change = 0x02;  // 跳跃时先下蹲
+        global.chassis_communicator->gimbal_data_tx.L0Change = 0x02;  // 跳跃时先下蹲
       } else if (global.chassis_communicator->jump_count < 50) {
-        global.chassis_communicator->request_state.L0Change = 0x03;  // 伸腿
+        global.chassis_communicator->gimbal_data_tx.L0Change = 0x03;  // 伸腿
       } else if (global.chassis_communicator->jump_count < 95) {
-        global.chassis_communicator->request_state.L0Change = 0x04;  // 收腿
+        global.chassis_communicator->gimbal_data_tx.L0Change = 0x04;  // 收腿
       } else {
         // 重置状态
         global.chassis_communicator->jump_flag = false;
         global.chassis_communicator->jump_count = 0;
       }
     } else {
-      global.chassis_communicator->request_state.L0Change = 0x01;  // 正常腿长
+      global.chassis_communicator->gimbal_data_tx.L0Change = 0x01;  // 正常腿长
       global.chassis_communicator->jump_flag = false;
       global.chassis_communicator->jump_count = 0;
     }
   }
 
   // 判断是否小陀螺
-  if (global.bc->rc->dial() == 660) {
-    global.chassis_communicator->request_state.L0Change = 0x07;  // 小陀螺正转
-  } else if (global.bc->rc->dial() == -660) {
-    global.chassis_communicator->request_state.L0Change = 0x08;  // 小陀螺反转
+  if (global.bc->rc->dial() == 660
+      || global.bc->rc->key(DR16::Key::kShift) == 1
+      || global.bc->tcremote.data().keyboard_key >> 4 ==1) {
+    global.chassis_communicator->gimbal_data_tx.L0Change = 0x07;  // 小陀螺正转
+  } else if (global.bc->rc->dial() == -660
+            || (global.bc->rc->key(DR16::Key::kShift) == 1 && global.bc->rc->key(DR16::Key::kCtrl) == 1)
+            || ( global.bc->tcremote.data().keyboard_key >> 4 ==1 &&  global.bc->tcremote.data().keyboard_key >> 5 ==1)) {
+    global.chassis_communicator->gimbal_data_tx.L0Change = 0x08;  // 小陀螺反转
   } else {
   }
 
   // 控制遥控器输入量
-  global.chassis_communicator->request_state.ChassisMoveYRequest = global.bc->rc->left_y();
+  global.chassis_communicator->gimbal_data_tx.ChassisMoveYRequest = global.bc->rc->left_y()
+                                                                  + global.bc->rc->key(DR16::Key::kW) - global.bc->rc->key(DR16::Key::kD)
+                                                                  + (global.bc->tcremote.data().keyboard_key>> 0 & 0x01) - (global.bc->tcremote.data().keyboard_key>> 1 & 0x01);
 }
 
 void Fsm::Update_Chassis_Request() {
   switch (mode_) {
     case State::kNoForce:
-      global.chassis_communicator->request_state.ChassisMoveYRequest = 0;
-      global.chassis_communicator->request_state.ChassisStateRequest = 0x00;
-      global.chassis_communicator->request_state.L0Change = 0x01;
+      global.chassis_communicator->gimbal_data_tx.ChassisMoveYRequest = 0;
+      global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;
+      global.chassis_communicator->gimbal_data_tx.L0Change = 0x01;
       break;
     case State::kTest:
       Update_Test();
       break;
     case State::kShoot:
       Update_Test();
-      global.chassis_communicator->request_state.ChassisStateRequest = 0x00;  // 底盘无力
+      global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
       break;
     case State::kHigh:
       Update_Test();
-      global.chassis_communicator->request_state.L0Change = 0x06;  // 伸腿
+      global.chassis_communicator->gimbal_data_tx.L0Change = 0x06;  // 伸腿
       break;
     case State::kAutoaim:
-      global.chassis_communicator->request_state.ChassisStateRequest = 0x00;  // 底盘无力
+      global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
     default:
-      global.chassis_communicator->request_state.ChassisMoveYRequest = 0;
-      global.chassis_communicator->request_state.ChassisStateRequest = 0x00;
-      global.chassis_communicator->request_state.L0Change = 0x01;
+      global.chassis_communicator->gimbal_data_tx.ChassisMoveYRequest = 0;
+      global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;
+      global.chassis_communicator->gimbal_data_tx.L0Change = 0x01;
       break;
   }
 }
@@ -162,24 +172,28 @@ void Fsm::Update_Control() {
             init_count_++;
             global.motor->DMInitControl();
           } else {
-            global.motor->DMControl();
+            global.motor->DMAutoControl();
           }
           break;
         case Motor::InitFlag::kOpposite:
           global.motor->yaw_init = -3.1f;
-          yaw_aim =  global.motor->yaw_init;
-          global.motor->DMInitControl();
-          init_count_ = 0;
+          if (init_count_ < 300) {
+            init_count_++;
+            global.motor->DMInitControl();
+          } else {
+            global.motor->DMAutoControl();
+          }
           break;
          default:
           break;
       }
+      yaw_aim =  global.motor->yaw_init;
       break;
     case State::kHigh:
-      global.motor->DMControl();
+      global.motor->DMAutoControl();
       break;
     case State::kShoot:
-      global.motor->DMControl();
+      global.motor->DMAutoControl();
       global.motor->ShootControl();
       break;
     case State::kAutoaim:

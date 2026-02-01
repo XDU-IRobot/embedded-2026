@@ -6,13 +6,12 @@
 using namespace rm;
 using namespace rm::device;
 
+/*
+@brief:与底盘通信的can设备
+*/
 class ChassisCommunicator final : public CanDevice {
  public:
-  // ChassisController(rm::hal::CanInterface &can, uint32_t rx_std_id) : CanDevice{can, rx_std_id} {}
-
-  explicit ChassisCommunicator(hal::CanInterface &can);
-  ChassisCommunicator() = delete;
-  ~ChassisCommunicator() override = default;
+  ChassisCommunicator(rm::hal::CanInterface &can, uint32_t rx_std_id) : CanDevice{can, rx_std_id} {}
 
   void RxCallback(const hal::CanFrame *msg) override;
   void SendChassisCommand();
@@ -24,7 +23,7 @@ class ChassisCommunicator final : public CanDevice {
                     0x06  测试高腿长*/
   };
 
-  TxGimbalData request_state;
+  TxGimbalData gimbal_data_tx;
 
   struct RxChassisData {
     u8 GimbalInitFlag;      //倒地自启云台控制
@@ -37,6 +36,29 @@ class ChassisCommunicator final : public CanDevice {
 
  private:
   u8 tx_buf_[8]{0};
+};
+
+/*
+@brief:接受图传数据原始字节流并转发给VT03处理的串口设备
+*/
+class TcReceiver {
+public:
+  TcReceiver() = delete;
+  explicit TcReceiver(hal::SerialInterface &serial);
+
+  void Begin();
+  void RxCallback(const std::vector<u8> &data, u16 rx_len);
+
+  // bool offline{false};
+  // u16 offlinecounter{0};
+
+  typedef struct {
+    std::array<u8, 128> data;
+    u16 len;
+  } referee_data_rx;
+
+private:
+  hal::SerialInterface *serial_;
 };
 
 #endif

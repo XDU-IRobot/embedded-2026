@@ -28,12 +28,13 @@ void AppMain(void) {
   global.bc->BoardcInit();
   global.motor->MotorInit();
   global.motor->MotorPidInit();
-  global.chassis_receive = new ChassisCommunicator(*global.motor->can2);
-  global.chassis_communicator = new ChassisCommunicator{*global.motor->can2};
+  global.chassis_receive = new ChassisCommunicator(*global.motor->can2,0x119);
+  global.chassis_communicator = new ChassisCommunicator{*global.motor->can2,0x120};
+
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{&htim13, etl::delegate<void()>::create<MainLoop>()};
   // 降频到500hz并启动
-  mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1);  // 84MHz / 168 / 1000 = 500Hz
+  mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1);
   mainloop_1000hz.Start();
 
   for (;;) {

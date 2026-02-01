@@ -46,7 +46,7 @@ class Motor {
   void ShootDisable();  ///< 发射机构失能
 
   void DMInitControl();  ///< 达妙电机初始化控制
-  void DMControl();      ///< 达妙电机正常控制更新
+  //void DMControl();      ///< 达妙电机正常控制更新
   void DMAutoControl();
   void ShootControl();  ///< 发射机构正常控制更新
 

@@ -2,6 +2,8 @@
 
 #include "spi.h"
 #include "usart.h"
+#include "global.hpp"
+#include "communiate.hpp"
 
 #include "boardc.hpp"
 #include "firstorderfilter.hpp"
@@ -14,11 +16,14 @@ void BoardC::BoardcInit() {
   buzzer = new Buzzer;
   led = new LED;
 
-  dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-  rc = new rm::device::DR16{*dbus};
+  dbus = new hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  tc_serial = new hal::Serial{huart6, 128, rm::hal::stm32::UartMode::kDma, rm::hal::stm32::UartMode::kDma};
+  imu = new BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+  rc = new DR16{*dbus};
+  tc_receiver = new TcReceiver{*tc_serial};
   device_rc << rc;
   rc->Begin();
+  tc_receiver->Begin();
   buzzer->Init();
   led->Init();
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
@@ -31,6 +36,7 @@ void BoardC::BoardcInit() {
 }
 
 void BoardC::EulerUpdate() {
+
   imu->Update();
   g_zfilter.Update(imu->gyro_z() - 0.001f);
   g_z = g_zfilter.value();
