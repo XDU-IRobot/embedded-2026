@@ -80,7 +80,7 @@ inline struct GlobalWarehouse {
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     uart6 = new rm::hal::Serial{huart6, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     // 遥控
-    rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及用了串口
+    rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     /*------*/

@@ -60,7 +60,8 @@ void MagazineControl() {
 
   // 按下扳机(延时1s)
   if (counter == 0) {
-    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500) && shooter_4 < -4000) {
+    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left()) && shooter_4 <
+        -4000) {
       // 堵转检测
       if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
         target_magz = globals->magazine_motor->pos() + 3.141593 / 90;
@@ -209,7 +210,8 @@ void GimbalControl() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{
       globals->imu->gyro_x(),
       globals->imu->gyro_y(),
-      gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z())/*globals->imu->gyro_z() - static_cast<float>(-0.00053263375)*/,
+      gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z())
+      /*globals->imu->gyro_z() - static_cast<float>(-0.00053263375)*/,
       globals->imu->accel_x(),
       globals->imu->accel_y(),
       globals->imu->accel_z()});
@@ -239,8 +241,10 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001; //
-  target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005;
+  target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.00001 + static_cast<float>(globals->rc->mouse_x()) /
+      32768.0 * 0.003; //≈0.003/per
+  target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 + static_cast<float>(
+    globals->rc->mouse_y() / 32768.0 * 0.00033); //0.00033/per
   // yaw限位
   // if (target_pos_yaw < -1.85) {
   //   target_pos_yaw = -1.85;
@@ -326,9 +330,33 @@ void ChassisPower() {
   // 遥控器输入底盘速度
   Vx = globals->rc->left_x() * 10000 / 660;
   Vy = globals->rc->left_y() * 10000 / 660;
+  if (globals->rc->key(rm::device::DR16::Key::kW)) {
+    Vy += 2000;
+    if (Vy >= 10000) {
+      Vy = 10000;
+    }
+  }
+  if (globals->rc->key(rm::device::DR16::Key::kS)) {
+    Vy -= 2000;
+    if (Vy <= -10000) {
+      Vy = -10000;
+    }
+  }
+  if (globals->rc->key(rm::device::DR16::Key::kD)) {
+    Vx += 2000;
+    if (Vx >= 10000) {
+      Vx = 10000;
+    }
+  }
+  if (globals->rc->key(rm::device::DR16::Key::kA)) {
+    Vx -= 2000;
+    if (Vx <= -10000) {
+      Vx = -10000;
+    }
+  }
   rm::i16 V_wheel[4];
-  V_wheel[0] = -Vy + Vx + 1.6 * Vw;
-  V_wheel[1] = Vy + Vx + 1.6 * Vw;
+  V_wheel[0] = -Vy + Vx + Vw;
+  V_wheel[1] = Vy + Vx + Vw;
   V_wheel[2] = Vy - 0.6 * Vx + 0.6 * Vw;
   V_wheel[3] = -Vy - 0.6 * Vx + 0.6 * Vw;
 
