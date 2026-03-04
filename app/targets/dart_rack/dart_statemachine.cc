@@ -283,6 +283,11 @@ void DartStateInitUpdate() {
   }
   // 根据扳机位置计算滑台里程
 
+
+  //让换弹电机撞限位
+
+
+
   // 打开撒放器
   if (dart_rack->trigger_motor_force_->encoder() >= 5000 &&
       dart_rack->state_.manual_mode.is_trigger_force_init_done == false) {
@@ -402,6 +407,10 @@ void DartStateAddUpdate() {
   // 加弹逻辑
   if (dart_rack->dart_count_ == DartCount::kFirst) {
     dart_rack->state_.manual_mode.add = PhaseState::kDone;  // 第一发不用换弹
+  }
+
+  if (dart_rack->state_.manual_mode.add == PhaseState::kUncomplete) {
+
   }
 }
 

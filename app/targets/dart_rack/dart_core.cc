@@ -14,11 +14,17 @@ void DartRack::Init() {
   trigger_motor_force_pid_.SetKp(-5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
   yaw_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(16384).SetMaxIout(0);
 
+
+  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
+
   // 硬件接口初始化
   can1_ = new rm::hal::Can{hcan1};
   dbus_ = new rm::hal::Serial{huart1, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  referee_uart = new rm::hal::Serial{huart3, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
   rc_ = new rm::device::DR16{*dbus_};
   rc_->Begin();
+  rx_referee = new rm::device::RxReferee{*referee_uart};
+  rx_referee->Begin();
   // 电机初始化
   load_motor_l_ = new rm::device::M3508{*can1_, 3};
   load_motor_r_ = new rm::device::M3508{*can1_, 4};

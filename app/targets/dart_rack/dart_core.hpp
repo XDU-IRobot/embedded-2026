@@ -3,7 +3,7 @@
 #include <librm.hpp>
 #include "usb.hpp"
 #include "encoder_counter.hpp"
-
+#include "Referee.hpp"
 // 状态机变量定义
 enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
 
@@ -86,7 +86,7 @@ struct DartRack {
   // 硬件接口
   rm::hal::Can *can1_{nullptr};     ///< CAN 总线接口
   rm::hal::Serial *dbus_{nullptr};  ///< 遥控器串口接口
-
+  rm::hal::Serial *referee_uart{nullptr};       ///< 裁判系统串口接口
   // 设备
   rm::device::DR16 *rc_{nullptr};                    ///< 遥控器
   rm::device::M3508 *load_motor_r_{nullptr};         ///< 右上膛电机
@@ -96,6 +96,9 @@ struct DartRack {
   rm::device::M2006 *yaw_motor_{nullptr};            ///< yaw轴调节电机
   rm::device::JyMe02Can *yaw_encoder_{nullptr};      ///< 编码器
 
+  //裁判系统
+  rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
+  rm::device::RxReferee *rx_referee{nullptr};
   // usb设备
   // USBVisionReceive_SCM_t *vision_data_{nullptr};  ///< 视觉数据
   // PID 控制器
