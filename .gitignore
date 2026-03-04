@@ -1,0 +1,8 @@
+
+.cursorignore
+
+.vscode
+.idea
+
+cmake-build*
+build

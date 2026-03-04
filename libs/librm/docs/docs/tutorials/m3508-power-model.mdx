@@ -1,0 +1,254 @@
+# M3508 电机功率模型
+
+本例程演示如何使用 librm 中的 `M3508PowerModel` 类实现电机功率估算和底盘功率控制。
+
+`M3508PowerModel` 基于西交利物浦大学 RM2023 电机功率模型开源实现，通过拟合模型估算电机功率，可用于直接底盘功率限制或辅助降低超级电容的工作压力。
+
+## 功率模型原理
+
+功率模型公式：
+
+$$
+P = \frac{\tau \cdot \omega}{9.55} + k_1 \cdot \omega^2 + k_2 \cdot I^2 + C
+$$
+
+其中：
+
+- $\tau$ 为输出转矩 (N·m)
+- $\omega$ 为转速 (rpm)
+- $I$ 为给定电流（控制值）
+- $k_1, k_2, C$ 为拟合系数
+
+## 基础用法
+
+### 计算单个电机功率
+
+```cpp
+#include <librm.hpp>
+
+void CalculateMotorPower() {
+  rm::modules::M3508PowerModel power_model;
+
+  // 构建电机状态
+  rm::modules::M3508PowerModel::MotorState state;
+  state.speed_rpm = 5000.0f;       // 当前转速 5000 rpm
+  state.give_current = 8000.0f;    // 给定电流（控制值，-16384~16384）
+  state.measured_current = 7800.0f; // 实际测量电流（可选）
+
+  // 计算功率
+  auto power_info = power_model.CalculatePower(state);
+
+  // 获取功率信息
+  float mechanical_power = power_info.mechanical_power;  // 机械功率 (W)
+  float loss_power = power_info.loss_power;              // 损耗功率 (W)
+  float total_power = power_info.total_power;            // 总功率 (W)
+  float torque = power_info.torque;                      // 输出转矩 (N·m)
+}
+```
+
+### 根据目标功率计算电流
+
+```cpp
+#include <librm.hpp>
+
+void CalculateCurrentFromPower() {
+  rm::modules::M3508PowerModel power_model;
+
+  float target_power = 50.0f;  // 目标功率 50W
+  float speed_rpm = 3000.0f;   // 当前转速
+  bool is_positive = true;     // 正向加速
+
+  // 计算达到目标功率所需的电流
+  float required_current = power_model.CalculateCtrlForPower(
+      target_power, speed_rpm, is_positive);
+
+  // 如果返回 0，表示目标功率无法达到（无实数解）
+  if (required_current != 0.0f) {
+    // 使用计算得到的电流
+    motor.SetCurrent(static_cast<int16_t>(required_current));
+  }
+}
+```
+
+## 底盘功率控制
+
+### 四轮底盘功率分配
+
+以下示例演示如何使用功率模型进行底盘功率限制：
+
+```cpp
+#include "can.h"
+#include "cmsis_os.h"
+
+#include <librm.hpp>
+
+extern "C" void ChassisPowerControlTask(const void *pv_arg) {
+  rm::hal::Can can1(hcan1);
+  rm::device::M3508 motors[4] = {
+    {can1, 1}, {can1, 2}, {can1, 3}, {can1, 4}
+  };
+  can1.SetFilter(0, 0);
+  can1.Begin();
+
+  // 创建功率模型和速度 PID
+  rm::modules::M3508PowerModel power_model;
+  rm::modules::PID velocity_pids[4] = {
+    {10, 0.5, 0, 16384, 5000},
+    {10, 0.5, 0, 16384, 5000},
+    {10, 0.5, 0, 16384, 5000},
+    {10, 0.5, 0, 16384, 5000}
+  };
+
+  // 最大功率限制（从裁判系统获取或预设）
+  float max_power = 80.0f;  // 80W
+
+  for (;;) {
+    // 获取目标速度
+    float target_speeds[4] = {
+      GetTargetSpeed(0), GetTargetSpeed(1),
+      GetTargetSpeed(2), GetTargetSpeed(3)
+    };
+
+    // PID 计算初始电流
+    float initial_currents[4];
+    std::array<rm::modules::M3508PowerModel::MotorState, 4> motor_states;
+
+    for (int i = 0; i < 4; i++) {
+      velocity_pids[i].Update(target_speeds[i], motors[i].velocity());
+      initial_currents[i] = velocity_pids[i].out();
+
+      // 构建电机状态
+      motor_states[i].speed_rpm = motors[i].velocity();
+      motor_states[i].give_current = initial_currents[i];
+      motor_states[i].measured_current = motors[i].current();
+    }
+
+    // 功率分配：如果超过最大功率，按比例缩放
+    float output_currents[4];
+    power_model.DistributePower<4>(motor_states, initial_currents,
+                                    max_power, output_currents);
+
+    // 应用限制后的电流
+    for (int i = 0; i < 4; i++) {
+      motors[i].SetCurrent(static_cast<int16_t>(output_currents[i]));
+    }
+
+    rm::device::DjiMotor<>::SendCommand();
+    osDelay(1);
+  }
+}
+```
+
+### 结合裁判系统动态调整功率限制
+
+```cpp
+#include <librm.hpp>
+
+extern "C" void DynamicPowerControlTask(const void *pv_arg) {
+  rm::modules::M3508PowerModel power_model;
+  rm::device::Referee referee(huart6);  // 裁判系统
+
+  // ... 电机初始化代码 ...
+
+  for (;;) {
+    referee.Update();
+
+    // 从裁判系统获取底盘功率限制
+    float chassis_power_limit = referee.chassis_power_limit();
+
+    // 获取当前缓冲能量
+    float buffer_energy = referee.chassis_power_buffer();
+
+    // 根据缓冲能量动态调整实际功率限制
+    float actual_power_limit = chassis_power_limit;
+
+    // 缓冲能量较低时降低功率限制，避免超功率
+    if (buffer_energy < 20.0f) {
+      actual_power_limit = chassis_power_limit * 0.6f;
+    } else if (buffer_energy < 40.0f) {
+      actual_power_limit = chassis_power_limit * 0.8f;
+    }
+
+    // 使用动态功率限制进行功率分配
+    // ... PID 计算和功率分配代码 ...
+
+    osDelay(1);
+  }
+}
+```
+
+## API 参考
+
+### 电机参数常量
+
+| 常量          | 值                           | 说明                           |
+| ------------- | ---------------------------- | ------------------------------ |
+| `kKt`         | 0.3 / (3591/187)             | 转矩系数                       |
+| `kKe`         | (60/(2π×24.48)) / (3591/187) | 反电动势系数                   |
+| `kK1`         | 1.453e-07                    | 转速平方项系数（转速相关损耗） |
+| `kK2`         | 1.23e-07                     | 电流平方项系数（电流相关损耗） |
+| `kConst`      | 4.081                        | 常数项（固定损耗）             |
+| `kMaxCurrent` | 16000                        | 最大控制电流限幅               |
+
+### MotorState 结构体
+
+```cpp
+struct MotorState {
+  f32 speed_rpm;         // 当前转速 (rpm)
+  f32 give_current;      // 当前给定电流（控制值，-16384~16384）
+  f32 measured_current;  // 实际测量电流
+};
+```
+
+### PowerInfo 结构体
+
+```cpp
+struct PowerInfo {
+  f32 mechanical_power;  // 机械功率 (W)
+  f32 loss_power;        // 损耗功率 (W)
+  f32 total_power;       // 总功率 (W)
+  f32 torque;            // 输出转矩 (N·m)
+};
+```
+
+### 主要方法
+
+| 方法                                                                                     | 说明                     |
+| ---------------------------------------------------------------------------------------- | ------------------------ |
+| `PowerInfo CalculatePower(const MotorState& state)`                                      | 计算电机当前功率         |
+| `f32 CalculateCtrlForPower(f32 target_power, f32 speed_rpm, bool is_positive_direction)` | 根据目标功率计算所需电流 |
+| `void DistributePower<NMotors>(...)`                                                     | 多电机功率分配           |
+
+### DistributePower 方法详解
+
+```cpp
+template <usize NMotors>
+void DistributePower(
+    const std::array<MotorState, NMotors> motor_states,  // 电机状态数组
+    const f32* initial_currents,                          // PID 计算的初始电流
+    f32 max_total_power,                                  // 最大总功率限制 (W)
+    f32* output_currents                                  // 输出的限制后电流
+) const;
+```
+
+功率分配逻辑：
+
+1. 计算所有电机的初始总功率
+2. 如果超过最大功率限制，按比例缩放各电机功率
+3. 根据缩放后的功率重新计算每个电机的电流
+4. 负功率（减速状态）不参与缩放
+
+## 注意事项
+
+:::warning
+
+- 功率模型是基于实验数据拟合的，实际功率可能有一定误差
+- `give_current` 范围为 -16384~16384，与 M3508 电机控制指令对应
+- `CalculateCtrlForPower` 返回 0 时表示目标功率无法达到（无实数解）
+- 功率分配时，处于减速状态（负功率）的电机不参与功率限制
+  :::
+
+## 参考资料
+
+- [RoboMaster 论坛 - RM2023 电机功率模型与功率控制](https://bbs.robomaster.com/article/9438)
+- [GitHub - Motor-modeling-and-power-control](https://github.com/MaxwellDemonLin/Motor-modeling-and-power-control)

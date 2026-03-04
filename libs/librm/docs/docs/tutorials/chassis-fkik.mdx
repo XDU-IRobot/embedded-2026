@@ -1,0 +1,416 @@
+# 底盘运动学解算
+
+本例程演示如何使用 librm 中的底盘运动学解算类实现各种常见底盘构型的正逆运动学计算。
+
+librm 提供了多种底盘构型的运动学解算器，包括麦克纳姆轮底盘、四舵轮底盘、三舵轮底盘和四全向轮底盘。
+
+## 麦克纳姆轮底盘 MecanumChassis
+
+### 基础用法
+
+```cpp
+#include "can.h"
+#include "cmsis_os.h"
+
+#include <librm.hpp>
+
+extern "C" void ChassisTask(const void *pv_arg) {
+  rm::hal::Can can1(hcan1);
+  rm::device::M3508 lf_motor(can1, 1);  // 左前
+  rm::device::M3508 rf_motor(can1, 2);  // 右前
+  rm::device::M3508 lr_motor(can1, 3);  // 左后
+  rm::device::M3508 rr_motor(can1, 4);  // 右后
+  can1.SetFilter(0, 0);
+  can1.Begin();
+
+  // 创建麦轮底盘运动学解算器
+  // 参数：wheel_base (轮子间距), wheel_track (轮子轴距)
+  rm::modules::MecanumChassis chassis(0.3f, 0.4f);
+
+  for (;;) {
+    // 获取目标速度（来自遥控器或自动控制）
+    float vx = GetTargetVx();  // 左右速度
+    float vy = GetTargetVy();  // 前后速度
+    float wz = GetTargetWz();  // 旋转角速度
+
+    // 正运动学解算：将底盘速度分解到四个轮子
+    auto result = chassis.Forward(vx, vy, wz);
+
+    // 将解算结果应用到各电机
+    lf_motor.SetVelocity(result.lf_speed);
+    rf_motor.SetVelocity(result.rf_speed);
+    lr_motor.SetVelocity(result.lr_speed);
+    rr_motor.SetVelocity(result.rr_speed);
+
+    rm::device::DjiMotor<>::SendCommand();
+    osDelay(1);
+  }
+}
+```
+
+### API 参考
+
+#### 构造函数
+
+```cpp
+MecanumChassis(f32 wheel_base, f32 wheel_track);
+```
+
+- `wheel_base`: 轮子间距（左右轮之间的距离）
+- `wheel_track`: 轮子轴距（前后轮之间的距离）
+
+#### 主要方法
+
+| 方法                                   | 说明                             |
+| -------------------------------------- | -------------------------------- |
+| `auto Forward(f32 vx, f32 vy, f32 wz)` | 正运动学解算，返回四个轮子的速度 |
+| `auto forward_result()`                | 获取最近一次正运动学解算的结果   |
+
+#### 返回值结构
+
+```cpp
+struct {
+  f32 lf_speed;  // 左前轮速度
+  f32 rf_speed;  // 右前轮速度
+  f32 lr_speed;  // 左后轮速度
+  f32 rr_speed;  // 右后轮速度
+};
+```
+
+## 四舵轮底盘 SteeringChassis
+
+### 360 度模式
+
+```cpp
+#include <librm.hpp>
+
+extern "C" void SteeringChassisTask(const void *pv_arg) {
+  // 创建四舵轮底盘运动学解算器
+  // 参数：chassis_radius (底盘中心到轮子的距离)
+  rm::modules::SteeringChassis chassis(0.3f);
+
+  for (;;) {
+    float vx = GetTargetVx();
+    float vy = GetTargetVy();
+    float w = GetTargetW();
+
+    // 360度模式：舵可以旋转360度
+    auto result = chassis.Forward(vx, vy, w);
+
+    // 设置舵角和轮速
+    SetSteerPosition(LF, result.lf_steer_position);
+    SetSteerPosition(RF, result.rf_steer_position);
+    SetSteerPosition(LR, result.lr_steer_position);
+    SetSteerPosition(RR, result.rr_steer_position);
+
+    SetWheelSpeed(LF, result.lf_wheel_speed);
+    SetWheelSpeed(RF, result.rf_wheel_speed);
+    SetWheelSpeed(LR, result.lr_wheel_speed);
+    SetWheelSpeed(RR, result.rr_wheel_speed);
+
+    osDelay(1);
+  }
+}
+```
+
+### 180 度模式（推荐）
+
+当目标舵角和当前舵角相差超过 180 度时，可以通过舵角加 180 度并反转轮速来减少舵的旋转量，从而提高响应速度。使用 180 度模式可以自动处理这一优化。
+
+```cpp
+#include <librm.hpp>
+
+extern "C" void SteeringChassis180Task(const void *pv_arg) {
+  rm::modules::SteeringChassis chassis(0.3f);
+
+  for (;;) {
+    float vx = GetTargetVx();
+    float vy = GetTargetVy();
+    float w = GetTargetW();
+
+    // 获取当前四个舵的角度（弧度制）
+    float current_lf = GetCurrentSteerAngle(LF);
+    float current_rf = GetCurrentSteerAngle(RF);
+    float current_lr = GetCurrentSteerAngle(LR);
+    float current_rr = GetCurrentSteerAngle(RR);
+
+    // 180度模式：传入当前舵角，自动优化舵角变化
+    // 如果目标舵角与当前舵角差值大于90度，会自动将舵角加180度并反转轮速
+    auto result = chassis.Forward(vx, vy, w, current_lf, current_rf, current_lr, current_rr);
+
+    // 应用结果
+    SetSteerPosition(LF, result.lf_steer_position);
+    SetSteerPosition(RF, result.rf_steer_position);
+    SetSteerPosition(LR, result.lr_steer_position);
+    SetSteerPosition(RR, result.rr_steer_position);
+
+    SetWheelSpeed(LF, result.lf_wheel_speed);
+    SetWheelSpeed(RF, result.rf_wheel_speed);
+    SetWheelSpeed(LR, result.lr_wheel_speed);
+    SetWheelSpeed(RR, result.rr_wheel_speed);
+
+    osDelay(1);
+  }
+}
+```
+
+### API 参考
+
+#### 构造函数
+
+```cpp
+explicit SteeringChassis(f32 chassis_radius);
+```
+
+- `chassis_radius`: 底盘中心到轮子的距离
+
+#### 主要方法
+
+| 方法                                                                                                                          | 说明                   |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `auto Forward(f32 vx, f32 vy, f32 w)`                                                                                         | 360 度模式正运动学解算 |
+| `auto Forward(f32 vx, f32 vy, f32 w, f32 current_lf_angle, f32 current_rf_angle, f32 current_lr_angle, f32 current_rr_angle)` | 180 度模式正运动学解算 |
+
+#### 返回值结构
+
+```cpp
+struct {
+  f32 lf_steer_position, rf_steer_position, lr_steer_position, rr_steer_position;  // 舵角
+  f32 lf_wheel_speed, rf_wheel_speed, lr_wheel_speed, rr_wheel_speed;              // 轮速
+};
+```
+
+## 三舵轮底盘 TriSteeringChassis
+
+三角形排列的三舵轮底盘（前、左后、右后）。
+
+### 基础用法
+
+```cpp
+#include <librm.hpp>
+
+extern "C" void TriSteeringTask(const void *pv_arg) {
+  // 创建三舵轮底盘运动学解算器
+  rm::modules::TriSteeringChassis chassis(0.25f);
+
+  for (;;) {
+    float vx = GetTargetVx();
+    float vy = GetTargetVy();
+    float w = GetTargetW();
+
+    // 360度模式
+    // ready_for_spin = true: 静止时舵摆成圆周，方便随时开始小陀螺
+    // ready_for_spin = false: 静止时舵指向中心，增加抗推动能力
+    auto result = chassis.Forward(vx, vy, w, true);
+
+    SetSteerPosition(FRONT, result.front_steer_position);
+    SetSteerPosition(LR, result.lr_steer_position);
+    SetSteerPosition(RR, result.rr_steer_position);
+
+    SetWheelSpeed(FRONT, result.front_wheel_speed);
+    SetWheelSpeed(LR, result.lr_wheel_speed);
+    SetWheelSpeed(RR, result.rr_wheel_speed);
+
+    osDelay(1);
+  }
+}
+```
+
+### 180 度模式
+
+```cpp
+#include <librm.hpp>
+
+extern "C" void TriSteering180Task(const void *pv_arg) {
+  rm::modules::TriSteeringChassis chassis(0.25f);
+
+  for (;;) {
+    float vx = GetTargetVx();
+    float vy = GetTargetVy();
+    float w = GetTargetW();
+
+    // 获取当前舵角
+    float current_front = GetCurrentSteerAngle(FRONT);
+    float current_lr = GetCurrentSteerAngle(LR);
+    float current_rr = GetCurrentSteerAngle(RR);
+
+    // 180度模式
+    auto result = chassis.Forward(vx, vy, w, current_front, current_lr, current_rr, true);
+
+    SetSteerPosition(FRONT, result.front_steer_position);
+    SetSteerPosition(LR, result.lr_steer_position);
+    SetSteerPosition(RR, result.rr_steer_position);
+
+    SetWheelSpeed(FRONT, result.front_wheel_speed);
+    SetWheelSpeed(LR, result.lr_wheel_speed);
+    SetWheelSpeed(RR, result.rr_wheel_speed);
+
+    osDelay(1);
+  }
+}
+```
+
+### API 参考
+
+#### 构造函数
+
+```cpp
+explicit TriSteeringChassis(f32 chassis_radius);
+```
+
+- `chassis_radius`: 底盘中心到轮子的距离
+
+#### 主要方法
+
+| 方法                                                                                                                                   | 说明                   |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `auto Forward(f32 vx, f32 vy, f32 w, bool ready_for_spin = true)`                                                                      | 360 度模式正运动学解算 |
+| `auto Forward(f32 vx, f32 vy, f32 w, f32 current_front_angle, f32 current_lr_angle, f32 current_rr_angle, bool ready_for_spin = true)` | 180 度模式正运动学解算 |
+| `auto forward_result()`                                                                                                                | 获取最近一次解算结果   |
+
+#### 返回值结构
+
+```cpp
+struct {
+  f32 front_steer_position, lr_steer_position, rr_steer_position;  // 舵角
+  f32 front_wheel_speed, lr_wheel_speed, rr_wheel_speed;           // 轮速
+};
+```
+
+#### 轮子位置说明
+
+三舵轮排列为等边三角形：
+
+- **前轮(front)**：位于底盘正前方，角度 π/2（90°）
+- **左后轮(lr)**：位于底盘左后方，角度 7π/6（210°）
+- **右后轮(rr)**：位于底盘右后方，角度 11π/6（330°）
+
+## 四全向轮底盘 QuadOmniChassis
+
+### 正运动学解算
+
+```cpp
+#include <librm.hpp>
+
+extern "C" void OmniChassisTask(const void *pv_arg) {
+  rm::modules::QuadOmniChassis chassis;
+
+  for (;;) {
+    float vx = GetTargetVx();
+    float vy = GetTargetVy();
+    float wz = GetTargetWz();
+
+    // 正运动学解算
+    // normalize = true: 当最大轮速超过1时，按比例缩放所有轮速
+    auto result = chassis.Forward(vx, vy, wz, true);
+
+    SetWheelSpeed(LF, result.lf_speed);
+    SetWheelSpeed(RF, result.rf_speed);
+    SetWheelSpeed(LR, result.lr_speed);
+    SetWheelSpeed(RR, result.rr_speed);
+
+    osDelay(1);
+  }
+}
+```
+
+### 逆运动学解算
+
+从轮速反推底盘速度：
+
+```cpp
+#include <librm.hpp>
+
+void CalculateChassisVelocity() {
+  rm::modules::QuadOmniChassis chassis;
+
+  // 获取四个轮子的当前速度
+  float lf_speed = GetWheelSpeed(LF);
+  float rf_speed = GetWheelSpeed(RF);
+  float lr_speed = GetWheelSpeed(LR);
+  float rr_speed = GetWheelSpeed(RR);
+
+  // 逆运动学解算
+  auto result = chassis.Inverse(lf_speed, rf_speed, lr_speed, rr_speed);
+
+  // 获取底盘速度
+  float vx = result.vx;  // 左右速度
+  float vy = result.vy;  // 前后速度
+  float wz = result.wz;  // 旋转角速度
+}
+```
+
+### API 参考
+
+#### 构造函数
+
+```cpp
+QuadOmniChassis();  // 默认构造函数
+```
+
+#### 主要方法
+
+| 方法                                                                   | 说明                             |
+| ---------------------------------------------------------------------- | -------------------------------- |
+| `auto Forward(f32 vx, f32 vy, f32 wz, bool normalize = false)`         | 正运动学解算，返回四个轮子的速度 |
+| `auto Inverse(f32 lf_speed, f32 rf_speed, f32 lr_speed, f32 rr_speed)` | 逆运动学解算，返回底盘速度       |
+| `auto forward_result()`                                                | 获取最近一次正运动学解算结果     |
+| `auto inverse_result()`                                                | 获取最近一次逆运动学解算结果     |
+
+#### 正运动学返回值结构
+
+```cpp
+struct {
+  f32 lf_speed;  // 左前轮速度
+  f32 rf_speed;  // 右前轮速度
+  f32 lr_speed;  // 左后轮速度
+  f32 rr_speed;  // 右后轮速度
+};
+```
+
+#### 逆运动学返回值结构
+
+```cpp
+struct {
+  f32 vx;  // 左右速度
+  f32 vy;  // 前后速度
+  f32 wz;  // 旋转角速度
+};
+```
+
+## 坐标系约定
+
+所有底盘运动学解算器使用统一的坐标系约定：
+
+- **vx**：左右方向速度，向右为正
+- **vy**：前后方向速度，向前为正
+- **wz/w**：旋转角速度，从上向下看顺时针为正
+- **舵角**：以底盘前进方向为 0，弧度制
+
+```
+        前 (vy+)
+         ↑
+         │
+  左 ←───┼───→ 右 (vx+)
+         │
+         ↓
+        后
+
+      ↻ wz+ (顺时针)
+```
+
+## 注意事项
+
+:::warning
+
+- 舵轮底盘的角度单位为弧度制
+- 180 度模式需要传入准确的当前舵角才能正确优化舵角变化
+- 静止状态（vx=vy=wz=0）时，各解算器会返回预设的安全舵角位置
+  :::
+
+:::tip
+
+- 对于舵轮底盘，强烈推荐使用 180 度模式，可以显著加快舵的响应速度
+- 四全向轮底盘的 `normalize` 参数适用于输入已归一化的场景
+- 三舵轮底盘的 `ready_for_spin` 参数可根据实际需求选择静止时的舵角策略
+  :::
