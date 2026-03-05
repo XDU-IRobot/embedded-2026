@@ -77,8 +77,6 @@ inline class Gimbal {
 
   void GimbalScanTargetUpdate();
 
-  void GimbalPerceptTargetUpdate();
-
   void GimbalAimbotTargetUpdate();
 
   void GimbalDownYawFollow();

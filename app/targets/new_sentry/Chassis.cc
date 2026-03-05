@@ -121,7 +121,7 @@ void Chassis::ChassisNavigateDataUpdate() {
                        -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_,  //
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
   chassis->chassis_receive_y_ =
-      rm::modules::Map(rm::modules::Clamp(-globals->NucControl.vy + globals->navigate_communicator->chassis_target_y(),
+      rm::modules::Map(rm::modules::Clamp(-globals->NucControl.vy - globals->navigate_communicator->chassis_target_y(),
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
                        -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_,  //
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);

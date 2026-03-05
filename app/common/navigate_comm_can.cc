@@ -20,18 +20,18 @@ void NavigateCanCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x180) {
     ReportStatus(kOk);
     chassis_target_x_ =
-        static_cast<f32>(static_cast<u16>(msg->data[0]) << 8 | static_cast<u16>(msg->data[1])) / 10000.0f;
+        static_cast<f32>(static_cast<i16>(msg->data[0] << 8 | msg->data[1])) / 1000.0f;
     chassis_target_y_ =
-        static_cast<f32>(static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3])) / 10000.0f;
+        static_cast<f32>(static_cast<i16>(msg->data[2] << 8 | msg->data[3])) / 1000.0f;
     chassis_target_w_ =
-        static_cast<f32>(static_cast<u16>(msg->data[4]) << 8 | static_cast<u16>(msg->data[5])) / 10000.0f;
+        static_cast<f32>(static_cast<i16>(msg->data[4] << 8 | msg->data[5])) / 1000.0f;
     target_yaw_speed_ =
-        static_cast<f32>(static_cast<u16>(msg->data[6]) << 8 | static_cast<u16>(msg->data[7])) / 10000.0f;
+        static_cast<f32>(static_cast<i16>(msg->data[6] << 8 | msg->data[7])) / 1000.0f;
   }
   if (msg->rx_std_id == 0x190) {
     ReportStatus(kOk);
     scan_mode_ = msg->data[0];
-    perception_flag_ = msg->data[1];
+    // perception_flag_ = msg->data[1];
   }
 }
 
