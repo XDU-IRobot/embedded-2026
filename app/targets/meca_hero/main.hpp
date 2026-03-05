@@ -216,7 +216,7 @@ inline int overpower_count = 0;
 
 inline float gyro_z;
 
-inline float average1=0;
+inline float average1 = 0;
 /*----------------------------------------------
  *执行函数
  */

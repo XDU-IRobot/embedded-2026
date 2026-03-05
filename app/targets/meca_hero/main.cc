@@ -4,12 +4,12 @@
 rm::f32 pitch;
 rm::f32 yaw;
 
-
-float sum=0;
+float sum = 0;
 int count = 0;
 
 void G_average() {
-  if (globals->gyro_z_filter.apply(globals->imu->gyro_z())<0.01&&globals->gyro_z_filter.apply(globals->imu->gyro_z())>-0.01) {
+  if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.01 &&
+      globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.01) {
     sum += globals->gyro_z_filter.apply(globals->imu->gyro_z());
     count++;
   }
@@ -60,10 +60,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>() //
+      etl::delegate<void()>::create<MainLoop>()  //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(100, 1000 - 1); // 84MHz / 84 / 1000 = 1kHz
-  mainloop_1000hz.Start(); // 启动定时器
+  mainloop_1000hz.SetPrescalerAndPeriod(100, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
+  mainloop_1000hz.Start();                               // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
   for (;;) {
     __WFI();
