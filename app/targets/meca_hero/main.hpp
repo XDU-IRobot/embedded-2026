@@ -63,7 +63,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_chassis_follow{nullptr};
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{1000.0f};  ///< mahony 姿态解算器，频率 1000Hz
+  rm::modules::MahonyAhrs ahrs{831.68f};  ///< mahony 姿态解算器，频率 1000Hz 831.68
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
@@ -215,6 +215,8 @@ inline float power_limit = 50.0;
 inline int overpower_count = 0;
 
 inline float gyro_z;
+
+inline float average1=0;
 /*----------------------------------------------
  *执行函数
  */
