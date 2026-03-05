@@ -26,6 +26,7 @@ typedef enum {
   kGbScan,      // 扫描模式
   kGbNavigate,  // 云台导航模式
   kGbAimbot,    // 云台自瞄模式
+  kGbPercept,   // 云台感知模式
 
   kCsRemote,    // 底盘遥控模式
   kCsNavigate,  // 底盘导航模式
@@ -47,14 +48,14 @@ inline struct GlobalWarehouse {
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                   ///< CAN 总线接口
   rm::device::HipnucImuCan *hipnuc_imu{nullptr};                 ///< IMU
-  rm::device::AimbotCanCommunicator *can_communicator{nullptr};  ///< CAN 通信器
+  rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};  ///< CAN 通信器
   rm::device::NavigateCanCommunicator *navigate_communicator{nullptr};  ///< CAN 通信器
   rm::hal::Serial *dbus{nullptr};          ///< 遥控器串口接口
   rm::hal::Serial *referee_uart{nullptr};  ///< 裁判系统串口接口
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
-  rm::device::DeviceManager<1> device_nuc;
+  rm::device::DeviceManager<2> device_nuc;
   rm::device::DeviceManager<3> device_gimbal;
   rm::device::DeviceManager<3> device_shoot;
   rm::device::DeviceManager<4> device_chassis;

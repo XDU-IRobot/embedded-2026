@@ -49,7 +49,7 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  can_communicator = new rm::device::AimbotCanCommunicator(*can1);
+  aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can1);
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
@@ -76,7 +76,7 @@ void GlobalWarehouse::Init() {
   wheel_rb = new rm::device::M3508{*can2, 4};
 
   device_rc << rc;                                                 // 遥控器
-  device_nuc << can_communicator;                                  // nuc
+  device_nuc << aimbot_communicator;                                  // nuc
   device_gimbal << up_yaw_motor << down_yaw_motor << pitch_motor;  // 云台电机
   device_shoot << friction_left << friction_right << dial_motor;   // 发射机构电机
   device_chassis << wheel_lf << wheel_rf << wheel_lb << wheel_rb;  // 底盘电机
@@ -227,7 +227,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   gimbal->GimbalTask();
   chassis->ChassisTask();
   // 硬触发
-  if (globals->can_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
+  if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
     globals->imu_count++;
     globals->time_camera++;
     if (globals->time_camera == 10) {
@@ -244,9 +244,9 @@ void GlobalWarehouse::SubLoop500Hz() {
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }
-  // globals->can_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
+  // globals->aimbot_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
   //                                             globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
-  // globals->can_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
+  // globals->aimbot_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
   //                                              imu_time, globals->imu_count);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);

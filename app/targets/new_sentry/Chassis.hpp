@@ -11,7 +11,15 @@ inline class Chassis {
  public:
   StateMachineType ChassisMove_ = {kNoForce};  // 底盘运动状态
  private:
-  rm::modules::PID chassis_follow_pid_;
+  rm::modules::PID chassis_follow_pid_{};
+
+  rm::modules::M3508PowerModel power_model_{};
+  std::array<rm::modules::M3508PowerModel::MotorState, 4> motor_state_{};
+  std::array<rm::modules::M3508PowerModel::PowerInfo, 4> power_info_{};
+
+  f32 output_currents_[4]{};
+  f32 total_power_ = 0.0f;
+  f32 chassis_power_limit_ = 0.0f;
 
   f32 chassis_receive_x_ = 0.0f;  // 底盘x轴接收值
   f32 chassis_receive_y_ = 0.0f;  // 底盘y轴接收值

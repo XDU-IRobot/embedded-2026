@@ -96,6 +96,7 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalScanTargetUpdate() {
+  // 上部yaw轴扫描
   if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_) {
     gimbal->scan_yaw_flag_ = true;
   } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_) {
@@ -106,14 +107,18 @@ void Gimbal::GimbalScanTargetUpdate() {
   } else {
     gimbal->gimbal_up_yaw_target_ += 0.002f;
   }
+  // 基于下部yaw轴转速增减上部yaw轴转速
   if (gimbal->GimbalMove_ == kGbNavigate) {
-    gimbal->gimbal_up_yaw_target_ +=
-        rm::modules::Map(rm::modules::Clamp(globals->NucControl.yaw_speed, -1.0f, 1.0f), -1.0f, 1.0f, -0.01f, 0.01f);
+    gimbal->gimbal_up_yaw_target_ += rm::modules::Map(
+        rm::modules::Clamp(globals->NucControl.yaw_speed + globals->navigate_communicator->target_yaw_speed(), -1.0f,
+                           1.0f),
+        -1.0f, 1.0f, -0.01f, 0.01f);
   } else {
     gimbal->gimbal_up_yaw_target_ += 0.001f;
   }
   gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴周期限制
                                                     -static_cast<f32>(M_PI), M_PI);
+  // pitch轴扫描
   if (gimbal->gimbal_pitch_target_ >= gimbal->highest_aimbot_pitch_angle_) {
     gimbal->scan_pitch_flag_ = true;
   } else if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_pitch_angle_) {
@@ -124,14 +129,17 @@ void Gimbal::GimbalScanTargetUpdate() {
   } else {
     gimbal->gimbal_pitch_target_ += 0.004f;
   }
-  if (globals->NucControl.scan_mode) {
+  // 下部yaw轴扫描
+  if (globals->NucControl.scan_mode || globals->navigate_communicator->scan_mode()) {
     gimbal->GimbalMove_ = kGbScan;
   } else {
     gimbal->GimbalMove_ = kGbNavigate;
   }
   if (gimbal->GimbalMove_ == kGbNavigate) {
-    gimbal->gimbal_down_yaw_target_ +=
-        rm::modules::Map(rm::modules::Clamp(globals->NucControl.yaw_speed, -1.0f, 1.0f), -1.0f, 1.0f, -0.01f, 0.01f);
+    gimbal->gimbal_down_yaw_target_ += rm::modules::Map(
+        rm::modules::Clamp(globals->NucControl.yaw_speed + globals->navigate_communicator->target_yaw_speed(), -1.0f,
+                           1.0f),
+        -1.0f, 1.0f, -0.01f, 0.01f);
   } else {
     gimbal->gimbal_down_yaw_target_ += 0.001f;
   }
@@ -151,12 +159,12 @@ void Gimbal::GimbalAimbotTargetUpdate() {
                                                         -static_cast<f32>(M_PI), M_PI);
     gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
                                                       gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
-  } else if (globals->can_communicator->aimbot_state() >> 0 & 0x01) {
+  } else if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
     gimbal->gimbal_up_yaw_target_ =
-        rm::modules::Map(rm::modules::Wrap(globals->can_communicator->yaw(), -180.0f, 180.0f),  //
+        rm::modules::Map(rm::modules::Wrap(globals->aimbot_communicator->yaw(), -180.0f, 180.0f),  //
                          0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
     gimbal->gimbal_pitch_target_ = rm::modules::Wrap(
-        rm::modules::Map(-globals->can_communicator->pitch(), 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+        rm::modules::Map(-globals->aimbot_communicator->pitch(), 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
         -static_cast<f32>(M_PI), M_PI);
     gimbal->GimbalDownYawFollow();
     gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
@@ -191,9 +199,11 @@ void Gimbal::GimbalMovePIDUpdate() {
 }
 
 void Gimbal::GimbalMatchUpdate() {
-  if (globals->Aimbot.AimbotState >> 0 & 0x01 || globals->can_communicator->aimbot_state() >> 0 & 0x01) {
+  if (globals->Aimbot.AimbotState >> 0 & 0x01 || globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
     gimbal->GimbalMove_ = kGbAimbot;
-  } else if (globals->NucControl.scan_mode) {
+  } else if (globals->navigate_communicator->perception_flag() != 0x00) {
+    gimbal->GimbalMove_ = kGbPercept;
+  } else if (globals->NucControl.scan_mode || globals->navigate_communicator->scan_mode()) {
     gimbal->GimbalMove_ = kGbScan;
   } else {
     gimbal->GimbalMove_ = kGbNavigate;
@@ -272,7 +282,7 @@ void Gimbal::ShootEnableUpdate() {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
   } else if (globals->rc->dial() >= 650 || globals->Aimbot.AimbotState >> 1 & 0x01 ||
-             globals->can_communicator->aimbot_state() >> 1 & 0x01) {
+             globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     // if (heat_limit_ - heat_current_ > 100) {
     gimbal->shoot_frequency_ = -30.0f;

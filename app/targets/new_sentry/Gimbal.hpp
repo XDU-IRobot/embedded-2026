@@ -22,6 +22,9 @@ inline class Gimbal {
 
   f32 ammo_speed_ = 7800.0f;  // 摩擦轮速度初速度
 
+  u8 last_perception_flag = 0;
+  u16 perception_time = 0;
+
   u8 shoot_num_ = 0;                        // 开火次数
   u16 last_remain_bullet_ = 0;              // 上一次剩余子弹数
   f32 shoot_initial_speed_[10] = {};        // 子弹初速度
@@ -73,6 +76,8 @@ inline class Gimbal {
   void GimbalRCTargetUpdate();
 
   void GimbalScanTargetUpdate();
+
+  void GimbalPerceptTargetUpdate();
 
   void GimbalAimbotTargetUpdate();
 
