@@ -17,6 +17,7 @@ class AimbotCanCommunicator final : public CanDevice {
   [[nodiscard]] f32 pitch() const;
   [[nodiscard]] u8 nuc_start_flag() const;
 
+  void UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot_id, u8 mode, u16 imu_count, f32 bullet_speed);
   void UpdateQuaternion(f32 w, f32 x, f32 y, f32 z);
   void UpdateControlFlag(u8 robot_id, u8 mode, u16 imu_count, u32 imu_time);
   void RxCallback(const hal::CanFrame *msg) override;

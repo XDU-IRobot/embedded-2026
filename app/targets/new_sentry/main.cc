@@ -243,11 +243,14 @@ void GlobalWarehouse::SubLoop500Hz() {
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }
-  // globals->aimbot_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
-  //                                             globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
-  // globals->aimbot_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id,
-  // globals->aim_mode,
-  //                                              imu_time, globals->imu_count);
+  /*globals->aimbot_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
+                                              globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
+  globals->aimbot_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
+                                               imu_time, globals->imu_count);*/
+  globals->aimbot_communicator->UpdateControl(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->roll(),
+                                              globals->hipnuc_imu->pitch(),
+                                              referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
+                                              globals->imu_count, referee_data_buffer->data().shoot_data.initial_speed);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
   // if (selection) {

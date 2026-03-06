@@ -1,9 +1,11 @@
 #include "Gimbal.hpp"
 
+f32 a, b, c, d;
+
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->roll();
+  gimbal->gimbal_pitch_target_ = -globals->hipnuc_imu->roll();
   gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
   gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
   gimbal->pitch_torque_ = 0.0f;
@@ -13,6 +15,8 @@ void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
   gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
   gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
+  a = gimbal->gimbal_up_yaw_target_;
+  b = gimbal->gimbal_pitch_target_;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -213,6 +217,8 @@ void Gimbal::GimbalAimbotTargetUpdate() {
     gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
                                                       gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
   } else if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
+    c = globals->aimbot_communicator->yaw();
+    d = -globals->aimbot_communicator->pitch();
     gimbal->gimbal_up_yaw_target_ =
         rm::modules::Map(rm::modules::Wrap(globals->aimbot_communicator->yaw(), -180.0f, 180.0f),  //
                          0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
@@ -247,7 +253,7 @@ void Gimbal::GimbalMovePIDUpdate() {
                                        gimbal->gimbal_pitch_target_);
   globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
                                     globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
-                                    globals->hipnuc_imu->roll(), globals->pitch_motor->vel());
+                                    -globals->hipnuc_imu->roll(), globals->pitch_motor->vel());
   const f32 gravity_compensation_ = 1.1f * std::cos(globals->hipnuc_imu->roll() + 0.377f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(pitch_torque_, -10.0f, 10.0f);
@@ -298,7 +304,7 @@ void Gimbal::GimbalDisableUpdate() {
   globals->aim_mode = 0x00;
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->roll();
+  gimbal->gimbal_pitch_target_ = -globals->hipnuc_imu->roll();
   gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
   gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
   gimbal->pitch_torque_ = 0.0f;
