@@ -6,7 +6,6 @@
 
 #include "timer_task.hpp"
 // #include "fsm.hpp"
-//
 // #include <etl/cyclic_value.h>
 
 #include "main.hpp"
@@ -261,6 +260,8 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
+    // globals->down_yaw_motor->SetMitCommand(0, 0, 0, 0, 0);
+    // globals->pitch_motor->SetMitCommand(0, 0, 0, 0, 0);
     globals->down_yaw_motor->SetMitCommand(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
     globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
   }

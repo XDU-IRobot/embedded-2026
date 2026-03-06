@@ -16,14 +16,19 @@ inline class Gimbal {
   bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
 
  private:
+  rm::modules::TrajectoryLimiter up_yaw_move_limiter_{6.28, 15.70};
+  rm::modules::TrajectoryLimiter down_yaw_move_limiter_{6.28, 15.70};
+
   f32 gimbal_up_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据（编码器控制，弧度制，左正右负）
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，左正右负）
   f32 gimbal_pitch_target_ = 0.0f;     // 云台pitch轴目标数据（编码器控制，弧度制，下正上负）
 
   f32 ammo_speed_ = 7800.0f;  // 摩擦轮速度初速度
 
-  u8 last_perception_flag = 0;
-  u16 perception_time = 0;
+  bool percept_move_complete_ = true;   // 全向感知运动完成标志
+  u16 perception_time_ = 0;             // 全向感知运动时间
+  f32 up_yaw_percept_target_ = 0.0f;    // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
+  f32 down_yaw_percept_target_ = 0.0f;  // 云台下部yaw轴感知目标数据（陀螺仪控制，弧度制，左正右负）
 
   u8 shoot_num_ = 0;                        // 开火次数
   u16 last_remain_bullet_ = 0;              // 上一次剩余子弹数
@@ -76,6 +81,8 @@ inline class Gimbal {
   void GimbalRCTargetUpdate();
 
   void GimbalScanTargetUpdate();
+
+  void GimbalPerceptTargetUpdate();
 
   void GimbalAimbotTargetUpdate();
 
