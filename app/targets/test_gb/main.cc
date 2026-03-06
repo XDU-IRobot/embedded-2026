@@ -61,7 +61,7 @@ void GlobalWarehouse::Init() {
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   yaw_speed_feedforward = new YawSpeedFeedforward(0.002, 1);
-  gimbal_solver_with_roll = new Gimbal_Solver_WithRoll(-2.6441,3.0756);
+  gimbal_solver_with_roll = new Gimbal_Solver_WithRoll(-2.6441, 3.0756);
   sine_sweep_yaw = new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 6.0, 500.0);
 
   can1->SetFilter(0, 0);
