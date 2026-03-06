@@ -49,8 +49,7 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  can_communicator = new rm::device::AimbotCanCommunicator(*can2);
-
+  can_communicator = new device::AimbotCanCommunicator(*can2);
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   imu_uart = new rm::hal::Serial{huart1, 1024, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
@@ -71,7 +70,7 @@ void GlobalWarehouse::Init() {
   can2->Begin();
   rc->Begin();
   // hipnuc_imu->Begin();
-  //buzzer->Init();
+  buzzer->Init();
   led->Init();
   sine_sweep_yaw->Reset();
   device_rc << rc;                            // 遥控器

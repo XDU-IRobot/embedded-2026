@@ -7,7 +7,6 @@
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
 #include "timer_task.hpp"
-#include "device_manager.hpp"
 #include "controllers/gimbal_2dof.hpp"
 #include "controllers/shoot_3fric.hpp"
 
@@ -20,9 +19,9 @@ struct GlobalWarehouse {
   rm::hal::Serial *dbus{nullptr};               ///< 遥控器串口接口
 
   // 设备 //
-  DeviceManager<10> device_manager;        ///< 设备管理器，维护所有设备在线状态
-  rm::device::DR16 *rc{nullptr};           ///< 遥控器
-  rm::device::GM6020 *yaw_motor{nullptr};  ///< 云台 Yaw 电机
+  rm::device::DeviceManager<10> device_manager;  ///< 设备管理器，维护所有设备在线状态
+  rm::device::DR16 *rc{nullptr};                 ///< 遥控器
+  rm::device::GM6020 *yaw_motor{nullptr};        ///< 云台 Yaw 电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  ///< 云台 Pitch 电机
   rm::device::BMI088 *imu{nullptr};                                                 ///< BMI088 IMU
 
@@ -67,8 +66,8 @@ void MainLoop() {
                                                 -globals->imu->accel_y(),  //
                                                 -globals->imu->accel_x(),  //
                                                 -globals->imu->accel_z()});
-  globals->yaw_motor->IsAlive();
-  globals->rc->IsAlive();
+  // globals->yaw_motor->IsAlive();
+  // globals->rc->IsAlive();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
