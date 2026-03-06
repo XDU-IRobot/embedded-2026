@@ -75,7 +75,7 @@ void GlobalWarehouse::Init() {
   wheel_rb = new rm::device::M3508{*can2, 4};
 
   device_rc << rc;                                                 // 遥控器
-  device_nuc << aimbot_communicator;                                  // nuc
+  device_nuc << aimbot_communicator;                               // nuc
   device_gimbal << up_yaw_motor << down_yaw_motor << pitch_motor;  // 云台电机
   device_shoot << friction_left << friction_right << dial_motor;   // 发射机构电机
   device_chassis << wheel_lf << wheel_rf << wheel_lb << wheel_rb;  // 底盘电机
@@ -245,7 +245,8 @@ void GlobalWarehouse::SubLoop500Hz() {
   }
   // globals->aimbot_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
   //                                             globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
-  // globals->aimbot_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
+  // globals->aimbot_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id,
+  // globals->aim_mode,
   //                                              imu_time, globals->imu_count);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
