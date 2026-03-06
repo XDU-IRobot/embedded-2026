@@ -198,10 +198,10 @@ void GlobalWarehouse::SubLoop500Hz() {
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }
-  // can 通信
-  globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
-                                              globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
-  globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count, globals->imu_time);
+  // // can 通信
+  // globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
+  //                                             globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
+  // globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count, globals->imu_time);
 
   globals->RCStateUpdate();
   gimbal->GimbalTask();
