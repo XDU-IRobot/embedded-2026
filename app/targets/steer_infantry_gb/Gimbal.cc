@@ -70,12 +70,6 @@ void Gimbal::GimbalAimbotTargetUpdate() {
   }
 }
 
-float yaw_speed_ff = 0;
-float last_yaw_target = 0;
-float yaw_target = 0;
-float Ts = 0.002f;
-float Kf = 1;
-
 void Gimbal::GimbalMovePIDUpdate() {
   yaw_target = gimbal->gimbal_yaw_target_;
   yaw_speed_ff = Kf * (yaw_target - last_yaw_target) / Ts;

@@ -216,13 +216,13 @@ void GlobalWarehouse::SubLoop500Hz() {
                                            globals->imu_count, 22.0f);
   globals->RCStateUpdate();
   gimbal->GimbalTask();
-  rm::device::DjiMotor<>::SendCommand(*can1);
-  rm::device::DjiMotor<>::SendCommand(*can2);
+  rm::device::DjiMotorBase::SendCommand(*can1);
+  rm::device::DjiMotorBase::SendCommand(*can2);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    globals->pitch_motor->SetPosition(0, 0, gimbal->pitch_torque_, 0, 0);
+    globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
   }
 }
 

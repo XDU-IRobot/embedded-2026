@@ -22,6 +22,12 @@ inline class Gimbal {
 
   f32 ammo_speed_ = 8000.0f;  // 摩擦轮速度 9000.0f -> 25m/s 初速度
 
+  f32 yaw_speed_ff = 0;
+  f32 last_yaw_target = 0;
+  f32 yaw_target = 0;
+  f32 Ts = 0.002f;
+  f32 Kf = 1;
+
   u8 shoot_num_ = 0;                        // 开火次数
   u16 last_remain_bullet_ = 0;              // 上一次剩余子弹数
   f32 shoot_initial_speed_[10] = {};        // 子弹初速度
