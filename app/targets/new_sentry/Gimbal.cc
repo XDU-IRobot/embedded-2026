@@ -1,7 +1,5 @@
 #include "Gimbal.hpp"
 
-f32 a, b, c, d;
-
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
@@ -15,9 +13,6 @@ void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
   gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
   gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
-  a = gimbal->gimbal_up_yaw_target_;
-  b = gimbal->gimbal_down_yaw_target_;
-  c = gimbal->percept_move_complete_;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -172,7 +167,7 @@ void Gimbal::GimbalPerceptTargetUpdate() {
     } else if (globals->navigate_communicator->perception_flag() >> 2 & 0x01) {
       gimbal->up_yaw_percept_target_ = globals->hipnuc_imu->yaw() - static_cast<f32>(M_PI) / 2.0f;
       gimbal->down_yaw_percept_target_ = globals->ahrs.euler_angle().yaw - static_cast<f32>(M_PI) / 2.0f;
-    } else if (globals->navigate_communicator->perception_flag() >> 1 & 0x01 || globals->rc->dial() < -650) {
+    } else if (globals->navigate_communicator->perception_flag() >> 1 & 0x01) {
       gimbal->up_yaw_percept_target_ = globals->hipnuc_imu->yaw() + static_cast<f32>(M_PI);
       gimbal->down_yaw_percept_target_ = globals->ahrs.euler_angle().yaw + static_cast<f32>(M_PI);
     }
@@ -183,7 +178,7 @@ void Gimbal::GimbalPerceptTargetUpdate() {
   gimbal->gimbal_up_yaw_target_ = gimbal->up_yaw_move_limiter_.Update(0.002f);
   gimbal->gimbal_down_yaw_target_ = gimbal->down_yaw_move_limiter_.Update(0.002f);
   gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴周期限制
-                                                -static_cast<f32>(M_PI), M_PI);
+                                                    -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
   gimbal->percept_move_complete_ = gimbal->up_yaw_move_limiter_.IsAtTarget(0.001f);
@@ -263,8 +258,7 @@ void Gimbal::GimbalMatchUpdate() {
     gimbal->GimbalMove_ = kGbAimbot;
     gimbal->percept_move_complete_ = true;
     gimbal->perception_time_ = 0;
-  } else if (globals->rc->dial() < -650 || globals->navigate_communicator->perception_flag() != 0x00 ||
-             !gimbal->percept_move_complete_) {
+  } else if (globals->navigate_communicator->perception_flag() != 0x00 || !gimbal->percept_move_complete_) {
     gimbal->GimbalMove_ = kGbPercept;
   } else if (globals->NucControl.scan_mode || globals->navigate_communicator->scan_mode()) {
     gimbal->GimbalMove_ = kGbScan;
