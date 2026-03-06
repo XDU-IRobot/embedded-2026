@@ -12,7 +12,8 @@ class Gimbal2Dof {
         .SetCircular(true)           //
         .SetCircularCycle(M_PI * 2)  //
         .SetFuzzy(true)              //
-        .SetFuzzyErrorScale(M_PI/4.f);
+        .SetFuzzyErrorScale(M_PI)
+        .SetFuzzyDErrorScale(M_PI*100);
     pid_.pitch_position
         .SetFuzzy(true)  //
         .SetFuzzyErrorScale(M_PI);

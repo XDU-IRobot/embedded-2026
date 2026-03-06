@@ -7,6 +7,7 @@
 #include "buzzer.hpp"
 #include "controllers/gimbal_2dof.hpp"
 #include "yaw_speed_feedforward.hpp"
+#include "gimbal_solver_withRoll.hpp"
 
 #include "aimbot_comm_can.hpp"
 #include "USB.hpp"
@@ -57,7 +58,8 @@ inline struct GlobalWarehouse {
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
   Gimbal2Dof gimbal_controller;          ///< 二轴双 Yaw 云台控制器
-  YawSpeedFeedforward *yaw_speed_feedforward;
+  YawSpeedFeedforward *yaw_speed_feedforward;      ///<yaw轴速度前馈
+  Gimbal_Solver_WithRoll *gimbal_solver_with_roll;   ///<roll轴补偿
   MultiFreqSine *sine_sweep_yaw{nullptr};  ///< 正弦扫频信号发生器
   LowPassFilterFloat low_pass_filter;
 
