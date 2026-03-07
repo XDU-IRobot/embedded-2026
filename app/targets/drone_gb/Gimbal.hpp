@@ -2,7 +2,7 @@
 #define BOARDC_GIMBAL_HPP
 
 #define NEW_DRONE_GB 1
-#define SINGLE_SHOOT_MOOD 1
+#define SINGLE_SHOOT_MOOD 0
 
 #include <librm.hpp>
 #include <utility>
@@ -339,12 +339,7 @@ class Gimbal {
 
         rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average + M_PI, 0, 2 * M_PI);
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
-        auto_flag_last = Aimbot.AimbotState;
       } else {
-        if (auto_flag_last != Aimbot.AimbotState) {
-          rc_yaw_data = yaw;
-          rc_pitch_data = rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
-        }
         rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
@@ -399,7 +394,7 @@ class Gimbal {
         shoot_controller.SetLoaderSpeed(0);
       }
 #else
-      if (rc->dial() >= 550) {
+      if (rc->dial() >= 550 || Aimbot.AimbotState & (0x1 << 3)) {
         if (auto_reverse_flag) {
           shoot_controller.SetLoaderSpeed(-redirl_speed);
           auto_reverse_time--;
@@ -435,7 +430,6 @@ class Gimbal {
           auto_reverse_time = auto_reverse_time_max;
         }
       }
-    }
 #endif
       shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
       shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());

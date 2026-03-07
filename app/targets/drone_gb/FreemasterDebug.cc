@@ -56,10 +56,12 @@ void FreemasterDebug() {
   Ashoot_hz = gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
   Adrmp = gimbal->friction_left->rpm() + gimbal->friction_right->rpm();
   Armp = gimbal->friction_left->rpm();
+
   Aautopitch = Aimbot.TargetPitchAngle + gimbal->err_average;
   Apitchpose = gimbal->pitch_motor->pos();
 
-  Aautoyaw = Aimbot.TargetPitchAngle;
+  // Aautoyaw = rm::modules::Wrap(Aimbot.TargetYawAngle + M_PI, 0, 2 * M_PI);
+  Aautoyaw = Aimbot.TargetYawAngle;
   Ayaw = gimbal->yaw;
 
   Ax = gimbal->imu->accel_x();
