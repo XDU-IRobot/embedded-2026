@@ -27,12 +27,9 @@ void ChassisCommunicator::SendChassisCommand() {
 @brief:图传原始数据接收类的实现
 */
 
-TcReceiver::TcReceiver(hal::SerialInterface &serial)
-    : serial_{&serial} {}
+TcReceiver::TcReceiver(hal::SerialInterface &serial) : serial_{&serial} {}
 
-void TcReceiver::Begin() {
-  this->serial_->Begin();
-}
+void TcReceiver::Begin() { this->serial_->Begin(); }
 
 void TcReceiver::RxCallback(const std::vector<u8> &data, u16 rx_len) {
   for (u16 i = 0; i < rx_len; i++) {
@@ -40,6 +37,4 @@ void TcReceiver::RxCallback(const std::vector<u8> &data, u16 rx_len) {
   }
 }
 
-extern "C" {
-
-}
+extern "C" {}

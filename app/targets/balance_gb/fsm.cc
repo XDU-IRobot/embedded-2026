@@ -74,18 +74,18 @@ void Fsm::Update_Test() {
   global.chassis_communicator->gimbal_data_tx.L0Change = 0x01;             // 正常腿长
 
   // 控制腿的状态
-  if (//global.bc->rc->right_x() > 650 ||
-    global.bc->tcremote.data().keyboard_key >> 9 ==1) {
+  if (  // global.bc->rc->right_x() > 650 ||
+      global.bc->tcremote.data().keyboard_key >> 9 == 1) {
     global.chassis_communicator->jump_flag = true;
-  } else if (//global.bc->rc->right_x() == -660 ||
-    global.bc->tcremote.data().keyboard_key >> 10 ==1) {
+  } else if (  // global.bc->rc->right_x() == -660 ||
+      global.bc->tcremote.data().keyboard_key >> 10 == 1) {
     global.chassis_communicator->gimbal_data_tx.L0Change = 0x00;  // 低腿长
     global.chassis_communicator->jump_flag = false;
     global.chassis_communicator->jump_count = 0;
   } else {
     if (global.chassis_communicator->jump_flag &&
-      //global.bc->rc->right_x() < 650
-      global.bc->tcremote.data().keyboard_key >> 9 ==0) {
+        // global.bc->rc->right_x() < 650
+        global.bc->tcremote.data().keyboard_key >> 9 == 0) {
       // 跳跃计时增加
       global.chassis_communicator->jump_count++;
       // 跳跃腿长控制
@@ -108,21 +108,20 @@ void Fsm::Update_Test() {
   }
 
   // 判断是否小陀螺
-  if (global.bc->rc->dial() == 660
-      || global.bc->rc->key(DR16::Key::kShift) == 1
-      || global.bc->tcremote.data().keyboard_key >> 4 ==1) {
+  if (global.bc->rc->dial() == 660 || global.bc->rc->key(DR16::Key::kShift) == 1 ||
+      global.bc->tcremote.data().keyboard_key >> 4 == 1) {
     global.chassis_communicator->gimbal_data_tx.L0Change = 0x07;  // 小陀螺正转
-  } else if (global.bc->rc->dial() == -660
-            || (global.bc->rc->key(DR16::Key::kShift) == 1 && global.bc->rc->key(DR16::Key::kCtrl) == 1)
-            || ( global.bc->tcremote.data().keyboard_key >> 4 ==1 &&  global.bc->tcremote.data().keyboard_key >> 5 ==1)) {
+  } else if (global.bc->rc->dial() == -660 ||
+             (global.bc->rc->key(DR16::Key::kShift) == 1 && global.bc->rc->key(DR16::Key::kCtrl) == 1) ||
+             (global.bc->tcremote.data().keyboard_key >> 4 == 1 && global.bc->tcremote.data().keyboard_key >> 5 == 1)) {
     global.chassis_communicator->gimbal_data_tx.L0Change = 0x08;  // 小陀螺反转
   } else {
   }
 
   // 控制遥控器输入量
-  global.chassis_communicator->gimbal_data_tx.ChassisMoveYRequest = global.bc->rc->left_y()
-                                                                  + global.bc->rc->key(DR16::Key::kW) - global.bc->rc->key(DR16::Key::kD)
-                                                                  + (global.bc->tcremote.data().keyboard_key>> 0 & 0x01) - (global.bc->tcremote.data().keyboard_key>> 1 & 0x01);
+  global.chassis_communicator->gimbal_data_tx.ChassisMoveYRequest =
+      global.bc->rc->left_y() + global.bc->rc->key(DR16::Key::kW) - global.bc->rc->key(DR16::Key::kD) +
+      (global.bc->tcremote.data().keyboard_key >> 0 & 0x01) - (global.bc->tcremote.data().keyboard_key >> 1 & 0x01);
 }
 
 void Fsm::Update_Chassis_Request() {
@@ -164,7 +163,8 @@ void Fsm::Update_Control() {
       break;
     case State::kTest:
       global.motor->CalcYawPos(global.motor->yaw_motor->pos());
-      global.motor->Transit_initmode(static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
+      global.motor->Transit_initmode(
+          static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
       switch (global.motor->init_mode) {
         case Motor::InitFlag::kNormal:
           global.motor->yaw_init = 0.f;
@@ -184,10 +184,10 @@ void Fsm::Update_Control() {
             global.motor->DMAutoControl();
           }
           break;
-         default:
+        default:
           break;
       }
-      yaw_aim =  global.motor->yaw_init;
+      yaw_aim = global.motor->yaw_init;
       break;
     case State::kHigh:
       global.motor->DMAutoControl();

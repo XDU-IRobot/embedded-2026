@@ -28,8 +28,8 @@ void AppMain(void) {
   global.bc->BoardcInit();
   global.motor->MotorInit();
   global.motor->MotorPidInit();
-  global.chassis_receive = new ChassisCommunicator(*global.motor->can2,0x119);
-  global.chassis_communicator = new ChassisCommunicator{*global.motor->can2,0x120};
+  global.chassis_receive = new ChassisCommunicator(*global.motor->can2, 0x119);
+  global.chassis_communicator = new ChassisCommunicator{*global.motor->can2, 0x120};
 
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{&htim13, etl::delegate<void()>::create<MainLoop>()};

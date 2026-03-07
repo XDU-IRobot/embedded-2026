@@ -1,5 +1,5 @@
 /**
-* @file   yaw_speed_feedforward.cc
+ * @file   yaw_speed_feedforward.cc
  * @brief  实现速度前馈，不仅仅只是yaw，也可以加入pitch
  **/
 #include "yaw_speed_feedforward.hpp"

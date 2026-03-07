@@ -36,7 +36,6 @@ void BoardC::BoardcInit() {
 }
 
 void BoardC::EulerUpdate() {
-
   imu->Update();
   g_zfilter.Update(imu->gyro_z() - 0.001f);
   g_z = g_zfilter.value();

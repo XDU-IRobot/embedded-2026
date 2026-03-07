@@ -42,7 +42,7 @@ class ChassisCommunicator final : public CanDevice {
 @brief:接受图传数据原始字节流并转发给VT03处理的串口设备
 */
 class TcReceiver {
-public:
+ public:
   TcReceiver() = delete;
   explicit TcReceiver(hal::SerialInterface &serial);
 
@@ -57,7 +57,7 @@ public:
     u16 len;
   } referee_data_rx;
 
-private:
+ private:
   hal::SerialInterface *serial_;
 };
 
