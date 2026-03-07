@@ -53,13 +53,16 @@ void GlobalWarehouse::Init() {
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   imu_uart = new rm::hal::Serial{huart1, 1024, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
-  rc = new device::DR16{*dbus};
-  imu = new device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-  hipnuc_imu = new device::HipnucImuCan{*can2, 8};
-  yaw_motor = new device::DmMotor<device::DmMotorControlMode::kMit>  //
+  rc = new rm::device::DR16{*dbus};
+  imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+  hipnuc_imu = new rm::device::HipnucImuCan{*can2, 8};
+  yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x12, 0x02, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
-  pitch_motor = new device::DmMotor<device::DmMotorControlMode::kMit>  //
+  pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x11, 0x01, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
+  yaw_speed_feedforward = new YawSpeedFeedforward(0.002, 1);
+  gimbal_solver_with_roll = new Gimbal_Solver_WithRoll(-2.6441, 3.0756);
+  sine_sweep_yaw = new MultiFreqSine(MultiFreqSine::DefaultFrequencies(), 20, 6.0, 500.0);
 
   can1->SetFilter(0, 0);
   can2->SetFilter(0, 0);
@@ -69,12 +72,12 @@ void GlobalWarehouse::Init() {
   // hipnuc_imu->Begin();
   buzzer->Init();
   led->Init();
-
+  sine_sweep_yaw->Reset();
   device_rc << rc;                            // 遥控器
   device_gimbal << yaw_motor << pitch_motor;  // 云台电机
   device_nuc << can_communicator;
 
-  // device_gimbal.OnDeviceFaultOrOffline([&](device::Device *offline_device) {
+  // device_gimbal.OnDeviceFaultOrOffline([&](rm::device::Device *offline_device) {
   //   if (time_offline[0] == 0) {
   //     if (offline_device == yaw_motor) {
   //       buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
@@ -89,7 +92,7 @@ void GlobalWarehouse::Init() {
   //   }
   // });
 
-  // device_nuc.OnDeviceFaultOrOffline([&](device::Device *offline_device) {
+  // device_nuc.OnDeviceFaultOrOffline([&](rm::device::Device *offline_device) {
   //   if (time_offline[0] == 0) {
   //     if (offline_device == can_communicator) {
   //       led_controller.SetPattern<modules::led_pattern::RedFlash>();
@@ -110,61 +113,69 @@ void GlobalWarehouse::Init() {
 
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
+  // // Yaw PID 参数
+  // gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
+  // gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.f);
+  // // pitch PID 参数
+  // gimbal_controller.pid().pitch_position.SetKp(18.0f).SetKi(0.f).SetKd(2.0f).SetMaxOut(10000.0f).SetMaxIout(0.f);
+  // gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.f).SetKd(0.15f).SetMaxOut(10.0f).SetMaxIout(0.f);
+
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(3.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.01f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.5f);
+  gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.01f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.2f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(18.0f).SetKi(0.0f).SetKd(2.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.15f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.01f).SetKd(4.f).SetMaxOut(10000.0f).SetMaxIout(0.5f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.01f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.2f);
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  if (globals->device_rc.all_device_ok()) {
-    switch (globals->rc->switch_r()) {
-      case device::DR16::SwitchPosition::kUp:
+  if (globals->device_rc.all_device_ok()) switch (globals->rc->switch_r()) {
+      case rm::device::DR16::SwitchPosition::kUp:
         // 右拨杆打到最上侧挡位
         switch (globals->rc->switch_l()) {
-          case device::DR16::SwitchPosition::kDown:
-          case device::DR16::SwitchPosition::kMid:
-          case device::DR16::SwitchPosition::kUp:
+          case rm::device::DR16::SwitchPosition::kDown:
+          case rm::device::DR16::SwitchPosition::kMid:
+          case rm::device::DR16::SwitchPosition::kUp:
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
         }
         break;
 
-      case device::DR16::SwitchPosition::kMid:
+      case rm::device::DR16::SwitchPosition::kMid:
         // 右拨杆打到中间挡位
         switch (globals->rc->switch_l()) {
-          case device::DR16::SwitchPosition::kDown:
+          case rm::device::DR16::SwitchPosition::kDown:
             globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
             gimbal->GimbalMove_ = kGbRemote;
             break;
-          case device::DR16::SwitchPosition::kMid:
+          case rm::device::DR16::SwitchPosition::kMid:
             globals->StateMachine_ = kTest;
             gimbal->GimbalMove_ = kGbAimbot;
             break;
-          case device::DR16::SwitchPosition::kUp:
+          case rm::device::DR16::SwitchPosition::kUp:
+            globals->StateMachine_ = kSineSweepYaw;
+            gimbal->GimbalMove_ = kGbRemote;
+            break;
           default:
             globals->StateMachine_ = kNoForce;
             break;
         }
         break;
 
-      case device::DR16::SwitchPosition::kDown:
+      case rm::device::DR16::SwitchPosition::kDown:
       default:
         globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
         break;
     }
-  }
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
   // imu 解算
-  // globals->imu->Update();
-  // globals->ahrs.Update(  //
-  //     rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
-  //                              -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
+  globals->imu->Update();
+  globals->ahrs.Update(  //
+      rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z(),
+                               -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
   imu_time = HAL_GetTick();
   // 激光
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
@@ -186,19 +197,20 @@ void GlobalWarehouse::SubLoop500Hz() {
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }
-  // can 通信
-  globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
-                                              globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
-  globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count, globals->imu_time);
+  // // can 通信
+  // globals->can_communicator->UpdateQuaternion(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
+  //                                             globals->ahrs.quaternion().y, globals->ahrs.quaternion().z);
+  // globals->can_communicator->UpdateControlFlag(0, globals->aim_mode, globals->imu_count, globals->imu_time);
 
   globals->RCStateUpdate();
   gimbal->GimbalTask();
+
+  globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
+  globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time_ % 2 == 0) {
-    globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-    globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
   }
 }
 
