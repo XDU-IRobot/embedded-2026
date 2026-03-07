@@ -19,8 +19,8 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     ReportStatus(kOk);
     aimbot_state_ = static_cast<u8>(msg->data[0]);
     aimbot_target_ = static_cast<u8>(msg->data[1]);
-    yaw_ = static_cast<f32>(static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3])) / 10000.0f;
-    pitch_ = static_cast<f32>(static_cast<u16>(msg->data[4]) << 8 | static_cast<u16>(msg->data[5])) / 10000.0f;
+    yaw_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[2]) << 8) | msg->data[3]));
+    pitch_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5]));
     nuc_start_flag_ = static_cast<u8>(msg->data[6]);
   }
 }

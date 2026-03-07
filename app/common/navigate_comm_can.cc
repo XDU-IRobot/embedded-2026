@@ -27,7 +27,7 @@ void NavigateCanCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x190) {
     ReportStatus(kOk);
     scan_mode_ = msg->data[0];
-    // perception_flag_ = msg->data[1];
+    perception_flag_ = msg->data[1];
   }
 }
 

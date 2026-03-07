@@ -16,8 +16,8 @@ inline class Gimbal {
   bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
 
  private:
-  rm::modules::TrajectoryLimiter up_yaw_move_limiter_{6.28, 15.70};
-  rm::modules::TrajectoryLimiter down_yaw_move_limiter_{6.28, 15.70};
+  rm::modules::TrajectoryLimiter up_yaw_move_limiter_{3.14, 15.70};
+  rm::modules::TrajectoryLimiter down_yaw_move_limiter_{3.14, 15.70};
 
   f32 gimbal_up_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据（编码器控制，弧度制，左正右负）
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，左正右负）
