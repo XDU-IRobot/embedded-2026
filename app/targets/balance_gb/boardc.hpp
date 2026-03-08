@@ -26,7 +26,9 @@ class BoardC {
   VT03 tcremote;                    ///<  图传数据处理调用接口
   TcReceiver *tc_receiver;          ///< 图传数据接受
   hal::Serial *tc_serial{nullptr};  ///<  图传串口接口
-  hal::Serial *dbus{nullptr};
+  hal::Serial *dbus{nullptr};       ///<  遥控器串口
+  hal::Serial *hipnuc_serial{nullptr}; ///< hipnuc串口
+  HipnucImu  *hipnuc_imu{nullptr};                 ///< IMU
   DR16 *rc{nullptr};                 ///< 遥控器
   BMI088 *imu{nullptr};              ///< bmi088
   modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器

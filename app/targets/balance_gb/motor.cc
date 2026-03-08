@@ -4,7 +4,10 @@
 
 #include "motor.hpp"
 #include "global.hpp"
-// #include "pid_debug.h"
+#include "firstorderfilter.hpp"
+#include "usart.h"
+
+FirstOrderFilter pitch_vel_filter(1.f / 500.f, 0.006f);
 
 using namespace rm::modules;
 
@@ -18,7 +21,8 @@ i16 debug;
 i16 rpm_left, rpm_right;
 f32 left_x;
 u8 status;
-
+f32 yaw_target,pitch_target;
+static float current_vel = 0.0f;
 // extern Debug pid_debug;
 
 void Motor::MotorInit() {
@@ -35,6 +39,12 @@ void Motor::MotorInit() {
   ammo_right = new M3508{*can1, 8};
   dial_motor = new M3508{*can2, 1};
 
+  yaw_feedforward = new YawSpeedFeedforward(0.002,-1);
+
+  //vofa_plotter = new VofaPlotter;
+
+  //sweep_controller = new SineSweep(0.f, 2.f,);
+
   can1->SetFilter(0, 0);
   can1->Begin();
   can2->SetFilter(0, 0);
@@ -46,16 +56,15 @@ void Motor::CalcYawPos(f32 pos) { yaw_motor_pos = -yaw_motor->pos() + 0.85f; };
 void Motor::MotorPidInit() {
   // 初始pid参数
   //  yaw电机pid
-  gimbal_controller.pid().yaw_position.SetKp(-35.f).SetKi(0.f).SetKd(-300.f).SetMaxOut(200.f).SetMaxIout(0.f);
-  gimbal_controller.pid().yaw_speed.SetKp(0.7f).SetKi(0.f).SetKd(0.01f).SetMaxOut(6.f).SetMaxIout(0.f);
+  gimbal_controller.pid().yaw_position.SetKp(-18.f).SetKi(0.f).SetKd(-350.f).SetMaxOut(20.f).SetMaxIout(0.f);
+  gimbal_controller.pid().yaw_speed.SetKp(1.2f).SetKi(0.f).SetKd(0.5f).SetMaxOut(6.f).SetMaxIout(0.f);
 
   // pitch电机pid
-  gimbal_controller.pid().pitch_position.SetKp(80.f).SetKi(0.f).SetKd(620.f).SetMaxOut(100.f).SetMaxIout(0.f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKi(0.01f).SetKd(1.f).SetMaxOut(6.f).SetMaxIout(0.8f);
+  gimbal_controller.pid().pitch_position.SetKp(32.f).SetKi(0.f).SetKd(100.f).SetMaxOut(10.f).SetMaxIout(0.f);
+  gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.01f).SetKd(0.f).SetMaxOut(0.f).SetMaxIout(0.4f);
 
   // 摩擦轮电机
   shoot_controller.pid().fric_1_speed.SetKp(700.f).SetKi(0.f).SetKd(0.f).SetMaxOut(16384.f).SetMaxIout(0.f);
-
   shoot_controller.pid().fric_2_speed.SetKp(700.f).SetKi(0.f).SetKd(0.f).SetMaxOut(16384.f).SetMaxIout(0.f);
 
   // 拨盘电机
@@ -70,6 +79,7 @@ void Motor::DMEnable() {
   gimbal_controller.Enable(true);
   if (DMEnable_ == 1) {
     yaw_motor->SendInstruction(DmMotorInstructions::kClearError);
+    pitch_motor->SendInstruction(DmMotorInstructions::kClearError);
     pitch_motor->SendInstruction(DmMotorInstructions::kEnable);  // 使达妙电机使能
     yaw_motor->SendInstruction(DmMotorInstructions::kEnable);
     DMEnable_ = 0;
@@ -106,14 +116,26 @@ void Motor::ShootDisable() {
 void Motor::DMInitControl() {
   rc_request_pitch = pitch_init;
   rc_request_yaw = yaw_init;
-  gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch);
+  yaw_feedforward->Update(rc_request_yaw);
+  gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch,yaw_feedforward->GetYawSpeedFeedforward());
+  pitch_vel_filter.Update(pitch_motor->vel());
   gimbal_controller.Update(yaw_motor_pos, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
   if (yaw_motor_pos > rc_request_yaw + 0.03f || yaw_motor_pos < rc_request_yaw - 0.03f) {
     global.fsm.init_count_ = 0;
     global.fsm.inited_ = true;
   }
+  yaw_target = rc_request_yaw;
+  pitch_target = rc_request_pitch;
+  current_vel = pitch_motor->vel();
+  // vofa_plotter->AddVariable(current_vel);
+  // vofa_plotter->Update();
+  // std::string buf = vofa_plotter->buffer(); // 先获取缓冲区
+  // uint16_t send_len = std::min(static_cast<uint16_t>(buf.size()), static_cast<uint16_t>(16)); // 取最小长度
+  // HAL_UART_Transmit_DMA(&huart6,
+  //                       ""),
+  //                       send_len);
 }
-// void Motor::DMControl() {
+// void Motor::DMControl() {S
 //
 //   left_x = global.bc->rc->left_x();
 //
@@ -139,24 +161,29 @@ void Motor::DMAutoControl() {
     rc_request_yaw = 0.f;
     reset_yaw_flag = 1;
   }
+  pitch_vel_filter.Update(pitch_motor->vel());
   if (aimbot_comm->aimbot_state() == 0) {
     rc_request_pitch += Map(global.bc->rc->right_y() + global.bc->rc->mouse_y() + global.bc->tcremote.data().mouse_y,
                             -660, 660, -0.11f, 0.11f);
-    rc_request_pitch = Clamp(rc_request_pitch, -15.f, 22.f);
+    rc_request_pitch = Clamp(rc_request_pitch, -15.f, 20.f);
 
     rc_request_yaw -= Map(global.bc->rc->left_x() + global.bc->rc->mouse_x() + global.bc->tcremote.data().mouse_x, -660,
                           660, -0.23f, 0.23f);
     rc_request_yaw = Wrap(rc_request_yaw, -180.f, 180.f);
-    gimbal_controller.SetTarget((reset_yaw - rc_request_yaw) / 57.3f, rc_request_pitch / 57.3f);
+    yaw_feedforward->Update((reset_yaw - rc_request_yaw) / 57.3f);
+    gimbal_controller.SetTarget((reset_yaw - rc_request_yaw) / 57.3f, rc_request_pitch / 57.3f,yaw_feedforward->GetYawSpeedFeedforward());
     gimbal_controller.Update(global.bc->yaw / 57.3f, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
   } else {
     rc_request_pitch = aimbot_comm->pitch();
     rc_request_pitch = Clamp(rc_request_pitch, -15.f / 57.3f, 22.f / 57.3f);
     rc_request_yaw = aimbot_comm->yaw();
     rc_request_yaw = Wrap(rc_request_yaw, -std::numbers::pi, std::numbers::pi);
-    gimbal_controller.SetTarget((reset_yaw) / 57.3f, rc_request_pitch / 57.3f);
+    yaw_feedforward->Update((reset_yaw) / 57.3f);
+    gimbal_controller.SetTarget((reset_yaw) / 57.3f, rc_request_pitch / 57.3f,yaw_feedforward->GetYawSpeedFeedforward());
     gimbal_controller.Update(global.bc->yaw / 57.3f, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
   }
+  yaw_target = (reset_yaw - rc_request_yaw) / 57.3f;
+  pitch_target = rc_request_pitch;
 }
 
 void Motor::ShootControl() {
@@ -185,10 +212,10 @@ void Motor::SendDMCommand() {
   yaw_pid_debug = gimbal_controller.output().yaw;
   pitch_pid_debug = gimbal_controller.output().pitch;
   gravity_compensation_ = 1.f * std::cos(global.bc->pitch / 57.3f);
-  pitch_motor->SetPosition(0.f, 0.f, gravity_compensation_ + gimbal_controller.output().pitch, 0.f, 0.f);
-  yaw_motor->SetPosition(0.f, 0.f, gimbal_controller.output().yaw, 0.f, 0.f);
+  pitch_motor->SetMitCommand(0.f, 0.f, gravity_compensation_ + gimbal_controller.output().pitch, 0.f, 0.f);
+  yaw_motor->SetMitCommand(0.f, 0.f, gimbal_controller.output().yaw, 0.f, 0.f);
   // pitch_motor->SetPosition(0.f,0.f, 0.f,0.f,0.f);
-  // yaw_motor->SetPosition(0.f,0.f,0.f,0.f,0.f);
+  // yaw_motor->SetMitCommand(0.f,0.f,0.f,0.f,0.f);
 }
 
 void Motor::SendDjiCommand() {
@@ -207,8 +234,8 @@ void Motor::SendDjiCommand() {
 
   debug = o3;
 
-  rm::device::DjiMotor<>::SendCommand(*can1);
-  rm::device::DjiMotor<>::SendCommand(*can2);
+  DjiMotorBase::SendCommand(*can1);
+  DjiMotorBase::SendCommand(*can2);
 }
 
 void Motor::Transit_initmode(InitFlag new_mode) {

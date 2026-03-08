@@ -4,7 +4,8 @@
 #include "aimbot_comm_can.hpp"
 #include "controllers/gimbal_2dof.hpp"
 #include "controllers/shoot_2firc.hpp"
-#include "communiate.hpp"
+#include "SineSweep.hpp"
+#include "yaw_speed_feedforward.hpp"
 
 using namespace rm;
 using namespace rm::device;
@@ -21,6 +22,9 @@ class Motor {
   device::AimbotCanCommunicator *aimbot_comm{nullptr};
   Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
   Shoot2Fric shoot_controller{8, 36.0f};  ///< 摩擦轮
+  YawSpeedFeedforward *yaw_feedforward{nullptr};
+  SineSweep *sweep_controller{nullptr};
+  //modules::VofaPlotter *vofa_plotter{nullptr};
 
   enum class InitFlag {
     kNormal,   // 正常模式
