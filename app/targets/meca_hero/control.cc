@@ -1,4 +1,6 @@
 #include "main.hpp"
+#include "Aimbot.h"
+#include "usbd_cdc_if.h"
 
 void MagazineControl() {
   // 失能
@@ -149,59 +151,59 @@ void ShooterControl() {
 }
 
 /*----------------------------------------------------*/
-void ChassisControl_deprecated() {
-  // chassis_1 = globals->chassis_motor_1->rpm();
-  // chassis_2 = globals->chassis_motor_2->rpm();
-  // chassis_3 = globals->chassis_motor_3->rpm();
-  // chassis_4 = globals->chassis_motor_4->rpm();
-  // 失能
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
-      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
-    // // 给底盘电机发送指令
-    // globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());
-    // globals->pid_chassis_2->Update(0, globals->chassis_motor_2->rpm());
-    // globals->pid_chassis_3->Update(0, globals->chassis_motor_3->rpm());
-    // globals->pid_chassis_4->Update(0, globals->chassis_motor_4->rpm());
-    // 给chassis电机发送指令
-    globals->chassis_motor_1->SetCurrent(static_cast<int16_t>(0));
-    globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(0));
-    globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(0));
-    globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(0));
-    return;
-  }
-  // 底盘随动
-  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
-    globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
-    globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
-                                        0.001); // 云台正位为电机编码器的-90°
-    Vw = globals->pid_chassis_follow->out();
-  } else {
-    Vw = 0;
-  }
-
-  // 遥控器输入底盘速度
-  Vx = globals->rc->left_x() * 10000 / 660;
-  Vy = globals->rc->left_y() * 10000 / 660;
-
-  rm::i16 V_wheel_1 = -Vy + Vx + 0.8 * Vw;
-  rm::i16 V_wheel_2 = Vy + Vx + 0.8 * Vw;
-  rm::i16 V_wheel_3 = Vy - 0.6 * Vx + 0.3 * Vw;
-  rm::i16 V_wheel_4 = -Vy - 0.6 * Vx + 0.3 * Vw;
-
-  // 目标速度PID
-  globals->pid_chassis_1->Update(V_wheel_1, globals->chassis_motor_1->rpm());
-  globals->pid_chassis_2->Update(V_wheel_2, globals->chassis_motor_2->rpm());
-  globals->pid_chassis_3->Update(V_wheel_3, globals->chassis_motor_3->rpm());
-  globals->pid_chassis_4->Update(V_wheel_4, globals->chassis_motor_4->rpm());
-
-  // 给chassis电机发送指令
-  globals->chassis_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_chassis_1->out()));
-  globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_chassis_2->out()));
-  globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_chassis_3->out()));
-  globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_chassis_4->out()));
-  // 发送CAN信号
-  rm::device::DjiMotorBase::SendCommand();
-}
+// void ChassisControl_deprecated() {
+//   // chassis_1 = globals->chassis_motor_1->rpm();
+//   // chassis_2 = globals->chassis_motor_2->rpm();
+//   // chassis_3 = globals->chassis_motor_3->rpm();
+//   // chassis_4 = globals->chassis_motor_4->rpm();
+//   // 失能
+//   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
+//       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+//     // // 给底盘电机发送指令
+//     // globals->pid_chassis_1->Update(0, globals->chassis_motor_1->rpm());
+//     // globals->pid_chassis_2->Update(0, globals->chassis_motor_2->rpm());
+//     // globals->pid_chassis_3->Update(0, globals->chassis_motor_3->rpm());
+//     // globals->pid_chassis_4->Update(0, globals->chassis_motor_4->rpm());
+//     // 给chassis电机发送指令
+//     globals->chassis_motor_1->SetCurrent(static_cast<int16_t>(0));
+//     globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(0));
+//     globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(0));
+//     globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(0));
+//     return;
+//   }
+//   // 底盘随动
+//   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
+//     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
+//     globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
+//                                         0.001); // 云台正位为电机编码器的-90°
+//     Vw = globals->pid_chassis_follow->out();
+//   } else {
+//     Vw = 0;
+//   }
+//
+//   // 遥控器输入底盘速度
+//   Vx = globals->rc->left_x() * 10000 / 660;
+//   Vy = globals->rc->left_y() * 10000 / 660;
+//
+//   rm::i16 V_wheel_1 = -Vy + Vx + 0.8 * Vw;
+//   rm::i16 V_wheel_2 = Vy + Vx + 0.8 * Vw;
+//   rm::i16 V_wheel_3 = Vy - 0.6 * Vx + 0.3 * Vw;
+//   rm::i16 V_wheel_4 = -Vy - 0.6 * Vx + 0.3 * Vw;
+//
+//   // 目标速度PID
+//   globals->pid_chassis_1->Update(V_wheel_1, globals->chassis_motor_1->rpm());
+//   globals->pid_chassis_2->Update(V_wheel_2, globals->chassis_motor_2->rpm());
+//   globals->pid_chassis_3->Update(V_wheel_3, globals->chassis_motor_3->rpm());
+//   globals->pid_chassis_4->Update(V_wheel_4, globals->chassis_motor_4->rpm());
+//
+//   // 给chassis电机发送指令
+//   globals->chassis_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_chassis_1->out()));
+//   globals->chassis_motor_2->SetCurrent(static_cast<int16_t>(globals->pid_chassis_2->out()));
+//   globals->chassis_motor_3->SetCurrent(static_cast<int16_t>(globals->pid_chassis_3->out()));
+//   globals->chassis_motor_4->SetCurrent(static_cast<int16_t>(globals->pid_chassis_4->out()));
+//   // 发送CAN信号
+//   rm::device::DjiMotorBase::SendCommand();
+// }
 
 /*----------------------------------------------------*/
 void GimbalControl() {
@@ -224,6 +226,7 @@ void GimbalControl() {
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
+
   // 监测imu
   Gy = globals->imu->gyro_y();
   Gz = gyro_z;
@@ -326,7 +329,7 @@ void ChassisPower() {
   // 底盘随动
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
-    globals->pid_chassis_follow->Update(1.5708, globals->gimbal_motor_yaw->pos(),
+    globals->pid_chassis_follow->Update(2.2311, globals->gimbal_motor_yaw->pos(),
                                         0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow->out());
   } else {
@@ -403,4 +406,10 @@ void ChassisPower() {
   V_chassis_2 = globals->chassis_motor[1]->rpm();
   V_chassis_3 = globals->chassis_motor[2]->rpm();
   V_chassis_4 = globals->chassis_motor[3]->rpm();
+}
+
+void AutoaimUpdate() {
+  aimbot.Prepare();
+  aimbot.Send();
+  aimbot.Receive(UserRxBuf, UserRxLen);
 }

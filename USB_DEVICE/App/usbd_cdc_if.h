@@ -52,7 +52,10 @@
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048
 /* USER CODE BEGIN EXPORTED_DEFINES */
-
+   extern uint8_t UserRxBuf[64];
+   extern uint8_t UserRxLen;
+   extern uint8_t UserTxBuf[64];
+   extern uint8_t UserTxLen;
 /* USER CODE END EXPORTED_DEFINES */
 
 /**

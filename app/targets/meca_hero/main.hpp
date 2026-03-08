@@ -7,6 +7,7 @@
 #include "spi.h"
 #include "timer_task.hpp"
 #include "buzzer_controller.hpp"
+#include "usbd_cdc_if.h"
 /*-------------------------------------------------
  *变量
  */
@@ -217,6 +218,12 @@ inline int overpower_count = 0;
 inline float gyro_z;
 
 inline float average1=0;
+
+enum class autoaim_state {
+  kAutoAim_Disable,
+  kAutoAim_Enable,
+  kAutoAim_FIRE
+};
 /*----------------------------------------------
  *执行函数
  */
@@ -232,6 +239,8 @@ void GimbalControl();
 void ChassisPower();
 // 裁判系统
 void Referee();
+//自瞄更新
+void AutoaimUpdate();
 // 随动监测
 inline int follow;
 #endif  // BOARDC_MAIN_HPP

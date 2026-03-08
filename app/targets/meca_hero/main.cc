@@ -7,6 +7,8 @@ rm::f32 yaw;
 
 float sum=0;
 int count = 0;
+int autoaim_update_count = 0;
+uint32_t System_time;
 
 void G_average() {
   if (globals->gyro_z_filter.apply(globals->imu->gyro_z())<0.01&&globals->gyro_z_filter.apply(globals->imu->gyro_z())>-0.01) {
@@ -39,6 +41,12 @@ void MainLoop() {
   GimbalControl();
   // 发送DjiCAN信号
   rm::device::DjiMotorBase::SendCommand();
+  if (autoaim_update_count==1) {
+    AutoaimUpdate();
+    autoaim_update_count=0;
+  }else {
+    autoaim_update_count++;
+  }
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
