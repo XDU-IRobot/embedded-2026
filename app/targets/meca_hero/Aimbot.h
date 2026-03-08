@@ -14,15 +14,15 @@ using namespace rm;
 
 // USB通信,自瞄发送包,25字节
 struct Aimbot_USB_Transmit {
-  uint8_t _SOF;//1
-  uint8_t ID;//1
+  uint8_t _SOF;  // 1
+  uint8_t ID;    // 1
 
-  uint32_t TimeStamp;//4
+  uint32_t TimeStamp;  // 4
 
-  f32 q0;//4
-  f32 q1;//4
-  f32 q2;//4
-  f32 q3;//4
+  f32 q0;  // 4
+  f32 q1;  // 4
+  f32 q2;  // 4
+  f32 q3;  // 4
 
   uint8_t robot_id;
   uint8_t AimbotState;
