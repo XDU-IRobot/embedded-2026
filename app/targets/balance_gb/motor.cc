@@ -21,7 +21,7 @@ i16 debug;
 i16 rpm_left, rpm_right;
 f32 left_x;
 u8 status;
-f32 yaw_target,pitch_target;
+f32 yaw_target, pitch_target;
 static float current_vel = 0.0f;
 // extern Debug pid_debug;
 
@@ -39,11 +39,11 @@ void Motor::MotorInit() {
   ammo_right = new M3508{*can1, 8};
   dial_motor = new M3508{*can2, 1};
 
-  yaw_feedforward = new YawSpeedFeedforward(0.002,-1);
+  yaw_feedforward = new YawSpeedFeedforward(0.002, -1);
 
-  //vofa_plotter = new VofaPlotter;
+  // vofa_plotter = new VofaPlotter;
 
-  //sweep_controller = new SineSweep(0.f, 2.f,);
+  // sweep_controller = new SineSweep(0.f, 2.f,);
 
   can1->SetFilter(0, 0);
   can1->Begin();
@@ -117,7 +117,7 @@ void Motor::DMInitControl() {
   rc_request_pitch = pitch_init;
   rc_request_yaw = yaw_init;
   yaw_feedforward->Update(rc_request_yaw);
-  gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch,yaw_feedforward->GetYawSpeedFeedforward());
+  gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch, yaw_feedforward->GetYawSpeedFeedforward());
   pitch_vel_filter.Update(pitch_motor->vel());
   gimbal_controller.Update(yaw_motor_pos, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
   if (yaw_motor_pos > rc_request_yaw + 0.03f || yaw_motor_pos < rc_request_yaw - 0.03f) {
@@ -171,7 +171,8 @@ void Motor::DMAutoControl() {
                           660, -0.23f, 0.23f);
     rc_request_yaw = Wrap(rc_request_yaw, -180.f, 180.f);
     yaw_feedforward->Update((reset_yaw - rc_request_yaw) / 57.3f);
-    gimbal_controller.SetTarget((reset_yaw - rc_request_yaw) / 57.3f, rc_request_pitch / 57.3f,yaw_feedforward->GetYawSpeedFeedforward());
+    gimbal_controller.SetTarget((reset_yaw - rc_request_yaw) / 57.3f, rc_request_pitch / 57.3f,
+                                yaw_feedforward->GetYawSpeedFeedforward());
     gimbal_controller.Update(global.bc->yaw / 57.3f, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
   } else {
     rc_request_pitch = aimbot_comm->pitch();
@@ -179,7 +180,8 @@ void Motor::DMAutoControl() {
     rc_request_yaw = aimbot_comm->yaw();
     rc_request_yaw = Wrap(rc_request_yaw, -std::numbers::pi, std::numbers::pi);
     yaw_feedforward->Update((reset_yaw) / 57.3f);
-    gimbal_controller.SetTarget((reset_yaw) / 57.3f, rc_request_pitch / 57.3f,yaw_feedforward->GetYawSpeedFeedforward());
+    gimbal_controller.SetTarget((reset_yaw) / 57.3f, rc_request_pitch / 57.3f,
+                                yaw_feedforward->GetYawSpeedFeedforward());
     gimbal_controller.Update(global.bc->yaw / 57.3f, yaw_motor->vel(), global.bc->pitch / 57.3f, pitch_motor->vel());
   }
   yaw_target = (reset_yaw - rc_request_yaw) / 57.3f;

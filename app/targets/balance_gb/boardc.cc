@@ -29,7 +29,7 @@ void BoardC::BoardcInit() {
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
   buzzer_controller.Play<modules::buzzer_melody::Startup>();
 
-  hipnuc_serial =  new rm::hal::Serial{huart1, 518, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  hipnuc_serial = new rm::hal::Serial{huart1, 518, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   hipnuc_imu = new rm::device::HipnucImu{*hipnuc_serial};
   hipnuc_imu->Begin();
 

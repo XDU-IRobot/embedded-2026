@@ -74,8 +74,7 @@ void Fsm::Update_Test() {
   global.chassis_communicator->gimbal_data_tx.L0Change = 0x01;             // 正常腿长
 
   // 控制腿的状态
-  if (   global.bc->rc->right_x() > 650 ||
-      global.bc->tcremote.data().keyboard_key >> 9 == 1) {
+  if (global.bc->rc->right_x() > 650 || global.bc->tcremote.data().keyboard_key >> 9 == 1) {
     global.chassis_communicator->jump_flag = true;
   } else if (  // global.bc->rc->right_x() == -660 ||
       global.bc->tcremote.data().keyboard_key >> 10 == 1) {
@@ -97,8 +96,7 @@ void Fsm::Update_Test() {
         global.chassis_communicator->gimbal_data_tx.L0Change = 0x04;  // 收腿
       } else if (global.chassis_communicator->jump_count < 120) {
         global.chassis_communicator->gimbal_data_tx.L0Change = 0x05;  // 缓冲
-      }
-        else {
+      } else {
         // 重置状态
         global.chassis_communicator->jump_flag = false;
         global.chassis_communicator->jump_count = 0;
@@ -166,7 +164,8 @@ void Fsm::Update_Control() {
       break;
     case State::kTest:
       global.motor->CalcYawPos(global.motor->yaw_motor->pos());
-      global.motor->Transit_initmode(static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
+      global.motor->Transit_initmode(
+          static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
       switch (global.motor->init_mode) {
         case Motor::InitFlag::kNormal:
           global.motor->yaw_init = 0.f;
@@ -189,7 +188,7 @@ void Fsm::Update_Control() {
         default:
           break;
       }
-      //global.motor->DMAutoControl();
+      // global.motor->DMAutoControl();
       yaw_aim = global.motor->yaw_init;
       break;
     case State::kHigh:
@@ -215,7 +214,7 @@ void Fsm::Update_500HZ() {
   // imu更新
   global.bc->EulerUpdate();
   pitch_debug = global.bc->pitch;
-  yaw_debug = global.bc->yaw/57.3f;
+  yaw_debug = global.bc->yaw / 57.3f;
   roll_debug = global.bc->roll;
 
   pitch_staus = global.motor->pitch_motor->status();

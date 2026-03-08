@@ -24,7 +24,7 @@ class Motor {
   Shoot2Fric shoot_controller{8, 36.0f};  ///< 摩擦轮
   YawSpeedFeedforward *yaw_feedforward{nullptr};
   SineSweep *sweep_controller{nullptr};
-  //modules::VofaPlotter *vofa_plotter{nullptr};
+  // modules::VofaPlotter *vofa_plotter{nullptr};
 
   enum class InitFlag {
     kNormal,   // 正常模式
