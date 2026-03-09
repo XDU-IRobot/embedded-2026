@@ -6,7 +6,7 @@
 namespace rm::device {
 class AimbotCanCommunicator final : public CanDevice {
  public:
-  explicit AimbotCanCommunicator(rm::hal::CanInterface &can);
+  explicit AimbotCanCommunicator(hal::CanInterface &can);
   AimbotCanCommunicator(AimbotCanCommunicator &&other) noexcept = default;
   AimbotCanCommunicator() = delete;
   ~AimbotCanCommunicator() override = default;

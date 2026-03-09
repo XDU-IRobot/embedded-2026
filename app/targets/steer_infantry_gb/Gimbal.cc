@@ -8,7 +8,7 @@ void Gimbal::GimbalInit() {
 void Gimbal::GimbalTask() { gimbal->GimbalStateUpdate(); }
 
 void Gimbal::GimbalStateUpdate() {
-  // if (!globals->device_gimbal.all_device_ok()) {
+  // if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
   //   gimbal->GimbalDisableUpdate();  // 云台电机失能计算
   // } else {
   switch (globals->StateMachine_) {
@@ -20,12 +20,16 @@ void Gimbal::GimbalStateUpdate() {
       gimbal->GimbalEnableUpdate();  // 云台电机使能计算
       break;
 
+    case kMatch:
+      gimbal->GimbalMatchUpdate();
+      break;
+
     default:                          // 错误状态，所有电机失能
       gimbal->GimbalDisableUpdate();  // 云台电机失能计算
       break;
   }
   // }
-  // if (!globals->device_shoot.all_device_ok()) {
+  // if (!globals->device_shoot.all_device_ok() || !globals->chassis_communicator->ammo_power_state()) {
   //   gimbal->ShootDisableUpdate();  // 发射机构失能计算
   // } else {
   switch (globals->StateMachine_) {
@@ -47,14 +51,47 @@ void Gimbal::GimbalStateUpdate() {
   }
   // }
 }
+void ChassisStateUpdate() {
+  globals->chassis_move_x = rm::modules::Clamp(
+      globals->rc->right_x() / 660.0f -
+          (globals->rc->key(rm::device::DR16::Key::kA) ? 1 : globals->image_data_->data().keyboard_key >> 2 & 0x01) +
+          (globals->rc->key(rm::device::DR16::Key::kD) ? 1 : globals->image_data_->data().keyboard_key >> 3 & 0x01),
+      -1.0f, 1.0f);
+  globals->chassis_move_y = rm::modules::Clamp(
+      globals->rc->right_y() / 660.0f +
+          (globals->rc->key(rm::device::DR16::Key::kW) ? 1 : globals->image_data_->data().keyboard_key >> 0 & 0x01) -
+          (globals->rc->key(rm::device::DR16::Key::kS) ? 1 : globals->image_data_->data().keyboard_key >> 1 & 0x01),
+      -1.0f, 1.0f);
+
+  globals->ui_refresh_flag =  // UI
+      globals->rc->key(rm::device::DR16::Key::kR) || globals->image_data_->data().keyboard_key >> 8 & 0x01 ? 1 : 0;
+  globals->get_target_flag = globals->aimbot_communicator->aimbot_state() >> 0 & 0x01;
+  globals->suggest_fire_flag = globals->aimbot_communicator->aimbot_state() >> 1 & 0x01;
+
+  if (globals->rc->key(rm::device::DR16::Key::kCtrl) ? 1 : globals->image_data_->data().keyboard_key >> 5 & 0x01) {
+    if (globals->rc->key(rm::device::DR16::Key::kV) ? 1 : globals->image_data_->data().keyboard_key >> 14 & 0x01) {
+      globals->aim_speed_change_flag = -1;
+    } else if (globals->aim_speed_change_flag == -1) {
+      globals->aim_speed_change--;
+      if (globals->aim_speed_change < -10) globals->aim_speed_change = -10;
+      globals->aim_speed_change_flag = 0;
+    }
+    if (globals->rc->key(rm::device::DR16::Key::kB) ? 1 : globals->image_data_->data().keyboard_key >> 15 & 0x01) {
+      globals->aim_speed_change_flag = 1;
+    } else if (globals->aim_speed_change_flag == 1) {
+      globals->aim_speed_change++;
+      if (globals->aim_speed_change > 10) globals->aim_speed_change = 10;
+      globals->aim_speed_change = 0;
+    }
+  }
+
+}
 
 void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
-                                                 -globals->rc_max_value_, globals->rc_max_value_,
-                                                 -gimbal->sensitivity_yaw_, gimbal->sensitivity_yaw_);
+                                                 -660, 660, -gimbal->sensitivity_yaw_, gimbal->sensitivity_yaw_);
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(),  // pitch轴目标值
-                                                   -globals->rc_max_value_, globals->rc_max_value_,
-                                                   -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
+                                                   -660, 660, -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->gimbal_yaw_target_ =
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.0f, 2.0f * static_cast<f32>(M_PI));  // yaw轴限位
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,          // pitch轴限位
@@ -62,18 +99,17 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalAimbotTargetUpdate() {
-  if (globals->can_communicator->aimbot_state() >> 0 & 0x01) {
-    gimbal->gimbal_yaw_target_ = globals->can_communicator->yaw();
-    gimbal->gimbal_pitch_target_ = globals->can_communicator->pitch();
+  if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
+    gimbal->gimbal_yaw_target_ = globals->aimbot_communicator->yaw();
+    gimbal->gimbal_pitch_target_ = globals->aimbot_communicator->pitch();
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
 }
 
 void Gimbal::GimbalMovePIDUpdate() {
-  yaw_target = gimbal->gimbal_yaw_target_;
-  yaw_speed_ff = Kf * (yaw_target - last_yaw_target) / Ts;
-  last_yaw_target = yaw_target;
+  gimbal->yaw_speed_ff = gimbal->Kf * (gimbal->gimbal_yaw_target_ - last_yaw_target) / Ts;
+  gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
 
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ff);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->yaw_motor->rpm(),
@@ -81,6 +117,15 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->ahrs.euler_angle().pitch);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gimbal->gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.0f, 10.0f);
+}
+
+void Gimbal::GimbalMatchUpdate() {
+  if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
+    gimbal->GimbalMove_ = kGbAimbot;
+  } else {
+    gimbal->GimbalMove_ = kGbRemote;
+  }
+  gimbal->GimbalEnableUpdate();
 }
 
 void Gimbal::GimbalEnableUpdate() {
@@ -132,8 +177,8 @@ void Gimbal::ShootEnableUpdate() {
   // gimbal->AmmoSpeedUpdate();
   globals->shoot_controller.SetArmSpeed(-ammo_speed_);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  if ((globals->can_communicator->aimbot_state() >> 0 & 0x01 &&
-       globals->can_communicator->aimbot_state() >> 1 & 0x01) ||
+  if ((globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
+       globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
       globals->rc->dial() >= 650) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     gimbal->shoot_frequency_ = 20.0f;

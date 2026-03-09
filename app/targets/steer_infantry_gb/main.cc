@@ -8,10 +8,7 @@
 
 #include "main.hpp"
 #include "Gimbal.hpp"
-float yaw_set;
-float yaw_ecd;
-float pitch_set;
-float pitch_ecd;
+
 using namespace rm;
 
 void MainLoop() {
@@ -47,7 +44,8 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  can_communicator = new rm::device::AimbotCanCommunicator{*can2};
+  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can2};
+  chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
 
@@ -63,7 +61,7 @@ void GlobalWarehouse::Init() {
   device_rc << rc;                                                // 遥控器
   device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
   device_shoot << friction_left << friction_right << dial_motor;  // 发射机构电机
-  device_nuc << can_communicator;                                 // NUC
+  device_nuc << aimbot_communicator;                              // NUC
 
   can1->SetFilter(0, 0);
   can1->Begin();
@@ -107,11 +105,13 @@ void GlobalWarehouse::RCStateUpdate() {
       // 右拨杆打到最上侧挡位
       switch (globals->rc->switch_l()) {
         case rm::device::DR16::SwitchPosition::kDown:
+          globals->StateMachine_ = kNoForce;
+          gimbal->GimbalMove_ = kMatch;
+          break;
         case rm::device::DR16::SwitchPosition::kMid:
         case rm::device::DR16::SwitchPosition::kUp:
         default:
           globals->StateMachine_ = kNoForce;
-          gimbal->GimbalMove_ = kGbRemote;
           break;
       }
       break;
@@ -125,12 +125,14 @@ void GlobalWarehouse::RCStateUpdate() {
           break;
         case rm::device::DR16::SwitchPosition::kMid:
           globals->StateMachine_ = kTest;
-          gimbal->GimbalMove_ = kGbAimbot;
+          gimbal->GimbalMove_ = kGbRemote;
           break;
         case rm::device::DR16::SwitchPosition::kUp:
+          globals->StateMachine_ = kTest;
+          gimbal->GimbalMove_ = kGbAimbot;
+          break;
         default:
-          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
-          gimbal->GimbalMove_ = kGbRemote;
+          globals->StateMachine_ = kNoForce;
           break;
       }
       break;
@@ -139,6 +141,7 @@ void GlobalWarehouse::RCStateUpdate() {
       switch (globals->rc->switch_l()) {
         case rm::device::DR16::SwitchPosition::kUp:
           globals->Music();
+          break;
         case rm::device::DR16::SwitchPosition::kMid:
         case rm::device::DR16::SwitchPosition::kDown:
         default:
@@ -155,7 +158,7 @@ void GlobalWarehouse::RCStateUpdate() {
 
 void GlobalWarehouse::Music() {
   if (globals->rc->dial() >= 650) {
-    globals->music = true;
+    globals->music_play_flag = true;
   }
   if (globals->rc->dial() <= -650 && !globals->music_change_flag) {
     globals->music_choice++;
@@ -167,41 +170,36 @@ void GlobalWarehouse::Music() {
   if (globals->music_choice == 3) {
     globals->music_choice = 0;
   }
-  if (music) {
+  if (music_play_flag) {
     if (globals->music_choice == 1) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SeeUAgain>();
-      globals->music = false;
+      globals->music_play_flag = false;
     }
     if (globals->music_choice == 2) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SuperMario>();
-      globals->music = false;
+      globals->music_play_flag = false;
     }
   }
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{
-      globals->imu->gyro_y(), globals->imu->gyro_z(), globals->imu->gyro_x() + globals->yaw_gyro_bias_,
-      globals->imu->accel_y(), globals->imu->accel_z(), globals->imu->accel_x()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_y(), globals->imu->gyro_z(),
+                                                globals->imu->gyro_x() + 0.0015f, globals->imu->accel_y(),
+                                                globals->imu->accel_z(), globals->imu->accel_x()});
 
-  imu_time = HAL_GetTick();
-  yaw_set = globals->can_communicator->yaw();
-  pitch_set = globals->can_communicator->pitch();
-  yaw_ecd = globals->ahrs.euler_angle().yaw;
-  pitch_ecd = globals->ahrs.euler_angle().pitch;
   // 激光
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399);
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399u);
   // 硬触发
-  if (globals->can_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
+  if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
     globals->imu_count++;
     globals->time_camera++;
     if (globals->time_camera == 10) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535u);
       globals->time_camera = 0;
     }
     if (globals->time_camera == 5) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0u);
     }
   } else {
     globals->imu_count = 0;
@@ -211,9 +209,13 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count = 0;
   }
   // can 通信
-  globals->can_communicator->UpdateControl(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
-                                           globals->ahrs.quaternion().y, globals->ahrs.quaternion().z, 103, 0,
-                                           globals->imu_count, 22.0f);
+  globals->aimbot_communicator->UpdateControl(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
+                                              globals->ahrs.quaternion().y, globals->ahrs.quaternion().z,
+                                              globals->chassis_communicator->robot_id(), globals->aim_mode,
+                                              globals->imu_count, globals->chassis_communicator->ammo_speed());
+  globals->chassis_communicator->SendChassisCommand(
+      globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,
+      globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change);
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   rm::device::DjiMotorBase::SendCommand(*can1);

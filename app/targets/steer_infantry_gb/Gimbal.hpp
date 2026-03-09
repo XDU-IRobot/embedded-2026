@@ -24,7 +24,6 @@ inline class Gimbal {
 
   f32 yaw_speed_ff = 0;
   f32 last_yaw_target = 0;
-  f32 yaw_target = 0;
   f32 Ts = 0.002f;
   f32 Kf = 1;
 
