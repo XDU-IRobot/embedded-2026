@@ -319,12 +319,12 @@ void GlobalWarehouse::SubLoop500Hz() {
   chassis->ChassisTask();
   // rm::device::DjiMotor<>::SendCommand(*can1);
   // rm::device::DjiMotor<>::SendCommand(*can2);
-  if (USB_selection) {
+  if (selection) {
     GimbalDataSend();
-    USB_selection ^= 1;
+    selection ^= 1;
   } else {
     RefereeDataSend();
-    USB_selection ^= 1;
+    selection ^= 1;
   }
 }
 
