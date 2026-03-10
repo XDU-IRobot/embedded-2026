@@ -42,10 +42,10 @@ void MainLoop() {
   GimbalControl();
   // 发送DjiCAN信号
   rm::device::DjiMotorBase::SendCommand();
-  if (autoaim_update_count==1) {
+  if (autoaim_update_count == 1) {
     AutoaimUpdate();
-    autoaim_update_count=0;
-  }else {
+    autoaim_update_count = 0;
+  } else {
     autoaim_update_count++;
   }
 
