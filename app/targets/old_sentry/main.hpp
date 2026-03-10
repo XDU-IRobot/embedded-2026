@@ -72,7 +72,7 @@ inline struct GlobalWarehouse {
   rm::device::M3508 *wheel_lb{nullptr};   ///< 左后轮电机
   rm::device::M3508 *wheel_rb{nullptr};   ///< 右后轮电机
 
-  rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
+  rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data{nullptr};  ///< 裁判系统数据缓冲区
 
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};                   ///< 姿态解算器

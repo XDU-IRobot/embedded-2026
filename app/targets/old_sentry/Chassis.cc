@@ -16,7 +16,7 @@ void Chassis::ChassisTask() {
 }
 
 void Chassis::ChassisStateUpdate() {
-  if (!globals->referee_data_buffer->data().robot_status.power_management_chassis_output ||
+  if (!globals->referee_data->data().robot_status.power_management_chassis_output ||
       !globals->device_chassis.all_device_ok()) {
     chassis->ChassisMove_ = kUnable;
   } else {
@@ -205,11 +205,11 @@ void Chassis::ChassisDisableUpdate() {
 
 void Chassis::PowerLimitLoop() {
   // 缓冲能量过低判断
-  if (globals->referee_data_buffer->data().power_heat_data.buffer_energy < 10) {
+  if (globals->referee_data->data().power_heat_data.buffer_energy < 10) {
     chassis->k_speed_power_limit_ = 0.0f;
-  } else if (globals->referee_data_buffer->data().power_heat_data.buffer_energy < 60) {
+  } else if (globals->referee_data->data().power_heat_data.buffer_energy < 60) {
     chassis->k_speed_power_limit_ = static_cast<f32>(
-        pow(static_cast<f32>(globals->referee_data_buffer->data().power_heat_data.buffer_energy) / 60.0f, 2));
+        pow(static_cast<f32>(globals->referee_data->data().power_heat_data.buffer_energy) / 60.0f, 2));
   } else {
     chassis->k_speed_power_limit_ = 1.0f;
   }

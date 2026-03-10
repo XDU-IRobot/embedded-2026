@@ -56,7 +56,7 @@ void GimbalDataSend() {
   globals->GimbalData.q1 = globals->up_yaw_qx;
   globals->GimbalData.q2 = globals->up_yaw_qy;
   globals->GimbalData.q3 = globals->up_yaw_qz;
-  globals->GimbalData.robot_id = globals->referee_data_buffer->data().robot_status.robot_id > 100 ? 1 : 0;
+  globals->GimbalData.robot_id = globals->referee_data->data().robot_status.robot_id > 100 ? 1 : 0;
   USBSendMessage(reinterpret_cast<uint8_t *>(&globals->GimbalData), sizeof(globals->GimbalData), 0x03);
 }
 
@@ -64,9 +64,9 @@ void GimbalDataSend() {
  * @brief          发送自瞄所需裁判系统数据
  */
 void RefereeDataSend() {
-  if (globals->referee_data_buffer->data().robot_status.current_HP < globals->RefereeData.current_HP &&
-      globals->referee_data_buffer->data().hurt_data.HP_deduction_reason == 0) {
-    globals->RefereeData.hurt_armor = globals->referee_data_buffer->data().hurt_data.armor_id + 1;
+  if (globals->referee_data->data().robot_status.current_HP < globals->RefereeData.current_HP &&
+      globals->referee_data->data().hurt_data.HP_deduction_reason == 0) {
+    globals->RefereeData.hurt_armor = globals->referee_data->data().hurt_data.armor_id + 1;
     globals->hurt_time = 2500;
   } else if (globals->hurt_time <= 0) {
     globals->RefereeData.hurt_armor = 0;
@@ -74,12 +74,12 @@ void RefereeDataSend() {
   } else {
     globals->hurt_time--;
   }
-  globals->RefereeData.current_HP = globals->referee_data_buffer->data().robot_status.current_HP;
-  globals->RefereeData.game_progress = globals->referee_data_buffer->data().game_status.game_progress;
-  globals->RefereeData.remain_time = globals->referee_data_buffer->data().game_status.stage_remain_time;
+  globals->RefereeData.current_HP = globals->referee_data->data().robot_status.current_HP;
+  globals->RefereeData.game_progress = globals->referee_data->data().game_status.game_progress;
+  globals->RefereeData.remain_time = globals->referee_data->data().game_status.stage_remain_time;
   globals->RefereeData.remain_bullet =
-      globals->referee_data_buffer->data().projectile_allowance.projectile_allowance_17mm;
-  globals->RefereeData.robot_id = globals->referee_data_buffer->data().robot_status.robot_id > 100 ? 1 : 0;
+      globals->referee_data->data().projectile_allowance.projectile_allowance_17mm;
+  globals->RefereeData.robot_id = globals->referee_data->data().robot_status.robot_id > 100 ? 1 : 0;
   USBSendMessage(reinterpret_cast<uint8_t *>(&globals->RefereeData), sizeof(globals->RefereeData), 0x07);
 }
 

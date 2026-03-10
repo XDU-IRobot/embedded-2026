@@ -68,14 +68,14 @@ inline struct GlobalWarehouse {
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};     ///< 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                           ///< 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                          ///< 右侧摩擦轮电机
-  rm::device::M2006 *dial_motor{nullptr};                                              ///< 拨盘电机
+  rm::device::M3508 *dial_motor{nullptr};                                              ///< 拨盘电机
   // 底盘
   rm::device::M3508 *wheel_lf{nullptr};  ///< 左前轮电机
   rm::device::M3508 *wheel_rf{nullptr};  ///< 右前轮电机
   rm::device::M3508 *wheel_lb{nullptr};  ///< 左后轮电机
   rm::device::M3508 *wheel_rb{nullptr};  ///< 右后轮电机
 
-  rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
+  rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data{nullptr};  ///< 裁判系统数据缓冲区
 
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};          ///< 姿态解算器
@@ -100,7 +100,6 @@ inline struct GlobalWarehouse {
   bool music = false;                           // 控制音乐播放
   bool music_change_flag = false;               // 音乐改动标识位
   bool selection = false;                       // 选择发送不同的usb数据
-  const float yaw_gyro_bias_ = 0.0015f;         // 偏航角（角度值）的陀螺仪偏移量
 
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态

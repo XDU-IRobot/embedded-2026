@@ -16,9 +16,9 @@ void Chassis::ChassisTask() {
 }
 
 void Chassis::ChassisStateUpdate() {
-  if ((
-          // !globals->referee_data_buffer->data().robot_status.power_management_chassis_output ||
-          !globals->device_chassis.all_device_ok() && gimbal->down_yaw_enable_flag_)) {
+  if (
+          // !globals->referee_data->data().robot_status.power_management_chassis_output ||
+          !globals->device_chassis.all_device_ok()) {
     chassis->ChassisMove_ = kUnable;
   } else {
     switch (globals->StateMachine_) {
@@ -57,12 +57,10 @@ void Chassis::ChassisRCDataUpdate() {
   //                    globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
   if (std::abs(globals->rc->right_y()) > 20 || std::abs(globals->rc->right_x()) > 20) {
-    chassis->chassis_receive_x_ =
-        -rm::modules::Map(-static_cast<f32>(globals->rc->right_y()), -660, 660, -chassis->chassis_sensitivity_xy_,
-                          chassis->chassis_sensitivity_xy_);
-    chassis->chassis_receive_y_ =
-        -rm::modules::Map(-static_cast<f32>(globals->rc->right_x()), -660, 660, -chassis->chassis_sensitivity_xy_,
-                          chassis->chassis_sensitivity_xy_);
+    chassis->chassis_receive_x_ = rm::modules::Map(globals->rc->right_x(), -660, 660, -chassis->chassis_sensitivity_xy_,
+                                                   chassis->chassis_sensitivity_xy_);
+    chassis->chassis_receive_y_ = rm::modules::Map(globals->rc->right_y(), -660, 660, -chassis->chassis_sensitivity_xy_,
+                                                   chassis->chassis_sensitivity_xy_);
   } else {
     chassis->chassis_receive_x_ = 0.0f;
     chassis->chassis_receive_y_ = 0.0f;
@@ -74,7 +72,7 @@ void Chassis::ChassisRCDataUpdate() {
     chassis->chassis_target_y_ =
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
-    chassis->chassis_target_w_ = 6000.0f;
+    chassis->chassis_target_w_ = 4000.0f;
   } else if (globals->rc->dial() <= -650) {
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_) -
@@ -82,16 +80,16 @@ void Chassis::ChassisRCDataUpdate() {
     chassis->chassis_target_y_ =
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_);
-    chassis->chassis_target_w_ = -6000.0f;
+    chassis->chassis_target_w_ = -4000.0f;
   } else {
     chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
                                  chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
     chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
                                  chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
-    chassis->chassis_follow_pid_.Update(0.0f, chassis->down_yaw_delta_, 1.0f);
+    chassis->chassis_follow_pid_.Update(0.0f, -chassis->down_yaw_delta_, 1.0f);
     chassis->chassis_target_w_ = chassis->chassis_follow_pid_.out();
   }
-  if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
+  if (std::abs(chassis->chassis_target_w_) > 3000.0f) {
     chassis->chassis_target_x_ *= 0.5;
     chassis->chassis_target_y_ *= 0.5;
   }
@@ -227,18 +225,18 @@ void Chassis::PowerLimitLoop() {
                                            chassis->output_currents_);
 
   // 缓冲能量过低判断
-  if (globals->referee_data_buffer->data().power_heat_data.buffer_energy < 10) {
+  if (globals->referee_data->data().power_heat_data.buffer_energy < 10) {
     chassis->k_speed_power_limit_ = 0.0f;
     chassis->chassis_power_limit_ =
-        static_cast<f32>(globals->referee_data_buffer->data().robot_status.chassis_power_limit) * 0.6f;
-  } else if (globals->referee_data_buffer->data().power_heat_data.buffer_energy < 60) {
-    chassis->k_speed_power_limit_ = static_cast<f32>(
-        pow(static_cast<f32>(globals->referee_data_buffer->data().power_heat_data.buffer_energy) / 60.0f, 2));
+        static_cast<f32>(globals->referee_data->data().robot_status.chassis_power_limit) * 0.6f;
+  } else if (globals->referee_data->data().power_heat_data.buffer_energy < 60) {
+    chassis->k_speed_power_limit_ =
+        static_cast<f32>(pow(static_cast<f32>(globals->referee_data->data().power_heat_data.buffer_energy) / 60.0f, 2));
     chassis->chassis_power_limit_ =
-        static_cast<f32>(globals->referee_data_buffer->data().robot_status.chassis_power_limit) * 0.8f;
+        static_cast<f32>(globals->referee_data->data().robot_status.chassis_power_limit) * 0.8f;
   } else {
     chassis->k_speed_power_limit_ = 1.0f;
-    chassis->chassis_power_limit_ = globals->referee_data_buffer->data().robot_status.chassis_power_limit;
+    chassis->chassis_power_limit_ = globals->referee_data->data().robot_status.chassis_power_limit;
   }
 }
 

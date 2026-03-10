@@ -8,8 +8,8 @@ void Gimbal::GimbalInit() {
 
 void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
-  gimbal->heat_limit_ = globals->referee_data_buffer->data().robot_status.shooter_barrel_heat_limit;
-  gimbal->heat_current_ = globals->referee_data_buffer->data().power_heat_data.shooter_17mm_1_barrel_heat;
+  gimbal->heat_limit_ = globals->referee_data->data().robot_status.shooter_barrel_heat_limit;
+  gimbal->heat_current_ = globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat;
   f32 yaw = rm::modules::Map(globals->up_yaw_motor->encoder(), 0.0f, globals->GM6020_encoder_max_, 0.0f,
                              2.0f * static_cast<f32>(M_PI));
   yaw = rm::modules::Wrap(yaw, -static_cast<f32>(M_PI), M_PI);
@@ -17,7 +17,7 @@ void Gimbal::GimbalTask() {
 }
 
 void Gimbal::GimbalStateUpdate() {
-  if (!globals->referee_data_buffer->data().robot_status.power_management_gimbal_output ||
+  if (!globals->referee_data->data().robot_status.power_management_gimbal_output ||
       !globals->device_gimbal.all_device_ok()) {
     gimbal->GimbalDisableUpdate();  // 云台电机失能计算
   } else {

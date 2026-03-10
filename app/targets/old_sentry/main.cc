@@ -50,7 +50,7 @@ void GlobalWarehouse::Init() {
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
 
   rx_referee = new rm::device::RxReferee{*globals->referee_uart};
-  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
+  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   rc = new rm::device::DR16{*dbus};
   up_yaw_motor = new rm::device::GM6020{*can1, 5};

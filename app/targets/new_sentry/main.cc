@@ -29,6 +29,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   chassis = new Chassis;
   globals->Init();
 
+  for (auto ch : {TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4}) {
+    HAL_TIM_PWM_Start(&htim1, ch);
+  }
+
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,                                   //
@@ -49,7 +53,7 @@ void GlobalWarehouse::Init() {
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
-  navigate_communicator = new rm::device::NavigateCanCommunicator(*can1);
+  navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
 
@@ -58,21 +62,21 @@ void GlobalWarehouse::Init() {
   hipnuc_imu = new rm::device::HipnucImuCan{*can2, 8};
 
   rc = new rm::device::DR16{*dbus};
-  up_yaw_motor = new rm::device::GM6020{*can1, 1};
+  up_yaw_motor = new rm::device::GM6020{*can2, 1};
   down_yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can1, {0x05, 0x04, 3.141593, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
+      {*can1, {0x05, 0x04, 3.14159, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can1, {0x03, 0x02, 3.141593, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
-  friction_left = new rm::device::M3508{*can1, 2};
-  friction_right = new rm::device::M3508{*can1, 3};
-  dial_motor = new rm::device::M2006{*can1, 1};
+      {*can2, {0x03, 0x02, 3.14159, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
+  friction_left = new rm::device::M3508{*can2, 3};
+  friction_right = new rm::device::M3508{*can2, 2};
+  dial_motor = new rm::device::M3508{*can2, 4};
 
-  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
+  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
 
-  wheel_lf = new rm::device::M3508{*can2, 1};
-  wheel_rf = new rm::device::M3508{*can2, 3};
-  wheel_lb = new rm::device::M3508{*can2, 2};
-  wheel_rb = new rm::device::M3508{*can2, 4};
+  wheel_lf = new rm::device::M3508{*can1, 1};
+  wheel_rf = new rm::device::M3508{*can1, 3};
+  wheel_lb = new rm::device::M3508{*can1, 4};
+  wheel_rb = new rm::device::M3508{*can1, 2};
 
   device_rc << rc;                                                 // 遥控器
   device_nuc << aimbot_communicator;                               // nuc
@@ -102,13 +106,13 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // 上部 Yaw PID 参数
-  gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(300.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(320.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().up_yaw_speed.SetKp(300.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
-  gimbal_controller.pid().down_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(2000).SetMaxOut(30.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().down_yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_position.SetKp(50.0f).SetKi(0.0f).SetKd(2000).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_speed.SetKp(1.2f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(14.0f).SetKi(0.0f).SetKd(120.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(16.0f).SetKi(0.0f).SetKd(400.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(1.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
@@ -220,7 +224,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   // const u32 imu_time = HAL_GetTick();
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{
-      globals->imu->gyro_x(), globals->imu->gyro_y(), globals->imu->gyro_z() + globals->yaw_gyro_bias_,
+      globals->imu->gyro_x(), globals->imu->gyro_y(), globals->imu->gyro_z() - 0.0015f,
       globals->imu->accel_x(), globals->imu->accel_y(), globals->imu->accel_z()});
   globals->RCStateUpdate();
   gimbal->GimbalTask();
@@ -240,34 +244,29 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count = 0;
     globals->time_camera = 0;
   }
+  // globals->time_camera++;
+  // if (globals->time_camera == 10) {
+  //   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
+  //   globals->time_camera = 0;
+  // }
+  // if (globals->time_camera == 5) {
+  //   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+  // }
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }
-  /*globals->aimbot_communicator->UpdateQuaternion(globals->hipnuc_imu->quat_w(), globals->hipnuc_imu->quat_x(),
-                                              globals->hipnuc_imu->quat_y(), globals->hipnuc_imu->quat_z());
-  globals->aimbot_communicator->UpdateControlFlag(referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
-                                               imu_time, globals->imu_count);*/
-  globals->aimbot_communicator->UpdateControl(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->roll(),
-                                              globals->hipnuc_imu->pitch(),
-                                              referee_data_buffer->data().robot_status.robot_id, globals->aim_mode,
-                                              globals->imu_count, referee_data_buffer->data().shoot_data.initial_speed);
+  globals->aimbot_communicator->UpdateControl(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(),
+                                              -globals->hipnuc_imu->roll(),
+                                              referee_data->data().robot_status.robot_id, globals->aim_mode,
+                                              globals->imu_count, referee_data->data().shoot_data.initial_speed);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
-  // if (selection) {
-  //   GimbalDataSend();
-  //   selection = false;
-  // } else {
-  // RefereeDataSend();
-  //   selection = true;
-  // }
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    // globals->down_yaw_motor->SetMitCommand(0, 0, 0, 0, 0);
-    // globals->pitch_motor->SetMitCommand(0, 0, 0, 0, 0);
-    globals->down_yaw_motor->SetMitCommand(0, 0, globals->gimbal_controller.output().down_yaw, 0, 0);
-    globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
+    globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
+    globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 0);
   }
 }
 

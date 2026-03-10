@@ -13,7 +13,7 @@ void RxReferee::Begin() { this->serial_->Begin(); }
 void RxReferee::RxCallback(const std::vector<u8> &data, u16 rx_len) {
   // Heartbeat();
   for (u16 i = 0; i < rx_len; i++) {
-    *globals->referee_data_buffer << data.at(i);
+    *globals->referee_data << data.at(i);
   }
 }
 }  // namespace rm::device
