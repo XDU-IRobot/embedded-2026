@@ -8,6 +8,7 @@
 #include "timer_task.hpp"
 #include "buzzer_controller.hpp"
 #include "usbd_cdc_if.h"
+#include "Vofa.hpp"
 /*-------------------------------------------------
  *变量
  */
@@ -224,6 +225,11 @@ enum class autoaim_state {
   kAutoAim_Enable,
   kAutoAim_FIRE
 };
+
+inline rm::f32 aimbot_pitch;
+inline rm::f32 aimbot_yaw;
+inline int aimbot_state_flag=0;
+inline int aimbot_OT=500;
 /*----------------------------------------------
  *执行函数
  */

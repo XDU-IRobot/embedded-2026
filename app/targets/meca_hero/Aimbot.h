@@ -27,8 +27,8 @@ struct Aimbot_USB_Transmit {
   uint8_t robot_id;
   uint8_t AimbotState;
 
-  f32 reserved1;
-  f32 reserved2;
+  // f32 reserved1;
+  // f32 reserved2;
 
   uint8_t _EOF;
 };

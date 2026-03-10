@@ -24,6 +24,7 @@ void G_average() {
 
 // 定频循环
 void MainLoop() {
+  VOFA_Send_JustFloat_DMA(&huart1);
   G_average();
   // 遥控器输入值
   l_switch_position_last = l_switch_position_now;
@@ -47,6 +48,7 @@ void MainLoop() {
   }else {
     autoaim_update_count++;
   }
+
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
