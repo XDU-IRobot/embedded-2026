@@ -41,3 +41,12 @@ void VOFA_Send_JustFloat_DMA(UART_HandleTypeDef *huart, Vofa_TxFrame &tx_buffer)
     HAL_UART_Transmit_DMA(huart, reinterpret_cast<const uint8_t *>(&tx_buffer), sizeof(Vofa_TxFrame));
   }
 }
+
+/**
+ * @brief 下行接收函数（非阻塞 DMA）
+ */
+void VOFA_Receive_DMA(UART_HandleTypeDef *huart, uint8_t *rx_buffer) {
+  if (huart->gState == HAL_UART_STATE_READY) {
+    HAL_UART_Receive_DMA(huart, rx_buffer, sizeof(Vofa_TxFrame));
+  }
+}

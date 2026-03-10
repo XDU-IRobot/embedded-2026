@@ -8,6 +8,13 @@ struct Vofa_TxFrame {
   float pid_out;
   uint8_t tail[4] = {0x00, 0x00, 0x80, 0x7F};
 };
+
+struct Vofa_RxFrame {
+  float P;
+  float I;
+  float D;
+  uint8_t tail = {0xFF};
+};
 #pragma pack()
 
 void VOFA_Prepare_Package(const float &pid_out, Vofa_TxFrame &tx_buffer);
