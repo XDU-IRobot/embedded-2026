@@ -218,18 +218,14 @@ inline int overpower_count = 0;
 
 inline float gyro_z;
 
-inline float average1=0;
+inline float average1 = 0;
 
-enum class autoaim_state {
-  kAutoAim_Disable,
-  kAutoAim_Enable,
-  kAutoAim_FIRE
-};
+enum class autoaim_state { kAutoAim_Disable, kAutoAim_Enable, kAutoAim_FIRE };
 
 inline rm::f32 aimbot_pitch;
 inline rm::f32 aimbot_yaw;
-inline int aimbot_state_flag=0;
-inline int aimbot_OT=500;
+inline int aimbot_state_flag = 0;
+inline int aimbot_OT = 500;
 /*----------------------------------------------
  *执行函数
  */
@@ -245,7 +241,7 @@ void GimbalControl();
 void ChassisPower();
 // 裁判系统
 void Referee();
-//自瞄更新
+// 自瞄更新
 void AutoaimUpdate();
 // 随动监测
 inline int follow;

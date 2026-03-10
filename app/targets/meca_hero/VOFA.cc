@@ -49,4 +49,3 @@ void VOFA_Send_JustFloat_DMA(UART_HandleTypeDef* huart) {
     HAL_UART_Transmit_DMA(huart, (uint8_t*)&g_vofa_tx, sizeof(Vofa_TxFrame));
   }
 }
-

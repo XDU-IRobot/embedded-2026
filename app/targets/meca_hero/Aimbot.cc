@@ -1,6 +1,5 @@
 #include "Aimbot.h"
 
-
 #include "librm.hpp"
 #include "usbd_cdc_if.h"
 
@@ -23,8 +22,8 @@ void Aimbot::Prepare() {
   this->USB_Tx.TimeStamp = System_time;
   this->USB_Tx.robot_id = globals->ref.data().robot_status.robot_id;
   // refereedata.getrobotid();
-  this->USB_Tx.AimbotState =0;
-    // globals->ref.data().;
+  this->USB_Tx.AimbotState = 0;
+  // globals->ref.data().;
   // (uint8_t)mygimbal.getAimbotState();
   this->USB_Tx.q0 = globals->ahrs.quaternion().w;
   // myquaternion.w;

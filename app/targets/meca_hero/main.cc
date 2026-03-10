@@ -48,7 +48,6 @@ void MainLoop() {
   } else {
     autoaim_update_count++;
   }
-
 }
 
 extern "C" [[noreturn]] void AppMain(void) {

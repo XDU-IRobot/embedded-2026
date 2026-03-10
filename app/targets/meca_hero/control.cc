@@ -218,8 +218,8 @@ void GimbalControl() {
   //   gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) - average1;
   // }
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
-                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) - average1
-                                                         - globals->ahrs.euler_angle().pitch * average1 * 12
+                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) -
+                                                         average1 - globals->ahrs.euler_angle().pitch * average1 * 12
                                                 /*globals->imu->gyro_z() - static_cast<float>(-0.00053263375)*/,
                                                 globals->imu->accel_x(), globals->imu->accel_y(),
                                                 globals->imu->accel_z()});
@@ -259,9 +259,9 @@ void GimbalControl() {
     }
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003; // ≈0.003/per
+                      static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003;  // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033); // 0.00033/per
+                        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033);  // 0.00033/per
   }
 
   // target_pos_yaw
@@ -338,7 +338,7 @@ void ChassisPower() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow->Update(1.54, globals->gimbal_motor_yaw->pos(),
-                                        0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+                                        0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow->out());
   } else {
     Vw = 0;
@@ -397,8 +397,8 @@ void ChassisPower() {
     overpower_count--;
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                    ? 50
-                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                      ? 50
+                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
