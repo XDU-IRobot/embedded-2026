@@ -39,7 +39,7 @@ void Aimbot::Receive(uint8_t *rx_data, uint8_t Len) {
       switch (rx_data[1]) {
         case Aimbot_USB_Rx_ID:
           memcpy(&USB_Rx, rx_data, Len);
-          aimbot_OT=500;
+          aimbot_OT = 500;
           break;
         default:
           break;

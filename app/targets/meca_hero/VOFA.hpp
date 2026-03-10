@@ -1,7 +1,7 @@
 #ifndef BOARDC_VOFA_HPP
 #define BOARDC_VOFA_HPP
 
-#include"librm.hpp"
+#include "librm.hpp"
 
 #pragma pack(1)
 struct Vofa_TxFrame {
