@@ -8,7 +8,7 @@
 #include "timer_task.hpp"
 #include "buzzer_controller.hpp"
 #include "usbd_cdc_if.h"
-#include "Vofa.hpp"
+#include "VOFA.hpp"
 /*-------------------------------------------------
  *变量
  */
@@ -243,6 +243,8 @@ void ChassisPower();
 void Referee();
 // 自瞄更新
 void AutoaimUpdate();
+//VOFA监测
+void VOFA();
 // 随动监测
 inline int follow;
 #endif  // BOARDC_MAIN_HPP
