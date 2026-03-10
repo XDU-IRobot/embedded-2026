@@ -1,6 +1,7 @@
 #include "main.hpp"
 #include "Aimbot.h"
 #include "usbd_cdc_if.h"
+#include "VOFA.hpp"
 
 void MagazineControl() {
   // 失能
@@ -209,14 +210,6 @@ void ShooterControl() {
 void GimbalControl() {
   // IMU解算
   globals->imu->Update();
-  // if (globals->ahrs.euler_angle().pitch < -0.19) {
-  //   if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.011 && globals->gyro_z_filter.apply(
-  //           globals->imu->gyro_z()) > -0.011) {
-  //     gyro_z = 0;
-  //   }
-  // } else {
-  //   gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) - average1;
-  // }
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
                                                 gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) -
                                                          average1 - globals->ahrs.euler_angle().pitch * average1 * 12
@@ -231,6 +224,7 @@ void GimbalControl() {
   Gy = globals->imu->gyro_y();
   Gz = gyro_z;
   Gx = globals->imu->gyro_x();
+  //是否启动
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->gimbal_motor_yaw->SetMitCommand(0, 0, 0, 0, 0);
@@ -251,7 +245,7 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  if (aimbot_state_flag) {
+  if (aimbot_state_flag>=0&&(globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_right())) {
     target_pos_yaw = aimbot.USB_Rx.YawRelativeAngle;
     target_pos_pitch = aimbot.USB_Rx.PitchRelativeAngle;
     if (aimbot_OT != 0) {
@@ -406,6 +400,8 @@ void ChassisPower() {
     globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
   }
   rm::device::DjiMotorBase::SendCommand();
+
+  //监测值
   P_chassis_1 = output_currents[0];
   P_chassis_2 = output_currents[1];
   P_chassis_3 = output_currents[2];
@@ -422,5 +418,11 @@ void AutoaimUpdate() {
   aimbot.Receive(UserRxBuf, UserRxLen);
   aimbot_pitch = aimbot.USB_Rx.PitchRelativeAngle;
   aimbot_yaw = aimbot.USB_Rx.YawRelativeAngle;
-  aimbot_state_flag = aimbot.USB_Rx.AimbotState;
+  aimbot_state_flag = aimbot.USB_Rx.AimbotState*500;
+}
+
+Vofa_TxFrame pitch_V_pid;
+void VOFA() {
+  VOFA_Prepare_Package(globals->pid_yaw_position->out(),pitch_V_pid);
+  VOFA_Send_JustFloat_DMA(&huart1,pitch_V_pid);
 }

@@ -24,7 +24,6 @@ void G_average() {
 
 // 定频循环
 void MainLoop() {
-  VOFA_Send_JustFloat_DMA(&huart1);
   G_average();
   // 遥控器输入值
   l_switch_position_last = l_switch_position_now;
@@ -40,10 +39,13 @@ void MainLoop() {
   MagazineControl();
   // 云台控制逻辑
   GimbalControl();
+  //VOFA
+
   // 发送DjiCAN信号
   rm::device::DjiMotorBase::SendCommand();
   if (autoaim_update_count == 1) {
     AutoaimUpdate();
+    VOFA();
     autoaim_update_count = 0;
   } else {
     autoaim_update_count++;
@@ -69,10 +71,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>()  //
+      etl::delegate<void()>::create<MainLoop>() //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(100, 1000 - 1);  // 84MHz / 84 / 1000 = 1kHz
-  mainloop_1000hz.Start();                               // 启动定时器
+  mainloop_1000hz.SetPrescalerAndPeriod(100-1, 1000 - 1); // 84MHz / 100 / 1000 = 840Hz
+  mainloop_1000hz.Start(); // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
   for (;;) {
     __WFI();
