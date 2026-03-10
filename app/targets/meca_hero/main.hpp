@@ -243,7 +243,7 @@ void ChassisPower();
 void Referee();
 // 自瞄更新
 void AutoaimUpdate();
-//VOFA监测
+// VOFA监测
 void VOFA();
 // 随动监测
 inline int follow;

@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 // 接收缓冲区定义
 #define RX_BUF_SIZE 64
 // extern uint8_t g_rx_buffer[RX_BUF_SIZE];
@@ -32,9 +31,7 @@ Vofa_TxFrame g_vofa_tx;
 /**
  * @brief 准备数据包
  */
-void VOFA_Prepare_Package(const float &pid_out, Vofa_TxFrame &tx_buffer) {
-  tx_buffer.pid_out = pid_out;
-}
+void VOFA_Prepare_Package(const float &pid_out, Vofa_TxFrame &tx_buffer) { tx_buffer.pid_out = pid_out; }
 
 /**
  * @brief 上行发送函数（非阻塞 DMA）
