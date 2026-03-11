@@ -18,6 +18,7 @@ typedef enum {
   kNoForce,      // 无力模式
   kTest,         // 调试模式
   kMatch,        // 比赛模式
+
   kGbRemote,     // 云台遥控模式
   kGbAimbot,     // 云台自瞄模式
 } StateMachineType;
