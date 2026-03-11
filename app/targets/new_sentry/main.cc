@@ -256,10 +256,16 @@ void GlobalWarehouse::SubLoop500Hz() {
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }
+  f32 shoot_initial_speed;
+  if (referee_data->data().shoot_data.initial_speed >= 22.f && referee_data->data().shoot_data.initial_speed <= 26.f) {
+    shoot_initial_speed = referee_data->data().shoot_data.initial_speed;
+  } else {
+    shoot_initial_speed = 24.0f;
+  }
   globals->aimbot_communicator->UpdateControl(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(),
                                               -globals->hipnuc_imu->roll(),
                                               referee_data->data().robot_status.robot_id, globals->aim_mode,
-                                              globals->imu_count, referee_data->data().shoot_data.initial_speed);
+                                              globals->imu_count, shoot_initial_speed);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
