@@ -109,6 +109,8 @@ inline struct GlobalWarehouse {
 
   void RCStateUpdate();
 
+  void ChassisStateUpdate();
+
   void Music();
 } *globals;
 

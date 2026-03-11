@@ -156,6 +156,48 @@ void GlobalWarehouse::RCStateUpdate() {
   // }
 }
 
+
+void GlobalWarehouse::ChassisStateUpdate() {
+  globals->chassis_move_x = static_cast<i8>(rm::modules::Clamp(
+      static_cast<f32>(globals->rc->right_x()) / 660.f -
+          (globals->rc->key(rm::device::DR16::Key::kA) || globals->image_data_->data().keyboard_key >> 2 & 0x01 ? 1.f
+                                                                                                                : 0.f) +
+          (globals->rc->key(rm::device::DR16::Key::kD) || globals->image_data_->data().keyboard_key >> 3 & 0x01 ? 1.f
+                                                                                                                : 0.f),
+      -1.f, 1.f));
+  globals->chassis_move_y = static_cast<i8>(rm::modules::Clamp(
+      static_cast<f32>(globals->rc->right_y()) / 660.f +
+          (globals->rc->key(rm::device::DR16::Key::kW) || globals->image_data_->data().keyboard_key >> 0 & 0x01 ? 1.f
+                                                                                                                : 0.f) -
+          (globals->rc->key(rm::device::DR16::Key::kS) || globals->image_data_->data().keyboard_key >> 1 & 0x01 ? 1.f
+                                                                                                                : 0.f),
+      -1.f, 1.f));
+
+  globals->ui_refresh_flag =  // UI
+      globals->rc->key(rm::device::DR16::Key::kR) || globals->image_data_->data().keyboard_key >> 8 & 0x01 ? 1 : 0;
+  globals->get_target_flag = globals->aimbot_communicator->aimbot_state() >> 0 & 0x01;
+  globals->suggest_fire_flag = globals->aimbot_communicator->aimbot_state() >> 1 & 0x01;
+
+  if (globals->rc->key(rm::device::DR16::Key::kCtrl) ? true : globals->image_data_->data().keyboard_key >> 5 & 0x01) {
+    if (globals->rc->key(rm::device::DR16::Key::kV) ? true : globals->image_data_->data().keyboard_key >> 14 & 0x01) {
+      globals->aim_speed_change_flag = -1;
+    } else if (globals->aim_speed_change_flag == -1) {
+      globals->aim_speed_change--;
+      if (globals->aim_speed_change < -10) globals->aim_speed_change = -10;
+      globals->aim_speed_change_flag = 0;
+    }
+    if (globals->rc->key(rm::device::DR16::Key::kB) ? true : globals->image_data_->data().keyboard_key >> 15 & 0x01) {
+      globals->aim_speed_change_flag = 1;
+    } else if (globals->aim_speed_change_flag == 1) {
+      globals->aim_speed_change++;
+      if (globals->aim_speed_change > 10) globals->aim_speed_change = 10;
+      globals->aim_speed_change_flag = 0;
+    }
+  }
+  globals->chassis_state |= 1u << 0;
+
+}
+
 void GlobalWarehouse::Music() {
   if (globals->rc->dial() >= 650) {
     globals->music_play_flag = true;
@@ -217,6 +259,7 @@ void GlobalWarehouse::SubLoop500Hz() {
       globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,
       globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change);
   globals->RCStateUpdate();
+  globals->ChassisStateUpdate();
   gimbal->GimbalTask();
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
