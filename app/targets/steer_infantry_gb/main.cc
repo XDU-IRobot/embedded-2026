@@ -174,15 +174,15 @@ void GlobalWarehouse::ChassisStateUpdate() {
   globals->get_target_flag = globals->aimbot_communicator->aimbot_state() >> 0 & 0x01;
   globals->suggest_fire_flag = globals->aimbot_communicator->aimbot_state() >> 1 & 0x01;
   // 弹速调整
-  if (globals->rc->key(rm::device::DR16::Key::kCtrl) ? true : globals->image_data_->data().keyboard_key >> 5 & 0x01) {
-    if (globals->rc->key(rm::device::DR16::Key::kV) ? true : globals->image_data_->data().keyboard_key >> 14 & 0x01) {
+  if (globals->rc->key(rm::device::DR16::Key::kCtrl) || globals->image_data_->data().keyboard_key >> 5 & 0x01) {
+    if (globals->rc->key(rm::device::DR16::Key::kV) || globals->image_data_->data().keyboard_key >> 14 & 0x01) {
       globals->aim_speed_change_flag = -1;
     } else if (globals->aim_speed_change_flag == -1) {
       globals->aim_speed_change--;
       if (globals->aim_speed_change < -10) globals->aim_speed_change = -10;
       globals->aim_speed_change_flag = 0;
     }
-    if (globals->rc->key(rm::device::DR16::Key::kB) ? true : globals->image_data_->data().keyboard_key >> 15 & 0x01) {
+    if (globals->rc->key(rm::device::DR16::Key::kB) || globals->image_data_->data().keyboard_key >> 15 & 0x01) {
       globals->aim_speed_change_flag = 1;
     } else if (globals->aim_speed_change_flag == 1) {
       globals->aim_speed_change++;
@@ -208,7 +208,38 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= 0u << 1;
     globals->chassis_state &= 0u << 2;
   }
+  // 高速模式
+  if (globals->rc->key(rm::device::DR16::Key::kC) || globals->image_data_->data().keyboard_key >> 13 & 0x01) {
+    globals->speed_change_flag = true;
+  } else if (globals->speed_change_flag == 1) {
+    globals->speed_change_flag = false;
+    globals->chassis_state ^= 1u << 3;
+  }
+  if ((globals->rc->key(rm::device::DR16::Key::kF) || globals->image_data_->data().keyboard_key >> 9 & 0x01) &&
+      !globals->xf_state) {
+    globals->df_flag = true;
+  } else if (globals->df_flag) {
+    globals->df_flag = false;
+    globals->df_state ^= true;
+  }
+  if ((globals->rc->key(rm::device::DR16::Key::kG) || globals->image_data_->data().keyboard_key >> 10 & 0x01) &&
+      !globals->df_state) {
+    globals->xf_flag = true;
+  } else if (globals->xf_flag) {
+    globals->xf_flag = false;
+    globals->xf_state ^= true;
+  }
 
+  if (globals->df_state) {
+    globals->chassis_state |= 1u << 4;
+    globals->chassis_state &= 0u << 5;
+  } else if (globals->xf_state) {
+    globals->chassis_state |= 1u << 5;
+    globals->chassis_state &= 0u << 4;
+  } else {
+    globals->chassis_state &= 0u << 4;
+    globals->chassis_state &= 0u << 5;
+  }
 }
 
 void GlobalWarehouse::Music() {

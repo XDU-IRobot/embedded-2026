@@ -19,8 +19,8 @@ typedef enum {
   kTest,         // 调试模式
   kMatch,        // 比赛模式
 
-  kGbRemote,     // 云台遥控模式
-  kGbAimbot,     // 云台自瞄模式
+  kGbRemote,  // 云台遥控模式
+  kGbAimbot,  // 云台自瞄模式
 } StateMachineType;
 
 inline struct GlobalWarehouse {
@@ -83,7 +83,9 @@ inline struct GlobalWarehouse {
   int8_t aim_speed_change_flag = 0;  // 弹速调整标志位
   bool music_play_flag = false;      // 音乐播放标识位
   bool music_change_flag = false;    // 音乐改动标识位
-  bool USB_selection = false;        // 选择发送不同的usb数据
+  bool speed_change_flag = false;    // 速度调整标志位
+  bool df_flag, df_state;       // 大符标志位和状态
+  bool xf_flag, xf_state;       // 小符标志位和状态
 
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
