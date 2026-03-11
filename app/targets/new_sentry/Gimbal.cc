@@ -1,5 +1,7 @@
 #include "Gimbal.hpp"
 
+f32 a, b, c, d;
+
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
@@ -13,6 +15,10 @@ void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
   gimbal->heat_limit_ = globals->referee_data->data().robot_status.shooter_barrel_heat_limit;
   gimbal->heat_current_ = globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat;
+  a = globals->hipnuc_imu->yaw();
+  b = globals->hipnuc_imu->pitch();
+  c = globals->aimbot_communicator->yaw() / 180.0f * 3.14159f;
+  d = globals->aimbot_communicator->pitch() / 180.0f * 3.14159f;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -86,9 +92,9 @@ void Gimbal::GimbalScanTargetUpdate() {
     gimbal->scan_yaw_flag_ = false;
   }
   if (gimbal->scan_yaw_flag_) {
-    gimbal->gimbal_up_yaw_target_ -= 0.002f;
+    gimbal->gimbal_up_yaw_target_ -= 0.003f;
   } else {
-    gimbal->gimbal_up_yaw_target_ += 0.002f;
+    gimbal->gimbal_up_yaw_target_ += 0.003f;
   }
   // 基于下部yaw轴转速增减上部yaw轴转速
   if (gimbal->GimbalMove_ == kGbNavigate) {
@@ -116,7 +122,8 @@ void Gimbal::GimbalScanTargetUpdate() {
   if (globals->NucControl.scan_mode || globals->navigate_communicator->scan_mode()) {
     gimbal->GimbalMove_ = kGbScan;
   } else {
-    gimbal->GimbalMove_ = kGbNavigate;
+    gimbal->GimbalMove_ = kGbScan;
+    // gimbal->GimbalMove_ = kGbNavigate;
   }
   if (gimbal->perception_time_ > 0) {
     gimbal->perception_time_--;
@@ -166,10 +173,10 @@ void Gimbal::GimbalPerceptTargetUpdate() {
     gimbal->perception_time_ = 1000;
   }
   // pitch轴扫描
-  if (gimbal->gimbal_pitch_target_ >= gimbal->highest_aimbot_pitch_angle_) {
-    gimbal->scan_pitch_flag_ = true;
-  } else if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_pitch_angle_) {
+  if (gimbal->gimbal_pitch_target_ <= gimbal->highest_aimbot_pitch_angle_) {
     gimbal->scan_pitch_flag_ = false;
+  } else if (gimbal->gimbal_pitch_target_ >= gimbal->highest_pitch_angle_) {
+    gimbal->scan_pitch_flag_ = true;
   }
   if (gimbal->scan_pitch_flag_) {
     gimbal->gimbal_pitch_target_ -= 0.004f;
@@ -245,7 +252,8 @@ void Gimbal::GimbalMatchUpdate() {
     gimbal->GimbalMove_ = kGbAimbot;
     gimbal->percept_move_complete_ = true;
     gimbal->perception_time_ = 0;
-  } else if (globals->navigate_communicator->perception_flag() != 0x00 || !gimbal->percept_move_complete_) {
+  } else if ((globals->navigate_communicator->perception_flag() != 0x00 || !gimbal->percept_move_complete_) &&
+             gimbal->perception_time_ <= 0) {
     gimbal->GimbalMove_ = kGbPercept;
   } else if (globals->NucControl.scan_mode || globals->navigate_communicator->scan_mode()) {
     gimbal->GimbalMove_ = kGbScan;

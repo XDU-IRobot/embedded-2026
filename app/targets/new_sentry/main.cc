@@ -24,6 +24,7 @@ void MainLoop() {
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
+  rm::Sleep(std::chrono::milliseconds(100));  // 等待设备初始化完成
   globals = new GlobalWarehouse;
   gimbal = new Gimbal;
   chassis = new Chassis;
@@ -109,10 +110,10 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(320.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().up_yaw_speed.SetKp(300.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
-  gimbal_controller.pid().down_yaw_position.SetKp(50.0f).SetKi(0.0f).SetKd(2000).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_position.SetKp(35.0f).SetKi(0.0f).SetKd(2000).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(1.2f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(16.0f).SetKi(0.0f).SetKd(400.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(16.0f).SetKi(0.0f).SetKd(300.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(1.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
@@ -162,7 +163,7 @@ void GlobalWarehouse::RCStateUpdate() {
             break;
           case rm::device::DR16::SwitchPosition::kMid:
             globals->StateMachine_ = kTest;
-            gimbal->GimbalMove_ = kGbNavigate;
+            gimbal->GimbalMove_ = kGbScan;
             chassis->ChassisMove_ = kCsNavigate;
             break;
           case rm::device::DR16::SwitchPosition::kUp:

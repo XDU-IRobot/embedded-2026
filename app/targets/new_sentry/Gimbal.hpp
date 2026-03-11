@@ -13,8 +13,8 @@ inline class Gimbal {
 
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
  private:
-  rm::modules::TrajectoryLimiter up_yaw_move_limiter_{3.14, 15.70};
-  rm::modules::TrajectoryLimiter down_yaw_move_limiter_{3.14, 15.70};
+  rm::modules::TrajectoryLimiter up_yaw_move_limiter_{4.0f, 16.0f};
+  rm::modules::TrajectoryLimiter down_yaw_move_limiter_{4.0f, 16.0f};
 
   f32 gimbal_up_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据（编码器控制，弧度制，左正右负）
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，左正右负）
@@ -53,8 +53,8 @@ inline class Gimbal {
   const f32 highest_aimbot_pitch_angle_ = -0.3f;  // 云台上部yaw轴最大（弧度制）
   const f32 highest_pitch_angle_ = 0.6f;         // 云台pitch轴最高（弧度制）
   const f32 lowest_pitch_angle_ = -0.7f;         // 云台pitch轴最低（弧度制）
-  const u16 max_up_yaw_pos_ = 6000;              // 云台上部yaw轴最大（编码器值）
-  const u16 min_up_yaw_pos_ = 2100;              // 云台上部yaw轴最小（编码器值）
+  const u16 max_up_yaw_pos_ = 5500;              // 云台上部yaw轴最大（编码器值）
+  const u16 min_up_yaw_pos_ = 2600;              // 云台上部yaw轴最小（编码器值）
 
  public:
   void GimbalInit();
