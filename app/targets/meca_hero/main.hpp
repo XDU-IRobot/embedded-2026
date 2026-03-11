@@ -12,6 +12,7 @@
 /*-------------------------------------------------
  *变量
  */
+inline float follow_d=500;
 inline struct GlobalWarehouse {
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};      ///< CAN 总线接口
@@ -128,7 +129,8 @@ inline struct GlobalWarehouse {
     pid_pitch_velocity = new rm::modules::PID{9000, 3000, 10, 15000, 500};
 
     // 底盘随动
-    pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
+
+    pid_chassis_follow = new rm::modules::PID{15000, 2000, follow_d, 16000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);

@@ -9,6 +9,32 @@ int count = 0;
 int autoaim_update_count = 0;
 uint32_t System_time;
 
+
+
+// void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+//   if (huart->Instance == USART1) {
+//     // 1. 这一步至关重要：手动添加字符串结束符
+//     // Size 是硬件告诉你的实际收到的字节数
+//     rx_buffer[Size] = '\0';
+//
+//     // 2. 解析逻辑
+//     char type = rx_buffer[0];
+//     // 跳过第一个字母，直接解析后面的数字
+//     float val = atof(&rx_buffer[1]);
+//
+//     // 根据首字母更新 PID 参数
+//     switch (type) {
+//       case 'P': globals->gimbal->pos_pid.kp = val; break;
+//       case 'v': globals->gimbal->vel_pid.kp = val; break;
+//       case 'i': globals->gimbal->vel_pid.ki = val; break;
+//       case 'f': globals->gimbal->pitch_kg = val;   break;
+//     }
+//
+//     // 3. 重点：处理完后必须重新开启接收
+//     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t*)rx_buffer, 64);
+//   }
+// }
+
 void G_average() {
   if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.01 &&
       globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.01) {
@@ -39,8 +65,6 @@ void MainLoop() {
   MagazineControl();
   // 云台控制逻辑
   GimbalControl();
-  // VOFA
-
   // 发送DjiCAN信号
   rm::device::DjiMotorBase::SendCommand();
   if (autoaim_update_count == 1) {
@@ -58,7 +82,9 @@ extern "C" [[noreturn]] void AppMain(void) {
    */
   globals = new GlobalWarehouse;
   globals->Init();
-
+  // // 启动 DMA 接收到空闲中断
+  // // rx_buffer 建议开大一点，比如 64 字节
+  // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t*)rx_buffer, 64);
   // 启动 DMA 接收
   rm::hal::SerialRxCallbackFunction ref_rx_callback = [&](const std::vector<uint8_t> &data, uint16_t len) {
     for (int i = 0; i < len; i++) {
