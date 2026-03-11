@@ -96,17 +96,6 @@ void Gimbal::GimbalScanTargetUpdate() {
   } else {
     gimbal->gimbal_up_yaw_target_ += 0.003f;
   }
-  // 基于下部yaw轴转速增减上部yaw轴转速
-  if (gimbal->GimbalMove_ == kGbNavigate) {
-    gimbal->gimbal_up_yaw_target_ += rm::modules::Map(
-        rm::modules::Clamp(globals->NucControl.yaw_speed + globals->navigate_communicator->target_yaw_speed(), -1.0f,
-                           1.0f),
-        -1.0f, 1.0f, -0.01f, 0.01f);
-  } else {
-    gimbal->gimbal_up_yaw_target_ += 0.001f;
-  }
-  gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴周期限制
-                                                    -static_cast<f32>(M_PI), M_PI);
   // pitch轴扫描
   if (gimbal->gimbal_pitch_target_ <= gimbal->highest_aimbot_pitch_angle_) {
     gimbal->scan_pitch_flag_ = false;
@@ -137,6 +126,17 @@ void Gimbal::GimbalScanTargetUpdate() {
       gimbal->gimbal_down_yaw_target_ += 0.001f;
     }
   }
+  // 基于下部yaw轴转速增减上部yaw轴转速
+  if (gimbal->GimbalMove_ == kGbNavigate) {
+    gimbal->gimbal_up_yaw_target_ += rm::modules::Map(
+        rm::modules::Clamp(globals->NucControl.yaw_speed + globals->navigate_communicator->target_yaw_speed(), -1.0f,
+                           1.0f),
+        -1.0f, 1.0f, -0.01f, 0.01f);
+  } else {
+    gimbal->gimbal_up_yaw_target_ += 0.001f;
+  }
+  gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴周期限制
+                                                    -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
                                                       -static_cast<f32>(M_PI), M_PI);
 

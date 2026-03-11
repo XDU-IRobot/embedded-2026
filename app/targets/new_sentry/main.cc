@@ -143,9 +143,6 @@ void GlobalWarehouse::RCStateUpdate() {
             globals->StateMachine_ = kMatch;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
           case rm::device::DR16::SwitchPosition::kUp:
-            globals->StateMachine_ = kMatch;
-            gimbal->GimbalMove_ = kGbAimbot;
-            chassis->ChassisMove_ = kNoForce;
           case rm::device::DR16::SwitchPosition::kMid:
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
