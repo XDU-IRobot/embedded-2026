@@ -12,7 +12,6 @@
 #include "controllers/quad_omni_chassis.hpp"
 #include "controllers/shoot_3fric.hpp"
 
-#include "USB.hpp"
 #include "Referee.hpp"
 
 // 状态机
@@ -83,12 +82,6 @@ inline struct GlobalWarehouse {
   QuadOmniChassis chassis_controller;            ///< 四轮转向底盘控制器
   Shoot3Fric shoot_controller{8, 36.0f, false};  ///< 三摩擦轮发射机构控制器，8发拨盘
   EncoderCounter dail_encoder_counter;           ///< 云台 Yaw 下部电机位置计数器
-
-  // USB //
-  GimbalDataFrame_SCM_t GimbalData{0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0, 0};  ///< IMU数据
-  RefereeDataFrame_SCM_t RefereeData{0, 0, 0, 0, 0, 0, 0, 0, 0};               ///< 裁判系统数据
-  AimbotFrame_SCM_t Aimbot{0, 0, 0, 0, 0.0f, 0.0f, 0.0f, 0};                   ///< 自瞄数据
-  NucControlFrame_SCM_t NucControl{0, 0, 0.0, 0.0, 0.0, 0.0, false, 0};        ///< NUC控制数据
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   u_int8_t time = 0;                            // 时间

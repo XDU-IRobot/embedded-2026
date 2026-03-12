@@ -114,23 +114,23 @@ void Chassis::ChassisNavigateDataUpdate() {
   chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ - globals->down_yaw_motor->pos();
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
   chassis->chassis_receive_x_ =
-      rm::modules::Map(rm::modules::Clamp(globals->NucControl.vx + globals->navigate_communicator->chassis_target_x(),
+      rm::modules::Map(rm::modules::Clamp(globals->navigate_communicator->chassis_target_x(),
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
                        -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_,  //
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
   chassis->chassis_receive_y_ =
-      rm::modules::Map(rm::modules::Clamp(-globals->NucControl.vy - globals->navigate_communicator->chassis_target_y(),
+      rm::modules::Map(rm::modules::Clamp(-globals->navigate_communicator->chassis_target_y(),
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
                        -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_,  //
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
   chassis->chassis_target_w_ =
-      rm::modules::Map(rm::modules::Clamp(globals->NucControl.vw + globals->navigate_communicator->chassis_target_w(),
+      rm::modules::Map(rm::modules::Clamp(globals->navigate_communicator->chassis_target_w(),
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
                        -chassis->chassis_max_navigate_xyw_, chassis->chassis_max_navigate_xyw_,  //
                        -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
   if (std::abs(chassis->chassis_target_w_) > 0) {
     chassis->chassis_move_delta_angle_ =
-        -0.5f * rm::modules::Clamp(globals->NucControl.vw + globals->navigate_communicator->chassis_target_w(),
+        -0.5f * rm::modules::Clamp(globals->navigate_communicator->chassis_target_w(),
                                    -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_);
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) -
