@@ -13,7 +13,7 @@ void ChassisCommunicator::ParseRxData(const hal::CanFrame *msg) {
   heat_real_ = static_cast<u16>(msg->data[0]) << 8 | static_cast<u16>(msg->data[1]);
   cooling_speed_ = static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3]);
   heat_limit_ = static_cast<u16>(msg->data[4]) << 8 | static_cast<u16>(msg->data[5]);
-  ammo_speed_ = modules::IntToFloat(msg->data[6], 0.f, 32.f, 8); // modules::FloatToInt( , 0.f, 32.f, 8);
+  ammo_speed_ = modules::IntToFloat(msg->data[6], 0.f, 32.f, 8);  // modules::FloatToInt( , 0.f, 32.f, 8);
   robot_id_ = msg->data[7] & 0x01;
   gimbal_power_state_ = msg->data[7] >> 4 & 0x01;
   chassis_power_state_ = msg->data[7] >> 5 & 0x01;
