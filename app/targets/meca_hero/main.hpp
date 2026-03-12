@@ -13,18 +13,19 @@
 /*-------------------------------------------------
  *变量
  */
-inline float follow_d=500;
+inline float follow_d = 0;
+
 inline struct GlobalWarehouse {
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};      ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr};  ///< 遥控器串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr}; ///< CAN 总线接口
+  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}; ///< 遥控器串口接口
 
   // 设备 //
-  rm::device::DR16 *rc{nullptr};  ///< 遥控器
+  rm::device::DR16 *rc{nullptr}; ///< 遥控器
   // rm::device::GM6020 *yaw_motor{nullptr};                                              ///< 云台 Yaw 电机
   // rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *magazine_motor{nullptr};  ///< 云台 Pitch 电机
-  rm::device::BMI088 *imu{nullptr};  ///< BMI088 IMU
-
+  rm::device::BMI088 *imu{nullptr}; ///< BMI088 IMU
+  rm::device::AimbotCanCommunicator *aimbot_can_communicator{nullptr};
   // 创建电机对象
   rm::device::M3508 *chassis_motor_1{nullptr};
   rm::device::M3508 *chassis_motor_2{nullptr};
@@ -67,7 +68,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_chassis_follow_pos{nullptr};
   rm::modules::PID *pid_chassis_follow_vel{nullptr};
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{831.68f};  ///< mahony 姿态解算器，频率 1000Hz 831.68
+  rm::modules::MahonyAhrs ahrs{831.68f}; ///< mahony 姿态解算器，频率 1000Hz 831.68
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
@@ -83,8 +84,9 @@ inline struct GlobalWarehouse {
     can2 = new rm::hal::Can{hcan2};
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     uart6 = new rm::hal::Serial{huart6, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
     // 遥控
-    rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
+    rc = new rm::device::DR16{*dbus}; // 设置了遥控器以及串口
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     /*------*/
@@ -114,8 +116,8 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{20, 2, 4, 18000, 2};
     pid_chassis_4 = new rm::modules::PID{20, 2, 4, 18000, 2};
 
-    pid_shooter_1 = new rm::modules::PID{25, 2, 4, 10000, 2};  // 20
-    pid_shooter_2 = new rm::modules::PID{25, 2, 4, 10000, 2};  // 20
+    pid_shooter_1 = new rm::modules::PID{25, 2, 4, 10000, 2}; // 20
+    pid_shooter_2 = new rm::modules::PID{25, 2, 4, 10000, 2}; // 20
     pid_shooter_3 = new rm::modules::PID{25, 2, 4, 10000, 2};
     pid_shooter_4 = new rm::modules::PID{25, 2, 4, 10000, 2};
     pid_shooter_5 = new rm::modules::PID{25, 2, 4, 10000, 2};
@@ -131,7 +133,8 @@ inline struct GlobalWarehouse {
 
     // 底盘随动
 
-    pid_chassis_follow_pos = new rm::modules::PID{15000, 2000, follow_d, 16000, 0};
+    pid_chassis_follow_pos = new rm::modules::PID{20, 0, 0, 4, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{4000, 0, follow_d, 16000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
@@ -149,7 +152,7 @@ inline struct GlobalWarehouse {
     can1->Begin();
     can2->SetFilter(0, 0);
     can2->Begin();
-    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+    rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
   }
 } *globals;
 ;
@@ -179,7 +182,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4600;
-inline rm::i16 V_shooter_2 = -4150;  // 12m/s
+inline rm::i16 V_shooter_2 = -4150; // 12m/s
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;
@@ -228,7 +231,7 @@ enum class autoaim_state { kAutoAim_Disable, kAutoAim_Enable, kAutoAim_FIRE };
 inline rm::f32 aimbot_pitch;
 inline rm::f32 aimbot_yaw;
 inline int aimbot_state_flag = 0;
-inline int aimbot_TO = 500;
+inline int imu_count = 0;
 /*----------------------------------------------
  *执行函数
  */
@@ -246,6 +249,7 @@ void ChassisPower();
 void Referee();
 // 自瞄更新
 void AutoaimUpdate();
+void CANAutoaimUpdate();
 // VOFA监测
 void VOFA();
 // 随动监测

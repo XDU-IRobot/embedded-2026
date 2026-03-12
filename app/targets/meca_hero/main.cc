@@ -2,14 +2,7 @@
 #include "timer_task.hpp"
 #include "tim.h"
 #include <librm.hpp>
-#include "can.h"
-#include "usart.h"
-#include "spi.h"
-#include "timer_task.hpp"
 #include "buzzer_controller.hpp"
-#include "usbd_cdc_if.h"
-#include "VOFA.hpp"
-#include "aimbot_comm_can.hpp"
 rm::f32 pitch;
 rm::f32 yaw;
 
@@ -46,7 +39,7 @@ uint32_t System_time;
 
 void G_average() {
   if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.01 &&
-      globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.01) {
+      globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.011) {
     sum += globals->gyro_z_filter.apply(globals->imu->gyro_z());
     count++;
   }
@@ -77,7 +70,8 @@ void MainLoop() {
   // 发送DjiCAN信号
   rm::device::DjiMotorBase::SendCommand();
   if (autoaim_update_count == 1) {
-    AutoaimUpdate();
+    // AutoaimUpdate();
+    CANAutoaimUpdate();
     VOFA();
     autoaim_update_count = 0;
   } else {

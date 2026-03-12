@@ -1,5 +1,5 @@
-#ifndef CAN_HPP
-#define CAN_HPP
+#ifndef AIMBOT_CAN_HPP
+#define AIMBOT_CAN_HPP
 
 #include <librm.hpp>
 
@@ -17,7 +17,9 @@ class AimbotCanCommunicator final : public CanDevice {
   [[nodiscard]] f32 pitch() const;
   [[nodiscard]] u8 nuc_start_flag() const;
 
-  void UpdateControl(f32 w, f32 x, f32 y, f32 z, u8 robot_id, u8 mode, u16 imu_count, f32 bullet_speed);
+  void UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot_id, u8 mode, u16 imu_count, f32 bullet_speed);
+  void UpdateQuaternion(f32 w, f32 x, f32 y, f32 z);
+  void UpdateControlFlag(u8 robot_id, u8 mode, u16 imu_count, u32 imu_time);
   void RxCallback(const hal::CanFrame *msg) override;
 
  private:
@@ -32,4 +34,4 @@ class AimbotCanCommunicator final : public CanDevice {
 };
 }  // namespace rm::device
 
-#endif  // CAN_HPP
+#endif  // AIMBOT_CAN_HPP
