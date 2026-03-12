@@ -257,9 +257,9 @@ void GimbalControl() {
     //-aimbot.USB_Rx.PitchRelativeAngle;usb
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003; // ≈0.003/per
+                      static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003;  // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033); // 0.00033/per
+                        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033);  // 0.00033/per
   }
 
   // target_pos_yaw
@@ -306,8 +306,8 @@ void GimbalControl() {
     globals->gimbal_motor_pitch->SetCurrent(0);
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
-        static_cast<int16_t>((1.7 + 1.3 * globals->ahrs.euler_angle().pitch) * pitch_ff)
-        + (globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
+        static_cast<int16_t>((1.7 + 1.3 * globals->ahrs.euler_angle().pitch) * pitch_ff) +
+        (globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
   }
 
   // HAL_Delay(0);
@@ -337,7 +337,7 @@ void ChassisPower() {
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
-                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+                                            0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out());
@@ -394,12 +394,12 @@ void ChassisPower() {
   float buffer_energy = globals->ref.data().buff.remaining_energy;
   if (overpower_count > 0) {
     // 超功率
-    power_limit = 60000; // 随便给的
+    power_limit = 60000;  // 随便给的
     overpower_count--;
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                    ? 50
-                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                      ? 50
+                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
@@ -427,7 +427,6 @@ void AutoaimUpdate() {
   aimbot_yaw = aimbot.USB_Rx.YawRelativeAngle;
   aimbot_state_flag = aimbot.USB_Rx.AimbotState * 5;
 }
-
 
 void CANAutoaimUpdate() {
   if (imu_count >= 10000) {

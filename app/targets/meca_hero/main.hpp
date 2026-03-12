@@ -17,14 +17,14 @@ inline float follow_d = 0;
 
 inline struct GlobalWarehouse {
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr}; ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}; ///< 遥控器串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};      ///< CAN 总线接口
+  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr};  ///< 遥控器串口接口
 
   // 设备 //
-  rm::device::DR16 *rc{nullptr}; ///< 遥控器
+  rm::device::DR16 *rc{nullptr};  ///< 遥控器
   // rm::device::GM6020 *yaw_motor{nullptr};                                              ///< 云台 Yaw 电机
   // rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *magazine_motor{nullptr};  ///< 云台 Pitch 电机
-  rm::device::BMI088 *imu{nullptr}; ///< BMI088 IMU
+  rm::device::BMI088 *imu{nullptr};  ///< BMI088 IMU
   rm::device::AimbotCanCommunicator *aimbot_can_communicator{nullptr};
   // 创建电机对象
   rm::device::M3508 *chassis_motor_1{nullptr};
@@ -68,7 +68,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_chassis_follow_pos{nullptr};
   rm::modules::PID *pid_chassis_follow_vel{nullptr};
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{831.68f}; ///< mahony 姿态解算器，频率 1000Hz 831.68
+  rm::modules::MahonyAhrs ahrs{831.68f};  ///< mahony 姿态解算器，频率 1000Hz 831.68
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
@@ -86,7 +86,7 @@ inline struct GlobalWarehouse {
     uart6 = new rm::hal::Serial{huart6, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
     // 遥控
-    rc = new rm::device::DR16{*dbus}; // 设置了遥控器以及串口
+    rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     /*------*/
@@ -116,8 +116,8 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{20, 2, 4, 18000, 2};
     pid_chassis_4 = new rm::modules::PID{20, 2, 4, 18000, 2};
 
-    pid_shooter_1 = new rm::modules::PID{25, 2, 4, 10000, 2}; // 20
-    pid_shooter_2 = new rm::modules::PID{25, 2, 4, 10000, 2}; // 20
+    pid_shooter_1 = new rm::modules::PID{25, 2, 4, 10000, 2};  // 20
+    pid_shooter_2 = new rm::modules::PID{25, 2, 4, 10000, 2};  // 20
     pid_shooter_3 = new rm::modules::PID{25, 2, 4, 10000, 2};
     pid_shooter_4 = new rm::modules::PID{25, 2, 4, 10000, 2};
     pid_shooter_5 = new rm::modules::PID{25, 2, 4, 10000, 2};
@@ -152,7 +152,7 @@ inline struct GlobalWarehouse {
     can1->Begin();
     can2->SetFilter(0, 0);
     can2->Begin();
-    rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
   }
 } *globals;
 ;
@@ -182,7 +182,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4600;
-inline rm::i16 V_shooter_2 = -4150; // 12m/s
+inline rm::i16 V_shooter_2 = -4150;  // 12m/s
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;

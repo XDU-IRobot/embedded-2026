@@ -11,8 +11,6 @@ int count = 0;
 int autoaim_update_count = 0;
 uint32_t System_time;
 
-
-
 // void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 //   if (huart->Instance == USART1) {
 //     // 1. 这一步至关重要：手动添加字符串结束符
