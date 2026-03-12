@@ -46,10 +46,12 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+#ifdef MECA_HERO
 uint8_t UserRxBuf[64];
 uint8_t UserRxLen;
 uint8_t UserTxBuf[64];
 uint8_t UserTxLen;
+#endif
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -293,13 +295,14 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 #ifdef ALGORITHM_ENROLL_TEST
   UsbReceive(Buf, (uint8_t)*Len);
 #endif
-
+#ifdef MECA_HERO
   if(*Len == 25){
     memcpy(UserRxBuf, Buf, *Len);
     UserRxLen = *Len;
     // aimofflinecount = 0;
   }
   return (USBD_OK);
+#endif
   /* USER CODE END 6 */
 }
 

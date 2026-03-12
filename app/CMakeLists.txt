@@ -45,6 +45,5 @@ target_compile_definitions(dart_rack PRIVATE DART_RACK)
 
 #麦轮英雄底盘
 file(GLOB_RECURSE MECA_HERO_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/meca_hero/*.cc)
-list(APPEND MECA_HERO_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/meca_hero/VOFA.cc)  # 显式添加 VOFA.cc
 add_exe_target(meca_hero "${MECA_HERO_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(meca_hero PRIVATE MECA_HERO)

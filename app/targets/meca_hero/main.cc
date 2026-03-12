@@ -1,6 +1,15 @@
 #include "main.hpp"
 #include "timer_task.hpp"
 #include "tim.h"
+#include <librm.hpp>
+#include "can.h"
+#include "usart.h"
+#include "spi.h"
+#include "timer_task.hpp"
+#include "buzzer_controller.hpp"
+#include "usbd_cdc_if.h"
+#include "VOFA.hpp"
+#include "aimbot_comm_can.hpp"
 rm::f32 pitch;
 rm::f32 yaw;
 

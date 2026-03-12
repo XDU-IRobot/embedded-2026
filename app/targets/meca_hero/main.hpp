@@ -9,6 +9,7 @@
 #include "buzzer_controller.hpp"
 #include "usbd_cdc_if.h"
 #include "VOFA.hpp"
+#include "aimbot_comm_can.hpp"
 /*-------------------------------------------------
  *变量
  */
@@ -63,8 +64,8 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_pitch_velocity{nullptr};
 
   // 底盘随动
-  rm::modules::PID *pid_chassis_follow{nullptr};
-
+  rm::modules::PID *pid_chassis_follow_pos{nullptr};
+  rm::modules::PID *pid_chassis_follow_vel{nullptr};
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{831.68f};  ///< mahony 姿态解算器，频率 1000Hz 831.68
   // 底盘功率检测
@@ -130,7 +131,7 @@ inline struct GlobalWarehouse {
 
     // 底盘随动
 
-    pid_chassis_follow = new rm::modules::PID{15000, 2000, follow_d, 16000, 0};
+    pid_chassis_follow_pos = new rm::modules::PID{15000, 2000, follow_d, 16000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
@@ -227,7 +228,7 @@ enum class autoaim_state { kAutoAim_Disable, kAutoAim_Enable, kAutoAim_FIRE };
 inline rm::f32 aimbot_pitch;
 inline rm::f32 aimbot_yaw;
 inline int aimbot_state_flag = 0;
-inline int aimbot_OT = 500;
+inline int aimbot_TO = 500;
 /*----------------------------------------------
  *执行函数
  */

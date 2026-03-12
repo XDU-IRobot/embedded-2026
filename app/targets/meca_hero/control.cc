@@ -2,6 +2,8 @@
 #include "Aimbot.h"
 #include "usbd_cdc_if.h"
 #include "VOFA.hpp"
+#include "aimbot_comm_can.hpp"
+inline device::AimbotCanCommunicator aimbot_can_communicator(*globals->can1);
 
 void MagazineControl() {
   // 失能
@@ -247,12 +249,17 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
-  if (aimbot_state_flag > 0 &&
+  if (aimbot_state_flag > 0 && aimbot_TO>0 &&
       (globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_right())) {
-    target_pos_yaw = -aimbot.USB_Rx.YawRelativeAngle;
-    target_pos_pitch = -aimbot.USB_Rx.PitchRelativeAngle;
-    if (aimbot_OT != 0) {
-      aimbot_OT--;
+    target_pos_yaw = -aimbot_can_communicator.yaw();
+    //-aimbot.USB_Rx.YawRelativeAngle;usb
+    target_pos_pitch = -aimbot_can_communicator.pitch();
+    //-aimbot.USB_Rx.PitchRelativeAngle;usb
+    if (aimbot_TO != 0) {
+      aimbot_TO--;
+    }
+    if (aimbot_state_flag!=0) {
+      aimbot_state_flag--;
     }
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
@@ -305,7 +312,8 @@ void GimbalControl() {
     globals->gimbal_motor_pitch->SetCurrent(0);
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
-        static_cast<int16_t>((1+globals->ahrs.euler_angle().pitch)*pitch_ff)/*(globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
+        static_cast<int16_t>((1 + globals->ahrs.euler_angle().pitch) * pitch_ff)
+        /*(globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
   }
 
   // HAL_Delay(0);
@@ -333,10 +341,10 @@ void ChassisPower() {
 
   // 底盘随动
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
-    globals->pid_chassis_follow->SetCircular(true).SetCircularCycle(3.141593 * 2);
-    globals->pid_chassis_follow->Update(1.54, globals->gimbal_motor_yaw->pos(),
-                                        0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
-    Vw = static_cast<rm::i16>(globals->pid_chassis_follow->out());
+    globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
+    globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
+                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+    Vw = static_cast<rm::i16>(globals->pid_chassis_follow_pos->out());
   } else {
     Vw = 0;
   }
@@ -421,7 +429,14 @@ void AutoaimUpdate() {
   aimbot.Receive(UserRxBuf, UserRxLen);
   aimbot_pitch = aimbot.USB_Rx.PitchRelativeAngle;
   aimbot_yaw = aimbot.USB_Rx.YawRelativeAngle;
-  aimbot_state_flag = aimbot.USB_Rx.AimbotState * 500;
+  aimbot_state_flag = aimbot.USB_Rx.AimbotState*5;
+}
+
+
+void CANAutoaimUpdate() {
+  aimbot_can_communicator.UpdateControl(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
+                                        globals->ahrs.quaternion().y, globals->ahrs.quaternion().z,
+                                        1, 0, 1, shooter_4);
 }
 
 Vofa_TxFrame pitch_V_pid;
