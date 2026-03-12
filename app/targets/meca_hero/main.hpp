@@ -133,8 +133,8 @@ inline struct GlobalWarehouse {
 
     // 底盘随动
 
-    pid_chassis_follow_pos = new rm::modules::PID{20, 0, 0, 4, 0};
-    pid_chassis_follow_vel = new rm::modules::PID{4000, 0, follow_d, 16000, 0};
+    pid_chassis_follow_pos = new rm::modules::PID{20, 0, 0, 3, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{2000, 0, follow_d, 16000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
