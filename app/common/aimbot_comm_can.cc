@@ -25,7 +25,6 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
   }
 }
 
-
 void AimbotCanCommunicator::UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot_id, u8 mode, u16 imu_count,
                                           f32 bullet_speed) {
   tx_buf_[0] = modules::F32ToF16(yaw) >> 8;
@@ -38,7 +37,7 @@ void AimbotCanCommunicator::UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot
   const u8 mode_bits = mode & 0x3;                       // 最低 2 位
   const u8 imu_bits = static_cast<u8>(imu_count) & 0xF;  // 最低 4 位
 
-  tx_buf_[6] = static_cast<u8>( id_bit << 6 | mode_bits << 4 | imu_bits);
+  tx_buf_[6] = static_cast<u8>(id_bit << 6 | mode_bits << 4 | imu_bits);
   tx_buf_[7] = modules::FloatToInt(bullet_speed, 0.f, 32.f, 8);
 
   this->can_->Write(0x150, tx_buf_, 8);

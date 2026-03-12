@@ -77,8 +77,7 @@ void RefereeDataSend() {
   globals->RefereeData.current_HP = globals->referee_data->data().robot_status.current_HP;
   globals->RefereeData.game_progress = globals->referee_data->data().game_status.game_progress;
   globals->RefereeData.remain_time = globals->referee_data->data().game_status.stage_remain_time;
-  globals->RefereeData.remain_bullet =
-      globals->referee_data->data().projectile_allowance.projectile_allowance_17mm;
+  globals->RefereeData.remain_bullet = globals->referee_data->data().projectile_allowance.projectile_allowance_17mm;
   globals->RefereeData.robot_id = globals->referee_data->data().robot_status.robot_id > 100 ? 1 : 0;
   USBSendMessage(reinterpret_cast<uint8_t *>(&globals->RefereeData), sizeof(globals->RefereeData), 0x07);
 }

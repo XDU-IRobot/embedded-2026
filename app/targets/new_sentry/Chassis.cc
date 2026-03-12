@@ -17,8 +17,8 @@ void Chassis::ChassisTask() {
 
 void Chassis::ChassisStateUpdate() {
   if (
-          // !globals->referee_data->data().robot_status.power_management_chassis_output ||
-          !globals->device_chassis.all_device_ok()) {
+      // !globals->referee_data->data().robot_status.power_management_chassis_output ||
+      !globals->device_chassis.all_device_ok()) {
     chassis->ChassisMove_ = kUnable;
   } else {
     switch (globals->StateMachine_) {

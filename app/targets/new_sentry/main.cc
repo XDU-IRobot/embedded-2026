@@ -221,9 +221,9 @@ void GlobalWarehouse::Music() {
 void GlobalWarehouse::SubLoop500Hz() {
   // const u32 imu_time = HAL_GetTick();
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{
-      globals->imu->gyro_x(), globals->imu->gyro_y(), globals->imu->gyro_z() - 0.0015f,
-      globals->imu->accel_x(), globals->imu->accel_y(), globals->imu->accel_z()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
+                                                globals->imu->gyro_z() - 0.0015f, globals->imu->accel_x(),
+                                                globals->imu->accel_y(), globals->imu->accel_z()});
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   chassis->ChassisTask();
@@ -260,9 +260,8 @@ void GlobalWarehouse::SubLoop500Hz() {
     shoot_initial_speed = 24.0f;
   }
   globals->aimbot_communicator->UpdateControl(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(),
-                                              -globals->hipnuc_imu->roll(),
-                                              referee_data->data().robot_status.robot_id, globals->aim_mode,
-                                              globals->imu_count, shoot_initial_speed);
+                                              -globals->hipnuc_imu->roll(), referee_data->data().robot_status.robot_id,
+                                              globals->aim_mode, globals->imu_count, shoot_initial_speed);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
 }

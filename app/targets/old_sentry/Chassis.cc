@@ -208,8 +208,8 @@ void Chassis::PowerLimitLoop() {
   if (globals->referee_data->data().power_heat_data.buffer_energy < 10) {
     chassis->k_speed_power_limit_ = 0.0f;
   } else if (globals->referee_data->data().power_heat_data.buffer_energy < 60) {
-    chassis->k_speed_power_limit_ = static_cast<f32>(
-        pow(static_cast<f32>(globals->referee_data->data().power_heat_data.buffer_energy) / 60.0f, 2));
+    chassis->k_speed_power_limit_ =
+        static_cast<f32>(pow(static_cast<f32>(globals->referee_data->data().power_heat_data.buffer_energy) / 60.0f, 2));
   } else {
     chassis->k_speed_power_limit_ = 1.0f;
   }
