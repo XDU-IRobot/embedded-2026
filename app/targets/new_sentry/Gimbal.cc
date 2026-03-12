@@ -1,7 +1,5 @@
 #include "Gimbal.hpp"
 
-f32 a, b, c, d;
-
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
@@ -15,10 +13,6 @@ void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
   gimbal->heat_limit_ = globals->referee_data->data().robot_status.shooter_barrel_heat_limit;
   gimbal->heat_current_ = globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat;
-  a = globals->hipnuc_imu->yaw();
-  b = globals->hipnuc_imu->pitch();
-  c = globals->aimbot_communicator->yaw() / 180.0f * 3.14159f;
-  d = globals->aimbot_communicator->pitch() / 180.0f * 3.14159f;
 }
 
 void Gimbal::GimbalStateUpdate() {
