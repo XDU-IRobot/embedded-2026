@@ -92,9 +92,9 @@ void Gimbal::GimbalScanTargetUpdate() {
     gimbal->scan_yaw_flag_ = false;
   }
   if (gimbal->scan_yaw_flag_) {
-    gimbal->gimbal_up_yaw_target_ -= 0.003f;
+    gimbal->gimbal_up_yaw_target_ -= 0.0025f;
   } else {
-    gimbal->gimbal_up_yaw_target_ += 0.003f;
+    gimbal->gimbal_up_yaw_target_ += 0.0025f;
   }
   // pitch轴扫描
   if (gimbal->gimbal_pitch_target_ <= gimbal->highest_aimbot_pitch_angle_) {
@@ -103,16 +103,16 @@ void Gimbal::GimbalScanTargetUpdate() {
     gimbal->scan_pitch_flag_ = true;
   }
   if (gimbal->scan_pitch_flag_) {
-    gimbal->gimbal_pitch_target_ -= 0.004f;
+    gimbal->gimbal_pitch_target_ -= 0.005f;
   } else {
-    gimbal->gimbal_pitch_target_ += 0.004f;
+    gimbal->gimbal_pitch_target_ += 0.005f;
   }
   // 下部yaw轴扫描
   if (globals->NucControl.scan_mode || globals->navigate_communicator->scan_mode()) {
     gimbal->GimbalMove_ = kGbScan;
   } else {
-    gimbal->GimbalMove_ = kGbScan;
-    // gimbal->GimbalMove_ = kGbNavigate;
+    // gimbal->GimbalMove_ = kGbScan;
+    gimbal->GimbalMove_ = kGbNavigate;
   }
   if (gimbal->perception_time_ > 0) {
     gimbal->perception_time_--;
@@ -186,54 +186,40 @@ void Gimbal::GimbalPerceptTargetUpdate() {
 }
 
 void Gimbal::GimbalAimbotTargetUpdate() {
-  if (globals->Aimbot.AimbotState >> 0 & 0x01) {
-    gimbal->gimbal_up_yaw_target_ = rm::modules::Map(rm::modules::Wrap(globals->Aimbot.Yaw, -180.0f, 180.0f),  //
-                                                     0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
-    gimbal->gimbal_pitch_target_ =
-        rm::modules::Wrap(rm::modules::Map(globals->Aimbot.Pitch, 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-                          -static_cast<f32>(M_PI), M_PI);
-    gimbal->GimbalDownYawFollow();
-    gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
-                                                        -static_cast<f32>(M_PI), M_PI);
-    gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
-                                                      gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
-  } else if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
-    gimbal->gimbal_up_yaw_target_ =
-        rm::modules::Map(rm::modules::Wrap(globals->aimbot_communicator->yaw(), -180.0f, 180.0f),  //
-                         0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
+  if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
+    if (globals->up_yaw_motor->encoder() >= gimbal->down_yaw_move_high_) {
+      gimbal->gimbal_down_yaw_target_ += 0.001;
+    } else if (globals->up_yaw_motor->encoder() <= gimbal->down_yaw_move_low_) {
+      gimbal->gimbal_down_yaw_target_ -= 0.001;
+    }
+    auto aimbot_target_yaw = rm::modules::Map(rm::modules::Wrap(globals->aimbot_communicator->yaw(), -180.0f, 180.0f),
+                                              0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
+    if ((globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ &&
+         aimbot_target_yaw >= globals->hipnuc_imu->yaw()) ||
+        (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ &&
+         aimbot_target_yaw <= globals->hipnuc_imu->yaw())) {
+      gimbal->gimbal_down_yaw_target_ =
+          aimbot_target_yaw - globals->hipnuc_imu->yaw() + globals->ahrs.euler_angle().yaw;
+      gimbal->down_yaw_move_limiter_.SetTarget(gimbal->gimbal_down_yaw_target_);
+      gimbal->gimbal_down_yaw_target_ = gimbal->down_yaw_move_limiter_.Update(0.002f);
+      gimbal->gimbal_down_yaw_target_ =
+          rm::modules::Wrap(gimbal->gimbal_down_yaw_target_, -static_cast<f32>(M_PI), M_PI);
+      if (gimbal->down_yaw_move_limiter_.IsAtTarget(0.001f)) {
+        gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
+      }
+    } else {
+      gimbal->gimbal_up_yaw_target_ = aimbot_target_yaw;
+      gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
+    }
     gimbal->gimbal_pitch_target_ = rm::modules::Wrap(
         rm::modules::Map(globals->aimbot_communicator->pitch(), 0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
         -static_cast<f32>(M_PI), M_PI);
-    gimbal->GimbalDownYawFollow();
-    gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
-                                                        -static_cast<f32>(M_PI), M_PI);
     gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
                                                       gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
-}
-
-void Gimbal::GimbalDownYawFollow() {
-  if ((globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() < 4000 &&
-       gimbal->gimbal_up_yaw_target_ >= globals->hipnuc_imu->yaw()) ||
-      (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ && globals->up_yaw_motor->encoder() > 4000 &&
-       gimbal->gimbal_up_yaw_target_ <= globals->hipnuc_imu->yaw())) {
-    gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
-    gimbal->gimbal_down_yaw_target_ =
-        gimbal->gimbal_up_yaw_target_ - globals->hipnuc_imu->yaw() + globals->ahrs.euler_angle().yaw;
-    // gimbal->up_yaw_move_limiter_.SetTarget(gimbal->gimbal_up_yaw_target_);
-    gimbal->down_yaw_move_limiter_.SetTarget(gimbal->gimbal_down_yaw_target_);
-    // gimbal->gimbal_up_yaw_target_ = gimbal->up_yaw_move_limiter_.Update(0.002f);
-    gimbal->gimbal_down_yaw_target_ = gimbal->down_yaw_move_limiter_.Update(0.002f);
-    // gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_,  // 上部yaw轴周期限制
-    //                                                   -static_cast<f32>(M_PI), M_PI);
-    gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_,  // 下部yaw轴周期限制
-                                                        -static_cast<f32>(M_PI), M_PI);
-  } else {
-    gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
-    gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
-  }
+  gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
 }
 
 void Gimbal::GimbalMovePIDUpdate() {

@@ -39,7 +39,7 @@ inline class Gimbal {
   bool max_angle_flag_ = false;     // 云台上部yaw轴最大角度标志
   bool min_angle_flag_ = false;     // 云台上部yaw轴最小角度标志
 
-  bool down_yaw_move_flag_ = false;  // 云台下部yaw轴目标数据刷新标志
+  bool down_yaw_move_flag_ = false;    // 云台下部yaw轴目标数据刷新标志
   bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
 
   bool scan_yaw_flag_ = false;    // 扫描yaw轴方向标识位
@@ -51,10 +51,12 @@ inline class Gimbal {
   bool XF_state_ = false;  // 小符状态
 
   const f32 highest_aimbot_pitch_angle_ = -0.3f;  // 云台上部yaw轴最大（弧度制）
-  const f32 highest_pitch_angle_ = 0.6f;         // 云台pitch轴最高（弧度制）
-  const f32 lowest_pitch_angle_ = -0.7f;         // 云台pitch轴最低（弧度制）
-  const u16 max_up_yaw_pos_ = 5500;              // 云台上部yaw轴最大（编码器值）
-  const u16 min_up_yaw_pos_ = 2600;              // 云台上部yaw轴最小（编码器值）
+  const f32 highest_pitch_angle_ = 0.6f;          // 云台pitch轴最高（弧度制）
+  const f32 lowest_pitch_angle_ = -0.7f;          // 云台pitch轴最低（弧度制）
+  const u16 max_up_yaw_pos_ = 5500;               // 云台上部yaw轴最大（编码器值）
+  const u16 min_up_yaw_pos_ = 2600;               // 云台上部yaw轴最小（编码器值）
+  const u16 down_yaw_move_high_ = 5200;            // 云台下部yaw轴运动高阈值（编码器值）
+  const u16 down_yaw_move_low_ = 2900;              // 云台下部yaw轴运动低阈值（编码器值）
 
  public:
   void GimbalInit();
@@ -71,8 +73,6 @@ inline class Gimbal {
   void GimbalPerceptTargetUpdate();
 
   void GimbalAimbotTargetUpdate();
-
-  void GimbalDownYawFollow();
 
   void GimbalMovePIDUpdate();
 
