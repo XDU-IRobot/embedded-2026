@@ -215,6 +215,7 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->speed_change_flag = false;
     globals->chassis_state ^= 1u << 3;
   }
+  // 打符模式切换
   if ((globals->rc->key(rm::device::DR16::Key::kF) || globals->image_data_->data().keyboard_key >> 9 & 0x01) &&
       !globals->xf_state) {
     globals->df_flag = true;
@@ -229,7 +230,6 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->xf_flag = false;
     globals->xf_state ^= true;
   }
-
   if (globals->df_state) {
     globals->chassis_state |= 1u << 4;
     globals->chassis_state &= 0u << 5;
@@ -273,7 +273,6 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_y(), globals->imu->gyro_z(),
                                                 globals->imu->gyro_x() + 0.0015f, globals->imu->accel_y(),
                                                 globals->imu->accel_z(), globals->imu->accel_x()});
-
   // 激光
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399u);
   // 硬触发
