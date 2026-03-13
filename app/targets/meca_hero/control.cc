@@ -446,6 +446,6 @@ void CustomClientUpdate() { globals->custom_client->Unpack(UserRxBuf, UserRxLen)
 Vofa_TxFrame pitch_V_pid;
 
 void VOFA() {
-  VOFA_Prepare_Package(globals->pid_yaw_position->out(), pitch_V_pid);
-  VOFA_Send_JustFloat_DMA(&huart1, pitch_V_pid);
+  // VOFA_Prepare_Package(globals->pid_yaw_position->out(), pitch_V_pid);
+  // VOFA_Send_JustFloat_DMA(&huart1, pitch_V_pid);
 }

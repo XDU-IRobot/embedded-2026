@@ -12,8 +12,8 @@ extern float yaw, pitch, roll;
 Aimbot aimbot;
 extern uint8_t UserTxBuf[64];
 void Aimbot::Send() {
-  memcpy(UserTxBuf, &USB_Tx, 33);
-  CDC_Transmit_FS((uint8_t *)&UserTxBuf, 33);
+  memcpy(UserTxBuf, &USB_Tx, 25);
+  CDC_Transmit_FS((uint8_t *)&UserTxBuf, 25);
 }
 
 void Aimbot::Prepare() {

@@ -259,4 +259,7 @@ void CustomClientUpdate();
 void VOFA();
 // 随动监测
 inline int follow;
+inline bool cc_mouse_l;
+inline int cc_mouse_x;
+inline bool key_w;
 #endif  // BOARDC_MAIN_HPP
