@@ -72,6 +72,7 @@ void MainLoop() {
   if (autoaim_update_count == 1) {
     // AutoaimUpdate();
     CANAutoaimUpdate();
+    CustomClientUpdate();
     VOFA();
     autoaim_update_count = 0;
   } else {
@@ -96,7 +97,6 @@ extern "C" [[noreturn]] void AppMain(void) {
   };
   globals->uart6->AttachRxCallback(ref_rx_callback);
   globals->uart6->Begin();
-
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,

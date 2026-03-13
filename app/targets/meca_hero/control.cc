@@ -255,11 +255,13 @@ void GimbalControl() {
     //-aimbot.USB_Rx.YawRelativeAngle;usb
     target_pos_pitch = globals->aimbot_can_communicator->pitch();
     //-aimbot.USB_Rx.PitchRelativeAngle;usb
+    aimbot_state_flag=0;
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
         static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003; // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
         static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033); // 0.00033/per
+    aimbot_state_flag=0;
   }
 
   // target_pos_yaw
@@ -424,7 +426,7 @@ void AutoaimUpdate() {
   aimbot.Send();
   aimbot.Receive(UserRxBuf, UserRxLen);
 
-  aimbot_state_flag = aimbot.USB_Rx.AimbotState * 5;
+  // aimbot_state_flag = aimbot.USB_Rx.AimbotState * 5;
 }
 
 
@@ -438,6 +440,10 @@ void CANAutoaimUpdate() {
                                                   globals->ahrs.euler_angle().roll, 1, 0, imu_count, 12);
   aimbot_pitch = globals->aimbot_can_communicator->yaw();
   aimbot_yaw = globals->aimbot_can_communicator->pitch();
+}
+
+void CustomClientUpdate() {
+  globals->custom_client->Unpack(UserRxBuf,UserRxLen);
 }
 
 Vofa_TxFrame pitch_V_pid;
