@@ -5,7 +5,7 @@
 #include "cstring"
 
 namespace rm::device {
-void CustomClient::Unpack( uint8_t *rx_data, uint8_t Len) {
+void CustomClient::Unpack(uint8_t *rx_data, uint8_t Len) {
   if (Len == sizeof(CClient_Rx)) {
     if (rx_data[0] == CClientSOF && rx_data[Len - 1] == CClientEOF) {
       switch (rx_data[1]) {
@@ -25,4 +25,4 @@ void CustomClient::Unpack( uint8_t *rx_data, uint8_t Len) {
   _key = static_cast<uint16_t>(CClient_Rx.payload[8] << 8 | CClient_Rx.payload[9] << 8);
   _mouse_mid = static_cast<uint8_t>(CClient_Rx.payload[10]);
 }
-}
+}  // namespace rm::device

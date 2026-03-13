@@ -253,7 +253,7 @@ void Referee();
 // 自瞄更新
 void AutoaimUpdate();
 void CANAutoaimUpdate();
-//自定义客户端
+// 自定义客户端
 void CustomClientUpdate();
 // VOFA监测
 void VOFA();
