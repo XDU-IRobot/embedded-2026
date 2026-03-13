@@ -73,9 +73,9 @@ void MainLoop() {
     // CustomClientUpdate();
     //
 
-    key_w=globals->custom_client->key(rm::device::DR16::Key::kW);
-    cc_mouse_l=globals->custom_client->mouse_left();
-    cc_mouse_x=globals->custom_client->mouse_x();
+    key_w = globals->custom_client->key(rm::device::DR16::Key::kW);
+    cc_mouse_l = globals->custom_client->mouse_left();
+    cc_mouse_x = globals->custom_client->mouse_x();
     //
     VOFA();
     autoaim_update_count = 0;

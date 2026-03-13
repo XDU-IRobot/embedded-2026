@@ -19,7 +19,7 @@ void CustomClient::Unpack(uint8_t *rx_data, uint8_t Len) {
           _mouse_right = static_cast<uint8_t>(CClient_Rx.payload[7]);
           _key = static_cast<uint16_t>(CClient_Rx.payload[8] | CClient_Rx.payload[9] << 8);
           _mouse_mid = static_cast<uint8_t>(CClient_Rx.payload[10]);
-           tt = _mouse_x << 16 | _mouse_y;
+          tt = _mouse_x << 16 | _mouse_y;
           VOFA_Prepare_Package(tt, test);
           VOFA_Send_JustFloat_DMA(&huart1, test);
           break;
@@ -29,4 +29,4 @@ void CustomClient::Unpack(uint8_t *rx_data, uint8_t Len) {
     }
   }
 }
-} // namespace rm::device
+}  // namespace rm::device

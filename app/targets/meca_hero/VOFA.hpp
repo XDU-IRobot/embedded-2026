@@ -17,7 +17,7 @@ struct Vofa_RxFrame {
 };
 #pragma pack()
 
-void VOFA_Prepare_Package( float &pid_out, Vofa_TxFrame &tx_buffer);
+void VOFA_Prepare_Package(float &pid_out, Vofa_TxFrame &tx_buffer);
 void VOFA_Send_JustFloat_DMA(UART_HandleTypeDef *huart, Vofa_TxFrame &tx_buffer);
 
 #endif  // BOARDC_VOFA_HPP
