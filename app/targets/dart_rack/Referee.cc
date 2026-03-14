@@ -18,4 +18,4 @@ void RxReferee::RxCallback(const std::vector<u8> &data, u16 rx_len) {
     *dart_rack->referee_data_buffer << data.at(i);
   }
 }
-}  // namespace rm::device
+}  // namespace rm::device10

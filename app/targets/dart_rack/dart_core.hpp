@@ -37,6 +37,10 @@ struct ManualMode {
   bool is_load_down_done = false;
   bool is_load_up_done = false;
   bool is_trigger_lock_done = false;
+  bool is_add_init_done = false;
+  bool is_add_down_done = false;
+  bool is_add_up_done = false;
+  bool is_add_plate_done = false;
   void ManualModeClear()  // 清空所有标志位
   {
     mode = ModeState::kUnable;
@@ -53,6 +57,10 @@ struct ManualMode {
     is_load_down_done = false;
     is_load_up_done = false;
     is_trigger_lock_done = false;
+    is_add_init_done = false;
+    is_add_down_done = false;
+    is_add_up_done = false;
+    is_add_plate_done = false;
   }
 };
 
@@ -85,6 +93,7 @@ struct DartRack {
 
   // 硬件接口
   rm::hal::Can *can1_{nullptr};     ///< CAN 总线接口
+  rm::hal::Can *can2_{nullptr};
   rm::hal::Serial *dbus_{nullptr};  ///< 遥控器串口接口
   rm::hal::Serial *referee_uart{nullptr};       ///< 裁判系统串口接口
   // 设备
@@ -94,6 +103,7 @@ struct DartRack {
   rm::device::M2006 *trigger_motor_{nullptr};        ///< 扳机活动电机
   rm::device::M2006 *trigger_motor_force_{nullptr};  ///< 扳机释放电机
   rm::device::M2006 *yaw_motor_{nullptr};            ///< yaw轴调节电机
+  rm::device::M3508 *add_motor_{nullptr};            ///< 加弹电机
   rm::device::JyMe02Can *yaw_encoder_{nullptr};      ///< 编码器
 
   //裁判系统
@@ -107,12 +117,14 @@ struct DartRack {
   rm::modules::PID trigger_motor_speed_pid_{};
   rm::modules::PID trigger_motor_force_pid_{};
   rm::modules::PID yaw_motor_speed_pid_{};
+  rm::modules::PID add_motor_speed_pid_{};
 
   // 编码器计圈器
   EncoderCounter load_motor_r_odometer_;
   EncoderCounter load_motor_l_odometer_;
   EncoderCounter trigger_motor_odometer_;
   EncoderCounter trigger_motor_force_odometer_;
+  EncoderCounter add_motor_odometer_;
   DartCount dart_count_{DartCount::kFirst};
 
   // 视觉结构体
@@ -124,8 +136,8 @@ struct DartRack {
   // 扳机相关常量
   static constexpr int32_t kTriggerEcdMax = 800000;
   static constexpr int32_t kTriggerEcdMin = 0;
-  static constexpr int32_t kTriggerEcd[4] = {30000, 20000, 40000, 60000};  //< 扳机四发镖位置
-
+  static constexpr int32_t kTriggerEcd[4] = {0, 0, 0, 0};  //< 扳机四发镖位置
+  static constexpr int32_t kAddEcd[3] = {0, 0, 0};  //< 加弹三发镖位置
   static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
   /*
   上膛距离与扳机位置存在一定关系，理论上
