@@ -22,9 +22,9 @@ inline class Gimbal {
 
   f32 ammo_speed_ = 7000.0f;  // 摩擦轮速度初速度
 
-  bool percept_move_complete_ = true;   // 全向感知运动完成标志
-  u16 perception_time_ = 0;             // 全向感知运动时间
-  f32 up_yaw_percept_target_ = 0.0f;    // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
+  bool percept_move_complete_ = true;  // 全向感知运动完成标志
+  u16 perception_time_ = 0;            // 全向感知运动时间
+  f32 up_yaw_percept_target_ = 0.0f;  // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
   f32 down_yaw_percept_target_ = 0.0f;  // 云台下部yaw轴感知目标数据（陀螺仪控制，弧度制，左正右负）
 
   f32 shoot_frequency_ = 0.0f;
