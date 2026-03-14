@@ -66,9 +66,9 @@ void Gimbal::GimbalStateUpdate() {
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
+  gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.0033f, 0.0033f);
   // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
-  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
+  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.0033f, 0.0033f);
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -660, 660, -0.004f, 0.004f);
   gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_, -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_, -static_cast<f32>(M_PI), M_PI);
@@ -316,10 +316,11 @@ void Gimbal::ShootEnableUpdate() {
     } else {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
-  } else if (globals->rc->dial() >= 650 || globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) {
+  } else if (globals->rc->dial() >= 650 || (globals->rc->dial() >= 100 && globals->rc->dial() < 650 &&
+                                            globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     // if (heat_limit_ - heat_current_ > 100) {
-    gimbal->shoot_frequency_ = -30.0f;
+    gimbal->shoot_frequency_ = 20.0f;
     // } else if (heat_limit_ - heat_current_ < 40) {
     //     gimbal->shoot_frequency_ = 0.0f;
     // } else {
@@ -356,7 +357,7 @@ void Gimbal::ShootDisableUpdate() {
 
 void Gimbal::SetMotorCurrent() {
   globals->up_yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().up_yaw));
-  // globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
-  // globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
-  // globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
+  globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
+  globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
+  globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
 }

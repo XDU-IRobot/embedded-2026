@@ -35,7 +35,7 @@ inline class Chassis {
 
   bool rotate_flag_ = false;  // 小陀螺模式标识位
 
-  const f32 front_down_yaw_angle_ = 0.73f;  // 前方下部yaw轴角度
+  const f32 front_down_yaw_angle_ = -2.06f;  // 前方下部yaw轴角度
 
   const f32 chassis_sensitivity_xy_ = 3000.0f;  // 底盘x、y轴灵敏度
   const f32 chassis_max_speed_xy_ = 3000.0f;    // 底盘x、y轴最大速度

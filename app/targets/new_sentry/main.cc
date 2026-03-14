@@ -5,8 +5,6 @@
 #include "spi.h"
 
 #include "timer_task.hpp"
-// #include "fsm.hpp"
-// #include <etl/cyclic_value.h>
 
 #include "main.hpp"
 #include "Gimbal.hpp"
@@ -72,7 +70,7 @@ void GlobalWarehouse::Init() {
   friction_right = new rm::device::M3508{*can2, 2};
   dial_motor = new rm::device::M3508{*can2, 4};
 
-  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
+  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
 
   wheel_lf = new rm::device::M3508{*can1, 1};
   wheel_rf = new rm::device::M3508{*can1, 3};
@@ -110,8 +108,8 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().up_yaw_position.SetKp(240.0f).SetKi(0.0f).SetKd(320.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().up_yaw_speed.SetKp(300.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
-  gimbal_controller.pid().down_yaw_position.SetKp(35.0f).SetKi(0.0f).SetKd(2000).SetMaxOut(30.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().down_yaw_speed.SetKp(1.2f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_position.SetKp(35.0f).SetKi(0.0f).SetKd(1600.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(16.0f).SetKi(0.0f).SetKd(300.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(1.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
@@ -125,8 +123,8 @@ void GlobalWarehouse::ChassisPIDInit() {
 }
 
 void GlobalWarehouse::ShootPIDInit() {
-  shoot_controller.pid().fric_1_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
-  shoot_controller.pid().fric_2_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().fric_1_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().fric_2_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_speed.SetKp(3.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
 }
@@ -219,7 +217,6 @@ void GlobalWarehouse::Music() {
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
-  // const u32 imu_time = HAL_GetTick();
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
                                                 globals->imu->gyro_z() - 0.0015f, globals->imu->accel_x(),
@@ -242,14 +239,6 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count = 0;
     globals->time_camera = 0;
   }
-  // globals->time_camera++;
-  // if (globals->time_camera == 10) {
-  //   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
-  //   globals->time_camera = 0;
-  // }
-  // if (globals->time_camera == 5) {
-  //   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-  // }
   if (globals->imu_count >= 10000) {
     globals->imu_count = 0;
   }

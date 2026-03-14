@@ -4,9 +4,9 @@
 
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(9000.0f);
+  chassis->chassis_follow_pid_.SetKp(6000.0f);
   chassis->chassis_follow_pid_.SetKi(0.0f);
-  chassis->chassis_follow_pid_.SetKd(600000.0f);
+  chassis->chassis_follow_pid_.SetKd(500000.0f);
   chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
   chassis->chassis_follow_pid_.SetMaxIout(0.0f);
 }
@@ -114,12 +114,12 @@ void Chassis::ChassisNavigateDataUpdate() {
   chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ - globals->down_yaw_motor->pos();
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
   chassis->chassis_receive_x_ =
-      rm::modules::Map(rm::modules::Clamp(globals->navigate_communicator->chassis_target_x(),
+      rm::modules::Map(rm::modules::Clamp(-globals->navigate_communicator->chassis_target_y(),
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
                        -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_,  //
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
   chassis->chassis_receive_y_ =
-      rm::modules::Map(rm::modules::Clamp(-globals->navigate_communicator->chassis_target_y(),
+      rm::modules::Map(rm::modules::Clamp(globals->navigate_communicator->chassis_target_x(),
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
                        -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_,  //
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
@@ -188,7 +188,7 @@ void Chassis::ChassisEnableUpdate() {
   } else {
     globals->chassis_controller.Enable(false);
   }
-  // chassis->PowerLimitLoop();
+  chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }
 
