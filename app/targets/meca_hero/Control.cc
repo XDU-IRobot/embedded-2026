@@ -64,7 +64,8 @@ void MagazineControl() {
 
   // 按下扳机(延时1s)
   if (counter == 0) {
-    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left()) &&
+    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() || globals->
+         custom_client->mouse_left()) &&
         shooter_4 < -4000) {
       // 堵转检测
       if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
@@ -249,9 +250,10 @@ void GimbalControl() {
 
   // 遥控器输入云台角度
   aimbot_state_flag = globals->aimbot_can_communicator->aimbot_target();
-  if (aimbot_state_flag > 0 && (globals->rc->dial() >= 500 || globals->rc->dial() <= -500 ||
-                                r_switch_position_now == device::DR16::SwitchPosition::kUp ||
-                                globals->rc->mouse_button_right() || globals->custom_client->mouse_right())) {
+  if (aimbot_state_flag > 0 &&
+      (globals->rc->dial() >= 500 || globals->rc->dial() <= -500 || r_switch_position_now ==
+       device::DR16::SwitchPosition::kUp || globals->rc->mouse_button_right() || globals->custom_client->
+       mouse_right())) {
     target_pos_yaw = -globals->aimbot_can_communicator->yaw();
     //-aimbot.USB_Rx.YawRelativeAngle;usb
     target_pos_pitch = globals->aimbot_can_communicator->pitch();
@@ -259,9 +261,9 @@ void GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-                      static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003;  // ≈0.003/per
+        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003; // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-                        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033);  // 0.00033/per
+        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033); // 0.00033/per
     aimbot_state_flag = 0;
   }
 
@@ -305,9 +307,8 @@ void GimbalControl() {
   // 发送CAN
   globals->gimbal_motor_yaw->SetMitCommand(0, 0, globals->pid_yaw_position->out(), 0, 0);
   // 爬坡模式
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
-      l_switch_position_now != device::DR16::SwitchPosition::kUp &&
-      (globals->rc->dial() < 500 || globals->rc->dial() > -500)) {
+  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp && l_switch_position_now !=
+      device::DR16::SwitchPosition::kUp && (globals->rc->dial() < 500 || globals->rc->dial() > -500)) {
     globals->gimbal_motor_pitch->SetCurrent(0);
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
@@ -341,15 +342,27 @@ void ChassisPower() {
   // 底盘随动
   if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
+    // static uint follow_count;
+    // if (follow_count > 10) {
+    //   follow_count = 0;
+    // } else {
     globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
-                                            0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
+                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+    // follow_count++;
+    // }
+    // globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
+    // 0.0011);
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out());
   } else {
     Vw = 0;
   }
-  follow = Vw;
+  pos_target = 1.54;
+  pos_real = globals->gimbal_motor_yaw->pos();
+  vel_target =globals->pid_chassis_follow_pos->out();
+  vel_real= globals->gimbal_motor_yaw->vel();
+      follow = Vw;
 
   // 遥控器输入底盘速度
   Vx = globals->rc->left_x() * 10000 / 660;
@@ -379,10 +392,10 @@ void ChassisPower() {
     }
   }
   rm::i16 V_wheel[4];
-  V_wheel[0] = -Vy + Vx + Vw;
-  V_wheel[1] = Vy + Vx + Vw;
-  V_wheel[2] = Vy - 0.6 * Vx + 0.6 * Vw;
-  V_wheel[3] = -Vy - 0.6 * Vx + 0.6 * Vw;
+  V_wheel[0] = -Vy + 2 * Vx + Vw;
+  V_wheel[1] = Vy + 2 * Vx + Vw;
+  V_wheel[2] = Vy - 2 * Vx + Vw;
+  V_wheel[3] = -Vy - 2 * Vx + Vw;
 
   for (int i = 0; i < 4; i++) {
     globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());
@@ -399,12 +412,12 @@ void ChassisPower() {
   float buffer_energy = globals->ref.data().buff.remaining_energy;
   if (overpower_count > 0) {
     // 超功率
-    power_limit = 60000;  // 随便给的
+    power_limit = 60000; // 随便给的
     overpower_count--;
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                      ? 50
-                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                    ? 50
+                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
