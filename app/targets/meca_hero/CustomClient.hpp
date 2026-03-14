@@ -29,13 +29,13 @@ class CustomClient {
   CClient_Rx_Pack CClient_Rx;
   Vofa_TxFrame test;
 
-  [[nodiscard]] u16 mouse_x() const { return _mouse_x; }
-  [[nodiscard]] u16 mouse_y() const { return _mouse_y; }
-  [[nodiscard]] u16 mouse_z() const { return _mouse_z; }
+  [[nodiscard]] uint16_t mouse_x() const { return _mouse_x; }
+  [[nodiscard]] uint16_t mouse_y() const { return _mouse_y; }
+  [[nodiscard]] uint16_t mouse_z() const { return _mouse_z; }
   [[nodiscard]] bool mouse_left() const { return _mouse_left; }
   [[nodiscard]] bool mouse_right() const { return _mouse_right; }
-  [[nodiscard]] bool key(DR16::Key key) const { return _key & static_cast<u16>(key); }
-  [[nodiscard]] u8 mouse_mid() const { return _mouse_mid; }
+  [[nodiscard]] bool key(DR16::Key key) const { return _key & static_cast<uint16_t>(key); }
+  [[nodiscard]] uint8_t mouse_mid() const { return _mouse_mid; }
 
   void Pack();
   void Send();
