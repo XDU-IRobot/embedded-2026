@@ -69,7 +69,7 @@ void MainLoop() {
   rm::device::DjiMotorBase::SendCommand();
   if (autoaim_update_count == 1) {
     CANAutoaimUpdate();
-    //改usb中断处字长检查
+    // 改usb中断处字长检查
     AutoaimUpdate();
     // CustomClientUpdate();
 
@@ -104,10 +104,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>() //
+      etl::delegate<void()>::create<MainLoop>()  //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1); // 84MHz / 100 / 1000 = 840Hz
-  mainloop_1000hz.Start(); // 启动定时器
+  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1);  // 84MHz / 100 / 1000 = 840Hz
+  mainloop_1000hz.Start();                                   // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
   for (;;) {
     __WFI();
