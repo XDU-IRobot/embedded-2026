@@ -44,7 +44,7 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can2};
+  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
@@ -73,6 +73,10 @@ void GlobalWarehouse::Init() {
 
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
   buzzer_controller.Play<modules::buzzer_melody::Startup>();
+
+  for (auto ch : {TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4}) {
+    HAL_TIM_PWM_Start(&htim8, ch);
+  }
 
   globals->GimbalPIDInit();
   globals->ShootPIDInit();
@@ -280,11 +284,11 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count++;
     globals->time_camera++;
     if (globals->time_camera == 10) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535u);
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 65535u);
       globals->time_camera = 0;
     }
     if (globals->time_camera == 5) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0u);
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0u);
     }
   } else {
     globals->imu_count = 0;
@@ -294,8 +298,8 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count = 0;
   }
   // can 通信
-  globals->aimbot_communicator->UpdateControl(globals->ahrs.quaternion().w, globals->ahrs.quaternion().x,
-                                              globals->ahrs.quaternion().y, globals->ahrs.quaternion().z,
+  globals->aimbot_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
+                                              -globals->ahrs.euler_angle().roll,
                                               globals->chassis_communicator->robot_id(), globals->aim_mode,
                                               globals->imu_count, globals->chassis_communicator->ammo_speed());
   globals->chassis_communicator->SendChassisCommand(
