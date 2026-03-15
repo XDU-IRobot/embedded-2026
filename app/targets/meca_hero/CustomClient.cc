@@ -52,4 +52,4 @@ void CustomClient::Unpack(uint8_t *rx_data, uint8_t Len) {
     _key = 0;
   }
 }
-} // namespace rm::device
+}  // namespace rm::device
