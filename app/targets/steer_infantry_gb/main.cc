@@ -11,8 +11,6 @@
 
 using namespace rm;
 
-f32 h;
-
 void MainLoop() {
   globals->time++;
   globals->SubLoop500Hz();
@@ -278,7 +276,6 @@ void GlobalWarehouse::SubLoop500Hz() {
                                                 globals->imu->gyro_x() + 0.0015f, globals->imu->accel_y(),
                                                 globals->imu->accel_z(), globals->imu->accel_x()});
   // 硬触发
-  h = globals->time_camera;
   if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
     globals->imu_count++;
     globals->time_camera++;
