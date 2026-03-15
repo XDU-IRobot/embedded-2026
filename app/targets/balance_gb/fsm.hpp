@@ -10,10 +10,8 @@ class Fsm {
   enum class State {
     kNoForce,  // 无力模式
     kTest,     // 测试
-    kShoot,    // 使能发射机构
+    kShoot,    // 自瞄+打弹
     kHigh,     // 高腿长
-    kAutoaim,  // 自瞄模式
-
   };
   void Transit(State new_mode);
   void Update_State();

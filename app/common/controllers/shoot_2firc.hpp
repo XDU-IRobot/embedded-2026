@@ -21,7 +21,8 @@ class Shoot2Fric {
     state_.loader_speed = loader_speed;
     state_.loader_position = loader_position;
 
-    if (loader_position >= target_.loader_position - 2000.0f) {
+    position_ = loader_position-target_.loader_position;
+    if (loader_position <= target_.loader_position - 2000.0f) {
       single_shoot_complete_ = true;
     }
 
@@ -102,6 +103,7 @@ class Shoot2Fric {
   auto &target() { return target_; }
   auto &output() { return output_; }
   auto &shoot_flag() { return single_shoot_complete_; }
+  auto &position() { return position_; }
 
  private:
   bool enabled_{false};
@@ -110,6 +112,7 @@ class Shoot2Fric {
   const int bullets_per_drum_;
   const float loader_reduction_ratio_;
   float calculated_target_loader_speed_{0.0f};
+  float position_;
   Mode mode_{kFullAuto};
 
   struct {

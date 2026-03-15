@@ -5,13 +5,16 @@
 using namespace rm;
 using namespace rm::device;
 uint8_t id;
+i8 speed;
 
 /*
 @brief:底盘通信类的实现
 */
 void ChassisCommunicator::RxCallback(const hal::CanFrame *msg) {
+  speed = chassis_data_rx.BulletSpeed;
   if (msg->rx_std_id == 0x119) {
     chassis_data_rx.GimbalInitFlag = static_cast<u8>(msg->data[0]);
+    chassis_data_rx.BulletSpeed = static_cast<i8>(msg->data[1]);
   }
 }
 void ChassisCommunicator::SendChassisCommand() {

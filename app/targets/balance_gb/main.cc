@@ -22,7 +22,6 @@ extern "C" {
 void AppMain(void) {
   global.bc = new BoardC;
   global.motor = new Motor;
-  global.minipc = new MiniPC;
 
   // 初始化
   global.bc->BoardcInit();

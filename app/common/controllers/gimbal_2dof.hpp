@@ -38,11 +38,11 @@ class Gimbal2Dof {
     pid_.pitch_position.Update(target_.pitch_position, state_.pitch_position, dt);
 
     if (speed_pid_enabled_) {  // 速度位置双环
-      const float yaw_speed_target = pid_.yaw_position.out() + target_.yaw_speed_ff;
-      pid_.yaw_speed.Update(yaw_speed_target, state_.yaw_speed, dt);
+      state_.yaw_speed_target = pid_.yaw_position.out() + target_.yaw_speed_ff;
+      pid_.yaw_speed.Update(state_.yaw_speed_target, state_.yaw_speed, dt);
       output_.yaw = pid_.yaw_speed.out() + target_.yaw_output_ff;
-      const float pitch_speed_target = pid_.pitch_position.out();
-      pid_.pitch_speed.Update(pitch_speed_target, state_.pitch_speed, dt);
+      state_.pitch_speed_target = pid_.pitch_position.out();
+      pid_.pitch_speed.Update(state_.pitch_speed_target, state_.pitch_speed, dt);
       output_.pitch = pid_.pitch_speed.out();
     } else {  // 单位置环
       output_.yaw = pid_.yaw_position.out() + target_.yaw_output_ff;
@@ -89,6 +89,8 @@ class Gimbal2Dof {
     float yaw_speed;
     float pitch_position;
     float pitch_speed;
+    float yaw_speed_target;
+    float pitch_speed_target;
   } state_{};  ///< 当前状态
   struct {
     float yaw_position;
@@ -99,5 +101,6 @@ class Gimbal2Dof {
   struct {
     float yaw;
     float pitch;
+
   } output_{};  ///< 控制输出
 };

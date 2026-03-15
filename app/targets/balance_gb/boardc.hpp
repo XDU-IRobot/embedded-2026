@@ -23,16 +23,16 @@ class BoardC {
                             rm::modules::led_pattern::GreenBreath, rm::modules::led_pattern::RgbFlow>
       led_controller;  ///< RGB LED控制器
 
-  VT03 tcremote;                    ///<  图传数据处理调用接口
-  TcReceiver *tc_receiver;          ///< 图传数据接受
-  hal::Serial *tc_serial{nullptr};  ///<  图传串口接口
-  hal::Serial *dbus{nullptr};       ///<  遥控器串口
-  hal::Serial *hipnuc_serial{nullptr}; ///< hipnuc串口
-  HipnucImu  *hipnuc_imu{nullptr};                 ///< IMU
-  DR16 *rc{nullptr};                 ///< 遥控器
-  BMI088 *imu{nullptr};              ///< bmi088
-  modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
-  DeviceManager<1> device_rc;        ///< 设备管理器，维护所有设备在线状态
+  VT03 tcremote;                        ///<  图传数据处理调用接口
+  TcReceiver *tc_receiver;              ///< 图传数据接受
+  hal::Serial *tc_serial{nullptr};      ///<  图传串口接口
+  hal::Serial *dbus{nullptr};           ///<  遥控器串口
+  hal::Serial *hipnuc_serial{nullptr};  ///< hipnuc串口
+  HipnucImu *hipnuc_imu{nullptr};       ///< IMU
+  DR16 *rc{nullptr};                    ///< 遥控器
+  BMI088 *imu{nullptr};                 ///< bmi088
+  modules::MahonyAhrs ahrs{500.0f};     ///< 姿态解算器
+  DeviceManager<1> device_rc;           ///< 设备管理器，维护所有设备在线状态
   ///< 姿态解算角
   f32 pitch = 0.f;
   f32 roll = 0.f;

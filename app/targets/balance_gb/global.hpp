@@ -5,7 +5,6 @@
 #include "boardc.hpp"
 #include "motor.hpp"
 #include "communiate.hpp"
-#include "minipc.hpp"
 
 struct Global {
  public:
@@ -13,7 +12,6 @@ struct Global {
   Motor *motor{nullptr};                               ///< 电机object
   ChassisCommunicator *chassis_communicator{nullptr};  ///<  底盘控制器object
   ChassisCommunicator *chassis_receive{nullptr};       ///< 接受底盘指令
-  MiniPC *minipc{nullptr};                             ///< minipc object
 
   Fsm fsm{};  ///< 状态机控制行为模式
  public:

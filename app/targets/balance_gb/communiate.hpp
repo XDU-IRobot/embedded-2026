@@ -27,6 +27,7 @@ class ChassisCommunicator final : public CanDevice {
 
   struct RxChassisData {
     u8 GimbalInitFlag;  // 倒地自启云台控制
+    i8 BulletSpeed;    //子弹射速
   };
 
   RxChassisData chassis_data_rx;

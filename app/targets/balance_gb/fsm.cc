@@ -14,6 +14,9 @@ Fsm::State state;
 f32 pitch_con, yaw_con, pitch_ecd, yaw_ecd;
 u8 init_flag;
 f32 yaw_aim;
+f32 debug_w, debug_x, debug_y, debug_z;
+bool w;
+
 void Fsm::Transit(State new_mode) {
   // 输入新状态
   if (new_mode != mode_) {
@@ -21,14 +24,17 @@ void Fsm::Transit(State new_mode) {
     if (new_mode == State::kNoForce) {
       global.motor->DMDisable();
       global.motor->ShootDisable();
-    } else if (new_mode == State::kShoot) {
-      global.motor->DMEnable();
-      global.motor->ShootEnable();
-    } else if (new_mode == State::kAutoaim) {
+    }else if (new_mode == State::kTest) {
       global.motor->DMEnable();
       global.motor->ShootDisable();
-    } else {
+    }else if (new_mode == State::kShoot) {
       global.motor->DMEnable();
+      global.motor->ShootEnable();
+    }else if (new_mode == State::kHigh){
+      global.motor->DMEnable();
+      global.motor->ShootDisable();
+    }else {
+      global.motor->DMDisable();
       global.motor->ShootDisable();
     }
   }
@@ -55,12 +61,7 @@ void Fsm::Update_State() {
         }
         break;
       case DR16::SwitchPosition::kUp:
-        if (global.bc->rc->switch_l() == DR16::SwitchPosition::kMid) {
           Transit(State::kShoot);
-
-        } else if (global.bc->rc->switch_l() == DR16::SwitchPosition::kUp) {
-          Transit(State::kAutoaim);
-        }
         break;
       default:
         Transit(State::kNoForce);
@@ -74,8 +75,7 @@ void Fsm::Update_Test() {
   global.chassis_communicator->gimbal_data_tx.L0Change = 0x01;             // 正常腿长
 
   // 控制腿的状态
-  if (   global.bc->rc->right_x() > 650 ||
-      global.bc->tcremote.data().keyboard_key >> 9 == 1) {
+  if (global.bc->rc->right_x() > 650 || global.bc->tcremote.data().keyboard_key >> 9 == 1) {
     global.chassis_communicator->jump_flag = true;
   } else if (  // global.bc->rc->right_x() == -660 ||
       global.bc->tcremote.data().keyboard_key >> 10 == 1) {
@@ -89,16 +89,26 @@ void Fsm::Update_Test() {
       // 跳跃计时增加
       global.chassis_communicator->jump_count++;
       // 跳跃腿长控制
-      if (global.chassis_communicator->jump_count < 24) {
-        global.chassis_communicator->gimbal_data_tx.L0Change = 0x02;  // 跳跃时先下蹲
-      } else if (global.chassis_communicator->jump_count < 50) {
-        global.chassis_communicator->gimbal_data_tx.L0Change = 0x03;  // 伸腿
-      } else if (global.chassis_communicator->jump_count < 95) {
-        global.chassis_communicator->gimbal_data_tx.L0Change = 0x04;  // 收腿
-      } else if (global.chassis_communicator->jump_count < 120) {
-        global.chassis_communicator->gimbal_data_tx.L0Change = 0x05;  // 缓冲
-      }
-        else {
+      // if (global.chassis_communicator->jump_count < 24) {
+      //   global.chassis_communicator->gimbal_data_tx.L0Change = 0x02;  // 跳跃时先下蹲
+      // } else if (global.chassis_communicator->jump_count < 50) {
+      //   global.chassis_communicator->gimbal_data_tx.L0Change = 0x03;  // 伸腿
+      // } else if (global.chassis_communicator->jump_count < 95) {
+      //   global.chassis_communicator->gimbal_data_tx.L0Change = 0x04;  // 收腿
+      // } else if (global.chassis_communicator->jump_count < 120) {
+      //   global.chassis_communicator->gimbal_data_tx.L0Change = 0x05;  // 缓冲
+      // } else {
+      //   // 重置状态
+      //   global.chassis_communicator->jump_flag = false;
+      //   global.chassis_communicator->jump_count = 0;
+      // }
+      if (global.chassis_communicator->jump_count < 26) {
+        global.chassis_communicator->gimbal_data_tx.L0Change = 0x03;  // 跳跃时先下蹲
+      } else if (global.chassis_communicator->jump_count < 71) {
+        global.chassis_communicator->gimbal_data_tx.L0Change = 0x04;  // 伸腿
+      } else if (global.chassis_communicator->jump_count < 96) {
+        global.chassis_communicator->gimbal_data_tx.L0Change = 0x05;  // 收腿
+      } else {
         // 重置状态
         global.chassis_communicator->jump_flag = false;
         global.chassis_communicator->jump_count = 0;
@@ -111,20 +121,24 @@ void Fsm::Update_Test() {
   }
 
   // 判断是否小陀螺
-  if (global.bc->rc->dial() == 660 || global.bc->rc->key(DR16::Key::kShift) == 1 ||
+  if (global.bc->rc->dial()== 660 || global.bc->rc->key(DR16::Key::kShift) == 1 ||
       global.bc->tcremote.data().keyboard_key >> 4 == 1) {
     global.chassis_communicator->gimbal_data_tx.L0Change = 0x07;  // 小陀螺正转
+    global.motor->yaw_compensation_ = -3.5f;
   } else if (global.bc->rc->dial() == -660 ||
              (global.bc->rc->key(DR16::Key::kShift) == 1 && global.bc->rc->key(DR16::Key::kCtrl) == 1) ||
              (global.bc->tcremote.data().keyboard_key >> 4 == 1 && global.bc->tcremote.data().keyboard_key >> 5 == 1)) {
     global.chassis_communicator->gimbal_data_tx.L0Change = 0x08;  // 小陀螺反转
+    global.motor->yaw_compensation_ = 3.5f;
   } else {
+    global.motor->yaw_compensation_ = 0.f;
   }
 
   // 控制遥控器输入量
   global.chassis_communicator->gimbal_data_tx.ChassisMoveYRequest =
-      global.bc->rc->left_y() + global.bc->rc->key(DR16::Key::kW) - global.bc->rc->key(DR16::Key::kD) +
+      global.bc->rc->left_y() + global.bc->rc->key(DR16::Key::kW)*660.f - global.bc->rc->key(DR16::Key::kS)*660.f +
       (global.bc->tcremote.data().keyboard_key >> 0 & 0x01) - (global.bc->tcremote.data().keyboard_key >> 1 & 0x01);
+  w = global.bc->rc->key(DR16::Key::kW);
 }
 
 void Fsm::Update_Chassis_Request() {
@@ -136,17 +150,17 @@ void Fsm::Update_Chassis_Request() {
       break;
     case State::kTest:
       Update_Test();
+       //global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
       break;
     case State::kShoot:
       Update_Test();
       global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
+      global.motor->yaw_compensation_ = 0.f;
       break;
     case State::kHigh:
       Update_Test();
       global.chassis_communicator->gimbal_data_tx.L0Change = 0x06;  // 伸腿
       break;
-    case State::kAutoaim:
-      global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
     default:
       global.chassis_communicator->gimbal_data_tx.ChassisMoveYRequest = 0;
       global.chassis_communicator->gimbal_data_tx.ChassisStateRequest = 0x00;
@@ -166,7 +180,8 @@ void Fsm::Update_Control() {
       break;
     case State::kTest:
       global.motor->CalcYawPos(global.motor->yaw_motor->pos());
-      global.motor->Transit_initmode(static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
+      global.motor->Transit_initmode(
+          static_cast<Motor::InitFlag>(global.chassis_receive->chassis_data_rx.GimbalInitFlag));
       switch (global.motor->init_mode) {
         case Motor::InitFlag::kNormal:
           global.motor->yaw_init = 0.f;
@@ -178,7 +193,8 @@ void Fsm::Update_Control() {
           }
           break;
         case Motor::InitFlag::kOpposite:
-          global.motor->yaw_init = -3.1f;
+         // global.motor->yaw_init = -3.1f;
+          global.motor->yaw_init = 0.f;
           if (init_count_ < 300) {
             init_count_++;
             global.motor->DMInitControl();
@@ -189,7 +205,6 @@ void Fsm::Update_Control() {
         default:
           break;
       }
-      //global.motor->DMAutoControl();
       yaw_aim = global.motor->yaw_init;
       break;
     case State::kHigh:
@@ -199,8 +214,10 @@ void Fsm::Update_Control() {
       global.motor->DMAutoControl();
       global.motor->ShootControl();
       break;
-    case State::kAutoaim:
-      global.motor->DMAutoControl();
+    default:
+      global.motor->CalcYawPos(global.motor->yaw_motor->pos());
+      init_count_ = 0;
+      global.motor->reset_yaw_flag = 0;
       break;
   }
 }
@@ -215,7 +232,7 @@ void Fsm::Update_500HZ() {
   // imu更新
   global.bc->EulerUpdate();
   pitch_debug = global.bc->pitch;
-  yaw_debug = global.bc->yaw/57.3f;
+  yaw_debug = global.bc->yaw ;
   roll_debug = global.bc->roll;
 
   pitch_staus = global.motor->pitch_motor->status();
@@ -237,9 +254,12 @@ void Fsm::Update_500HZ() {
   if (global.bc->imu_count >= 10000) {
     global.bc->imu_count = 0;
   }
-  global.motor->aimbot_comm->UpdateControl(global.bc->ahrs.quaternion().w, global.bc->ahrs.quaternion().x,
-                                           global.bc->ahrs.quaternion().y, global.bc->ahrs.quaternion().z, 1, 0,
-                                           global.bc->imu_count, 20.0f);
+  global.motor->aimbot_comm->UpdateControl(global.bc->hipnuc_imu->yaw(), -global.bc->hipnuc_imu->pitch(),
+                                           -global.bc->hipnuc_imu->roll(), 1, 1, global.bc->imu_count, global.chassis_receive->chassis_data_rx.BulletSpeed);
+  debug_w = global.bc->hipnuc_imu->quat_w();
+  debug_x = global.bc->hipnuc_imu->quat_x();
+  debug_y = global.bc->hipnuc_imu->quat_y();
+  debug_z = global.bc->hipnuc_imu->quat_z();
   // 状态更新
   Update_State();
 

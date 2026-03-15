@@ -3,9 +3,10 @@
 #include <librm.hpp>
 #include "aimbot_comm_can.hpp"
 #include "controllers/gimbal_2dof.hpp"
-#include "controllers/shoot_2firc.hpp"
+#include "controllers/shoot_3fric.hpp"
 #include "SineSweep.hpp"
 #include "yaw_speed_feedforward.hpp"
+#include "encoder_counter.hpp"
 
 using namespace rm;
 using namespace rm::device;
@@ -21,10 +22,11 @@ class Motor {
   M3508 *ammo_right{nullptr};
   device::AimbotCanCommunicator *aimbot_comm{nullptr};
   Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
-  Shoot2Fric shoot_controller{8, 36.0f};  ///< 摩擦轮
+  Shoot3Fric shoot_controller{9,18,false};  ///< 摩擦轮
   YawSpeedFeedforward *yaw_feedforward{nullptr};
   SineSweep *sweep_controller{nullptr};
-  //modules::VofaPlotter *vofa_plotter{nullptr};
+  EncoderCounter dail_encoder_counter;
+  // modules::VofaPlotter *vofa_plotter{nullptr};
 
   enum class InitFlag {
     kNormal,   // 正常模式
@@ -40,7 +42,12 @@ class Motor {
 
   f32 yaw_motor_pos = 0.f;
 
+  f32 gravity_compensation_ = 0.f,yaw_compensation_=0.f;
+
+  int single_shoot_time = 30,single_shoot_temp = 0;
+
   bool reset_yaw_flag = false;
+  bool single_flag = false; //单发标志
 
   void MotorInit();  ///< 电机初始化
 
@@ -78,4 +85,5 @@ class Motor {
   bool DMEnable_ = true;
   bool dm_enabled_{false};
   bool shoot_enabled_{false};
+  bool single_shoot_flag_{false};
 };

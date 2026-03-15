@@ -6,7 +6,7 @@
 #define BOARDC_SINESWEEP_HPP
 #include <vector>
 class SineSweep {
-public:
+ public:
   // amp_min, amp_max: 振幅范围（输出大约在 [-amp, +amp]）
   // f_start, f_end: 起始和结束频率 (Hz)
   // duration: 扫频总时长 (秒)
@@ -17,7 +17,7 @@ public:
   bool Finished() const;
   void Reset();
 
-private:
+ private:
   double amp_min_, amp_max_;
   double f0_, f1_;
   double duration_, fs_, dt_;
@@ -27,7 +27,7 @@ private:
 };
 
 class MultiFreqSine {
-public:
+ public:
   // freqs: 目标频率列表 (Hz)
   // cycles_per_freq: 每个频率持续的周期数（整数），默认 20
   // amplitude: 输出振幅（正弦幅值），默认 1.0
@@ -42,7 +42,7 @@ public:
   // 生成与 MATLAB: F = ([1:0.5:22, 24:2:40, 50:10:120,200,250,333,500]); 等价的频率向量
   static std::vector<double> DefaultFrequencies();
 
-private:
+ private:
   struct Item {
     double freq;  // 实际使用的频率 (Hz) = fs / samples_per_cycle
     int samples_per_cycle;

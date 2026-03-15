@@ -7,8 +7,8 @@
  */
 class Shoot3Fric {
  public:
-  explicit Shoot3Fric(int bullets_per_drum, float reduction_ratio)
-      : bullets_per_drum_(bullets_per_drum), loader_reduction_ratio_(reduction_ratio) {
+  explicit Shoot3Fric(int bullets_per_drum, float reduction_ratio, bool direction = true)
+      : direction_(direction), bullets_per_drum_(bullets_per_drum), loader_reduction_ratio_(reduction_ratio) {
     pid_.loader_position.SetCircular(true).SetCircularCycle(2.0f * M_PI);  // 拨盘位置过零点处理
   }
 
@@ -24,8 +24,14 @@ class Shoot3Fric {
     state_.loader_speed = loader_speed;
 
     state_.loader_position = loader_position;
-    if (loader_position >= target_.loader_position - 1000.0f) {
-      single_shoot_complete_ = true;
+    if (direction_) {
+      if (loader_position >= target_.loader_position - 1000.0f) {
+        single_shoot_complete_ = true;
+      }
+    } else {
+      if (loader_position <= target_.loader_position + 1000.0f) {
+        single_shoot_complete_ = true;
+      }
     }
 
     if (!enabled_) {
@@ -39,20 +45,27 @@ class Shoot3Fric {
 
     // 摩擦轮PID
     if (!armed_) {
-      target_.fric_speed = 0.0f;
+      target_.fric_speed_left = 0.0f;
+      target_.fric_speed_right = 0.0f;
     }
-    pid_.fric_1_speed.Update(target_.fric_speed, state_.fric_1_speed, dt);
+    pid_.fric_1_speed.Update(target_.fric_speed_left, state_.fric_1_speed, dt);
     output_.fric_1 = pid_.fric_1_speed.out();
-    pid_.fric_2_speed.Update(-target_.fric_speed, state_.fric_2_speed, dt);
+    pid_.fric_2_speed.Update(-target_.fric_speed_right, state_.fric_2_speed, dt);
     output_.fric_2 = pid_.fric_2_speed.out();
-    pid_.fric_3_speed.Update(target_.fric_speed, state_.fric_3_speed, dt);
+    pid_.fric_3_speed.Update(target_.fric_speed_left, state_.fric_3_speed, dt);
     output_.fric_3 = pid_.fric_3_speed.out();
 
     // 拨盘PID
     if (single_shoot_complete_ == false) {
       // 单发模式，位置-速度串级PID
       pid_.loader_position.Update(target_.loader_position, state_.loader_position, dt);
-      pid_.loader_speed.Update(-7000.0f, state_.loader_speed, dt);
+      int16_t single_loader_speed;
+      if (direction_) {
+        single_loader_speed = 7000.0f;
+      } else {
+        single_loader_speed = -7000.0f;
+      }
+      pid_.loader_speed.Update(single_loader_speed, state_.loader_speed, dt);
       output_.loader = pid_.loader_speed.out();
     } else {
       // 全自动模式，速度环
@@ -72,8 +85,13 @@ class Shoot3Fric {
     }
     if (mode_ == kSingleShot && single_shoot_complete_) {
       // 单发模式，拨盘转动一个子弹间距
-      target_.loader_position =
-          state_.loader_position + loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+      if (direction_) {
+        target_.loader_position =
+            state_.loader_position + loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+      } else {
+        target_.loader_position =
+            state_.loader_position - loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+      }
       single_shoot_complete_ = false;
     } else if (mode_ == kFullAuto) {
       // 全自动模式，拨盘持续以计算得到的目标速度转动
@@ -107,7 +125,8 @@ class Shoot3Fric {
    * @brief 设置摩擦轮速度
    * @param fric_speed  摩擦轮速度，单位为弧度每秒
    */
-  void SetArmSpeed(float fric_speed) { target_.fric_speed = fric_speed; }
+  void SetLeftArmSpeed(float fric_speed) { target_.fric_speed_left = fric_speed; }
+  void SetRightArmSpeed(float fric_speed) { target_.fric_speed_right = fric_speed; }
 
   /**
    * @brief 摩擦轮解锁/上锁
@@ -130,6 +149,7 @@ class Shoot3Fric {
  private:
   bool enabled_{false};                         ///< 有力/无力？
   bool armed_{true};                            ///< 摩擦轮转/不转？
+  bool direction_{true};                        ///< 拨盘转动方向
   bool single_shoot_complete_{true};            ///< 单发模式是否发射完成
   const int bullets_per_drum_;                  ///< 拨盘每圈子弹数
   const float loader_reduction_ratio_;          ///< 拨盘减速比
@@ -151,7 +171,8 @@ class Shoot3Fric {
     float loader_position;  ///< 拨盘位置
   } state_{};               ///< 当前状态
   struct {
-    float fric_speed;       ///< 摩擦轮目标速度
+    float fric_speed_left;       ///< 摩擦轮目标速度
+    float fric_speed_right;       ///< 摩擦轮目标速度
     float loader_speed;     ///< 拨盘目标速度
     float loader_position;  ///< 拨盘目标位置
   } target_{};              ///< 目标状态

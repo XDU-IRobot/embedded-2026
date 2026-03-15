@@ -16,6 +16,7 @@ f32 AimbotCanCommunicator::pitch() const { return pitch_; }
 u8 AimbotCanCommunicator::nuc_start_flag() const { return nuc_start_flag_; }
 
 void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
+  aimbot_state_ = 0;
   if (msg->rx_std_id == 0x170) {
     ReportStatus(kOk);
     aimbot_state_ = static_cast<u8>(msg->data[0]);
@@ -26,21 +27,38 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
   }
 }
 
-void AimbotCanCommunicator::UpdateControl(f32 w, f32 x, f32 y, f32 z, u8 robot_id, u8 mode, u16 imu_count,
-                                          f32 bullet_speed) {
-  tx_buf_[0] = modules::F32ToF16(w) >> 8;
-  tx_buf_[1] = modules::F32ToF16(w);
-  tx_buf_[2] = modules::F32ToF16(x) >> 8;
-  tx_buf_[3] = modules::F32ToF16(x);
-  tx_buf_[4] = modules::F32ToF16(y) >> 8;
-  tx_buf_[5] = modules::F32ToF16(y);
-  const u8 z_sign = (z >= 0.f) ? 1 : 0;
+// void AimbotCanCommunicator::UpdateControl(f32 w, f32 x, f32 y, f32 z, u8 robot_id, u8 mode, u16 imu_count,
+//                                           f32 bullet_speed) {
+//   tx_buf_[0] = modules::F32ToF16(w) >> 8;
+//   tx_buf_[1] = modules::F32ToF16(w);
+//   tx_buf_[2] = modules::F32ToF16(x) >> 8;
+//   tx_buf_[3] = modules::F32ToF16(x);
+//   tx_buf_[4] = modules::F32ToF16(y) >> 8;
+//   tx_buf_[5] = modules::F32ToF16(y);
+//   const u8 z_sign = (z >= 0.f) ? 1 : 0;
+//   const u8 id_bit = (robot_id > 100) ? 1 : 0;
+//   const u8 mode_bits = mode & 0x3;                       // 最低 2 位
+//   const u8 imu_bits = static_cast<u8>(imu_count) & 0xF;  // 最低 4 位
+//
+//   tx_buf_[6] = static_cast<u8>((z_sign << 7) | (id_bit << 6) | (mode_bits << 4) | imu_bits);
+//   tx_buf_[7] = modules::FloatToInt(bullet_speed, 0.f, 32.f, 8);
+//
+//   this->can_->Write(0x150, tx_buf_, 8);
+// }
+void AimbotCanCommunicator::UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot_id, u8 mode, u16 imu_count,
+                                          i8 bullet_speed) {
+  tx_buf_[0] = modules::F32ToF16(yaw) >> 8;
+  tx_buf_[1] = modules::F32ToF16(yaw);
+  tx_buf_[2] = modules::F32ToF16(pitch) >> 8;
+  tx_buf_[3] = modules::F32ToF16(pitch);
+  tx_buf_[4] = modules::F32ToF16(roll) >> 8;
+  tx_buf_[5] = modules::F32ToF16(roll);
   const u8 id_bit = (robot_id > 100) ? 1 : 0;
   const u8 mode_bits = mode & 0x3;                       // 最低 2 位
   const u8 imu_bits = static_cast<u8>(imu_count) & 0xF;  // 最低 4 位
 
-  tx_buf_[6] = static_cast<u8>((z_sign << 7) | (id_bit << 6) | (mode_bits << 4) | imu_bits);
-  tx_buf_[7] = modules::FloatToInt(bullet_speed, 0.f, 32.f, 8);
+  tx_buf_[6] = static_cast<u8>( (id_bit << 6) | (mode_bits << 4) | imu_bits);
+  tx_buf_[7] = bullet_speed;
 
   this->can_->Write(0x150, tx_buf_, 8);
 }
