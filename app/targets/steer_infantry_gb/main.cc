@@ -282,13 +282,11 @@ void GlobalWarehouse::SubLoop500Hz() {
   if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
     globals->imu_count++;
     globals->time_camera++;
-    if (globals->time_camera % 10 == 0) {
+    if (globals->time_camera == 10) {
       __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 19999u);
-    } else if (globals->time_camera % 5 == 0) {
-      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0u);
     }
-    if (globals->time_camera == 100) {
-      globals->time_camera = 0;
+    if (globals->time_camera == 1) {
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0u);
     }
   } else {
     globals->imu_count = 0;
