@@ -190,7 +190,7 @@ inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4150;
 inline rm::i16 V_shooter_2 = -4650;  // 12m/s
-inline rm::i16 e_area=25;
+inline rm::i16 e_area = 25;
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;
