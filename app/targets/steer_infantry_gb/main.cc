@@ -11,6 +11,8 @@
 
 using namespace rm;
 
+f32 h;
+
 void MainLoop() {
   globals->time++;
   globals->SubLoop500Hz();
@@ -74,9 +76,7 @@ void GlobalWarehouse::Init() {
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
   buzzer_controller.Play<modules::buzzer_melody::Startup>();
 
-  for (auto ch : {TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4}) {
-    HAL_TIM_PWM_Start(&htim8, ch);
-  }
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
 
   globals->GimbalPIDInit();
   globals->ShootPIDInit();
@@ -277,18 +277,18 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_y(), globals->imu->gyro_z(),
                                                 globals->imu->gyro_x() + 0.0015f, globals->imu->accel_y(),
                                                 globals->imu->accel_z(), globals->imu->accel_x()});
-  // 激光
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 8399u);
   // 硬触发
+  h = globals->time_camera;
   if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
     globals->imu_count++;
     globals->time_camera++;
-    if (globals->time_camera == 10) {
-      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 65535u);
-      globals->time_camera = 0;
+    if (globals->time_camera % 10 == 0) {
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 19999u);
+    } else if (globals->time_camera % 5 == 0) {
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0u);
     }
-    if (globals->time_camera == 5) {
-      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0u);
+    if (globals->time_camera == 100) {
+      globals->time_camera = 0;
     }
   } else {
     globals->imu_count = 0;
@@ -320,6 +320,10 @@ void GlobalWarehouse::SubLoop250Hz() {
 
 void GlobalWarehouse::SubLoop100Hz() {
   if (globals->time % 5 == 0) {
+    globals->device_rc.Update();
+    globals->device_nuc.Update();
+    globals->device_gimbal.Update();
+    globals->device_shoot.Update();
     if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
         globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
       if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
