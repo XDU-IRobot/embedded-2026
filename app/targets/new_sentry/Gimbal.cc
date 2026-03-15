@@ -316,7 +316,7 @@ void Gimbal::ShootEnableUpdate() {
     } else {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
-  } else if (globals->rc->dial() >= 650 || (globals->rc->dial() >= 100 && globals->rc->dial() < 650 &&
+  } else if (globals->rc->dial() >= 650 || (globals->rc->dial() >= 100 && globals->rc->dial() < 650 ||
                                             globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     // if (heat_limit_ - heat_current_ > 100) {

@@ -22,9 +22,9 @@ inline class Gimbal {
 
   f32 ammo_speed_ = 7000.0f;  // 摩擦轮速度初速度
 
-  bool percept_move_complete_ = true;  // 全向感知运动完成标志
-  u16 perception_time_ = 0;            // 全向感知运动时间
-  f32 up_yaw_percept_target_ = 0.0f;  // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
+  u16 perception_time_ = 0;             // 全向感知运动时间
+
+  f32 up_yaw_percept_target_ = 0.0f;    // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
   f32 down_yaw_percept_target_ = 0.0f;  // 云台下部yaw轴感知目标数据（陀螺仪控制，弧度制，左正右负）
 
   f32 shoot_frequency_ = 0.0f;
@@ -35,12 +35,12 @@ inline class Gimbal {
   bool shoot_flag_ = false;         // 开火标志
   bool single_shoot_flag_ = false;  // 单发标志
 
+  bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
   bool pitch_enable_flag_ = false;  // 4310电机使能标志
   bool max_angle_flag_ = false;     // 云台上部yaw轴最大角度标志
   bool min_angle_flag_ = false;     // 云台上部yaw轴最小角度标志
 
-  bool down_yaw_move_flag_ = false;    // 云台下部yaw轴目标数据刷新标志
-  bool down_yaw_enable_flag_ = false;  // 4310电机使能标志
+  bool percept_move_complete_ = true;   // 全向感知运动完成标志
 
   bool scan_yaw_flag_ = false;    // 扫描yaw轴方向标识位
   bool scan_pitch_flag_ = false;  // 扫描pitch轴方向标识位
