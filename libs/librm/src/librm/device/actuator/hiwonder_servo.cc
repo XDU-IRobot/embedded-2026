@@ -6,17 +6,17 @@
 
 namespace rm::device {
 
-hiwonder_servo::hiwonder_servo(rm::hal::SerialInterface &serial) : serial_(&serial) {
+HiwonderServo::HiwonderServo(rm::hal::SerialInterface &serial) : serial_(&serial) {
     static rm::hal::SerialRxCallbackFunction rx_callback =
-            std::bind(&hiwonder_servo::RxCallback, this, std::placeholders::_1, std::placeholders::_2);
+            std::bind(&HiwonderServo::RxCallback, this, std::placeholders::_1, std::placeholders::_2);
     this->serial_->AttachRxCallback(rx_callback);
 }
 
-void hiwonder_servo::Begin() const {
+void HiwonderServo::Begin() {
     this->serial_->Begin();
 }
 
-void hiwonder_servo::SetServoAngle(rm::u16 pos, rm::u8 id, rm::u16 time) const {
+void HiwonderServo::SetServoAngle(rm::u16 pos, rm::u8 id, rm::u16 time) const {
     rm::u8 buf[10];
     buf[0] = 0x55;
     buf[1] = 0x55;
@@ -32,7 +32,7 @@ void hiwonder_servo::SetServoAngle(rm::u16 pos, rm::u8 id, rm::u16 time) const {
     this->serial_->Write(buf, 10);
 }
 
-void hiwonder_servo::RxCallback(const std::vector<rm::u8> &data, rm::u16 rx_len) {
+void HiwonderServo::RxCallback(const std::vector<rm::u8> &data, rm::u16 rx_len) {
     // Reserved for servo feedback parsing.
     (void)data;
     (void)rx_len;

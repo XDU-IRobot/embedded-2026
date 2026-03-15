@@ -13,12 +13,12 @@
 
 namespace rm::device {
 
-class hiwonder_servo : public Device {
+class HiwonderServo : public Device {
 public:
-    hiwonder_servo() = delete;
-    explicit hiwonder_servo(rm::hal::SerialInterface &serial);
+    HiwonderServo() = delete;
+    explicit HiwonderServo(rm::hal::SerialInterface &serial);
 
-    void Begin() const;
+    void Begin();
     void SetServoAngle(rm::u16 pos, rm::u8 id, rm::u16 time) const;
 
 private:

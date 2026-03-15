@@ -38,9 +38,13 @@
         * Output
         * EVENT_OUT
         * EXTI
+     PC7   ------> USART6_RX
+     PC6   ------> USART6_TX
 */
 void MX_GPIO_Init(void)
 {
+
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -48,6 +52,14 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
+
+  /*Configure GPIO pins : PC7 PC6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF8_USART6;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 }
 

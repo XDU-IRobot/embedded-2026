@@ -86,6 +86,7 @@ void DartStateManualUpdate() {
                     dart_rack->state_.manual_mode.mode = ModeState::kAim;
                 }
             }
+            break;
 
         case ModeState::kAim:
             if (dart_rack->state_.manual_mode.aim == PhaseState::kUncomplete) {
@@ -222,9 +223,11 @@ void DartStateAdjustUpdate() {
     if (dart_rack->rc_->dial() < -330) {
         dart_rack->add_motor_speed_pid_.Update(300.0f, dart_rack->add_motor_->rpm(), 1.0f);
         dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
+        dart_rack->add_plate_servo_->SetServoAngle(866, 0, 0);
     } else if (dart_rack->rc_->dial() > 330) {
         dart_rack->add_motor_speed_pid_.Update(-300.0f, dart_rack->add_motor_->rpm(), 1.0f);
         dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
+        dart_rack->add_plate_servo_->SetServoAngle(593, 0, 0);
     } else {
         dart_rack->add_motor_speed_pid_.Update(.0f, dart_rack->add_motor_->rpm(), 1.0f);
         dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
@@ -242,11 +245,11 @@ void DartStateUnableUpdate() {
 
 void DartStateInitUpdate() {
     // Yaw轴根据是第几发镖初始化
-    if (dart_rack->yaw_encoder_->angle_deg() - DartRack::kYawEcd[static_cast<uint8_t>(dart_rack->dart_count_)] > 0.1) {
+    if (dart_rack->yaw_encoder_->angle_deg() - DartRack::kYawEcd[static_cast<uint8_t>(dart_rack->dart_count_)] > 0.05) {
         dart_rack->yaw_motor_speed_pid_.Update(-1000.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
         dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
     } else if (dart_rack->yaw_encoder_->angle_deg() - DartRack::kYawEcd[static_cast<uint8_t>(dart_rack->dart_count_)] <
-               -0.1) {
+               -0.05) {
         dart_rack->yaw_motor_speed_pid_.Update(1000.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
         dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
     } else {
@@ -335,7 +338,7 @@ void DartStateInitUpdate() {
     // }
     dart_rack->state_.manual_mode.is_add_init_done = true;
     // 打开撒放器
-    if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 100 &&
+    if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 50 &&
         dart_rack->state_.manual_mode.is_trigger_force_init_done == false) {
         dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
         dart_rack->trigger_motor_force_->SetCurrent(
@@ -461,22 +464,54 @@ void DartStateAddUpdate() {
     }
 
     if (dart_rack->state_.manual_mode.add == PhaseState::kUncomplete) {
-        if (dart_rack->state_.manual_mode.is_add_down_done == false && dart_rack->add_motor_odometer_.linear_ticks() <
-            DartRack::kAddEcd[
-                static_cast<uint8_t>(dart_rack->dart_count_) - 1]) {
-            dart_rack->add_motor_speed_pid_.Update(30.0f, dart_rack->add_motor_->rpm(), 1.0f);
+        const auto add_index = static_cast<uint8_t>(dart_rack->dart_count_) - 1;
+        const auto target_ticks = DartRack::kAddEcd[add_index];
+        if (dart_rack->state_.manual_mode.is_add_down_done == false &&
+            dart_rack->add_motor_odometer_.linear_ticks() > target_ticks) {
+            dart_rack->add_motor_speed_pid_.Update(-300.0f, dart_rack->add_motor_->rpm(), 1.0f);
             dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-        } else if (dart_rack->add_motor_odometer_.linear_ticks() >= DartRack::kAddEcd[
-                       static_cast<uint8_t>(dart_rack->dart_count_) - 1] && dart_rack->state_.manual_mode.
-                   is_add_down_done == false) {
+        } else if (dart_rack->state_.manual_mode.is_add_down_done == false &&
+                   dart_rack->add_motor_odometer_.linear_ticks() <= target_ticks) {
             dart_rack->state_.manual_mode.is_add_down_done = true;
             dart_rack->add_motor_speed_pid_.Update(.0f, dart_rack->add_motor_->rpm(), 1.0f);
             dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-        }
-    }
-        if (dart_rack->state_.manual_mode.is_add_down_done == true && dart_rack->state_.manual_mode.is_add_plate_done == false) {
+        }else
+        {
+            dart_rack->add_motor_speed_pid_.Update(.0f, dart_rack->add_motor_->rpm(), 1.0f);
+            dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));}
+        if (dart_rack->state_.manual_mode.is_add_down_done == true && dart_rack->state_.manual_mode.is_add_plate_done ==
+            false) {
+            if (dart_rack->ticks<=1000) {
+                dart_rack->add_plate_servo_->SetServoAngle(
+                    DartRack::kAddPlateUnlockEcd[add_index], add_index, 0);
+                dart_rack->ticks++;
+            } else {
+                dart_rack->add_plate_servo_->SetServoAngle(
+                    DartRack::kAddPlateLockEcd[add_index], add_index, 0);
+                dart_rack->state_.manual_mode.is_add_plate_done = true;
+                dart_rack->ticks=0;
+            }
 
         }
+        if (dart_rack->state_.manual_mode.is_add_plate_done == true && dart_rack->state_.manual_mode.is_add_up_done ==
+            false) {
+            if (dart_rack->add_motor_odometer_.linear_ticks() < 0.f) {
+                dart_rack->add_motor_speed_pid_.Update(300.0f, dart_rack->add_motor_->rpm(), 1.0f);
+                dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
+            } else {
+                dart_rack->state_.manual_mode.is_add_up_done = true;
+                dart_rack->add_motor_speed_pid_.Update(.0f, dart_rack->add_motor_->rpm(), 1.0f);
+                dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
+            }
+        }
+        if (dart_rack->state_.manual_mode.is_add_plate_done == true && dart_rack->state_.manual_mode.is_add_up_done ==
+            true && dart_rack->state_.manual_mode.is_add_down_done == true) {
+            dart_rack->state_.manual_mode.add = PhaseState::kDone;
+        }
+    }
+    if (dart_rack->state_.manual_mode.add == PhaseState::kDone) {
+        dart_rack->add_motor_->SetCurrent(0);
+    }
 }
 
 void DartStateAimUpdate() {

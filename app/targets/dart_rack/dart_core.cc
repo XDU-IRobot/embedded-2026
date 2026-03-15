@@ -1,3 +1,5 @@
+#include "dart_core.hpp"
+
 #include "can.h"
 #include "usart.h"
 
@@ -11,7 +13,7 @@ void DartRack::Init() {
     load_motor_l_speed_pid_.SetKp(20).SetKi(1).SetKd(0).SetMaxOut(10000).SetMaxIout(20);
     load_motor_r_speed_pid_.SetKp(20).SetKi(1).SetKd(0).SetMaxOut(10000).SetMaxIout(20);
     trigger_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
-    trigger_motor_force_pid_.SetKp(-20).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
+    trigger_motor_force_pid_.SetKp(-20).SetKi(0).SetKd(0).SetMaxOut(15000).SetMaxIout(0);
     add_motor_speed_pid_.SetKp(20).SetKi(0).SetMaxOut(10000).SetMaxIout(0);
     yaw_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(16384).SetMaxIout(0);
 
@@ -27,6 +29,9 @@ void DartRack::Init() {
     rc_->Begin();
     rx_referee = new rm::device::RxReferee{*referee_uart};
     rx_referee->Begin();
+    servo_uart= new rm::hal::Serial{huart2, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    add_plate_servo_ = new rm::device::HiwonderServo{*servo_uart};
+    add_plate_servo_->Begin();
     // 电机初始化
     add_motor_ = new rm::device::M3508{*can1_, 1};
     load_motor_l_ = new rm::device::M3508{*can1_, 3};
