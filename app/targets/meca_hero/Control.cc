@@ -73,11 +73,11 @@ void MagazineControl() {
 
   // 按下扳机(延时1s)
   if (counter == 0) {
-    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() /*|| globals->
-         custom_client->mouse_left()*/) &&
-        shooter_4 < -4140 && shooter_4 > -4160 && shooter_5 < -4140 && shooter_5 > -4160 && shooter_6 < -4140 &&
-        shooter_6 > -4160 && shooter_1 < -3640 && shooter_1 > -3660 && shooter_2 < -3640 && shooter_2 > -3660 &&
-        shooter_3 < -3640 && shooter_3 > -3660) {
+    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left()
+        // shooter_4 < V_shooter_2+e_area && shooter_4 > V_shooter_2-e_area && shooter_5 <  V_shooter_2+e_area && shooter_5 > V_shooter_2-e_area && shooter_6 <  V_shooter_2+e_area &&
+        // shooter_6 > V_shooter_2-e_area && shooter_1 < V_chassis_1+e_area && shooter_1 > V_chassis_1-e_area && shooter_2 < V_chassis_1+e_area && shooter_2 > V_chassis_1-e_area &&
+        // shooter_3 < V_chassis_1+e_area && shooter_3 > V_chassis_1-e_area
+        )) {
       // 堵转检测
       if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
         target_magz = globals->magazine_motor->pos() + 3.141593 / 90;
@@ -228,7 +228,8 @@ void ShooterControl() {
 /*----------------------------------------------------*/
 inline f32 pitch_ff = 2750;
 
-void GimbalControl() {
+void
+GimbalControl() {
   // IMU解算
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
@@ -269,7 +270,7 @@ void GimbalControl() {
   aimbot_state_flag = globals->aimbot_can_communicator->aimbot_target();
   if (aimbot_state_flag > 0 && (globals->rc->dial() >= 500 || globals->rc->dial() <= -500 ||
                                 r_switch_position_now == device::DR16::SwitchPosition::kUp ||
-                                globals->rc->mouse_button_right() || globals->custom_client->mouse_right())) {
+                                globals->rc->mouse_button_right() /*|| globals->custom_client->mouse_right()*/)) {
     target_pos_yaw = -globals->aimbot_can_communicator->yaw();
     //-aimbot.USB_Rx.YawRelativeAngle;usb
     target_pos_pitch = globals->aimbot_can_communicator->pitch();
