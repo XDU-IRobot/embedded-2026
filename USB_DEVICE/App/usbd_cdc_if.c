@@ -292,7 +292,7 @@ static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
   UsbReceive(Buf, (uint8_t)*Len);
 #endif
 #ifdef MECA_HERO
-  if (*Len == 25/*自定义客户端*/) {
+  if (*Len == 14/*自定义客户端*/) {
     memcpy(UserRxBuf, Buf, *Len);
     UserRxLen = *Len;
     // aimofflinecount = 0;

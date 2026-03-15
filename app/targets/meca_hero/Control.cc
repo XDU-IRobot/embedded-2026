@@ -9,7 +9,14 @@ void MagazineControl() {
   if (l_switch_position_now != rm::device::DR16::SwitchPosition::kUp ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
-    globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    static int low_f = 0;
+    if (low_f > 9) {
+      low_f = 0;
+      globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    } else {
+      low_f++;
+    }
+
     // HAL_Delay(0);
     return;
   }
@@ -45,6 +52,8 @@ void MagazineControl() {
     // }
     // 使能
     globals->magazine_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    //防丝杆抖动
+    target_pos_pitch = -globals->ahrs.euler_angle().pitch;
   }
   // 拨盘电机逻辑
   // 堵转检测
@@ -64,9 +73,11 @@ void MagazineControl() {
 
   // 按下扳机(延时1s)
   if (counter == 0) {
-    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() || globals->
-         custom_client->mouse_left()) &&
-        shooter_4 < -4000) {
+    if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() /*|| globals->
+         custom_client->mouse_left()*/) &&
+        shooter_4 < -4140 && shooter_4 > -4160 && shooter_5 < -4140 && shooter_5 > -4160 && shooter_6 < -4140 &&
+        shooter_6 > -4160 && shooter_1 < -3640 && shooter_1 > -3660 && shooter_2 < -3640 && shooter_2 > -3660 &&
+        shooter_3 < -3640 && shooter_3 > -3660) {
       // 堵转检测
       if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
         target_magz = globals->magazine_motor->pos() + 3.141593 / 90;
@@ -81,7 +92,7 @@ void MagazineControl() {
       // if (target_magz <= -3.141593 /*（π）*/) {
       //   target_magz += 3.141593 * 2;
       // }
-      counter = 500;
+      counter = 840;
       // magz_compensation = 0;
     }
   } else {
@@ -93,7 +104,12 @@ void MagazineControl() {
   globals->pid_magz_position->Update(target_magz, globals->magazine_motor->pos(), 0.001);
   // target_velocity = globals->pid_magz_position->out();
   // globals->pid_magz_velocity->Update(target_velocity, globals->magazine_motor->vel(), 0.002);
-  globals->magazine_motor->SetMitCommand(0, 0, globals->pid_magz_position->out(), 0, 0);
+  static int low_f_1;
+  if (low_f_1 > 1) {
+    globals->magazine_motor->SetMitCommand(0, 0, globals->pid_magz_position->out(), 0, 0);
+  } else {
+    low_f_1++;
+  }
 }
 
 /*----------------------------------------------------*/
@@ -111,11 +127,12 @@ void ShooterControl() {
       r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
     globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
+    globals->pid_shooter_4->Update(0, globals->shooter_motor_4->rpm());
     // 给shooter电机发送指令
     globals->shooter_motor_1->SetCurrent(globals->pid_shooter_1->out());
     globals->shooter_motor_2->SetCurrent(0);
     globals->shooter_motor_3->SetCurrent(0);
-    globals->shooter_motor_4->SetCurrent(0);
+    globals->shooter_motor_4->SetCurrent(globals->pid_shooter_4->out());
     globals->shooter_motor_5->SetCurrent(0);
     globals->shooter_motor_6->SetCurrent(0);
     // // 目标速度PID
@@ -261,6 +278,7 @@ void GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
+        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003 +
         static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003; // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
         static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033); // 0.00033/per
@@ -360,9 +378,9 @@ void ChassisPower() {
   }
   pos_target = 1.54;
   pos_real = globals->gimbal_motor_yaw->pos();
-  vel_target =globals->pid_chassis_follow_pos->out();
-  vel_real= globals->gimbal_motor_yaw->vel();
-      follow = Vw;
+  vel_target = globals->pid_chassis_follow_pos->out();
+  vel_real = globals->gimbal_motor_yaw->vel();
+  follow = Vw;
 
   // 遥控器输入底盘速度
   Vx = globals->rc->left_x() * 10000 / 660;
@@ -417,7 +435,8 @@ void ChassisPower() {
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
                     ? 50
-                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                    : 180;
+    // static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);

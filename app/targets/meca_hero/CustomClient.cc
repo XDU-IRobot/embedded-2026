@@ -24,9 +24,16 @@ void CustomClient::Unpack(uint8_t *rx_data, uint8_t Len) {
           VOFA_Send_JustFloat_DMA(&huart1, test);
           break;
         default:
+          _mouse_x = 0;
+          _mouse_y = 0;
+          _mouse_z = 0;
+          _mouse_left = 0;
+          _mouse_right = 0;
+          _mouse_mid = 0;
+          _key = 0;
           break;
       }
     }
   }
 }
-}  // namespace rm::device
+} // namespace rm::device

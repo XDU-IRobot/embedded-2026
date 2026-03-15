@@ -119,12 +119,12 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{30, 2, 4, 18000, 100};
     pid_chassis_4 = new rm::modules::PID{30, 2, 4, 18000, 100};
 
-    pid_shooter_1 = new rm::modules::PID{25, 2, 4, 10000, 2}; // 20
-    pid_shooter_2 = new rm::modules::PID{25, 2, 4, 10000, 2}; // 20
-    pid_shooter_3 = new rm::modules::PID{25, 2, 4, 10000, 2};
-    pid_shooter_4 = new rm::modules::PID{25, 2, 4, 10000, 2};
-    pid_shooter_5 = new rm::modules::PID{25, 2, 4, 10000, 2};
-    pid_shooter_6 = new rm::modules::PID{25, 2, 4, 10000, 2};
+    pid_shooter_1 = new rm::modules::PID{21, 0, 2, 16000, 2}; // 20
+    pid_shooter_2 = new rm::modules::PID{21, 0, 2, 16000, 2}; // 20
+    pid_shooter_3 = new rm::modules::PID{21, 0, 2, 16000, 2};
+    pid_shooter_4 = new rm::modules::PID{21, 0, 2, 16000, 2};
+    pid_shooter_5 = new rm::modules::PID{21, 0, 2, 16000, 2};
+    pid_shooter_6 = new rm::modules::PID{21, 0, 2, 16000, 2};
 
     pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
     // pid_magz_velocity = new rm::modules::PID{0.17, 0, 0.0002, 6.4, 0};
@@ -136,12 +136,12 @@ inline struct GlobalWarehouse {
 
     // 底盘随动
 
-    pid_chassis_follow_pos = new rm::modules::PID{300, 0, 1, 1000, 0};
+    pid_chassis_follow_pos = new rm::modules::PID{1200, 0, 25, 1500, 0};
     // pid_chassis_follow_pos = new rm::modules::PID{14000, 33600, 100, 16000, 10000};
 
     // pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
 
-    pid_chassis_follow_vel = new rm::modules::PID{10, 0, 0, 16000, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{14.5, 0, 0, 16000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
@@ -174,7 +174,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = 0;
+inline float next_target_magz = -0.244346+0.523599+0.087266;//-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -188,7 +188,7 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -4600;
+inline rm::i16 V_shooter_1 = -3650;
 inline rm::i16 V_shooter_2 = -4150; // 12m/s
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
