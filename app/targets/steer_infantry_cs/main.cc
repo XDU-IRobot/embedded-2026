@@ -191,7 +191,7 @@ void GlobalWarehouse::RCStateUpdate() {
 
 void GlobalWarehouse::Music() {
   if (globals->rc->dial() >= 650) {
-    globals->music = true;
+    globals->music_play_flag = true;
   }
   if (globals->rc->dial() <= -650 && !globals->music_change_flag) {
     globals->music_choice++;
@@ -203,9 +203,9 @@ void GlobalWarehouse::Music() {
   }
   if (globals->rc->dial() >= -650 && globals->rc->dial() <= 650) {
     globals->music_change_flag = false;
-    globals->music = false;
+    globals->music_play_flag = false;
   }
-  if (music) {
+  if (music_play_flag) {
     if (globals->music_choice == 1) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SeeUAgain>();
     }

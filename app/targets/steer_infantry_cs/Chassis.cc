@@ -1,7 +1,5 @@
 #include "Chassis.hpp"
 
-#include "Gimbal.hpp"
-
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
   chassis->chassis_follow_pid_.SetKp(6000.0f);

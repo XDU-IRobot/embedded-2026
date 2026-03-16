@@ -10,17 +10,16 @@ class GimbalCommunicator final : public CanDevice {
   GimbalCommunicator() = delete;
   ~GimbalCommunicator() override = default;
 
-  f32 remote_speed_x() const { return remote_speed_x_; }
-  f32 remote_speed_y() const { return remote_speed_y_; }
-  u8 chassis_mode() const { return chassis_mode_; }
-  u8 UI_show_flag() const { return UI_show_flag_; }
-  u8 get_target_flag() const { return get_target_flag_; }
-  u8 suggest_fire_flag() const { return suggest_fire_flag_; }
-  u8 aim_speed_change() const { return aim_speed_change_; }
+  [[nodiscard]] f32 remote_speed_x() const { return remote_speed_x_; }
+  [[nodiscard]] f32 remote_speed_y() const { return remote_speed_y_; }
+  [[nodiscard]] u8 chassis_mode() const { return chassis_mode_; }
+  [[nodiscard]] u8 UI_show_flag() const { return UI_show_flag_; }
+  [[nodiscard]] u8 get_target_flag() const { return get_target_flag_; }
+  [[nodiscard]] u8 suggest_fire_flag() const { return suggest_fire_flag_; }
+  [[nodiscard]] u8 aim_speed_change() const { return aim_speed_change_; }
 
   void RxCallback(const hal::CanFrame *msg) override;
-  void SendGimbalCommand(i8 chassis_move_x, i8 chassis_move_y, u8 chassis_state, u8 ui_refresh_flag,
-                          u8 get_target_flag, u8 suggest_fire_flag, i8 aim_speed_change);
+  void SendGimbalCommand(u16 current_heat, u16 heat_limit, u8 power_state, u8 robot_id);
 
  private:
   f32 remote_speed_x_{};
@@ -31,8 +30,6 @@ class GimbalCommunicator final : public CanDevice {
   u8 suggest_fire_flag_{};
   i8 aim_speed_change_{};
   u8 tx_buf_[8]{};
-
-  void ParseRxData(const hal::CanFrame *msg);
 };
 }  // namespace rm::device
 
