@@ -37,10 +37,14 @@ uint32_t System_time;
 
 void G_average() {
   if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.01 &&
-      globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.011) {
+      globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.011&&shooter_1>-2000) {
     sum += globals->gyro_z_filter.apply(globals->imu->gyro_z());
     count++;
-  }
+      }else if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.008 &&
+          globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.0081&&shooter_1<-2000) {
+        sum += globals->gyro_z_filter.apply(globals->imu->gyro_z());
+        count++;
+      }
   if (count == 100) {
     average1 = sum / 100;
     sum = 0;
@@ -50,7 +54,7 @@ void G_average() {
 
 // 定频循环
 void MainLoop() {
-  G_average();
+
   // 遥控器输入值
   l_switch_position_last = l_switch_position_now;
   l_switch_position_now = globals->rc->switch_l();
@@ -63,6 +67,7 @@ void MainLoop() {
   ShooterControl();
   // 拨盘电机逻辑
   MagazineControl();
+  G_average();
   // 云台控制逻辑
   GimbalControl();
   // 发送DjiCAN信号
@@ -70,8 +75,8 @@ void MainLoop() {
   if (autoaim_update_count == 1) {
     CANAutoaimUpdate();
     // 改usb中断处字长检查
-    AutoaimUpdate();
-    // CustomClientUpdate();
+    // AutoaimUpdate();
+    CustomClientUpdate();
 
     key_w = globals->custom_client->key(rm::device::DR16::Key::kW);
     cc_mouse_l = globals->custom_client->mouse_left();

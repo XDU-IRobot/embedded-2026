@@ -22,6 +22,8 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     yaw_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[2]) << 8) | msg->data[3]));
     pitch_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5]));
     nuc_start_flag_ = static_cast<u8>(msg->data[6]);
+  }else {
+    aimbot_target_ = 0;
   }
 }
 
