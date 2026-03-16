@@ -496,8 +496,8 @@ public:
     ahrs_auto.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z(), imu->accel_y(),
                                               imu->accel_x(), -imu->accel_z()});
 #else
-  ahrs_auto.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), imu->gyro_y(), -imu->gyro_z(), -imu->accel_x(),
-                                            imu->accel_y(), -imu->accel_z()});
+    ahrs_auto.Update(rm::modules::ImuData6Dof{-imu->gyro_x(), imu->gyro_y(), -imu->gyro_z(), -imu->accel_x(),
+                                              imu->accel_y(), -imu->accel_z()});
 #endif
 
     pitch = ahrs_auto.euler_angle().pitch + M_PI;
