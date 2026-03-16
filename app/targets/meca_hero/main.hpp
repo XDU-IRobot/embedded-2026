@@ -131,10 +131,10 @@ inline struct GlobalWarehouse {
 
     pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
-    pid_pitch_position = new rm::modules::PID{70, 0.5, 1.1, 1, 0.1};
-    pid_pitch_velocity = new rm::modules::PID{9000, 3000, 45, 16000, 500};
-    // pid_pitch_position = new rm::modules::PID{50000, 10, 25, 1500, 1000};
-    // pid_pitch_velocity = new rm::modules::PID{14.5, 0, 0, 16000, 500};
+    pid_pitch_position = new rm::modules::PID{75, 0.5, 1.3, 1, 0.1};
+    pid_pitch_velocity = new rm::modules::PID{9100, 3500, 40, 16000, 500};
+    // pid_pitch_position = new rm::modules::PID{15000, 25, 100, 1500, 1000};
+    // pid_pitch_velocity = new rm::modules::PID{20, 0, 0, 16000, 5000};
 
     // 底盘随动
 
@@ -271,6 +271,12 @@ void VOFA();
 // 随动监测
 inline int follow;
 inline bool cc_mouse_l;
-inline int cc_mouse_x;
+inline int16_t cc_mouse_x;
+inline int16_t cc_mouse_y;
 inline bool key_w;
+inline bool key_a;
+inline bool key_s;
+inline bool key_d;
+inline bool key_q;
+inline bool key_e;
 #endif  // BOARDC_MAIN_HPP

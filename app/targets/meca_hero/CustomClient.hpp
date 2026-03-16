@@ -29,9 +29,9 @@ class CustomClient {
   CClient_Rx_Pack CClient_Rx;
   Vofa_TxFrame test;
 
-  [[nodiscard]] uint16_t mouse_x() const { return _mouse_x; }
-  [[nodiscard]] uint16_t mouse_y() const { return _mouse_y; }
-  [[nodiscard]] uint16_t mouse_z() const { return _mouse_z; }
+  [[nodiscard]] int16_t mouse_x() const { return _mouse_x; }
+  [[nodiscard]] int16_t mouse_y() const { return _mouse_y; }
+  [[nodiscard]] int16_t mouse_z() const { return _mouse_z; }
   [[nodiscard]] bool mouse_left() const { return _mouse_left; }
   [[nodiscard]] bool mouse_right() const { return _mouse_right; }
   [[nodiscard]] bool key(DR16::Key key) const { return _key & static_cast<uint16_t>(key); }
@@ -42,9 +42,9 @@ class CustomClient {
   void Unpack(uint8_t *rx_data, uint8_t Len);
 
  private:
-  u16 _mouse_x;
-  u16 _mouse_y;
-  u16 _mouse_z;
+  i16 _mouse_x;
+  i16 _mouse_y;
+  i16 _mouse_z;
   u16 _key;
   bool _mouse_left;
   bool _mouse_right;
