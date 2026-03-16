@@ -58,19 +58,18 @@ extern float Aautoyaw;
 
 extern AimbotFrame_SCM_t Aimbot;
 
-class Gimbal
-{
-public:
+class Gimbal {
+ public:
   int abcdefg = 0;
 
   Buzzer *buzzer{nullptr};  // 蜂鸣器
   rm::modules::BuzzerController<
-        rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
-        rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
-        rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
-        rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
-  buzzer_controller;
-  LED *led{nullptr};      // RGB LED灯
+      rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
+      rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
+      rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
+      rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
+      buzzer_controller;
+  LED *led{nullptr};  // RGB LED灯
   rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
                                 rm::modules::led_pattern::GreenBreath,
                                 rm::modules::led_pattern::RgbFlow>
@@ -99,9 +98,8 @@ public:
   rm::device::M2006 *dial_motor{nullptr};                                           // 拨盘电机
 
   rm::device::DR16 *rc{nullptr};  // 遥控器
-  int  SINGLE_SHOOT_MOOD=-1;
-  int mode_change_time=0;
-
+  int SINGLE_SHOOT_MOOD = -1;
+  int mode_change_time = 0;
 
   typedef enum {
     kNoForce,  // 无力
@@ -372,9 +370,9 @@ public:
       }
       yaw_motor->SetCurrent(0);
       pitch_torque = 0;
-      if (mode_change_time>0)mode_change_time--;
-      if (rc->left_x()==660&&rc->left_y()==-660&&rc->right_x()==-660&&rc->right_y()==-660&&mode_change_time == 0)
-      {
+      if (mode_change_time > 0) mode_change_time--;
+      if (rc->left_x() == 660 && rc->left_y() == -660 && rc->right_x() == -660 && rc->right_y() == -660 &&
+          mode_change_time == 0) {
         SINGLE_SHOOT_MOOD *= -1;
         buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
         mode_change_time = 20;
@@ -390,62 +388,59 @@ public:
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-    if (SINGLE_SHOOT_MOOD==1)
-    {
-      if (Aimbot.AimbotState & (0x1 << 3) || (encoder_dirl < 550 && rc->dial() >= 550)) single_flag = true;
-      encoder_dirl = rc->dial();
+      if (SINGLE_SHOOT_MOOD == 1) {
+        if (Aimbot.AimbotState & (0x1 << 3) || (encoder_dirl < 550 && rc->dial() >= 550)) single_flag = true;
+        encoder_dirl = rc->dial();
 
-      if (single_flag) {
-        if (single_shoot_mid >= single_shoot_time) {
-          single_flag = false;
-          single_shoot_mid = 0;
+        if (single_flag) {
+          if (single_shoot_mid >= single_shoot_time) {
+            single_flag = false;
+            single_shoot_mid = 0;
+          } else {
+            shoot_controller.SetLoaderSpeed(dirl_speed);
+            single_shoot_mid++;
+          }
         } else {
-          shoot_controller.SetLoaderSpeed(dirl_speed);
-          single_shoot_mid++;
+          shoot_controller.SetLoaderSpeed(0);
         }
       } else {
-        shoot_controller.SetLoaderSpeed(0);
-      }
-    }
-    else
-    {
-      if (rc->dial() >= 550) {
-        if (auto_reverse_flag) {
-          shoot_controller.SetLoaderSpeed(-redirl_speed);
-          auto_reverse_time--;
-          auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
-        } else {
-          if (GimbalState_ == kAuto) {
-            if (Aimbot.AimbotState && Aimbot.AutoFire) {
-              shoot_controller.SetLoaderSpeed(dirl_speed);
-            } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
-              shoot_controller.SetLoaderSpeed(0.0f);
+        if (rc->dial() >= 550) {
+          if (auto_reverse_flag) {
+            shoot_controller.SetLoaderSpeed(-redirl_speed);
+            auto_reverse_time--;
+            auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
+          } else {
+            if (GimbalState_ == kAuto) {
+              if (Aimbot.AimbotState && Aimbot.AutoFire) {
+                shoot_controller.SetLoaderSpeed(dirl_speed);
+              } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
+                shoot_controller.SetLoaderSpeed(0.0f);
+              } else {
+                shoot_controller.SetLoaderSpeed(dirl_speed);
+              }
             } else {
               shoot_controller.SetLoaderSpeed(dirl_speed);
             }
-          } else {
-            shoot_controller.SetLoaderSpeed(dirl_speed);
+          }
+        } else if (rc->dial() <= -600) {
+          shoot_controller.SetLoaderSpeed(-redirl_speed);
+        } else {
+          shoot_controller.SetLoaderSpeed(0.0f);
+        }
+
+        // 自动反转逻辑
+        if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
+          auto_reverse_buffer[4] = auto_reverse_buffer[3];
+          auto_reverse_buffer[3] = auto_reverse_buffer[2];
+          auto_reverse_buffer[2] = auto_reverse_buffer[1];
+          auto_reverse_buffer[1] = auto_reverse_buffer[0];
+          auto_reverse_buffer[0] = dial_motor->encoder();
+          if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
+            auto_reverse_flag = true;
+            auto_reverse_time = auto_reverse_time_max;
           }
         }
-      } else if (rc->dial() <= -600) {
-        shoot_controller.SetLoaderSpeed(-redirl_speed);
-      } else {
-        shoot_controller.SetLoaderSpeed(0.0f);
       }
-
-      // 自动反转逻辑
-      if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
-        auto_reverse_buffer[4] = auto_reverse_buffer[3];
-        auto_reverse_buffer[3] = auto_reverse_buffer[2];
-        auto_reverse_buffer[2] = auto_reverse_buffer[1];
-        auto_reverse_buffer[1] = auto_reverse_buffer[0];
-        auto_reverse_buffer[0] = dial_motor->encoder();
-        if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
-          auto_reverse_flag = true;
-          auto_reverse_time = auto_reverse_time_max;
-        }
-      }
-    }
       shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
       shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
 
