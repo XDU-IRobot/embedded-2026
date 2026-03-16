@@ -220,7 +220,14 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
                                     globals->ahrs.euler_angle().yaw, -globals->down_yaw_motor->vel(),
                                     globals->hipnuc_imu->pitch(), -globals->pitch_motor->vel());
-  const f32 gravity_compensation_ = -1.3f * std::cos(globals->hipnuc_imu->roll() + 0.2115f);
+  const f32 move_compensation_ = globals->down_yaw_motor->vel() / 10.0f;
+  if (std::abs(globals->down_yaw_motor->vel()) > 2.0f) {
+    gimbal->down_yaw_torque_ = globals->gimbal_controller.output().down_yaw + move_compensation_;
+  } else {
+    gimbal->down_yaw_torque_ = globals->gimbal_controller.output().down_yaw;
+  }
+  gimbal->down_yaw_torque_ = rm::modules::Clamp(gimbal->down_yaw_torque_, -10.0f, 10.0f);
+  const f32 gravity_compensation_ = -1.82f * std::cos(globals->hipnuc_imu->pitch() + 0.2115f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.0f, 10.0f);
 }
@@ -316,17 +323,17 @@ void Gimbal::ShootEnableUpdate() {
     } else {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
-  } else if (globals->rc->dial() >= 650 || (globals->rc->dial() >= 100 && globals->rc->dial() < 650 ||
+  } else if (globals->rc->dial() >= 650 || ((globals->rc->dial() >= 100 && globals->rc->dial() < 650) ||
                                             globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     // if (heat_limit_ - heat_current_ > 100) {
-    gimbal->shoot_frequency_ = 20.0f;
+    globals->shoot_controller.SetShootFrequency(20.0f);
     // } else if (heat_limit_ - heat_current_ < 40) {
-    //     gimbal->shoot_frequency_ = 0.0f;
+    // globals->shoot_controller.SetShootFrequency(0.0f);
     // } else {
-    //     gimbal->shoot_frequency_ = -std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f;
+    // globals->shoot_controller.SetShootFrequency(  //
+    //     std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f);
     // }
-    globals->shoot_controller.SetShootFrequency(shoot_frequency_);  // 负值为正转
   } else {
     globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     single_shoot_flag_ = false;

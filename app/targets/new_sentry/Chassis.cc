@@ -6,7 +6,7 @@ void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
   chassis->chassis_follow_pid_.SetKp(6000.0f);
   chassis->chassis_follow_pid_.SetKi(0.0f);
-  chassis->chassis_follow_pid_.SetKd(500000.0f);
+  chassis->chassis_follow_pid_.SetKd(300000.0f);
   chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
   chassis->chassis_follow_pid_.SetMaxIout(0.0f);
 }
@@ -51,10 +51,7 @@ void Chassis::ChassisStateUpdate() {
 }
 
 void Chassis::ChassisRCDataUpdate() {
-  chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ -
-                             rm::modules::Wrap(globals->down_yaw_motor->pos(), -static_cast<f32>(M_PI), M_PI);  //
-  // + rm::modules::Map(gimbal->mid_up_yaw_angle_ - static_cast<f32>(globals->up_yaw_motor->encoder()), 0.0f,
-  //                    globals->GM6020_encoder_max_, 0.0f, 2.0f * static_cast<f32>(M_PI));
+  chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ - globals->down_yaw_motor->pos();
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
   if (std::abs(globals->rc->right_y()) > 20 || std::abs(globals->rc->right_x()) > 20) {
     chassis->chassis_receive_x_ = rm::modules::Map(globals->rc->right_x(), -660, 660, -chassis->chassis_sensitivity_xy_,
@@ -123,6 +120,15 @@ void Chassis::ChassisNavigateDataUpdate() {
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
                        -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_,  //
                        -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+  if (std::abs(globals->rc->right_y()) > 20 || std::abs(globals->rc->right_x()) > 20) {
+    chassis->chassis_receive_x_ = rm::modules::Map(globals->rc->right_x(), -660, 660, -chassis->chassis_sensitivity_xy_,
+                                                   chassis->chassis_sensitivity_xy_);
+    chassis->chassis_receive_y_ = rm::modules::Map(globals->rc->right_y(), -660, 660, -chassis->chassis_sensitivity_xy_,
+                                                   chassis->chassis_sensitivity_xy_);
+  } else {
+    chassis->chassis_receive_x_ = 0.0f;
+    chassis->chassis_receive_y_ = 0.0f;
+  }
   chassis->chassis_target_w_ =
       rm::modules::Map(rm::modules::Clamp(globals->navigate_communicator->chassis_target_w(),
                                           -chassis_max_navigate_xyw_, chassis_max_navigate_xyw_),
@@ -130,19 +136,23 @@ void Chassis::ChassisNavigateDataUpdate() {
                        -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
   if (std::abs(chassis->chassis_target_w_) > 0) {
     chassis->chassis_move_delta_angle_ =
-        -0.5f * rm::modules::Clamp(globals->navigate_communicator->chassis_target_w(), -chassis_max_navigate_xyw_,
-                                   chassis_max_navigate_xyw_);
+        0.5f * rm::modules::Clamp(globals->navigate_communicator->chassis_target_w(), -chassis_max_navigate_xyw_,
+                                  chassis_max_navigate_xyw_);
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) -
         chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
     chassis->chassis_target_y_ =
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
+    chassis->chassis_target_x_ = chassis->chassis_receive_x_;
+    chassis->chassis_target_y_ = chassis->chassis_receive_y_;
   } else {
     chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
                                  chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
     chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
                                  chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
+    chassis->chassis_target_x_ = chassis->chassis_receive_x_;
+    chassis->chassis_target_y_ = chassis->chassis_receive_y_;
   }
   if (std::abs(chassis->chassis_target_w_) > 4000.0f) {
     chassis->chassis_target_x_ *= 0.5;

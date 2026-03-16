@@ -12,6 +12,7 @@ inline class Gimbal {
   StateMachineType GimbalMove_ = {kNoForce};  // 云台运动状态
 
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
+  f32 down_yaw_torque_ = 0.0f; // 下部yaw轴力矩数据
  private:
   rm::modules::TrajectoryLimiter up_yaw_move_limiter_{4.0f, 16.0f};
   rm::modules::TrajectoryLimiter down_yaw_move_limiter_{4.0f, 16.0f};

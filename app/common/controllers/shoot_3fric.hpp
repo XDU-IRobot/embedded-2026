@@ -86,10 +86,10 @@ class Shoot3Fric {
       // 单发模式，拨盘转动一个子弹间距
       if (direction_) {
         target_.loader_position =
-            state_.loader_position + loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+            state_.loader_position - loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
       } else {
         target_.loader_position =
-            state_.loader_position - loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+            state_.loader_position + loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
       }
       single_shoot_complete_ = false;
     } else if (mode_ == kFullAuto) {

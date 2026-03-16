@@ -31,7 +31,7 @@ inline class Chassis {
 
   f32 k_speed_power_limit_ = 1.0f;  // 底盘速度限制系数
 
-  f32 chassis_move_delta_angle_ = 0.5f;
+  f32 chassis_move_delta_angle_ = -0.15f;
 
   bool rotate_flag_ = false;  // 小陀螺模式标识位
 
