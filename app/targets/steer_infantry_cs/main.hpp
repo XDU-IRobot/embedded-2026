@@ -6,7 +6,6 @@
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
 #include "encoder_counter.hpp"
-#include "aimbot_comm_can.hpp"
 #include "controllers/quad_steering_chassis.hpp"
 #include "controllers/shoot_3fric.hpp"
 
@@ -36,16 +35,18 @@ inline struct GlobalWarehouse {
 
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                                        ///< CAN 总线接口
-  rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};                    ///< CAN 通信器
   rm::device::GimbalCommunicator *gimbal_communicator{nullptr};                       ///< CAN 通信器
   rm::hal::Serial *dbus{nullptr};                                                     ///< 遥控器串口接口
+  rm::device::BMI088 *imu{nullptr};                                                   ///< IMU
   rm::hal::Serial *referee_uart{nullptr};                                             ///< 裁判系统串口接口
   rm::device::RxReferee *rx_referee{nullptr};                                         ///< 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data{nullptr};  ///< 裁判系统数据
 
   // 设备 //
+  rm::device::DeviceManager<1> device_gimbal;
   rm::device::DeviceManager<8> device_chassis;
-
+  // 云台
+  rm::device::GM6020 *yaw_motor;
   // 底盘
   rm::device::GM6020 *steer_lf{nullptr};  ///< 左前轮舵电机
   rm::device::GM6020 *steer_rf{nullptr};  ///< 右前轮舵电机
@@ -64,15 +65,15 @@ inline struct GlobalWarehouse {
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
 
-  u8 time{};               // 时间
-  u16 hurt_time{};         // 受伤小陀螺倒计时
-  u8 time_camera{};        // 摄像头计数器
-  u16 imu_count{};         // IMU计数器
-  u8 aim_mode{};           // 自瞄模式
-  u8 music_choice{};       // 音乐选择
-  u16 current_heat{};       // 当前热量
-  u16 heat_limit{};         // 热量上限
-  u8 power_state{};         // 供能状态
+  u8 time{};                       // 时间
+  u16 hurt_time{};                 // 受伤小陀螺倒计时
+  u8 time_camera{};                // 摄像头计数器
+  u16 imu_count{};                 // IMU计数器
+  u8 aim_mode{};                   // 自瞄模式
+  u8 music_choice{};               // 音乐选择
+  u16 current_heat{};              // 当前热量
+  u16 heat_limit{};                // 热量上限
+  u8 power_state{};                // 供能状态
   bool music_play_flag = false;    // 控制音乐播放
   bool music_change_flag = false;  // 音乐改动标识位
 
@@ -80,7 +81,6 @@ inline struct GlobalWarehouse {
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
 
   // 函数 //
- public:
   void Init();
 
   void SubLoop500Hz();
@@ -94,11 +94,7 @@ inline struct GlobalWarehouse {
   void SubLoop10Hz();
 
  private:
-  void GimbalPIDInit();
-
   void ChassisPIDInit();
-
-  void ShootPIDInit();
 
   void RCStateUpdate();
 
