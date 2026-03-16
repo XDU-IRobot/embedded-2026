@@ -2,7 +2,6 @@
 #define BOARDC_GIMBAL_HPP
 
 #define NEW_DRONE_GB 1
-#define SINGLE_SHOOT_MOOD 0
 
 #include <librm.hpp>
 #include <utility>
@@ -59,16 +58,18 @@ extern float Aautoyaw;
 
 extern AimbotFrame_SCM_t Aimbot;
 
-class Gimbal {
- public:
+class Gimbal
+{
+public:
   int abcdefg = 0;
 
   Buzzer *buzzer{nullptr};  // 蜂鸣器
-  rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
-                                rm::modules::buzzer_melody::Success, rm::modules::buzzer_melody::Error,
-                                rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
-                                rm::modules::buzzer_melody::TheLick>
-      buzzer_controller;  // 蜂鸣器控制器
+  rm::modules::BuzzerController<
+        rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
+        rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
+        rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
+        rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
+  buzzer_controller;
   LED *led{nullptr};      // RGB LED灯
   rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
                                 rm::modules::led_pattern::GreenBreath,
@@ -98,6 +99,10 @@ class Gimbal {
   rm::device::M2006 *dial_motor{nullptr};                                           // 拨盘电机
 
   rm::device::DR16 *rc{nullptr};  // 遥控器
+  int  SINGLE_SHOOT_MOOD=-1;
+  int mode_change_time=0;
+
+
   typedef enum {
     kNoForce,  // 无力
     kManual,   // 手动
@@ -212,11 +217,11 @@ class Gimbal {
     can1->SetFilter(0, 0);
     can1->Begin();
     rc->Begin();
-    buzzer->Init();
     led->Init();
     rx_referee->Begin();
     led_controller.SetPattern<rm::modules::led_pattern::GreenBreath>();
-    buzzer_controller.Play<rm::modules::buzzer_melody::TheLick>();
+    buzzer->Init();
+    buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
 
     time_ = 0;
 
@@ -367,6 +372,13 @@ class Gimbal {
       }
       yaw_motor->SetCurrent(0);
       pitch_torque = 0;
+      if (mode_change_time>0)mode_change_time--;
+      if (rc->left_x()==660&&rc->left_y()==-660&&rc->right_x()==-660&&rc->right_y()==-660&&mode_change_time == 0)
+      {
+        SINGLE_SHOOT_MOOD *= -1;
+        buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
+        mode_change_time = 20;
+      }
     }
   }
 
@@ -378,7 +390,8 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-#if SINGLE_SHOOT_MOOD
+    if (SINGLE_SHOOT_MOOD==1)
+    {
       if (Aimbot.AimbotState & (0x1 << 3) || (encoder_dirl < 550 && rc->dial() >= 550)) single_flag = true;
       encoder_dirl = rc->dial();
 
@@ -393,8 +406,10 @@ class Gimbal {
       } else {
         shoot_controller.SetLoaderSpeed(0);
       }
-#else
-      if (rc->dial() >= 550 || Aimbot.AimbotState & (0x1 << 3)) {
+    }
+    else
+    {
+      if (rc->dial() >= 550) {
         if (auto_reverse_flag) {
           shoot_controller.SetLoaderSpeed(-redirl_speed);
           auto_reverse_time--;
@@ -430,7 +445,7 @@ class Gimbal {
           auto_reverse_time = auto_reverse_time_max;
         }
       }
-#endif
+    }
       shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
       shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
 
