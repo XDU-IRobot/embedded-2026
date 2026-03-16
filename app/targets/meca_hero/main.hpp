@@ -169,7 +169,7 @@ inline struct GlobalWarehouse {
 // 底盘速度
 inline rm::i16 Vx, Vy, Vw;
 // 云台角度
-inline float target_pos_yaw,last_target_pos_yaw, target_pos_pitch;
+inline float target_pos_yaw, last_target_pos_yaw, target_pos_pitch;
 // 云台当前角度
 inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 // imu陀螺仪
@@ -192,7 +192,7 @@ inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4150;
 inline rm::i16 V_shooter_2 = -4650;  // 12m/s
-inline rm::i16 e_area=100;
+inline rm::i16 e_area = 100;
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;
