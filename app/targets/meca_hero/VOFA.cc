@@ -31,8 +31,8 @@ Vofa_TxFrame g_vofa_tx;
 /**
  * @brief 准备数据包
  */
-void VOFA_Prepare_Package(float x[], Vofa_TxFrame &tx_buffer) {
-  for (int i=0;i<sizeof(Vofa_TxFrame::x);i++) {
+void VOFA_Prepare_Package(float x[], Vofa_TxFrame &tx_buffer,int len) {
+  for (int i=0;i<len;i++) {
     tx_buffer.x[i]=x[i];
   }
 }

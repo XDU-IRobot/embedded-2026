@@ -69,6 +69,8 @@ void MainLoop() {
   rm::device::DjiMotorBase::SendCommand();
   if (autoaim_update_count == 1) {
     CANAutoaimUpdate();
+    aimbot_target=globals->aimbot_can_communicator->aimbot_target();
+    aimbot_state=globals->aimbot_can_communicator->aimbot_state();
     // 改usb中断处字长检查
     // AutoaimUpdate();
     CustomClientUpdate();
@@ -80,7 +82,7 @@ void MainLoop() {
     key_a=globals->custom_client->key(rm::device::DR16::Key::kA);
     key_d=globals->custom_client->key(rm::device::DR16::Key::kD);
     key_e=globals->custom_client->key(rm::device::DR16::Key::kE);
-    // VOFA();
+    VOFA();
     autoaim_update_count = 0;
   } else {
     autoaim_update_count++;

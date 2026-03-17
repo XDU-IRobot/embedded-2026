@@ -119,12 +119,12 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{30, 2, 4, 18000, 100};
     pid_chassis_4 = new rm::modules::PID{30, 2, 4, 18000, 100};
 
-    pid_shooter_1 = new rm::modules::PID{21, 0, 2, 16000, 2};  // 20
-    pid_shooter_2 = new rm::modules::PID{21, 0, 2, 16000, 2};  // 20
-    pid_shooter_3 = new rm::modules::PID{21, 0, 2, 16000, 2};
-    pid_shooter_4 = new rm::modules::PID{21, 0, 2, 16000, 2};
-    pid_shooter_5 = new rm::modules::PID{21, 0, 2, 16000, 2};
-    pid_shooter_6 = new rm::modules::PID{21, 0, 2, 16000, 2};
+    pid_shooter_1 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};  // 20
+    pid_shooter_2 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};  // 20
+    pid_shooter_3 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
+    pid_shooter_4 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
+    pid_shooter_5 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
+    pid_shooter_6 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
 
     pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
     // pid_magz_velocity = new rm::modules::PID{0.17, 0, 0.0002, 6.4, 0};
@@ -176,7 +176,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = -0.244346 + 0.523599 + 0.087266;  //-6°
+inline float next_target_magz = -0.244346*0.5 ;  //-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -190,9 +190,10 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -4150;
-inline rm::i16 V_shooter_2 = -4650;  // 12m/s
+inline rm::i16 V_shooter_1 = -6800;
+inline rm::i16 V_shooter_2 = -6000;  // 12m/s
 inline rm::i16 e_area = 100;
+inline rm::i16 limit= -3000;
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;
@@ -279,4 +280,6 @@ inline bool key_s;
 inline bool key_d;
 inline bool key_q;
 inline bool key_e;
+inline int aimbot_target;
+inline int aimbot_state;
 #endif  // BOARDC_MAIN_HPP

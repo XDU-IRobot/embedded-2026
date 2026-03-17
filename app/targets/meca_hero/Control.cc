@@ -74,7 +74,8 @@ void MagazineControl() {
   // 按下扳机(延时1s)
   if (counter == 0) {
     if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() || globals->
-         custom_client->mouse_left())
+         custom_client->mouse_left() || (globals->aimbot_can_communicator->aimbot_state() == 2 && r_switch_position_now
+                                         == rm::device::DR16::SwitchPosition::kUp))
       // &&
       //   shooter_4 < V_shooter_2+e_area && shooter_4 > V_shooter_2-e_area && shooter_5 <  V_shooter_2+e_area && shooter_5 > V_shooter_2-e_area && shooter_6 <  V_shooter_2+e_area &&
       //   shooter_6 > V_shooter_2-e_area && shooter_1 < V_chassis_1+e_area && shooter_1 > V_chassis_1-e_area && shooter_2 < V_chassis_1+e_area && shooter_2 > V_chassis_1-e_area &&
@@ -131,12 +132,42 @@ void ShooterControl() {
     globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
     globals->pid_shooter_4->Update(0, globals->shooter_motor_4->rpm());
     // 给shooter电机发送指令
-    globals->shooter_motor_1->SetCurrent(globals->pid_shooter_1->out());
-    globals->shooter_motor_2->SetCurrent(0);
-    globals->shooter_motor_3->SetCurrent(0);
-    globals->shooter_motor_4->SetCurrent(globals->pid_shooter_4->out());
-    globals->shooter_motor_5->SetCurrent(0);
-    globals->shooter_motor_6->SetCurrent(0);
+    if (
+        shooter_6 < limit) {
+      globals->pid_shooter_1->Update(limit, globals->shooter_motor_1->rpm());
+      globals->pid_shooter_2->Update(limit, globals->shooter_motor_2->rpm());
+      globals->pid_shooter_3->Update(limit, globals->shooter_motor_3->rpm());
+      globals->pid_shooter_4->Update(limit, globals->shooter_motor_4->rpm());
+      globals->pid_shooter_5->Update(limit, globals->shooter_motor_5->rpm());
+      globals->pid_shooter_6->Update(limit, globals->shooter_motor_6->rpm());
+      globals->shooter_motor_1->SetCurrent(globals->pid_shooter_1->out());
+      globals->shooter_motor_2->SetCurrent(globals->pid_shooter_2->out());
+      globals->shooter_motor_3->SetCurrent(globals->pid_shooter_3->out());
+      globals->shooter_motor_4->SetCurrent(globals->pid_shooter_4->out());
+      globals->shooter_motor_5->SetCurrent(globals->pid_shooter_5->out());
+      globals->shooter_motor_6->SetCurrent(globals->pid_shooter_6->out());
+    } else {
+      // globals->pid_shooter_1->Update(0, globals->shooter_motor_1->rpm());
+      // globals->pid_shooter_2->Update(0, globals->shooter_motor_2->rpm());
+      // globals->pid_shooter_3->Update(0, globals->shooter_motor_3->rpm());
+      // globals->pid_shooter_4->Update(0, globals->shooter_motor_4->rpm());
+      // globals->pid_shooter_5->Update(0, globals->shooter_motor_5->rpm());
+      // globals->pid_shooter_6->Update(0, globals->shooter_motor_6->rpm());
+      // globals->shooter_motor_1->SetCurrent(globals->pid_shooter_1->out());
+      // globals->shooter_motor_2->SetCurrent(globals->pid_shooter_2->out());
+      // globals->shooter_motor_3->SetCurrent(globals->pid_shooter_3->out());
+      // globals->shooter_motor_4->SetCurrent(globals->pid_shooter_4->out());
+      // globals->shooter_motor_5->SetCurrent(globals->pid_shooter_5->out());
+      // globals->shooter_motor_6->SetCurrent(globals->pid_shooter_6->out());
+
+      globals->shooter_motor_1->SetCurrent(0);
+      globals->shooter_motor_2->SetCurrent(0);
+      globals->shooter_motor_3->SetCurrent(0);
+      globals->shooter_motor_4->SetCurrent(0);
+      globals->shooter_motor_5->SetCurrent(0);
+      globals->shooter_motor_6->SetCurrent(0);
+    }
+
     // // 目标速度PID
 
     // globals->pid_shooter_2->Update(0, globals->shooter_motor_2->rpm());
@@ -275,9 +306,21 @@ GimbalControl() {
                                  device::DR16::SwitchPosition::kUp) ||
                                 r_switch_position_now == device::DR16::SwitchPosition::kUp ||
                                 globals->rc->mouse_button_right() || globals->custom_client->mouse_right())) {
-    target_pos_yaw = -globals->aimbot_can_communicator->yaw();
+    if (-globals->aimbot_can_communicator->yaw() - target_pos_yaw > 0.05) {
+      target_pos_yaw += 0.05;
+    } else if (-globals->aimbot_can_communicator->yaw() - target_pos_yaw < -0.05) {
+      target_pos_yaw -= 0.05;
+    } else {
+      target_pos_yaw = -globals->aimbot_can_communicator->yaw();
+    }
     //-aimbot.USB_Rx.YawRelativeAngle;usb
-    target_pos_pitch = globals->aimbot_can_communicator->pitch();
+    if (-globals->aimbot_can_communicator->pitch() - target_pos_pitch > 0.05) {
+      target_pos_pitch += 0.05;
+    } else if (-globals->aimbot_can_communicator->pitch() - target_pos_pitch < -0.05) {
+      target_pos_pitch -= 0.05;
+    } else {
+      target_pos_pitch = -globals->aimbot_can_communicator->pitch();
+    }
     //-aimbot.USB_Rx.PitchRelativeAngle;usb
     aimbot_state_flag = 0;
   } else {
@@ -475,17 +518,26 @@ void CANAutoaimUpdate() {
   } else {
     imu_count++;
   }
-  globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().roll,
-                                                  globals->ahrs.euler_angle().pitch, 1, 0, imu_count, 12);
+  globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
+                                                  globals->ahrs.euler_angle().roll, 1, 0, imu_count, 12);
   aimbot_pitch = globals->aimbot_can_communicator->pitch() * 57.3;
   aimbot_yaw = globals->aimbot_can_communicator->yaw() * 57.3;
 }
 
 void CustomClientUpdate() { globals->custom_client->Unpack(UserRxBuf, UserRxLen); }
 
-Vofa_TxFrame pitch_V_pid;
+Vofa_TxFrame shooter;
 
 void VOFA() {
-  // VOFA_Prepare_Package(globals->pid_yaw_position->out(), pitch_V_pid);
-  // VOFA_Send_JustFloat_DMA(&huart1, pitch_V_pid);
+  float swhell[6];
+  // swhell[0]=-globals->aimbot_can_communicator->yaw();
+  // swhell[1]=-globals->aimbot_can_communicator->pitch();
+  swhell[0] = shooter_1;
+  swhell[1] = shooter_2;
+  swhell[2] = shooter_3;
+  swhell[3] = shooter_4;
+  swhell[4] = shooter_5;
+  swhell[5] = shooter_6;
+  VOFA_Prepare_Package(swhell, shooter, 6);
+  VOFA_Send_JustFloat_DMA(&huart1, shooter);
 }

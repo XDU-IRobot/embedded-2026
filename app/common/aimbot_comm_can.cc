@@ -24,6 +24,9 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     nuc_start_flag_ = static_cast<u8>(msg->data[6]);
   } else {
     aimbot_target_ = 0;
+    // yaw_=0;
+    // pitch_ = 0;
+    // aimbot_state_ = 0;
   }
 }
 
