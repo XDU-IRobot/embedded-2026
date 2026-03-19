@@ -9,9 +9,9 @@ using namespace rm;
 
 inline class Chassis {
  public:
-  StateMachineType ChassisMove_ = {kNoForce};  // 底盘运动状态
-  StateMachineType buff_state_ = {kNormal};                   // 底盘buff状态
-  StateMachineType speed_mode_ = {kNormalSpeed};                   // 底盘速度模式状态
+  StateMachineType ChassisMove_ = {kNoForce};     // 底盘运动状态
+  StateMachineType buff_state_ = {kNormal};       // 底盘buff状态
+  StateMachineType speed_mode_ = {kNormalSpeed};  // 底盘速度模式状态
  private:
   rm::modules::PID chassis_follow_pid_{};
 
