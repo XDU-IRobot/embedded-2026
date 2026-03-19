@@ -177,7 +177,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = -0.244346*0.5 ;  //-6°
+inline float next_target_magz = -0.244346 * 0.5;  //-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -194,7 +194,7 @@ inline int counter = 0;
 inline rm::i16 V_shooter_1 = -6800;
 inline rm::i16 V_shooter_2 = -6000;  // 12m/s
 inline rm::i16 e_area = 100;
-inline rm::i16 limit= -3000;
+inline rm::i16 limit = -3000;
 // 摩擦轮速度监测
 inline rm::i16 shooter_1;
 inline rm::i16 shooter_2;
