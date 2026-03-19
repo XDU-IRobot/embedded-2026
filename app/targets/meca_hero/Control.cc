@@ -133,7 +133,7 @@ void ShooterControl() {
     globals->pid_shooter_4->Update(0, globals->shooter_motor_4->rpm());
     // 给shooter电机发送指令
     if (
-        shooter_6 < limit) {
+      shooter_6 < limit) {
       globals->pid_shooter_1->Update(limit, globals->shooter_motor_1->rpm());
       globals->pid_shooter_2->Update(limit, globals->shooter_motor_2->rpm());
       globals->pid_shooter_3->Update(limit, globals->shooter_motor_3->rpm());
@@ -187,12 +187,21 @@ void ShooterControl() {
   // 摩擦轮逻辑
 
   // 目标速度PID
-  globals->pid_shooter_1->Update(V_shooter_1, globals->shooter_motor_1->rpm());
-  globals->pid_shooter_2->Update(V_shooter_1, globals->shooter_motor_2->rpm());
-  globals->pid_shooter_3->Update(V_shooter_1, globals->shooter_motor_3->rpm());
-  globals->pid_shooter_4->Update(V_shooter_2, globals->shooter_motor_4->rpm());
-  globals->pid_shooter_5->Update(V_shooter_2, globals->shooter_motor_5->rpm());
-  globals->pid_shooter_6->Update(V_shooter_2, globals->shooter_motor_6->rpm());
+  if (shooter_6 > limit) {
+    globals->pid_shooter_1->Update(limit, globals->shooter_motor_1->rpm());
+    globals->pid_shooter_2->Update(limit, globals->shooter_motor_2->rpm());
+    globals->pid_shooter_3->Update(limit, globals->shooter_motor_3->rpm());
+    globals->pid_shooter_4->Update(limit, globals->shooter_motor_4->rpm());
+    globals->pid_shooter_5->Update(limit, globals->shooter_motor_5->rpm());
+    globals->pid_shooter_6->Update(limit, globals->shooter_motor_6->rpm());
+  } else {
+    globals->pid_shooter_1->Update(V_shooter_1, globals->shooter_motor_1->rpm());
+    globals->pid_shooter_2->Update(V_shooter_1, globals->shooter_motor_2->rpm());
+    globals->pid_shooter_3->Update(V_shooter_1, globals->shooter_motor_3->rpm());
+    globals->pid_shooter_4->Update(V_shooter_2, globals->shooter_motor_4->rpm());
+    globals->pid_shooter_5->Update(V_shooter_2, globals->shooter_motor_5->rpm());
+    globals->pid_shooter_6->Update(V_shooter_2, globals->shooter_motor_6->rpm());
+  }
 
   // 给shooter电机发送指令
   globals->shooter_motor_1->SetCurrent(static_cast<int16_t>(globals->pid_shooter_1->out()));
@@ -266,9 +275,10 @@ GimbalControl() {
   // IMU解算
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
-                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) -
-                                                         average1 - globals->ahrs.euler_angle().pitch * average1 * 12
-                                                /*globals->imu->gyro_z() - static_cast<float>(-0.00053263375)*/,
+                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z())-0.00425
+                                                         // - average1
+                                                         // - globals->ahrs.euler_angle().pitch * average1 * 10 //2°
+                                                ,
                                                 globals->imu->accel_x(), globals->imu->accel_y(),
                                                 globals->imu->accel_z()});
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
@@ -278,6 +288,7 @@ GimbalControl() {
   // 监测imu
   Gy = globals->imu->gyro_y();
   Gz = gyro_z;
+  // globals->gyro_z_filter.apply(globals->imu->gyro_z());
   Gx = globals->imu->gyro_x();
   // 是否启动
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
@@ -325,10 +336,10 @@ GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 0.003 +
+        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
         static_cast<float>(globals->custom_client->mouse_x()) * 0.000015; // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 0.00033) +
+        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
         static_cast<float>(globals->custom_client->mouse_y()) * 0.000015; // 0.00033/per
     aimbot_state_flag = 0;
   }
@@ -532,7 +543,7 @@ void VOFA() {
   float swhell[6];
   // swhell[0]=-globals->aimbot_can_communicator->yaw();
   // swhell[1]=-globals->aimbot_can_communicator->pitch();
-  swhell[0] = shooter_1;
+  swhell[0] = globals->imu->gyro_z();
   swhell[1] = shooter_2;
   swhell[2] = shooter_3;
   swhell[3] = shooter_4;

@@ -11,6 +11,7 @@
 #include "VOFA.hpp"
 #include "aimbot_comm_can.hpp"
 #include "CustomClient.hpp"
+#include "State.hpp"
 /*-------------------------------------------------
  *变量
  */
@@ -119,12 +120,12 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{30, 2, 4, 18000, 100};
     pid_chassis_4 = new rm::modules::PID{30, 2, 4, 18000, 100};
 
-    pid_shooter_1 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};  // 20
-    pid_shooter_2 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};  // 20
-    pid_shooter_3 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
-    pid_shooter_4 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
-    pid_shooter_5 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
-    pid_shooter_6 = new rm::modules::PID{30, 0.001, 5, 16000, 1600};
+    pid_shooter_1 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};  // 20
+    pid_shooter_2 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};  // 20
+    pid_shooter_3 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
+    pid_shooter_4 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
+    pid_shooter_5 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
+    pid_shooter_6 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
 
     pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
     // pid_magz_velocity = new rm::modules::PID{0.17, 0, 0.0002, 6.4, 0};

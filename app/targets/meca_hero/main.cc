@@ -37,8 +37,8 @@ uint32_t System_time;
 
 void G_average() {
   if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.01 /*- 0.03 * eulerangle_pitch / 0.6644*/ &&
-      globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.011 /*- 0.03 * eulerangle_pitch / 0.6644*/) {
-    sum += globals->gyro_z_filter.apply(globals->imu->gyro_z());
+      globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.01 /*- 0.03 * eulerangle_pitch / 0.6644*/) {
+    sum += globals->imu->gyro_z();
     count++;
   }
   if (count == 100) {
@@ -77,8 +77,8 @@ void MainLoop() {
 
     key_w = globals->custom_client->key(rm::device::DR16::Key::kW);
     cc_mouse_l = globals->custom_client->mouse_right();
-    cc_mouse_x = globals->custom_client->mouse_x();
-    cc_mouse_y = globals->custom_client->mouse_y();
+    cc_mouse_x = globals->rc->mouse_x();
+    cc_mouse_y = globals->rc->mouse_y();
     key_a=globals->custom_client->key(rm::device::DR16::Key::kA);
     key_d=globals->custom_client->key(rm::device::DR16::Key::kD);
     key_e=globals->custom_client->key(rm::device::DR16::Key::kE);
