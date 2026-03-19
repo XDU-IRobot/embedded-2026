@@ -10,6 +10,8 @@ using namespace rm;
 inline class Chassis {
  public:
   StateMachineType ChassisMove_ = {kNoForce};  // 底盘运动状态
+  StateMachineType buff_state_ = {kNormal};                   // 底盘buff状态
+  StateMachineType speed_mode_ = {kNormalSpeed};                   // 底盘速度模式状态
  private:
   rm::modules::PID chassis_follow_pid_{};
 
@@ -33,7 +35,7 @@ inline class Chassis {
 
   f32 chassis_move_delta_angle_ = -0.15f;
 
-  bool rotate_flag_ = false;  // 小陀螺模式标识位
+  bool high_speed_mode_flag = false;  // 高速模式标志位
 
   const f32 front_down_yaw_angle_ = -2.06f;  // 前方下部yaw轴角度
 
@@ -52,11 +54,7 @@ inline class Chassis {
 
   void ChassisRCDataUpdate();
 
-  void ChassisNavigateDataUpdate();
-
   void ChassisMovePIDUpdate();
-
-  void ChassisMatchUpdate();
 
   void ChassisEnableUpdate();
 

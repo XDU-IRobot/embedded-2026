@@ -2,9 +2,9 @@
 
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(6000.0f);
+  chassis->chassis_follow_pid_.SetKp(0.0f);
   chassis->chassis_follow_pid_.SetKi(0.0f);
-  chassis->chassis_follow_pid_.SetKd(300000.0f);
+  chassis->chassis_follow_pid_.SetKd(0.0f);
   chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
   chassis->chassis_follow_pid_.SetMaxIout(0.0f);
 }
@@ -13,14 +13,48 @@ void Chassis::ChassisTask() {
   chassis->ChassisStateUpdate();  // 底盘状态机更新
 }
 
-void Chassis::ChassisStateUpdate() {}
+void Chassis::ChassisStateUpdate() {
+  // if (referee_data_buffer.data().robot_status.power_management_chassis_output == 0) {
+  //    chassis->ChassisMove_ = UNABLE;
+  // } else {
+  if ((globals->gimbal_communicator->chassis_mode() >> 0 & 0x01) == 1) {
+    if ((globals->gimbal_communicator->chassis_mode() >> 3 & 0x01) == 1) {
+      chassis->high_speed_mode_flag = true;
+    } else {
+      chassis->high_speed_mode_flag = false;
+    }
+    if ((globals->gimbal_communicator->chassis_mode() >> 4 & 0x01) == 1) {
+      chassis->buff_state_ = kDaFu;
+    } else if ((globals->gimbal_communicator->chassis_mode() >> 5 & 0x01) == 1) {
+      chassis->buff_state_ = kXiaoFu;
+    } else {
+      chassis->buff_state_ = kNormal;
+    }
+    if ((globals->gimbal_communicator->chassis_mode() >> 1 & 0x01) == 1) {
+      chassis->ChassisMove_ = kRotate;
+      chassis->ChassisEnableUpdate();
+    } else if ((globals->gimbal_communicator->chassis_mode() >> 2 & 0x01) == 1) {
+      chassis->ChassisMove_ = kReRotate;
+      chassis->ChassisEnableUpdate();
+
+    } else {
+      chassis->ChassisMove_ = kFollow;
+      chassis->ChassisEnableUpdate();
+    }
+  } else {
+    chassis->ChassisMove_ = kNoForce;
+    chassis->ChassisDisableUpdate();
+  }
+  // }
+}
 
 void Chassis::ChassisRCDataUpdate() {
   chassis->down_yaw_delta_ =
       chassis->front_down_yaw_angle_ -
       rm::modules::Map(globals->yaw_motor->encoder(), 0.0f, 8192.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
-  if (0) {
+  if (std::abs(globals->gimbal_communicator->remote_speed_x()) > 0.01f ||
+      std::abs(globals->gimbal_communicator->remote_speed_y()) > 0.01f) {
     chassis->chassis_receive_x_ =
         rm::modules::Map(0, -660, 660, -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
     chassis->chassis_receive_y_ =
@@ -29,7 +63,7 @@ void Chassis::ChassisRCDataUpdate() {
     chassis->chassis_receive_x_ = 0.0f;
     chassis->chassis_receive_y_ = 0.0f;
   }
-  if (0) {
+  if (chassis->ChassisMove_ == kRotate) {
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) -
         chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
@@ -37,7 +71,7 @@ void Chassis::ChassisRCDataUpdate() {
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
     chassis->chassis_target_w_ = 4000.0f;
-  } else if (0) {
+  } else if (chassis->ChassisMove_ == kReRotate) {
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_) -
         chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_);
@@ -83,14 +117,9 @@ void Chassis::ChassisMovePIDUpdate() {
       globals->wheel_lf->rpm(), globals->wheel_rf->rpm(), globals->wheel_lb->rpm(), globals->wheel_rb->rpm());
 }
 
-void Chassis::ChassisMatchUpdate() {
-  chassis->ChassisMove_ = kMatch;
-  chassis->ChassisEnableUpdate();
-}
-
 void Chassis::ChassisEnableUpdate() {
   globals->chassis_controller.Enable(true);
-  if (chassis->ChassisMove_ == kTest) {
+  if (chassis->ChassisMove_ == kFollow || chassis->ChassisMove_ == kRotate || chassis->ChassisMove_ == kReRotate) {
     chassis->ChassisRCDataUpdate();
     chassis->ChassisMovePIDUpdate();
   } else {

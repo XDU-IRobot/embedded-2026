@@ -18,6 +18,17 @@ typedef enum {
   kNoForce,      // 无力模式
   kTest,         // 调试模式
   kMatch,        // 比赛模式
+
+  kFollow,    // 跟随模式
+  kRotate,    // 旋转模式
+  kReRotate,  // 反旋转模式
+
+  kNormalSpeed,  // 正常速度模式
+  kHighSpeed,    // 高速模式
+
+  kNormal,  // 正常状态
+  kDaFu,    // 大符状态
+  kXiaoFu,  // 小符状态
 } StateMachineType;
 
 inline struct GlobalWarehouse {
@@ -46,7 +57,7 @@ inline struct GlobalWarehouse {
   rm::device::DeviceManager<1> device_gimbal;
   rm::device::DeviceManager<8> device_chassis;
   // 云台
-  rm::device::GM6020 *yaw_motor;
+  rm::device::GM6020 *yaw_motor{nullptr};
   // 底盘
   rm::device::GM6020 *steer_lf{nullptr};  ///< 左前轮舵电机
   rm::device::GM6020 *steer_rf{nullptr};  ///< 右前轮舵电机
@@ -95,8 +106,6 @@ inline struct GlobalWarehouse {
 
  private:
   void ChassisPIDInit();
-
-  void RCStateUpdate();
 
   void Music();
 } *globals;

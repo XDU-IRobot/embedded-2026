@@ -83,8 +83,6 @@ void GlobalWarehouse::Init() {
   chassis->ChassisInit();
 }
 
-void ChassisStateUpdate(){}
-
 void GlobalWarehouse::ChassisPIDInit() {
   chassis_controller.pid().lf_steer_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   chassis_controller.pid().lf_steer_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
