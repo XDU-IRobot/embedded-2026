@@ -19,7 +19,7 @@ uint8_t IsEmpty(Queue_t *q) {
 
 void EnQueue(Queue_t *q, uint8_t *val, uint8_t lenth) {
   uint8_t i = 0;
-  if (q->counter > (QSIZE - lenth)) return;
+  if (q->counter > (uint32_t)(QSIZE - lenth)) return;
 
   q->RW_Lock = 1;
   for (; i < lenth; i++) {
@@ -59,7 +59,7 @@ int Pop(Queue_t *buffer1, Queue_t *buffer2, uint8_t data[11]) {
 }
 
 void UI_EnQueue(Queue_t *q, uint8_t *val, uint8_t lenth) {
-  if (q->counter > (QSIZE - lenth)) return;
+  if (q->counter > (uint32_t)(QSIZE - lenth)) return;
 
   q->RW_Lock = 1;
   for (uint8_t i = 0; i < lenth; i++) {

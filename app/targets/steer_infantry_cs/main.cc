@@ -78,14 +78,15 @@ void GlobalWarehouse::Init() {
   referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
 
   yaw_motor = new rm::device::GM6020{*can1, 1};
-  steer_lf = new rm::device::GM6020{*can1, 1};
-  steer_rf = new rm::device::GM6020{*can1, 3};
-  steer_lb = new rm::device::GM6020{*can1, 4};
-  steer_rb = new rm::device::GM6020{*can1, 2};
-  wheel_lf = new rm::device::M3508{*can1, 1};
-  wheel_rf = new rm::device::M3508{*can1, 3};
-  wheel_lb = new rm::device::M3508{*can1, 4};
-  wheel_rb = new rm::device::M3508{*can1, 2};
+
+  steer_lf = new rm::device::GM6020{*can2, 1};
+  steer_rf = new rm::device::GM6020{*can2, 3};
+  steer_lb = new rm::device::GM6020{*can2, 4};
+  steer_rb = new rm::device::GM6020{*can2, 2};
+  wheel_lf = new rm::device::M3508{*can2, 1};
+  wheel_rf = new rm::device::M3508{*can2, 3};
+  wheel_lb = new rm::device::M3508{*can2, 4};
+  wheel_rb = new rm::device::M3508{*can2, 2};
 
   device_chassis << steer_lf << steer_rf << steer_lb << steer_rb   // 底盘舵电机
                  << wheel_lf << wheel_rf << wheel_lb << wheel_rb;  // 底盘轮电机
@@ -133,7 +134,6 @@ void GlobalWarehouse::SubLoop500Hz() {
         globals->referee_data->data().robot_status.power_management_gimbal_output << 2,
     globals->referee_data->data().robot_status.robot_id);
   chassis->ChassisTask();
-  rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
 
