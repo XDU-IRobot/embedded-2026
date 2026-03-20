@@ -60,6 +60,8 @@ inline class Chassis {
 
   void ChassisDisableUpdate();
 
+  void SpeedModeChange();
+
   void PowerLimitLoop();
 
   void SetMotorCurrent();

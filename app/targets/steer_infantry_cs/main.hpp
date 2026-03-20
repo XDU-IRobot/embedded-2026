@@ -11,6 +11,8 @@
 
 #include "GimbalCommunicator.hpp"
 #include "Referee.hpp"
+#include "UI.hpp"
+#include "queue.hpp"
 
 // 状态机
 typedef enum {
@@ -47,6 +49,7 @@ inline struct GlobalWarehouse {
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                                        ///< CAN 总线接口
   rm::device::GimbalCommunicator *gimbal_communicator{nullptr};                       ///< CAN 通信器
+  rm::device::SuperCap *supercap{nullptr};                                                   ///< 港科超级电容
   rm::hal::Serial *dbus{nullptr};                                                     ///< 遥控器串口接口
   rm::device::BMI088 *imu{nullptr};                                                   ///< IMU
   rm::hal::Serial *referee_uart{nullptr};                                             ///< 裁判系统串口接口
@@ -85,6 +88,7 @@ inline struct GlobalWarehouse {
   u16 current_heat{};              // 当前热量
   u16 heat_limit{};                // 热量上限
   u8 power_state{};                // 供能状态
+  u16 remain_bullet_number{};      // 剩余子弹数量
   bool music_play_flag = false;    // 控制音乐播放
   bool music_change_flag = false;  // 音乐改动标识位
 

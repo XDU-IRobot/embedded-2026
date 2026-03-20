@@ -112,8 +112,8 @@ void Chassis::ChassisMovePIDUpdate() {
   globals->chassis_controller.SetTarget(chassis->chassis_target_x_, chassis->chassis_target_y_,
                                         chassis->chassis_target_w_);
   globals->chassis_controller.Update(
-      globals->steer_lf->encoder(), globals->steer_rf->rpm(), globals->steer_lb->encoder(), globals->steer_rb->rpm(),
-      globals->steer_lf->encoder(), globals->steer_rf->rpm(), globals->steer_lb->encoder(), globals->steer_rb->rpm(),
+      globals->steer_lf->encoder(), globals->steer_lf->rpm(), globals->steer_rf->encoder(), globals->steer_rf->rpm(),
+      globals->steer_lb->encoder(), globals->steer_lb->rpm(), globals->steer_rb->encoder(), globals->steer_rb->rpm(),
       globals->wheel_lf->rpm(), globals->wheel_rf->rpm(), globals->wheel_lb->rpm(), globals->wheel_rb->rpm());
 }
 
@@ -135,32 +135,25 @@ void Chassis::ChassisDisableUpdate() {
   chassis->SetMotorCurrent();
 }
 
-void Chassis::PowerLimitLoop() {
-  float initial_currents[4];
-  initial_currents[0] = globals->chassis_controller.output().lf_wheel;
-  initial_currents[1] = globals->chassis_controller.output().rf_wheel;
-  initial_currents[2] = globals->chassis_controller.output().lb_wheel;
-  initial_currents[3] = globals->chassis_controller.output().rb_wheel;
-  chassis->motor_state_[0].speed_rpm = globals->wheel_lf->rpm();
-  chassis->motor_state_[0].give_current = globals->chassis_controller.output().lf_wheel;
-  chassis->motor_state_[0].measured_current = globals->wheel_lf->current();
-  chassis->motor_state_[1].speed_rpm = globals->wheel_rf->rpm();
-  chassis->motor_state_[1].give_current = globals->chassis_controller.output().rf_wheel;
-  chassis->motor_state_[1].measured_current = globals->wheel_rf->current();
-  chassis->motor_state_[2].speed_rpm = globals->wheel_lb->rpm();
-  chassis->motor_state_[2].give_current = globals->chassis_controller.output().lb_wheel;
-  chassis->motor_state_[2].measured_current = globals->wheel_lb->current();
-  chassis->motor_state_[3].speed_rpm = globals->wheel_rb->rpm();
-  chassis->motor_state_[3].give_current = globals->chassis_controller.output().rb_wheel;
-  chassis->motor_state_[3].measured_current = globals->wheel_rb->current();
-  for (int i = 0; i < 4; i++) {
-    chassis->power_info_[i] = chassis->power_model_.CalculatePower(chassis->motor_state_[i]);
+void Chassis::SpeedModeChange() {
+  // 超级电容是否可开启判断
+  if (globals->supercap->voltage() < 16.0f || globals->supercap->voltage() > 35.0f ||
+      (globals->supercap->error(rm::device::SuperCapError::kOverVoltage) << 0 |
+          globals->supercap->error(rm::device::SuperCapError::kOverCurrent) << 1 |
+          globals->supercap->error(rm::device::SuperCapError::kUnderVoltage) << 2 |
+          globals->supercap->error(rm::device::SuperCapError::kInputUnderVoltage) << 3 |
+          globals->supercap->error(rm::device::SuperCapError::kNoData) << 4) == true ||
+      globals->referee_data->data().power_heat_data.buffer_energy < 30) {
+    chassis->speed_mode_ = kNormal;
+  } else if (chassis->high_speed_mode_flag == true && globals->supercap->voltage() > 18.0f &&
+             globals->referee_data->data().power_heat_data.buffer_energy > 30) {
+    chassis->speed_mode_ = kHighSpeed;
+  } else if (chassis->high_speed_mode_flag == false) {
+    chassis->speed_mode_ = kNormalSpeed;
   }
-  chassis->total_power_ = chassis->power_info_[0].total_power + chassis->power_info_[1].total_power +
-                          chassis->power_info_[2].total_power + chassis->power_info_[3].total_power;
-  chassis->power_model_.DistributePower<4>(chassis->motor_state_, initial_currents, chassis->chassis_power_limit_,
-                                           chassis->output_currents_);
+}
 
+void Chassis::PowerLimitLoop() {
   // 缓冲能量过低判断
   if (globals->referee_data->data().power_heat_data.buffer_energy < 10) {
     chassis->k_speed_power_limit_ = 0.0f;
@@ -178,11 +171,14 @@ void Chassis::PowerLimitLoop() {
 }
 
 void Chassis::SetMotorCurrent() {
-  // globals->wheel_lf->SetCurrent(static_cast<i16>(chassis->output_currents_[0]));
-  // globals->wheel_rf->SetCurrent(static_cast<i16>(chassis->output_currents_[1]));
-  // globals->wheel_lb->SetCurrent(static_cast<i16>(chassis->output_currents_[2]));
-  // globals->wheel_rb->SetCurrent(static_cast<i16>(chassis->output_currents_[3]));
-
+  globals->steer_lf->SetCurrent(
+  static_cast<i16>(globals->chassis_controller.output().lf_steer * chassis->k_speed_power_limit_));
+  globals->steer_rf->SetCurrent(
+      static_cast<i16>(globals->chassis_controller.output().rf_steer * chassis->k_speed_power_limit_));
+  globals->steer_lb->SetCurrent(
+      static_cast<i16>(globals->chassis_controller.output().lb_steer * chassis->k_speed_power_limit_));
+  globals->steer_rb->SetCurrent(
+      static_cast<i16>(globals->chassis_controller.output().rb_steer * chassis->k_speed_power_limit_));
   globals->wheel_lf->SetCurrent(
       static_cast<i16>(globals->chassis_controller.output().lf_wheel * chassis->k_speed_power_limit_));
   globals->wheel_rf->SetCurrent(
