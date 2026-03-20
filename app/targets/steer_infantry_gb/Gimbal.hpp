@@ -14,22 +14,22 @@ inline class Gimbal {
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
  private:
-  f32 gimbal_yaw_target_ = 0.0f;  // 云台上部yaw轴目标数据（编码器控制，编码器制，1500.0~3500.0f，左正右负）
-  f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据（编码器控制，角度制，30.0~-35.0f，下正上负）
+  f32 gimbal_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据
+  f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据
 
   f32 gravity_compensation_ = 0.0f;     // 重力补偿值
   f32 k_gravity_compensation_ = -0.8f;  // 重力补偿系数
 
   f32 ammo_speed_ = 8000.0f;  // 摩擦轮速度 9000.0f -> 25m/s 初速度
 
-  f32 yaw_speed_ff = 0;
-  f32 last_yaw_target = 0;
+  f32 yaw_speed_ff = 0.0f;
+  f32 last_yaw_target = 0.0f;
   f32 Ts = 0.002f;
-  f32 Kf = 1;
+  f32 Kf = 1.0f;
 
   u8 shoot_num_ = 0;                        // 开火次数
   u16 last_remain_bullet_ = 0;              // 上一次剩余子弹数
-  f32 shoot_initial_speed_[10] = {};        // 子弹初速度
+  f32 shoot_initial_speed_[10]{};        // 子弹初速度
   f32 shoot_initial_average_speed_ = 0.0f;  // 子弹初速度平均值
   f32 target_shoot_initial_speed_ = 30.0f;  // 目标子弹初速度
 
