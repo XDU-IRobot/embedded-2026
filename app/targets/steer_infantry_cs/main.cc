@@ -23,7 +23,6 @@ String_Data mode, aimbot;
 Graph_Data image_x, image_y;
 
 extern u16 robot_id;
-extern u16 robot_id;
 extern u8 len;
 extern u8 Info_Arr[128];
 
@@ -207,8 +206,8 @@ void UiSend() {
 
     while (!IsEmpty(&UI_send_buffer[0])) {
       if (UI_send_buffer[0].counter / 4 >= 7) {
-        for (u8 i = 0; i < 7; i++) {
-          UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[i]);
+        for (unsigned long &i : tmp_send) {
+          UI_Pop(&UI_send_buffer[0], (u8 *)&i);
         }
         UI_ReFresh(7, *(Graph_Data *)tmp_send[0], *(Graph_Data *)tmp_send[1], *(Graph_Data *)tmp_send[2],
                    *(Graph_Data *)tmp_send[3], *(Graph_Data *)tmp_send[4], *(Graph_Data *)tmp_send[5],
@@ -341,8 +340,8 @@ void UiSend() {
 
     while (!IsEmpty(&UI_send_buffer[0])) {
       if (UI_send_buffer[0].counter / 4 >= 7) {
-        for (u8 i = 0; i < 7; i++) {
-          UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[i]);
+        for (unsigned long &i : tmp_send) {
+          UI_Pop(&UI_send_buffer[0], (u8 *)&i);
         }
         UI_ReFresh(7, *(Graph_Data *)tmp_send[0], *(Graph_Data *)tmp_send[1], *(Graph_Data *)tmp_send[2],
                    *(Graph_Data *)tmp_send[3], *(Graph_Data *)tmp_send[4], *(Graph_Data *)tmp_send[5],

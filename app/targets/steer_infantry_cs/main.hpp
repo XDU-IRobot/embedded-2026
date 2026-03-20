@@ -49,7 +49,7 @@ inline struct GlobalWarehouse {
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                                        ///< CAN 总线接口
   rm::device::GimbalCommunicator *gimbal_communicator{nullptr};                       ///< CAN 通信器
-  rm::device::SuperCap *supercap{nullptr};                                                   ///< 港科超级电容
+  rm::device::SuperCap *supercap{nullptr};                                            ///< 港科超级电容
   rm::hal::Serial *dbus{nullptr};                                                     ///< 遥控器串口接口
   rm::device::BMI088 *imu{nullptr};                                                   ///< IMU
   rm::hal::Serial *referee_uart{nullptr};                                             ///< 裁判系统串口接口
@@ -94,6 +94,21 @@ inline struct GlobalWarehouse {
 
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
+
+  struct TxData {
+    u8 enable_dcdc : 1;                  ///< 是否开启电容
+    u8 system_restart : 1;               ///< 重启电容
+    u8 resv0 : 6;                        ///< 保留位
+    u16 feedback_referee_power_limit;    ///< 底盘功率上限
+    u16 feedback_referee_energy_buffer;  ///< 缓冲能量
+    u8 resv1[3];                         ///< 保留位
+  } supercap_tx_data;
+  struct RxData {
+    u8 error_code;            ///< 错误标识
+    f32 chassis_power;        ///< 当前底盘功率
+    u16 chassis_power_limit;  ///< 底盘功率上限
+    u8 cap_energy;            ///< 电容能量百分比
+  } supercap_rx_data;
 
   // 函数 //
   void Init();

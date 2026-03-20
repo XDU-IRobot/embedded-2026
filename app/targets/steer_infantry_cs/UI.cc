@@ -12,8 +12,8 @@ uint16_t robot_id;
 *****************************************************************************************/
 
 void UI_Delete(uint8_t Del_Operate, uint8_t Del_Layer) {
-  unsigned char *framepoint;  // 读写指针
-  uint16_t frametail = 0xFFFF;     // CRC16校验值
+  unsigned char *framepoint;    // 读写指针
+  uint16_t frametail = 0xFFFF;  // CRC16校验值
 
   uint8_t *p = Info_Arr;
   len = 0;
@@ -133,8 +133,9 @@ void Line_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uin
         End_x、End_y   结束坐标（对顶角坐标）
 **********************************************************************************************************/
 
-void Rectangle_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer, uint32_t Graph_Color,
-                    uint32_t Graph_Width, uint32_t Start_x, uint32_t Start_y, uint32_t End_x, uint32_t End_y) {
+void Rectangle_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer,
+                    uint32_t Graph_Color, uint32_t Graph_Width, uint32_t Start_x, uint32_t Start_y, uint32_t End_x,
+                    uint32_t End_y) {
   int i;
   for (i = 0; i < 3 && imagename[i] != '\0'; i++) image->graphic_name[2 - i] = imagename[i];
   image->graphic_tpye = UI_Graph_Rectangle;
@@ -159,8 +160,9 @@ void Rectangle_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate
         Graph_Radius  图形半径
 **********************************************************************************************************/
 
-void Circle_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer, uint32_t Graph_Color,
-                 uint32_t Graph_Width, uint32_t Start_x, uint32_t Start_y, uint32_t Graph_Radius) {
+void Circle_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer,
+                 uint32_t Graph_Color, uint32_t Graph_Width, uint32_t Start_x, uint32_t Start_y,
+                 uint32_t Graph_Radius) {
   int i;
   for (i = 0; i < 3 && imagename[i] != '\0'; i++) image->graphic_name[2 - i] = imagename[i];
   image->graphic_tpye = UI_Graph_Circle;
@@ -186,8 +188,8 @@ void Circle_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, u
 **********************************************************************************************************/
 
 void Arc_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer, uint32_t Graph_Color,
-              uint32_t Graph_StartAngle, uint32_t Graph_EndAngle, uint32_t Graph_Width, uint32_t Start_x, uint32_t Start_y, uint32_t x_Length,
-              uint32_t y_Length) {
+              uint32_t Graph_StartAngle, uint32_t Graph_EndAngle, uint32_t Graph_Width, uint32_t Start_x,
+              uint32_t Start_y, uint32_t x_Length, uint32_t y_Length) {
   int i;
 
   for (i = 0; i < 3 && imagename[i] != '\0'; i++) image->graphic_name[2 - i] = imagename[i];
@@ -217,8 +219,9 @@ void Arc_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uint
         Graph_Float   要显示的变量
 **********************************************************************************************************/
 
-void Float_Draw(Float_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer, uint32_t Graph_Color,
-                uint32_t Graph_Size, uint32_t Graph_Digit, uint32_t Graph_Width, uint32_t Start_x, uint32_t Start_y, float Graph_Float) {
+void Float_Draw(Float_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer,
+                uint32_t Graph_Color, uint32_t Graph_Size, uint32_t Graph_Digit, uint32_t Graph_Width, uint32_t Start_x,
+                uint32_t Start_y, float Graph_Float) {
   int i;
 
   for (i = 0; i < 3 && imagename[i] != '\0'; i++) image->graphic_name[2 - i] = imagename[i];
@@ -247,8 +250,9 @@ void Float_Draw(Float_Data *image, char imagename[3], uint32_t Graph_Operate, ui
         *Char_Data          待发送字符串开始地址
 **********************************************************************************************************/
 
-void Char_Draw(String_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer, uint32_t Graph_Color,
-               uint32_t Graph_Size, uint32_t Graph_Digit, uint32_t Graph_Width, uint32_t Start_x, uint32_t Start_y, char *Char_Data) {
+void Char_Draw(String_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer,
+               uint32_t Graph_Color, uint32_t Graph_Size, uint32_t Graph_Digit, uint32_t Graph_Width, uint32_t Start_x,
+               uint32_t Start_y, char *Char_Data) {
   uint32_t i;
 
   for (i = 0; i < 3 && imagename[i] != '\0'; i++) image->Graph_Control.graphic_name[2 - i] = imagename[i];
@@ -278,8 +282,8 @@ Tips：：该函数只能推送1，2，5，7个图形，其他数目协议未涉
 int UI_ReFresh(int cnt, ...) {
   int i;
   Graph_Data imageData;
-  unsigned char *framepoint;  // 读写指针
-  uint16_t frametail = 0xFFFF;     // CRC16校验值
+  unsigned char *framepoint;    // 读写指针
+  uint16_t frametail = 0xFFFF;  // CRC16校验值
 
   UI_Packhead framehead;
   UI_Data_Operate datahead;
@@ -390,8 +394,8 @@ Tips：：该函数只能推送1，2，5，7个图形，其他数目协议未涉
 **********************************************************************************************************/
 int Char_ReFresh(String_Data string_Data) {
   String_Data imageData;
-  unsigned char *framepoint;  // 读写指针
-  uint16_t frametail = 0xFFFF;     // CRC16校验值
+  unsigned char *framepoint;    // 读写指针
+  uint16_t frametail = 0xFFFF;  // CRC16校验值
 
   UI_Packhead framehead;
   UI_Data_Operate datahead;

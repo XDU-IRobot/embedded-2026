@@ -139,10 +139,10 @@ void Chassis::SpeedModeChange() {
   // 超级电容是否可开启判断
   if (globals->supercap->voltage() < 16.0f || globals->supercap->voltage() > 35.0f ||
       (globals->supercap->error(rm::device::SuperCapError::kOverVoltage) << 0 |
-          globals->supercap->error(rm::device::SuperCapError::kOverCurrent) << 1 |
-          globals->supercap->error(rm::device::SuperCapError::kUnderVoltage) << 2 |
-          globals->supercap->error(rm::device::SuperCapError::kInputUnderVoltage) << 3 |
-          globals->supercap->error(rm::device::SuperCapError::kNoData) << 4) == true ||
+       globals->supercap->error(rm::device::SuperCapError::kOverCurrent) << 1 |
+       globals->supercap->error(rm::device::SuperCapError::kUnderVoltage) << 2 |
+       globals->supercap->error(rm::device::SuperCapError::kInputUnderVoltage) << 3 |
+       globals->supercap->error(rm::device::SuperCapError::kNoData) << 4) == true ||
       globals->referee_data->data().power_heat_data.buffer_energy < 30) {
     chassis->speed_mode_ = kNormal;
   } else if (chassis->high_speed_mode_flag == true && globals->supercap->voltage() > 18.0f &&
@@ -172,7 +172,7 @@ void Chassis::PowerLimitLoop() {
 
 void Chassis::SetMotorCurrent() {
   globals->steer_lf->SetCurrent(
-  static_cast<i16>(globals->chassis_controller.output().lf_steer * chassis->k_speed_power_limit_));
+      static_cast<i16>(globals->chassis_controller.output().lf_steer * chassis->k_speed_power_limit_));
   globals->steer_rf->SetCurrent(
       static_cast<i16>(globals->chassis_controller.output().rf_steer * chassis->k_speed_power_limit_));
   globals->steer_lb->SetCurrent(
