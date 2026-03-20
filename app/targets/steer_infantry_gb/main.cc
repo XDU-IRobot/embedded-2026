@@ -44,7 +44,7 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
+  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can2};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
@@ -156,35 +156,40 @@ void GlobalWarehouse::RCStateUpdate() {
 
 void GlobalWarehouse::ChassisStateUpdate() {
   // 前后左右
-  globals->chassis_move_x = static_cast<i8>(rm::modules::Clamp(
-      static_cast<f32>(globals->rc->right_x()) / 660.f -
-          (globals->rc->key(rm::device::DR16::Key::kA) || globals->image_data_->data().keyboard_key >> 2 & 0x01 ? 1.f
-                                                                                                                : 0.f) +
-          (globals->rc->key(rm::device::DR16::Key::kD) || globals->image_data_->data().keyboard_key >> 3 & 0x01 ? 1.f
-                                                                                                                : 0.f),
-      -1.f, 1.f));
-  globals->chassis_move_y = static_cast<i8>(rm::modules::Clamp(
-      static_cast<f32>(globals->rc->right_y()) / 660.f +
-          (globals->rc->key(rm::device::DR16::Key::kW) || globals->image_data_->data().keyboard_key >> 0 & 0x01 ? 1.f
-                                                                                                                : 0.f) -
-          (globals->rc->key(rm::device::DR16::Key::kS) || globals->image_data_->data().keyboard_key >> 1 & 0x01 ? 1.f
-                                                                                                                : 0.f),
-      -1.f, 1.f));
+  globals->chassis_move_x = rm::modules::Clamp(
+      static_cast<f32>(globals->rc->right_x()) / 6.6f -
+          static_cast<f32>(globals->image_update_flag ? (globals->image_data_->data().keyboard_key >> 3 & 0x01) -
+                                                            (globals->image_data_->data().keyboard_key >> 2 & 0x01)
+                                                      : globals->rc->key(rm::device::DR16::Key::kA) +
+                                                            globals->rc->key(rm::device::DR16::Key::kD)) *
+              100.0f,
+      -100.0f, 100.0f);
+  globals->chassis_move_y = rm::modules::Clamp(
+      static_cast<f32>(globals->rc->right_x()) / 6.6f -
+          static_cast<f32>(globals->image_update_flag ? (globals->image_data_->data().keyboard_key >> 0 & 0x01) -
+                                                            (globals->image_data_->data().keyboard_key >> 1 & 0x01)
+                                                      : globals->rc->key(rm::device::DR16::Key::kW) +
+                                                            globals->rc->key(rm::device::DR16::Key::kS)) *
+              100.0f,
+      -100.0f, 100.0f);
   // UI信息
-  globals->ui_refresh_flag =  // UI
-      globals->rc->key(rm::device::DR16::Key::kR) || globals->image_data_->data().keyboard_key >> 8 & 0x01 ? 1 : 0;
+  globals->ui_refresh_flag = globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 8 & 0x01
+                                                        : globals->rc->key(rm::device::DR16::Key::kR);
   globals->get_target_flag = globals->aimbot_communicator->aimbot_state() >> 0 & 0x01;
   globals->suggest_fire_flag = globals->aimbot_communicator->aimbot_state() >> 1 & 0x01;
   // 弹速调整
-  if (globals->rc->key(rm::device::DR16::Key::kCtrl) || globals->image_data_->data().keyboard_key >> 5 & 0x01) {
-    if (globals->rc->key(rm::device::DR16::Key::kV) || globals->image_data_->data().keyboard_key >> 14 & 0x01) {
+  if (globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 5 & 0x01
+                                 : globals->rc->key(rm::device::DR16::Key::kCtrl)) {
+    if (globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 14 & 0x01
+                                   : globals->rc->key(rm::device::DR16::Key::kV)) {
       globals->aim_speed_change_flag = -1;
     } else if (globals->aim_speed_change_flag == -1) {
       globals->aim_speed_change--;
       if (globals->aim_speed_change < -10) globals->aim_speed_change = -10;
       globals->aim_speed_change_flag = 0;
     }
-    if (globals->rc->key(rm::device::DR16::Key::kB) || globals->image_data_->data().keyboard_key >> 15 & 0x01) {
+    if (globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 15 & 0x01
+                                   : globals->rc->key(rm::device::DR16::Key::kB)) {
       globals->aim_speed_change_flag = 1;
     } else if (globals->aim_speed_change_flag == 1) {
       globals->aim_speed_change++;
@@ -199,8 +204,8 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= 0u << 0;
   }
   // 小陀螺
-  if (globals->rc->dial() >= 650 || globals->rc->key(rm::device::DR16::Key::kShift) ||
-      globals->image_data_->data().keyboard_key >> 4 & 0x01) {
+  if (globals->rc->dial() >= 650 || globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 4 & 0x01
+                                                               : globals->rc->key(rm::device::DR16::Key::kShift)) {
     globals->chassis_state |= 1u << 1;
     globals->chassis_state &= 0u << 2;
   } else if (globals->rc->dial() <= -650) {
@@ -211,21 +216,24 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= 0u << 2;
   }
   // 高速模式
-  if (globals->rc->key(rm::device::DR16::Key::kC) || globals->image_data_->data().keyboard_key >> 13 & 0x01) {
+  if (globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 13 & 0x01
+                                 : globals->rc->key(rm::device::DR16::Key::kC)) {
     globals->speed_change_flag = true;
   } else if (globals->speed_change_flag == 1) {
     globals->speed_change_flag = false;
     globals->chassis_state ^= 1u << 3;
   }
   // 打符模式切换
-  if ((globals->rc->key(rm::device::DR16::Key::kF) || globals->image_data_->data().keyboard_key >> 9 & 0x01) &&
+  if ((globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 9 & 0x01
+                                  : globals->rc->key(rm::device::DR16::Key::kF)) &&
       !globals->xf_state) {
     globals->df_flag = true;
   } else if (globals->df_flag) {
     globals->df_flag = false;
     globals->df_state ^= true;
   }
-  if ((globals->rc->key(rm::device::DR16::Key::kG) || globals->image_data_->data().keyboard_key >> 10 & 0x01) &&
+  if ((globals->image_update_flag ? globals->image_data_->data().keyboard_key >> 10 & 0x01
+                                  : globals->rc->key(rm::device::DR16::Key::kG)) &&
       !globals->df_state) {
     globals->xf_flag = true;
   } else if (globals->xf_flag) {
@@ -340,6 +348,8 @@ void GlobalWarehouse::SubLoop50Hz() {
 
 void GlobalWarehouse::SubLoop10Hz() {
   if (globals->time % 50 == 0) {
+    globals->image_update_flag = globals->image_data_->crc16_this_time_ != globals->last_crc;
+    globals->last_crc = globals->image_data_->crc16_this_time_;
     globals->time = 0;
   }
 }

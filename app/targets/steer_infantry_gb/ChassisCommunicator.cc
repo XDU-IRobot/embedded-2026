@@ -15,10 +15,10 @@ void ChassisCommunicator::RxCallback(const hal::CanFrame *msg) {
   }
 }
 
-void ChassisCommunicator::SendChassisCommand(i8 chassis_move_x, i8 chassis_move_y, u8 chassis_state, u8 ui_refresh_flag,
+void ChassisCommunicator::SendChassisCommand(f32 chassis_move_x, f32 chassis_move_y, u8 chassis_state, u8 ui_refresh_flag,
                                              u8 get_target_flag, u8 suggest_fire_flag, i8 aim_speed_change) {
-  tx_buf_[0] = chassis_move_x;
-  tx_buf_[1] = chassis_move_y;
+  tx_buf_[0] = static_cast<i8>(chassis_move_x);
+  tx_buf_[1] = static_cast<i8>(chassis_move_y);
   tx_buf_[2] = chassis_state;
   tx_buf_[3] = ui_refresh_flag;
   tx_buf_[4] = get_target_flag;

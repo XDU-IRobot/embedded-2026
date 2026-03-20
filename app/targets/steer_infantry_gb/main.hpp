@@ -67,20 +67,22 @@ inline struct GlobalWarehouse {
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
 
-  u_int8_t time = 0;                 // 时间
-  u_int16_t hurt_time = 0;           // 受伤小陀螺倒计时
-  u_int8_t music_choice = 0;         // 音乐选择
-  u_int8_t aim_mode = 0;             // 自瞄模式
-  u_int8_t time_camera = 0;          // 摄像头计数器
-  u_int16_t imu_count = 0;           // IMU计数器
-  int8_t chassis_move_x = 0;         // 底盘x轴目标速度
-  int8_t chassis_move_y = 0;         // 底盘y轴目标速度
-  u_int8_t chassis_state = 0;        // 底盘状态
-  u_int8_t ui_refresh_flag = 0;      // UI状态改变标志位
-  u_int8_t get_target_flag = 0;      // 有无目标标志位
-  u_int8_t suggest_fire_flag = 0;    // 建议开火标志位
+  uint8_t time = 0;                  // 时间
+  uint16_t hurt_time = 0;            // 受伤小陀螺倒计时
+  uint8_t music_choice = 0;          // 音乐选择
+  uint8_t aim_mode = 0;              // 自瞄模式
+  uint8_t time_camera = 0;           // 摄像头计数器
+  uint16_t imu_count = 0;            // IMU计数器
+  float chassis_move_x = 0;         // 底盘x轴目标速度
+  float chassis_move_y = 0;         // 底盘y轴目标速度
+  uint8_t chassis_state = 0;         // 底盘状态
+  uint8_t ui_refresh_flag = 0;       // UI状态改变标志位
+  uint8_t get_target_flag = 0;       // 有无目标标志位
+  uint8_t suggest_fire_flag = 0;     // 建议开火标志位
   int8_t aim_speed_change = 0;       // 弹速调整标志位
   int8_t aim_speed_change_flag = 0;  // 弹速调整标志位
+  uint16_t last_crc = 0;             // 上一次CRC校验结果
+  bool image_update_flag = false;    // 裁判系统数据更新标志位
   bool music_play_flag = false;      // 音乐播放标识位
   bool music_change_flag = false;    // 音乐改动标识位
   bool speed_change_flag = false;    // 速度调整标志位
