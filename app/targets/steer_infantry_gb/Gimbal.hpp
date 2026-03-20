@@ -14,8 +14,8 @@ inline class Gimbal {
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
  private:
-  f32 gimbal_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据
-  f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据
+  f32 gimbal_yaw_target_ = 0.0f;   // 云台上部yaw轴目标数据
+  f32 gimbal_pitch_target_ = 0.f;  // 云台pitch轴目标数据
 
   f32 gravity_compensation_ = 0.0f;     // 重力补偿值
   f32 k_gravity_compensation_ = -0.8f;  // 重力补偿系数
@@ -29,7 +29,7 @@ inline class Gimbal {
 
   u8 shoot_num_ = 0;                        // 开火次数
   u16 last_remain_bullet_ = 0;              // 上一次剩余子弹数
-  f32 shoot_initial_speed_[10]{};        // 子弹初速度
+  f32 shoot_initial_speed_[10]{};           // 子弹初速度
   f32 shoot_initial_average_speed_ = 0.0f;  // 子弹初速度平均值
   f32 target_shoot_initial_speed_ = 30.0f;  // 目标子弹初速度
 
