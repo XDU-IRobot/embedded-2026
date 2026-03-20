@@ -14,7 +14,7 @@ inline class Gimbal {
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
  private:
-  f32 gimbal_yaw_target_ = 0.0f;   // 云台上部yaw轴目标数据
+  f32 gimbal_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据
   f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据
 
   f32 gravity_compensation_ = 0.0f;     // 重力补偿值
