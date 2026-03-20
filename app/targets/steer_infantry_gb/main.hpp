@@ -73,8 +73,8 @@ inline struct GlobalWarehouse {
   uint8_t aim_mode = 0;              // 自瞄模式
   uint8_t time_camera = 0;           // 摄像头计数器
   uint16_t imu_count = 0;            // IMU计数器
-  float chassis_move_x = 0;         // 底盘x轴目标速度
-  float chassis_move_y = 0;         // 底盘y轴目标速度
+  float chassis_move_x = 0;          // 底盘x轴目标速度
+  float chassis_move_y = 0;          // 底盘y轴目标速度
   uint8_t chassis_state = 0;         // 底盘状态
   uint8_t ui_refresh_flag = 0;       // UI状态改变标志位
   uint8_t get_target_flag = 0;       // 有无目标标志位
