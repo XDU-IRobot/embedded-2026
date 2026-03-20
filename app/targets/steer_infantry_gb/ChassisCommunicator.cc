@@ -5,19 +5,14 @@ ChassisCommunicator::ChassisCommunicator(hal::CanInterface &can) : CanDevice(can
 
 void ChassisCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x100) {
-    ParseRxData(msg);
+    heat_real_ = static_cast<u16>(msg->data[0]) << 8 | static_cast<u16>(msg->data[1]);
+    heat_limit_ = static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3]);
+    ammo_speed_ = modules::IntToFloat(msg->data[4], 0.f, 32.f, 8);  // modules::FloatToInt( , 0.f, 32.f, 8);
+    robot_id_ = msg->data[5] & 0x01;
+    gimbal_power_state_ = msg->data[5] >> 4 & 0x01;
+    chassis_power_state_ = msg->data[5] >> 5 & 0x01;
+    ammo_power_state_ = msg->data[5] >> 6 & 0x01;
   }
-}
-
-void ChassisCommunicator::ParseRxData(const hal::CanFrame *msg) {
-  heat_real_ = static_cast<u16>(msg->data[0]) << 8 | static_cast<u16>(msg->data[1]);
-  cooling_speed_ = static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3]);
-  heat_limit_ = static_cast<u16>(msg->data[4]) << 8 | static_cast<u16>(msg->data[5]);
-  ammo_speed_ = modules::IntToFloat(msg->data[6], 0.f, 32.f, 8);  // modules::FloatToInt( , 0.f, 32.f, 8);
-  robot_id_ = msg->data[7] & 0x01;
-  gimbal_power_state_ = msg->data[7] >> 4 & 0x01;
-  chassis_power_state_ = msg->data[7] >> 5 & 0x01;
-  ammo_power_state_ = msg->data[7] >> 6 & 0x01;
 }
 
 void ChassisCommunicator::SendChassisCommand(i8 chassis_move_x, i8 chassis_move_y, u8 chassis_state, u8 ui_refresh_flag,
