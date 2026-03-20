@@ -1,7 +1,7 @@
 #include "GimbalCommunicator.hpp"
 
 namespace rm::device {
-GimbalCommunicator::GimbalCommunicator(hal::CanInterface &can) : CanDevice(can, 0x100) {}
+GimbalCommunicator::GimbalCommunicator(hal::CanInterface &can) : CanDevice(can, 0x120) {}
 
 void GimbalCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x120) {
@@ -21,6 +21,6 @@ void GimbalCommunicator::SendGimbalCommand(u16 current_heat, u16 heat_limit, u8 
   tx_buf_[2] = heat_limit >> 8;
   tx_buf_[3] = heat_limit;
   tx_buf_[4] = power_state << 4 | (robot_id < 100 ? 0 : 1);
-  this->can_->Write(0x120, tx_buf_, 8);
+  this->can_->Write(0x100, tx_buf_, 8);
 }
 }  // namespace rm::device
