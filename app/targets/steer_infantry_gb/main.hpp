@@ -47,8 +47,9 @@ inline struct GlobalWarehouse {
   rm::device::DeviceManager<2> device_gimbal;
   rm::device::DeviceManager<3> device_shoot;
   rm::device::DeviceManager<1> device_nuc;
+  rm::device::DeviceManager<1> device_referee;
 
-  rm::device::VT03 *image_data_{nullptr};  ///< 裁判系统数据缓冲区
+  rm::device::VT03 *image_data{nullptr};  ///< 裁判系统数据缓冲区
 
   // 云台
   rm::device::BMI088 *imu{nullptr};                                                 ///< IMU

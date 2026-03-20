@@ -5,6 +5,7 @@ ChassisCommunicator::ChassisCommunicator(hal::CanInterface &can) : CanDevice(can
 
 void ChassisCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x100) {
+    ReportStatus(kOk);
     heat_real_ = static_cast<u16>(msg->data[0]) << 8 | static_cast<u16>(msg->data[1]);
     heat_limit_ = static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3]);
     ammo_speed_ = modules::IntToFloat(msg->data[4], 0.f, 32.f, 8);  // modules::FloatToInt( , 0.f, 32.f, 8);
