@@ -69,7 +69,7 @@ inline struct GlobalWarehouse {
   rm::device::M3508 *wheel_rb{nullptr};   ///< 右后轮电机                                    ///< 拨盘电机
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{500.0f};                 ///< 姿态解算器
+  rm::modules::MahonyAhrs ahrs{500.0f};                    ///< 姿态解算器
   QuadSteeringChassis chassis_controller{0.0f, 0.45368f};  ///< 四轮转向底盘控制器
 
   uint8_t time{};                    // 时间

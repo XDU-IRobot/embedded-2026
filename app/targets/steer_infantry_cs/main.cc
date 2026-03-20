@@ -127,12 +127,12 @@ void GlobalWarehouse::SubLoop500Hz() {
                                                 globals->imu->gyro_x() + 0.0015f, globals->imu->accel_y(),
                                                 globals->imu->accel_z(), globals->imu->accel_x()});
   globals->gimbal_communicator->SendGimbalCommand(
-    globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat,
-    globals->referee_data->data().robot_status.shooter_barrel_heat_limit,
-    globals->referee_data->data().robot_status.power_management_gimbal_output |
-        globals->referee_data->data().robot_status.power_management_gimbal_output << 1 |
-        globals->referee_data->data().robot_status.power_management_gimbal_output << 2,
-    globals->referee_data->data().robot_status.robot_id);
+      globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat,
+      globals->referee_data->data().robot_status.shooter_barrel_heat_limit,
+      globals->referee_data->data().robot_status.power_management_gimbal_output |
+          globals->referee_data->data().robot_status.power_management_gimbal_output << 1 |
+          globals->referee_data->data().robot_status.power_management_gimbal_output << 2,
+      globals->referee_data->data().robot_status.robot_id);
   chassis->ChassisTask();
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
