@@ -350,8 +350,6 @@ void GlobalWarehouse::SubLoop50Hz() {
 
 void GlobalWarehouse::SubLoop10Hz() {
   if (globals->time % 50 == 0) {
-    globals->image_update_flag = globals->image_data->crc16_this_time() != globals->last_crc;
-    globals->last_crc = globals->image_data->crc16_this_time();
     globals->image_update_flag = globals->device_referee.all_device_ok();
     globals->time = 0;
   }

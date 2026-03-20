@@ -82,7 +82,6 @@ inline struct GlobalWarehouse {
   uint8_t suggest_fire_flag = 0;     // 建议开火标志位
   int8_t aim_speed_change = 0;       // 弹速调整标志位
   int8_t aim_speed_change_flag = 0;  // 弹速调整标志位
-  uint16_t last_crc = 0;             // 上一次CRC校验结果
   bool image_update_flag = false;    // 裁判系统数据更新标志位
   bool music_play_flag = false;      // 音乐播放标识位
   bool music_change_flag = false;    // 音乐改动标识位
