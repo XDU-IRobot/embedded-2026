@@ -166,7 +166,7 @@ void GlobalWarehouse::ChassisStateUpdate() {
               100.0f,
       -100.0f, 100.0f);
   globals->chassis_move_y = rm::modules::Clamp(
-      static_cast<f32>(globals->rc->right_x()) / 6.6f -
+      static_cast<f32>(globals->rc->right_y()) / 6.6f -
           static_cast<f32>(globals->image_update_flag ? (globals->image_data->data().keyboard_key >> 0 & 0x01) -
                                                             (globals->image_data->data().keyboard_key >> 1 & 0x01)
                                                       : globals->rc->key(rm::device::DR16::Key::kW) +
