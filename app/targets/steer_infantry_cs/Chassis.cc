@@ -115,14 +115,18 @@ void Chassis::ChassisMovePIDUpdate() {
   globals->chassis_controller.SetTarget(chassis->chassis_target_x_, chassis->chassis_target_y_,
                                         chassis->chassis_target_w_);
   globals->chassis_controller.Update(
-      rm::modules::Map(globals->steer_lf->encoder() - chassis->steer_wheel_init_encoder_[0],  //
-                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-      rm::modules::Map(globals->steer_rf->encoder() - chassis->steer_wheel_init_encoder_[1],  //
-                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-      rm::modules::Map(globals->steer_lb->encoder() - chassis->steer_wheel_init_encoder_[2],  //
-                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-      rm::modules::Map(globals->steer_rb->encoder() - chassis->steer_wheel_init_encoder_[3],  //
-                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+      rm::modules::Wrap(rm::modules::Map(globals->steer_lf->encoder() - chassis->steer_wheel_init_encoder_[0],  //
+                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+                        -static_cast<f32>(M_PI), M_PI),
+      rm::modules::Wrap(rm::modules::Map(globals->steer_rf->encoder() - chassis->steer_wheel_init_encoder_[1],  //
+                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+                        -static_cast<f32>(M_PI), M_PI),
+      rm::modules::Wrap(rm::modules::Map(globals->steer_lb->encoder() - chassis->steer_wheel_init_encoder_[2],  //
+                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+                        -static_cast<f32>(M_PI), M_PI),
+      rm::modules::Wrap(rm::modules::Map(globals->steer_rb->encoder() - chassis->steer_wheel_init_encoder_[3],  //
+                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+                        -static_cast<f32>(M_PI), M_PI),
       globals->steer_lf->rpm(), globals->steer_rf->rpm(), globals->steer_lb->rpm(), globals->steer_rb->rpm(),
       globals->wheel_lf->rpm(), globals->wheel_rf->rpm(), globals->wheel_lb->rpm(), globals->wheel_rb->rpm(), 2.0f);
 }

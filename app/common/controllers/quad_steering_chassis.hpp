@@ -18,7 +18,7 @@ class QuadSteeringChassis {
    * @brief 更新一步，角度单位均为弧度，速度单位均为弧度每秒
    */
   void Update(float lf_steer_position, float rf_steer_position, float lb_steer_position, float rb_steer_position,
-              float lf_steer_speed, float lb_steer_speed, float rf_steer_speed, float rb_steer_speed,
+              float lf_steer_speed, float rf_steer_speed, float lb_steer_speed, float rb_steer_speed,
               float lf_wheel_speed, float rf_wheel_speed, float lb_wheel_speed, float rb_wheel_speed, float dt = 1.f) {
     // 更新当前状态
     state_.lf_steer_position = lf_steer_position;
@@ -90,11 +90,11 @@ class QuadSteeringChassis {
     // 轮速控制
     pid_.lf_wheel.Update(fk_result.lf_wheel_speed, state_.lf_wheel_speed, dt);
     output_.lf_wheel = pid_.lf_wheel.out();
-    pid_.rf_wheel.Update(-fk_result.rf_wheel_speed, state_.rf_wheel_speed, dt);
+    pid_.rf_wheel.Update(fk_result.rf_wheel_speed, state_.rf_wheel_speed, dt);
     output_.rf_wheel = pid_.rf_wheel.out();
     pid_.lb_wheel.Update(fk_result.lr_wheel_speed, state_.lb_wheel_speed, dt);
     output_.lb_wheel = pid_.lb_wheel.out();
-    pid_.rb_wheel.Update(-fk_result.rr_wheel_speed, state_.rb_wheel_speed, dt);
+    pid_.rb_wheel.Update(fk_result.rr_wheel_speed, state_.rb_wheel_speed, dt);
     output_.rb_wheel = pid_.rb_wheel.out();
   }
 
