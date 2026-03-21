@@ -126,17 +126,13 @@ void Chassis::ChassisNavigateDataUpdate() {
                        -chassis->chassis_max_navigate_xyw_, chassis->chassis_max_navigate_xyw_,  //
                        -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
   if (std::abs(chassis->chassis_target_w_) > 0) {
-    chassis->chassis_move_delta_angle_ =
-        0.5f * rm::modules::Clamp(globals->navigate_communicator->chassis_target_w(), -chassis_max_navigate_xyw_,
-                                  chassis_max_navigate_xyw_);
+    chassis->chassis_move_delta_angle_ = 0.5f * chassis->chassis_target_w_;
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) -
         chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
     chassis->chassis_target_y_ =
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
-    chassis->chassis_target_x_ = chassis->chassis_receive_x_;
-    chassis->chassis_target_y_ = chassis->chassis_receive_y_;
   } else {
     chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
                                  chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
