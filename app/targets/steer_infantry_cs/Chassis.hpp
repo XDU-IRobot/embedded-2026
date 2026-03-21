@@ -15,14 +15,6 @@ inline class Chassis {
  private:
   rm::modules::PID chassis_follow_pid_{};
 
-  rm::modules::M3508PowerModel power_model_{};
-  std::array<rm::modules::M3508PowerModel::MotorState, 4> motor_state_{};
-  std::array<rm::modules::M3508PowerModel::PowerInfo, 4> power_info_{};
-
-  f32 output_currents_[4]{};
-  f32 total_power_ = 0.0f;
-  f32 chassis_power_limit_ = 0.0f;
-
   f32 chassis_receive_x_ = 0.0f;  // 底盘x轴接收值
   f32 chassis_receive_y_ = 0.0f;  // 底盘y轴接收值
   f32 chassis_target_x_ = 0.0f;   // 底盘x轴目标值
@@ -37,7 +29,9 @@ inline class Chassis {
 
   bool high_speed_mode_flag = false;  // 高速模式标志位
 
-  const f32 front_down_yaw_angle_ = -2.06f;  // 前方下部yaw轴角度
+  const u16 steer_wheel_init_encoder_[4]{1114, 3111, 2912, 2274};  // 舵轮初始编码器值
+
+  const f32 front_down_yaw_angle_ = 4.5166f;  // 前方下部yaw轴角度
 
   const f32 chassis_sensitivity_xy_ = 3000.0f;  // 底盘x、y轴灵敏度
   const f32 chassis_max_speed_xy_ = 3000.0f;    // 底盘x、y轴最大速度

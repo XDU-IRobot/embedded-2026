@@ -5,8 +5,8 @@ GimbalCommunicator::GimbalCommunicator(hal::CanInterface &can) : CanDevice(can, 
 
 void GimbalCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x120) {
-    remote_speed_x_ = static_cast<f32>(msg->data[0]) / 100.0f;
-    remote_speed_y_ = static_cast<f32>(msg->data[1]) / 100.0f;
+    remote_speed_x_ = static_cast<f32>(static_cast<i8>(msg->data[0])) / 100.0f;
+    remote_speed_y_ = static_cast<f32>(static_cast<i8>(msg->data[1])) / 100.0f;
     chassis_mode_ = static_cast<u8>(msg->data[2]);
     UI_show_flag_ = static_cast<u8>(msg->data[3]);
     get_target_flag_ = static_cast<u8>(msg->data[4]);

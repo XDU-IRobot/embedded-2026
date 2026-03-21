@@ -5,9 +5,7 @@
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
-#include "encoder_counter.hpp"
 #include "controllers/quad_steering_chassis.hpp"
-#include "controllers/shoot_3fric.hpp"
 
 #include "GimbalCommunicator.hpp"
 #include "Referee.hpp"

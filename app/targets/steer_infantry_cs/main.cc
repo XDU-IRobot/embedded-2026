@@ -40,7 +40,7 @@ void MainLoop() {
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
-  rm::Sleep(std::chrono::milliseconds(500));  // 等待设备初始化完成
+  rm::Sleep(std::chrono::milliseconds(100));  // 等待设备初始化完成
   globals = new GlobalWarehouse;
   chassis = new Chassis;
   globals->Init();
@@ -77,12 +77,12 @@ void GlobalWarehouse::Init() {
 
   referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
 
-  yaw_motor = new rm::device::GM6020{*can1, 1};
+  yaw_motor = new rm::device::GM6020{*can1, 4};
 
   steer_lf = new rm::device::GM6020{*can2, 1};
-  steer_rf = new rm::device::GM6020{*can2, 3};
+  steer_rf = new rm::device::GM6020{*can2, 2};
   steer_lb = new rm::device::GM6020{*can2, 4};
-  steer_rb = new rm::device::GM6020{*can2, 2};
+  steer_rb = new rm::device::GM6020{*can2, 3};
   wheel_lf = new rm::device::M3508{*can2, 1};
   wheel_rf = new rm::device::M3508{*can2, 3};
   wheel_lb = new rm::device::M3508{*can2, 4};
@@ -107,14 +107,14 @@ void GlobalWarehouse::Init() {
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
-  chassis_controller.pid().lf_steer_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lf_steer_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_steer_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_steer_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_steer_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_steer_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_steer_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_steer_speed.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_steer_position.SetKp(800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_steer_position.SetKp(800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_steer_position.SetKp(800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_steer_position.SetKp(800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   chassis_controller.pid().lf_wheel.SetKp(5.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
   chassis_controller.pid().rf_wheel.SetKp(5.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
   chassis_controller.pid().lb_wheel.SetKp(5.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
