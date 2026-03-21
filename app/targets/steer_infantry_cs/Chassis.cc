@@ -2,7 +2,7 @@
 
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(26000.0f).SetKi(0.0f).SetKd(1200000.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis->chassis_follow_pid_.SetKp(15000.0f).SetKi(0.0f).SetKd(1000000.0f).SetMaxOut(100000.0f).SetMaxIout(0.0f);
 }
 
 void Chassis::ChassisTask() {
@@ -65,7 +65,11 @@ void Chassis::ChassisRCDataUpdate() {
     chassis->chassis_target_y_ =
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
-    chassis->chassis_target_w_ = 4000.0f;
+    // if (std::pow(chassis->chassis_target_x_, 2) + std::pow(chassis->chassis_target_y_, 2) > 640000.0f) {
+    //   chassis->chassis_target_w_ = 2000.0f;
+    // } else {
+    chassis->chassis_target_w_ = 2000.0f * chassis->k_speed_limit;
+    // }
   } else if (chassis->ChassisMove_ == kReRotate) {
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_) -
@@ -73,7 +77,11 @@ void Chassis::ChassisRCDataUpdate() {
     chassis->chassis_target_y_ =
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_);
-    chassis->chassis_target_w_ = -4000.0f;
+    // if (std::pow(chassis->chassis_target_x_, 2) + std::pow(chassis->chassis_target_y_, 2) > 640000.0f) {
+    //   chassis->chassis_target_w_ = -2000.0f;
+    // } else {
+    chassis->chassis_target_w_ = -2000.0f * chassis->k_speed_limit;
+    // }
   } else {
     chassis->chassis_target_x_ = chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_) -
                                  chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
@@ -81,6 +89,10 @@ void Chassis::ChassisRCDataUpdate() {
                                  chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
     chassis->chassis_follow_pid_.Update(0.0f, -chassis->down_yaw_delta_, 1.0f);
     chassis->chassis_target_w_ = chassis->chassis_follow_pid_.out();
+    // if (std::abs(chassis->chassis_target_w_) > 2000.0f) {
+    //   chassis->chassis_target_x_ *= std::pow(20000.0f - std::abs(chassis->chassis_target_w_) / 20000.0f, 2);
+    //   chassis->chassis_target_y_ *= std::pow(20000.0f - std::abs(chassis->chassis_target_w_) / 20000.0f, 2);
+    // }
   }
   if (std::abs(chassis->chassis_target_w_) > 3000.0f) {
     chassis->chassis_target_x_ *= 0.5;
@@ -95,10 +107,10 @@ void Chassis::ChassisRCDataUpdate() {
         std::sqrt(std::pow(chassis->chassis_target_x_, 2.0f) + std::pow(chassis->chassis_target_y_, 2.0f)) /
         chassis->chassis_max_speed_xy_;
   }
-  chassis->chassis_target_x_ =
-      rm::modules::Clamp(chassis->chassis_target_x_, -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
-  chassis->chassis_target_y_ =
-      rm::modules::Clamp(chassis->chassis_target_y_, -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
+  chassis->chassis_target_x_ = rm::modules::Clamp(chassis->chassis_target_x_ * chassis->k_speed_limit,
+                                                  -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
+  chassis->chassis_target_y_ = rm::modules::Clamp(chassis->chassis_target_y_ * chassis->k_speed_limit,
+                                                  -chassis->chassis_max_speed_xy_, chassis->chassis_max_speed_xy_);
   chassis->chassis_target_w_ =
       rm::modules::Clamp(chassis->chassis_target_w_, -chassis->chassis_max_speed_w_, chassis->chassis_max_speed_w_);
 }
@@ -128,6 +140,7 @@ void Chassis::ChassisEnableUpdate() {
     globals->chassis_controller.Enable(false);
     chassis->ChassisMovePIDUpdate();
   }
+  chassis->SpeedModeChange();
   // chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }
@@ -147,12 +160,21 @@ void Chassis::SpeedModeChange() {
        globals->supercap->error(rm::device::SuperCapError::kInputUnderVoltage) << 3 |
        globals->supercap->error(rm::device::SuperCapError::kNoData) << 4) == true ||
       globals->referee_data->data().power_heat_data.buffer_energy < 30) {
-    chassis->speed_mode_ = kNormal;
+    chassis->speed_mode_ = kNormalSpeed;
   } else if (chassis->high_speed_mode_flag == true && globals->supercap->voltage() > 18.0f &&
              globals->referee_data->data().power_heat_data.buffer_energy > 30) {
     chassis->speed_mode_ = kHighSpeed;
-  } else if (chassis->high_speed_mode_flag == false) {
+  } else {
     chassis->speed_mode_ = kNormalSpeed;
+  }
+  if (globals->referee_data->data().robot_status.chassis_power_limit > 0.0f) {
+    if (chassis->speed_mode_ == kHighSpeed) {
+      chassis->k_speed_limit = globals->referee_data->data().robot_status.chassis_power_limit / 50.0f + 4.0f;
+    } else {
+      chassis->k_speed_limit = globals->referee_data->data().robot_status.chassis_power_limit / 30.0f + 0.6f;
+    }
+  } else {
+    chassis->k_speed_limit = 2.0f;
   }
 }
 

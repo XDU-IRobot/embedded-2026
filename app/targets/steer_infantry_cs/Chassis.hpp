@@ -23,6 +23,7 @@ inline class Chassis {
 
   f32 down_yaw_delta_ = 0.0f;  // 下部yaw轴随动差值
 
+  f32 k_speed_limit = 1.0f;  // 底盘速度限制系数
   f32 k_speed_power_limit_ = 1.0f;  // 底盘速度限制系数
 
   f32 chassis_move_delta_angle_ = -0.15f;
@@ -33,9 +34,9 @@ inline class Chassis {
 
   const f32 front_down_yaw_angle_ = 4.5166f;  // 前方下部yaw轴角度
 
-  const f32 chassis_sensitivity_xy_ = 3000.0f;  // 底盘x、y轴灵敏度
-  const f32 chassis_max_speed_xy_ = 3000.0f;    // 底盘x、y轴最大速度
-  const f32 chassis_max_speed_w_ = 5000.0f;     // 底盘转动最大速度
+  const f32 chassis_sensitivity_xy_ = 1600.0f;  // 底盘x、y轴灵敏度
+  const f32 chassis_max_speed_xy_ = 10000.0f;    // 底盘x、y轴最大速度
+  const f32 chassis_max_speed_w_ = 10000.0f;     // 底盘转动最大速度
   const f32 chassis_max_navigate_xyw_ = 1.0f;   // 底盘x、y、z轴导航最速度
 
  public:
