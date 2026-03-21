@@ -29,9 +29,6 @@ inline class Gimbal {
   u16 last_remain_bullet_ = 0;              // 上一次剩余子弹数
   f32 shoot_initial_speed_[10] = {};        // 子弹初速度
   f32 shoot_initial_average_speed_ = 0.0f;  // 子弹初速度平均值
-  f32 target_shoot_initial_speed_ = 30.0f;  // 目标子弹初速度
-
-  f32 shoot_frequency_ = 0.0f;
 
   u16 heat_limit_ = 0;    // 热量上限值
   u16 heat_current_ = 0;  // 热量实时值
