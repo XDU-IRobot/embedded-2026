@@ -15,9 +15,10 @@ class GimbalDoubleYaw {
         .SetDiffFirst(false);
     pid_.down_yaw_position.SetCircular(true)
         .SetCircularCycle(M_PI * 2.0f)
-        .SetFuzzy(true)
+        .SetFuzzy(false)
+        .SetDiffLpfAlpha(0.7)
         .SetFuzzyErrorScale(M_PI)
-        .SetDiffFirst(false);
+        .SetDiffFirst(true);
     pid_.pitch_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
   }
 
@@ -42,7 +43,9 @@ class GimbalDoubleYaw {
     }
 
     pid_.up_yaw_position.Update(target_.up_yaw_position, state_.up_yaw_position, dt);
-    pid_.down_yaw_position.Update(target_.down_yaw_position, state_.down_yaw_position, dt);
+    // pid_.down_yaw_position.Update(target_.down_yaw_position, state_.down_yaw_position, dt);
+    pid_.down_yaw_position.UpdateExtDiff(target_.down_yaw_position, state_.down_yaw_position, state_.down_yaw_speed,
+                                         dt);
     pid_.pitch_position.Update(target_.pitch_position, state_.pitch_position, dt);
 
     if (speed_pid_enabled_) {
@@ -59,9 +62,9 @@ class GimbalDoubleYaw {
     } else {
       // 单位置环
       output_.up_yaw = pid_.up_yaw_position.out() + target_.yaw_output_ff;
-      output_.down_yaw = pid_.down_yaw_position.out();
       output_.pitch = pid_.pitch_position.out();
     }
+    output_.down_yaw = pid_.down_yaw_position.out();
   }
 
   /**
@@ -112,7 +115,7 @@ class GimbalDoubleYaw {
     float up_yaw_position;
     float down_yaw_position;
     float pitch_position;
-    float yaw_speed_ff;  ///< Yaw 速度前馈
+    float yaw_speed_ff;   ///< Yaw 速度前馈
     float yaw_output_ff;  ///< Yaw 控制量前馈，控制量具体是力矩、电流或者什么，取决于电机驱动
   } target_{};            ///< 目标状态
   struct {

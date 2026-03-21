@@ -166,7 +166,7 @@ void Chassis::ChassisMovePIDUpdate() {
   globals->chassis_controller.SetTarget(chassis->chassis_target_x_, chassis->chassis_target_y_,
                                         chassis->chassis_target_w_);
   globals->chassis_controller.Update(globals->wheel_lf->rpm(), globals->wheel_rf->rpm(),  // 轮电机当前值
-                                     globals->wheel_lb->rpm(), globals->wheel_rb->rpm());
+                                     globals->wheel_lb->rpm(), globals->wheel_rb->rpm(), 2.0f);
 }
 
 void Chassis::ChassisMatchUpdate() {

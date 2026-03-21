@@ -218,8 +218,8 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
                                        gimbal->gimbal_pitch_target_);
   globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
-                                    globals->ahrs.euler_angle().yaw, -globals->down_yaw_motor->vel(),
-                                    globals->hipnuc_imu->pitch(), -globals->pitch_motor->vel());
+                                    globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
+                                    globals->hipnuc_imu->pitch(), -globals->pitch_motor->vel(), 2.0f);
   const f32 move_compensation_ = globals->down_yaw_motor->vel() / 9.0f;
   gimbal->down_yaw_torque_ = globals->gimbal_controller.output().down_yaw + move_compensation_;
   gimbal->down_yaw_torque_ = rm::modules::Clamp(gimbal->down_yaw_torque_, -10.0f, 10.0f);
@@ -307,8 +307,8 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Arm(true);
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  if (globals->referee_data->data().shoot_data.initial_speed >= 24.0f) {
-    gimbal->ammo_speed_ *= 24.0f / globals->referee_data->data().shoot_data.initial_speed;
+  if (globals->referee_data->data().shoot_data.initial_speed >= 23.5f) {
+    gimbal->ammo_speed_ = 7200.0f * std::pow(23.5f / globals->referee_data->data().shoot_data.initial_speed, 2);
   }
   if (globals->rc->dial() <= -650
       // && heat_limit_ - heat_current_ > 100
