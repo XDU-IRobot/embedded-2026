@@ -181,14 +181,16 @@ void GlobalWarehouse::ChassisStateUpdate() {
               100.0f,
       -100.0f, 100.0f);
   // 有无力
-  if (globals->StateMachine_ == kTest || globals->StateMachine_ == kMatch) {
+  if ((globals->StateMachine_ == kTest && gimbal->GimbalMove_ == kGbRemote) || globals->StateMachine_ == kMatch) {
     globals->chassis_state |= static_cast<u8>(1 << 0);
   } else {
     globals->chassis_state &= ~static_cast<u8>(1 << 0);
   }
   // 小陀螺
-  if (globals->rc->dial() >= 650 || globals->image_update_flag ? globals->image_data->data().keyboard_key >> 4 & 0x01
-                                                               : globals->rc->key(rm::device::DR16::Key::kShift)) {
+  if ((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) ||
+      (globals->StateMachine_ == kMatch && globals->image_update_flag
+           ? globals->image_data->data().keyboard_key >> 4 & 0x01
+           : globals->rc->key(rm::device::DR16::Key::kShift))) {
     globals->chassis_state |= static_cast<u8>(1 << 1);
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
   } else if (globals->rc->dial() <= -650) {
@@ -274,7 +276,7 @@ void GlobalWarehouse::Music() {
   if (globals->music_choice == 3) {
     globals->music_choice = 0;
   }
-  if (music_play_flag) {
+  if (globals->music_play_flag) {
     if (globals->music_choice == 1) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SeeUAgain>();
       globals->music_play_flag = false;
@@ -357,7 +359,9 @@ void GlobalWarehouse::SubLoop50Hz() {
 
 void GlobalWarehouse::SubLoop10Hz() {
   if (globals->time % 50 == 0) {
-    globals->image_update_flag = globals->device_referee.all_device_ok();
+    if (globals->init_time == 0) {
+      globals->image_update_flag = globals->device_referee.all_device_ok();
+    }
     globals->time = 0;
   }
 }

@@ -53,8 +53,6 @@ inline class Gimbal {
 
   void ShootDisableUpdate();
 
-  void AmmoSpeedUpdate();
-
   void SetMotorCurrent();
 } *gimbal;
 
