@@ -69,6 +69,7 @@ inline struct GlobalWarehouse {
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
 
   uint8_t time = 0;                  // 时间
+  uint16_t init_time = 1000;         // 初始化时间
   uint16_t hurt_time = 0;            // 受伤小陀螺倒计时
   uint8_t music_choice = 0;          // 音乐选择
   uint8_t aim_mode = 0;              // 自瞄模式
@@ -86,8 +87,10 @@ inline struct GlobalWarehouse {
   bool music_play_flag = false;      // 音乐播放标识位
   bool music_change_flag = false;    // 音乐改动标识位
   bool speed_change_flag = false;    // 速度调整标志位
-  bool df_flag, df_state;            // 大符标志位和状态
-  bool xf_flag, xf_state;            // 小符标志位和状态
+  bool df_flag = false;   // 大符标志位
+  bool df_state = false;  // 大符状态
+  bool xf_flag = false;   // 小符标志位
+  bool xf_state = false;  // 小符状态
 
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态

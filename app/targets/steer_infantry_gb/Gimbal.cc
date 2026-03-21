@@ -115,9 +115,9 @@ void Gimbal::GimbalDisableUpdate() {
   globals->aim_mode = 0x00;
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = -globals->ahrs.euler_angle().pitch;
-  gimbal->gravity_compensation_ = 0.f;
   gimbal->GimbalMovePIDUpdate();
   gimbal->SetMotorCurrent();
+  gimbal->pitch_torque_ = 0.f;
 }
 
 void Gimbal::DaMiaoMotorEnable() {

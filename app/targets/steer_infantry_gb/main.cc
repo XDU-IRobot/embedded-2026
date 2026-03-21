@@ -21,6 +21,7 @@ void MainLoop() {
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
+  rm::Sleep(std::chrono::milliseconds(100));
   globals = new GlobalWarehouse;
   gimbal = new Gimbal;
   globals->Init();
@@ -103,6 +104,11 @@ void GlobalWarehouse::RCStateUpdate() {
   // if (!globals->device_rc.all_device_ok()) {
   //   globals->StateMachine_ = kUnable;
   // } else {
+  if (globals->init_time > 0) {
+    globals->StateMachine_ = kNoForce;
+    globals->init_time--;
+    return;
+  }
   switch (globals->rc->switch_r()) {
     case rm::device::DR16::SwitchPosition::kUp:
       // 右拨杆打到最上侧挡位
@@ -173,6 +179,59 @@ void GlobalWarehouse::ChassisStateUpdate() {
                                                             globals->rc->key(rm::device::DR16::Key::kS)) *
               100.0f,
       -100.0f, 100.0f);
+  // 有无力
+  if (globals->StateMachine_ == kTest || globals->StateMachine_ == kMatch) {
+    globals->chassis_state |= static_cast<u8>(1 << 0);
+  } else {
+    globals->chassis_state &= ~static_cast<u8>(1 << 0);
+  }
+  // 小陀螺
+  if (globals->rc->dial() >= 650 || globals->image_update_flag ? globals->image_data->data().keyboard_key >> 4 & 0x01
+                                                               : globals->rc->key(rm::device::DR16::Key::kShift)) {
+    globals->chassis_state |= static_cast<u8>(1 << 1);
+    globals->chassis_state &= ~static_cast<u8>(1 << 2);
+  } else if (globals->rc->dial() <= -650) {
+    globals->chassis_state |= static_cast<u8>(1 << 2);
+    globals->chassis_state &= ~static_cast<u8>(1 << 1);
+  } else {
+    globals->chassis_state &= ~static_cast<u8>(1 << 1);
+    globals->chassis_state &= ~static_cast<u8>(1 << 2);
+  }
+  // 高速模式
+  if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01
+                                 : globals->rc->key(rm::device::DR16::Key::kC)) {
+    globals->speed_change_flag = true;
+  } else if (globals->speed_change_flag == 1) {
+    globals->speed_change_flag = false;
+    globals->chassis_state ^= static_cast<u8>(1 << 3);
+  }
+  // 打符模式切换
+  if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 9 & 0x01
+                                  : globals->rc->key(rm::device::DR16::Key::kF)) &&
+      !globals->xf_state) {
+    globals->df_flag = true;
+  } else if (globals->df_flag) {
+    globals->df_flag = false;
+    globals->df_state ^= true;
+  }
+  if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 10 & 0x01
+                                  : globals->rc->key(rm::device::DR16::Key::kG)) &&
+      !globals->df_state) {
+    globals->xf_flag = true;
+  } else if (globals->xf_flag) {
+    globals->xf_flag = false;
+    globals->xf_state ^= true;
+  }
+  if (globals->df_state) {
+    globals->chassis_state |= static_cast<u8>(1 << 4);
+    globals->chassis_state &= ~static_cast<u8>(1 << 5);
+  } else if (globals->xf_state) {
+    globals->chassis_state |= static_cast<u8>(1 << 5);
+    globals->chassis_state &= ~static_cast<u8>(1 << 4);
+  } else {
+    globals->chassis_state &= ~static_cast<u8>(1 << 4);
+    globals->chassis_state &= ~static_cast<u8>(1 << 5);
+  }
   // UI信息
   globals->ui_refresh_flag = globals->image_update_flag ? globals->image_data->data().keyboard_key >> 8 & 0x01
                                                         : globals->rc->key(rm::device::DR16::Key::kR);
@@ -197,59 +256,6 @@ void GlobalWarehouse::ChassisStateUpdate() {
       if (globals->aim_speed_change > 10) globals->aim_speed_change = 10;
       globals->aim_speed_change_flag = 0;
     }
-  }
-  // 有无力
-  if (globals->StateMachine_ == kTest || globals->StateMachine_ == kMatch) {
-    globals->chassis_state |= 1u << 0;
-  } else {
-    globals->chassis_state &= 0u << 0;
-  }
-  // 小陀螺
-  if (globals->rc->dial() >= 650 || globals->image_update_flag ? globals->image_data->data().keyboard_key >> 4 & 0x01
-                                                               : globals->rc->key(rm::device::DR16::Key::kShift)) {
-    globals->chassis_state |= 1u << 1;
-    globals->chassis_state &= 0u << 2;
-  } else if (globals->rc->dial() <= -650) {
-    globals->chassis_state |= 1u << 2;
-    globals->chassis_state &= 0u << 1;
-  } else {
-    globals->chassis_state &= 0u << 1;
-    globals->chassis_state &= 0u << 2;
-  }
-  // 高速模式
-  if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01
-                                 : globals->rc->key(rm::device::DR16::Key::kC)) {
-    globals->speed_change_flag = true;
-  } else if (globals->speed_change_flag == 1) {
-    globals->speed_change_flag = false;
-    globals->chassis_state ^= 1u << 3;
-  }
-  // 打符模式切换
-  if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 9 & 0x01
-                                  : globals->rc->key(rm::device::DR16::Key::kF)) &&
-      !globals->xf_state) {
-    globals->df_flag = true;
-  } else if (globals->df_flag) {
-    globals->df_flag = false;
-    globals->df_state ^= true;
-  }
-  if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 10 & 0x01
-                                  : globals->rc->key(rm::device::DR16::Key::kG)) &&
-      !globals->df_state) {
-    globals->xf_flag = true;
-  } else if (globals->xf_flag) {
-    globals->xf_flag = false;
-    globals->xf_state ^= true;
-  }
-  if (globals->df_state) {
-    globals->chassis_state |= 1u << 4;
-    globals->chassis_state &= 0u << 5;
-  } else if (globals->xf_state) {
-    globals->chassis_state |= 1u << 5;
-    globals->chassis_state &= 0u << 4;
-  } else {
-    globals->chassis_state &= 0u << 4;
-    globals->chassis_state &= 0u << 5;
   }
 }
 
