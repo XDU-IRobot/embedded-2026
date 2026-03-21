@@ -105,11 +105,11 @@ void MagazineControl() {
   // 拨盘电机串级PID（开循环）
   globals->pid_magz_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
   globals->pid_magz_position->Update(target_magz, globals->magazine_motor->pos(), 0.001);
-  // target_velocity = globals->pid_magz_position->out();
-  // globals->pid_magz_velocity->Update(target_velocity, globals->magazine_motor->vel(), 0.002);
+  target_velocity = globals->pid_magz_position->out();
+  globals->pid_magz_velocity->Update(target_velocity, globals->magazine_motor->vel(), 0.001);
   static int low_f_1;
   if (low_f_1 > 1) {
-    globals->magazine_motor->SetMitCommand(0, 0, globals->pid_magz_position->out(), 0, 0);
+    globals->magazine_motor->SetMitCommand(0, 0, globals->pid_magz_velocity->out(), 0, 0);
   } else {
     low_f_1++;
   }
@@ -268,7 +268,7 @@ void ShooterControl() {
 // }
 
 /*----------------------------------------------------*/
-inline f32 pitch_ff = 2750;
+inline f32 pitch_ff = 2500;
 
 void
 GimbalControl() {
@@ -376,13 +376,13 @@ GimbalControl() {
   // yawPID计算（双环）
   globals->pid_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
   globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw - 0.005, 0.001);
-  globals->pid_yaw_velocity->Update(globals->pid_yaw_velocity->out(), -globals->imu->gyro_z(), 0.002);
+  globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(), -globals->imu->gyro_z(), 0.001);
   // pitchPID计算
   globals->pid_pitch_position->Update(target_pos_pitch, -globals->ahrs.euler_angle().pitch, 1);
   globals->pid_pitch_velocity->Update(globals->pid_pitch_position->out(), -globals->imu->gyro_y(), 0.001);
 
   // 发送CAN
-  globals->gimbal_motor_yaw->SetMitCommand(0, 0, globals->pid_yaw_position->out(), 0, 0);
+  globals->gimbal_motor_yaw->SetMitCommand(0, 0, globals->pid_yaw_velocity->out(), 0, 0);
   // 爬坡模式
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
       l_switch_position_now != device::DR16::SwitchPosition::kUp &&
@@ -391,7 +391,7 @@ GimbalControl() {
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
         static_cast<int16_t>((1.7 + 1.3 * globals->ahrs.euler_angle().pitch) * pitch_ff) +
-        (globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
+        (0.98-0.25*eulerangle_pitch)*(globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
   }
 
   // HAL_Delay(0);
@@ -432,7 +432,7 @@ void ChassisPower() {
     // 0.0011);
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
-    Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out());
+    Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out())*(1-eulerangle_pitch/0.6644*0.5);
   } else {
     Vw = 0;
   }
@@ -443,7 +443,7 @@ void ChassisPower() {
   follow = Vw;
 
   // 遥控器输入底盘速度
-  Vx = globals->rc->left_x() * 10000 / 660;
+  Vx = globals->rc->left_x() * 5000 / 660;
   Vy = globals->rc->left_y() * 10000 / 660;
   if (globals->rc->key(rm::device::DR16::Key::kW) || globals->custom_client->key(rm::device::DR16::Key::kW)) {
     Vy += 2000;
@@ -469,11 +469,12 @@ void ChassisPower() {
       Vx = -10000;
     }
   }
+
   rm::i16 V_wheel[4];
-  V_wheel[0] = -Vy + 2 * Vx + Vw;
-  V_wheel[1] = Vy + 2 * Vx + Vw;
-  V_wheel[2] = Vy - 2 * Vx + Vw;
-  V_wheel[3] = -Vy - 2 * Vx + Vw;
+  V_wheel[0] = -Vy + 1 * Vx + 1*Vw;
+  V_wheel[1] = Vy + 1 * Vx + 1*Vw;
+  V_wheel[2] = Vy /*- 0.1 * Vx*/ + 1*Vw;
+  V_wheel[3] = -Vy /*- 0.1 * Vx*/ + 1*Vw;
 
   for (int i = 0; i < 4; i++) {
     globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());

@@ -117,8 +117,8 @@ inline struct GlobalWarehouse {
     // PID控制器
     pid_chassis_1 = new rm::modules::PID{20, 2, 4, 18000, 2};
     pid_chassis_2 = new rm::modules::PID{20, 2, 4, 18000, 2};
-    pid_chassis_3 = new rm::modules::PID{30, 2, 4, 18000, 100};
-    pid_chassis_4 = new rm::modules::PID{30, 2, 4, 18000, 100};
+    pid_chassis_3 = new rm::modules::PID{40, 2, 4, 18000, 100};
+    pid_chassis_4 = new rm::modules::PID{40, 2, 4, 18000, 100};
 
     pid_shooter_1 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};  // 20
     pid_shooter_2 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};  // 20
@@ -131,21 +131,23 @@ inline struct GlobalWarehouse {
     pid_magz_position = new rm::modules::PID{42, 0.001, 0, 20, 0};
     pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.0, 7, 0};
 
-    pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
-    pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
-    pid_pitch_position = new rm::modules::PID{75, 0.5, 1.3, 1, 0.1};
+    // pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
+    // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
+    pid_yaw_position = new rm::modules::PID{55, 0, 0, 10, 0};
+    pid_yaw_velocity = new rm::modules::PID{8.5, 0, 0, 6, 0};
+    pid_pitch_position = new rm::modules::PID{60, 0.5, 1.3, 1, 0.1};
     pid_pitch_velocity = new rm::modules::PID{9100, 3500, 40, 16000, 500};
-    // pid_pitch_position = new rm::modules::PID{15000, 25, 100, 1500, 1000};
-    // pid_pitch_velocity = new rm::modules::PID{20, 0, 0, 16000, 5000};
+    // pid_pitch_position = new rm::modules::PID{2000, 0, 0, 1500, 1000};
+    // pid_pitch_velocity = new rm::modules::PID{100, 0, 0, 16000, 5000};
 
     // 底盘随动
 
-    pid_chassis_follow_pos = new rm::modules::PID{1000, 0, 25, 1500, 0};
+    pid_chassis_follow_pos = new rm::modules::PID{700, 0, 0, 1500, 0};
     // pid_chassis_follow_pos = new rm::modules::PID{14000, 33600, 100, 16000, 10000};
 
     // pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
 
-    pid_chassis_follow_vel = new rm::modules::PID{9, 0, 0, 16000, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{5, 0, 0.09, 16000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
@@ -166,7 +168,6 @@ inline struct GlobalWarehouse {
     rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
   }
 } *globals;
-;
 
 // 底盘速度
 inline rm::i16 Vx, Vy, Vw;
@@ -192,8 +193,8 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -6800;
-inline rm::i16 V_shooter_2 = -6000;  // 12m/s
+inline rm::i16 V_shooter_1 = -4600;
+inline rm::i16 V_shooter_2 = -4150;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测
