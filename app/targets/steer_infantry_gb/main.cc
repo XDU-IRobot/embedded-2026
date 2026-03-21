@@ -146,6 +146,7 @@ void GlobalWarehouse::RCStateUpdate() {
       switch (globals->rc->switch_l()) {
         case rm::device::DR16::SwitchPosition::kUp:
           globals->Music();
+          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
           break;
         case rm::device::DR16::SwitchPosition::kMid:
         case rm::device::DR16::SwitchPosition::kDown:
