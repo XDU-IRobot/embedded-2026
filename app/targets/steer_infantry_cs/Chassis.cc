@@ -1,20 +1,12 @@
 #include "Chassis.hpp"
 
-f32 a, b;
-
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
-  chassis->chassis_follow_pid_.SetKp(0.0f);
-  chassis->chassis_follow_pid_.SetKi(0.0f);
-  chassis->chassis_follow_pid_.SetKd(0.0f);
-  chassis->chassis_follow_pid_.SetMaxOut(chassis->chassis_max_speed_w_);
-  chassis->chassis_follow_pid_.SetMaxIout(0.0f);
+  chassis->chassis_follow_pid_.SetKp(26000.0f).SetKi(0.0f).SetKd(1200000.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
 }
 
 void Chassis::ChassisTask() {
   chassis->ChassisStateUpdate();  // 底盘状态机更新
-  a = chassis->chassis_target_x_;
-  b = chassis->chassis_target_y_;
 }
 
 void Chassis::ChassisStateUpdate() {
@@ -87,7 +79,7 @@ void Chassis::ChassisRCDataUpdate() {
                                  chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_);
     chassis->chassis_target_y_ = chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_) +
                                  chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_);
-    chassis->chassis_follow_pid_.Update(0.0f, chassis->down_yaw_delta_, 1.0f);
+    chassis->chassis_follow_pid_.Update(0.0f, -chassis->down_yaw_delta_, 1.0f);
     chassis->chassis_target_w_ = chassis->chassis_follow_pid_.out();
   }
   if (std::abs(chassis->chassis_target_w_) > 3000.0f) {
@@ -115,20 +107,16 @@ void Chassis::ChassisMovePIDUpdate() {
   globals->chassis_controller.SetTarget(chassis->chassis_target_x_, chassis->chassis_target_y_,
                                         chassis->chassis_target_w_);
   globals->chassis_controller.Update(
-      rm::modules::Wrap(rm::modules::Map(globals->steer_lf->encoder() - chassis->steer_wheel_init_encoder_[0],  //
-                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-                        -static_cast<f32>(M_PI), M_PI),
-      rm::modules::Wrap(rm::modules::Map(globals->steer_rf->encoder() - chassis->steer_wheel_init_encoder_[1],  //
-                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-                        -static_cast<f32>(M_PI), M_PI),
-      rm::modules::Wrap(rm::modules::Map(globals->steer_lb->encoder() - chassis->steer_wheel_init_encoder_[2],  //
-                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-                        -static_cast<f32>(M_PI), M_PI),
-      rm::modules::Wrap(rm::modules::Map(globals->steer_rb->encoder() - chassis->steer_wheel_init_encoder_[3],  //
-                                         0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
-                        -static_cast<f32>(M_PI), M_PI),
+      rm::modules::Map(globals->steer_lf->encoder() - chassis->steer_wheel_init_encoder_[0],  //
+                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+      rm::modules::Map(globals->steer_rf->encoder() - chassis->steer_wheel_init_encoder_[1],  //
+                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+      rm::modules::Map(globals->steer_lb->encoder() - chassis->steer_wheel_init_encoder_[2],  //
+                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
+      rm::modules::Map(globals->steer_rb->encoder() - chassis->steer_wheel_init_encoder_[3],  //
+                       0.0f, 8191.0f, 0.0f, 2.0f * static_cast<f32>(M_PI)),
       globals->steer_lf->rpm(), globals->steer_rf->rpm(), globals->steer_lb->rpm(), globals->steer_rb->rpm(),
-      globals->wheel_lf->rpm(), globals->wheel_rf->rpm(), globals->wheel_lb->rpm(), globals->wheel_rb->rpm(), 2.0f);
+      globals->wheel_lf->rpm(), -globals->wheel_rf->rpm(), globals->wheel_lb->rpm(), -globals->wheel_rb->rpm(), 2.0f);
 }
 
 void Chassis::ChassisEnableUpdate() {
@@ -192,9 +180,9 @@ void Chassis::SetMotorCurrent() {
   globals->wheel_lf->SetCurrent(
       static_cast<i16>(globals->chassis_controller.output().lf_wheel * chassis->k_speed_power_limit_));
   globals->wheel_rf->SetCurrent(
-      static_cast<i16>(globals->chassis_controller.output().rf_wheel * chassis->k_speed_power_limit_));
+      static_cast<i16>(-globals->chassis_controller.output().rf_wheel * chassis->k_speed_power_limit_));
   globals->wheel_lb->SetCurrent(
       static_cast<i16>(globals->chassis_controller.output().lb_wheel * chassis->k_speed_power_limit_));
   globals->wheel_rb->SetCurrent(
-      static_cast<i16>(globals->chassis_controller.output().rb_wheel * chassis->k_speed_power_limit_));
+      static_cast<i16>(-globals->chassis_controller.output().rb_wheel * chassis->k_speed_power_limit_));
 }

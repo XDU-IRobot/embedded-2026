@@ -78,7 +78,6 @@ class QuadSteeringChassis {
     } else {
       output_.lb_steer = pid_.lb_steer_position.out();
     }
-    // 右后
     if (speed_pid_enabled_) {
       const float rb_steer_target_speed = pid_.rb_steer_position.out();
       pid_.rb_steer_speed.Update(rb_steer_target_speed, state_.rb_steer_speed, dt);

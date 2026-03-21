@@ -84,9 +84,9 @@ void GlobalWarehouse::Init() {
   steer_lb = new rm::device::GM6020{*can2, 4};
   steer_rb = new rm::device::GM6020{*can2, 3};
   wheel_lf = new rm::device::M3508{*can2, 1};
-  wheel_rf = new rm::device::M3508{*can2, 3};
+  wheel_rf = new rm::device::M3508{*can2, 2};
   wheel_lb = new rm::device::M3508{*can2, 4};
-  wheel_rb = new rm::device::M3508{*can2, 2};
+  wheel_rb = new rm::device::M3508{*can2, 3};
 
   device_chassis << steer_lf << steer_rf << steer_lb << steer_rb   // 底盘舵电机
                  << wheel_lf << wheel_rf << wheel_lb << wheel_rb;  // 底盘轮电机
