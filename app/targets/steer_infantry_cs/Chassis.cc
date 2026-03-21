@@ -36,7 +36,6 @@ void Chassis::ChassisStateUpdate() {
     } else if ((globals->gimbal_communicator->chassis_mode() >> 2 & 0x01) == 1) {
       chassis->ChassisMove_ = kReRotate;
       chassis->ChassisEnableUpdate();
-
     } else {
       chassis->ChassisMove_ = kFollow;
       chassis->ChassisEnableUpdate();
@@ -125,7 +124,7 @@ void Chassis::ChassisEnableUpdate() {
   } else {
     globals->chassis_controller.Enable(false);
   }
-  chassis->PowerLimitLoop();
+  // chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }
 
