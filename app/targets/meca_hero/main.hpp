@@ -19,12 +19,12 @@ inline float follow_d = 0;
 
 inline struct GlobalWarehouse {
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};      ///< CAN 总线接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};                       ///< CAN 总线接口
   rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}, *uart1{nullptr};  ///< 遥控器串口接口
 
   // 设备 //
   rm::device::DR16 *rc{nullptr};  ///< 遥控器
-  rm::device::VT03 *tc{nullptr};//图传遥控器
+  rm::device::VT03 *tc{nullptr};  // 图传遥控器
   // rm::device::GM6020 *yaw_motor{nullptr};                                              ///< 云台 Yaw 电机
   // rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *magazine_motor{nullptr};  ///< 云台 Pitch 电机
   rm::device::BMI088 *imu{nullptr};  ///< BMI088 IMU
@@ -88,12 +88,12 @@ inline struct GlobalWarehouse {
     can2 = new rm::hal::Can{hcan2};
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     uart6 = new rm::hal::Serial{huart6, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-    uart1=new rm::hal::Serial{huart1, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    uart1 = new rm::hal::Serial{huart1, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
     custom_client = new rm::device::CustomClient;
     // 遥控
     rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
-    tc=new rm::device::VT03;
+    tc = new rm::device::VT03;
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     /*------*/

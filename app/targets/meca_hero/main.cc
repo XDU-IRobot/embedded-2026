@@ -67,8 +67,8 @@ void MainLoop() {
       power_management_shooter_last = 1;
       power_management_shooter_delay = 0;
     }
-  }else {
-    power_management_shooter_last=globals->ref.data().robot_status.power_management_shooter_output;
+  } else {
+    power_management_shooter_last = globals->ref.data().robot_status.power_management_shooter_output;
   }
   // 遥控器输入值
   l_switch_position_last = l_switch_position_now;
