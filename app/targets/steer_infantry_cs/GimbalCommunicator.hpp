@@ -19,7 +19,7 @@ class GimbalCommunicator final : public CanDevice {
   [[nodiscard]] u8 aim_speed_change() const { return aim_speed_change_; }
 
   void RxCallback(const hal::CanFrame *msg) override;
-  void SendGimbalCommand(u16 current_heat, u16 heat_limit, u8 power_state, u8 robot_id);
+  void SendGimbalCommand(u16 current_heat, u16 heat_limit, float ammo_speed, u8 power_state, u8 robot_id);
 
  private:
   f32 remote_speed_x_{};

@@ -15,12 +15,14 @@ void GimbalCommunicator::RxCallback(const hal::CanFrame *msg) {
   }
 }
 
-void GimbalCommunicator::SendGimbalCommand(u16 current_heat, u16 heat_limit, u8 power_state, u8 robot_id) {
+void GimbalCommunicator::SendGimbalCommand(u16 current_heat, u16 heat_limit, float ammo_speed, u8 power_state,
+                                           u8 robot_id) {
   tx_buf_[0] = current_heat >> 8;
   tx_buf_[1] = current_heat;
   tx_buf_[2] = heat_limit >> 8;
   tx_buf_[3] = heat_limit;
-  tx_buf_[4] = power_state << 4 | (robot_id < 100 ? 0 : 1);
+  tx_buf_[4] = rm::modules::FloatToInt(ammo_speed, 0.0f, 32.0f, 8);
+  tx_buf_[5] = power_state << 4 | (robot_id < 100 ? 0 : 1);
   this->can_->Write(0x100, tx_buf_, 8);
 }
 }  // namespace rm::device

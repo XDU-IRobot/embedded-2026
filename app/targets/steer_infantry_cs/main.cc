@@ -107,13 +107,17 @@ void GlobalWarehouse::Init() {
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
-  chassis_controller.pid().lf_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(
+      0.0f);
   chassis_controller.pid().lf_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(
+      0.0f);
   chassis_controller.pid().rf_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(
+      0.0f);
   chassis_controller.pid().lb_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_steer_position.SetKp(1000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(
+      0.0f);
   chassis_controller.pid().rb_steer_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   chassis_controller.pid().lf_wheel.SetKp(5.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
   chassis_controller.pid().rf_wheel.SetKp(5.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
@@ -129,6 +133,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->gimbal_communicator->SendGimbalCommand(
       globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat,
       globals->referee_data->data().robot_status.shooter_barrel_heat_limit,
+      globals->referee_data->data().shoot_data.initial_speed,
       globals->referee_data->data().robot_status.power_management_gimbal_output |
           globals->referee_data->data().robot_status.power_management_gimbal_output << 1 |
           globals->referee_data->data().robot_status.power_management_gimbal_output << 2,
