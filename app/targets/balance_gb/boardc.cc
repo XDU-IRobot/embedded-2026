@@ -10,7 +10,7 @@
 
 static FirstOrderFilter g_zfilter(1.f / 500.f, 0.02f);
 extern rm::hal::Can *can1;
-f32 g_z;
+f32 gz,gx,gy;
 
 void BoardC::BoardcInit() {
   buzzer = new Buzzer;
@@ -40,18 +40,21 @@ void BoardC::BoardcInit() {
 }
 
 void BoardC::EulerUpdate() {
-  imu->Update();
+  // imu->Update();
   // g_zfilter.Update(imu->gyro_z() - 0.001f);
   // g_z = g_zfilter.value();
-  ahrs.Update(
-      rm::modules::ImuData6Dof{imu->gyro_y(), -imu->gyro_x(), g_z, imu->accel_y(), -imu->accel_x(), imu->accel_z()});
-  // roll = -ahrs.euler_angle().roll;
-  // roll = roll * 57.3f;
-  // yaw = -ahrs.euler_angle().yaw;
-  // yaw = yaw * 57.3f;
-  //pitch = -ahrs.euler_angle().pitch;
-  //pitch = pitch * 57.3f;
+  // ahrs.Update(
+  //     rm::modules::ImuData6Dof{imu->gyro_y(), -imu->gyro_x(), g_z, imu->accel_y(), -imu->accel_x(), imu->accel_z()});
+  //  roll_c = -ahrs.euler_angle().roll;
+  //  //roll_c = roll * 57.3f;
+  //  yaw_c = -ahrs.euler_angle().yaw;
+  //  //yaw_c = yaw * 57.3f;
+  // pitch_c = -ahrs.euler_angle().pitch;
+  // //pitch_c = pitch * 57.3f;
   roll = hipnuc_imu->roll() * 57.3f;
   yaw = hipnuc_imu->yaw() * 57.3f;
   pitch = -hipnuc_imu->pitch() * 57.3f;
+  gz = hipnuc_imu->gyro_z();
+  gx = hipnuc_imu->gyro_x();
+  gy = hipnuc_imu->gyro_y();
 }

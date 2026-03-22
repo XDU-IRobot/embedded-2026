@@ -53,7 +53,7 @@ void AimbotCanCommunicator::UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot
   tx_buf_[3] = modules::F32ToF16(pitch);
   tx_buf_[4] = modules::F32ToF16(roll) >> 8;
   tx_buf_[5] = modules::F32ToF16(roll);
-  const u8 id_bit = (robot_id > 100) ? 1 : 0;
+  const u8 id_bit = robot_id ;
   const u8 mode_bits = mode & 0x3;                       // 最低 2 位
   const u8 imu_bits = static_cast<u8>(imu_count) & 0xF;  // 最低 4 位
 

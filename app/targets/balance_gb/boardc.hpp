@@ -23,7 +23,6 @@ class BoardC {
                             rm::modules::led_pattern::GreenBreath, rm::modules::led_pattern::RgbFlow>
       led_controller;  ///< RGB LED控制器
 
-  VT03 tcremote;                        ///<  图传数据处理调用接口
   TcReceiver *tc_receiver;              ///< 图传数据接受
   hal::Serial *tc_serial{nullptr};      ///<  图传串口接口
   hal::Serial *dbus{nullptr};           ///<  遥控器串口
@@ -37,6 +36,10 @@ class BoardC {
   f32 pitch = 0.f;
   f32 roll = 0.f;
   f32 yaw = 0.f;
+  f32 pitch_c = 0.f;
+  f32 roll_c = 0.f;
+  f32 yaw_c = 0.f;
+  f32 kw,ks = 0.f;
   u_int8_t time_camera = 0;  // 摄像头计数器
   u_int16_t imu_count = 0;   // IMU计数器
   void BoardcInit();
