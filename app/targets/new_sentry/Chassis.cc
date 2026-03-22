@@ -16,9 +16,16 @@ void Chassis::ChassisTask() {
 }
 
 void Chassis::ChassisStateUpdate() {
-  if (
-      // !globals->referee_data->data().robot_status.power_management_chassis_output ||
-      !globals->device_chassis.all_device_ok()) {
+  if (globals->referee_data->data().robot_status.power_management_chassis_output && !globals->last_chassis_power) {
+    globals->chassis_init_time = 1500;
+  }
+  globals->last_chassis_power = globals->referee_data->data().robot_status.power_management_gimbal_output;
+  if (globals->chassis_init_time > 0) {
+    globals->chassis_init_time--;
+  }
+  if (!globals->device_chassis.all_device_ok() || globals->chassis_init_time > 0 ||
+      // globals->down_yaw_motor->status() != 0x1F ||
+      !globals->referee_data->data().robot_status.power_management_chassis_output) {
     chassis->ChassisMove_ = kUnable;
   } else {
     switch (globals->StateMachine_) {

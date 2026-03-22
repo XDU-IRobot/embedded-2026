@@ -108,11 +108,11 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().up_yaw_position.SetKp(250.0f).SetKi(0.0f).SetKd(1000.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().up_yaw_speed.SetKp(460.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
-  gimbal_controller.pid().down_yaw_position.SetKp(80.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().down_yaw_speed.SetKp(0.8f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_position.SetKp(30.0f).SetKi(0.0f).SetKd(1000.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().down_yaw_speed.SetKp(1.2f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(15.0f).SetKi(0.0f).SetKd(1000.0f).SetMaxOut(15.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(2.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(15.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(1.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
@@ -130,7 +130,15 @@ void GlobalWarehouse::ShootPIDInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  if (!globals->device_rc.all_device_ok()) {
+  if (globals->referee_data->data().robot_status.power_management_gimbal_output && !globals->last_gimbal_power) {
+    globals->gimbal_init_time = 500;
+  }
+  globals->last_gimbal_power = globals->referee_data->data().robot_status.power_management_gimbal_output;
+  if (globals->gimbal_init_time > 0) {
+    globals->gimbal_init_time--;
+  }
+  if (!globals->device_rc.all_device_ok() || globals->gimbal_init_time > 0 ||
+      !globals->referee_data->data().robot_status.power_management_gimbal_output) {
     globals->StateMachine_ = kUnable;
   } else {
     switch (globals->rc->switch_r()) {
@@ -257,8 +265,8 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
-    globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
-    globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 0);
+    globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0.0f);
+    globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 2.0f);
   }
 }
 

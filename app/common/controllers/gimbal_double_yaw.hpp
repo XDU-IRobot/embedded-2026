@@ -42,9 +42,7 @@ class GimbalDoubleYaw {
     }
 
     pid_.up_yaw_position.Update(target_.up_yaw_position, state_.up_yaw_position, dt);
-    // pid_.down_yaw_position.Update(target_.down_yaw_position, state_.down_yaw_position, dt);
-    pid_.down_yaw_position.UpdateExtDiff(target_.down_yaw_position, state_.down_yaw_position, state_.down_yaw_speed,
-                                         dt);
+    pid_.down_yaw_position.Update(target_.down_yaw_position, state_.down_yaw_position, dt);
     pid_.pitch_position.Update(target_.pitch_position, state_.pitch_position, dt);
 
     if (speed_pid_enabled_) {
@@ -61,9 +59,9 @@ class GimbalDoubleYaw {
     } else {
       // 单位置环
       output_.up_yaw = pid_.up_yaw_position.out() + target_.yaw_output_ff;
+      output_.down_yaw = pid_.down_yaw_position.out();
       output_.pitch = pid_.pitch_position.out();
     }
-    output_.down_yaw = pid_.down_yaw_position.out();
   }
 
   /**

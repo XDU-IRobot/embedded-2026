@@ -16,53 +16,59 @@ void Gimbal::GimbalTask() {
 }
 
 void Gimbal::GimbalStateUpdate() {
-  // if (
-  //     // !globals->referee_data->data().robot_status.power_management_gimbal_output ||
-  //     !globals->device_gimbal.all_device_ok()) {
-  //   gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-  // } else {
-  switch (globals->StateMachine_) {
-    case kNoForce:                    // 无力模式下，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      break;
+  if (!globals->device_gimbal.all_device_ok()) {
+    gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+  } else {
+    switch (globals->StateMachine_) {
+      case kNoForce:                    // 无力模式下，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
 
-    case kTest:                      // 测试模式下，发射系统与拨盘电机失能
-      gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-      break;
+      case kTest:                      // 测试模式下，发射系统与拨盘电机失能
+        gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+        break;
 
-    case kMatch:                    // 比赛模式下，所有电机正常工作
-      gimbal->GimbalMatchUpdate();  // 云台电机使能计算
-      break;
+      case kMatch:                    // 比赛模式下，所有电机正常工作
+        gimbal->GimbalMatchUpdate();  // 云台电机使能计算
+        break;
 
-    default:                          // 错误状态，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      break;
+      default:                          // 错误状态，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
+    }
   }
-  // }
-  // if (!globals->device_shoot.all_device_ok()) {
-  //   gimbal->ShootDisableUpdate();  // 发射机构失能计算
-  // } else {
-  switch (globals->StateMachine_) {
-    case kMatch:                    // 比赛模式下，发射系统与拨盘电使能
-      gimbal->ShootEnableUpdate();  // 发射机构使能计算
-      break;
-    case kTest:
-      switch (gimbal->GimbalMove_) {
-        case kGbAimbot:
-          gimbal->ShootEnableUpdate();  // 发射机构使能计算
-          break;
-        case kGbRemote:
-        default:
-          gimbal->ShootDisableUpdate();  // 发射机构失能计算
-          break;
-      }
-      break;
-    case kNoForce:                   // 无力模式下，所有电机失能
-    default:                         // 错误状态，所有电机失能
-      gimbal->ShootDisableUpdate();  // 发射机构失能计算
-      break;
+  if (globals->referee_data->data().robot_status.power_management_shooter_output && !globals->last_shooter_power) {
+    globals->shooter_init_time = 1500;
   }
-  // }
+  globals->last_shooter_power = globals->referee_data->data().robot_status.power_management_shooter_output;
+  if (globals->shooter_init_time > 0) {
+    globals->shooter_init_time--;
+  }
+  if (!globals->device_shoot.all_device_ok() || globals->shooter_init_time > 0 ||
+      !globals->referee_data->data().robot_status.power_management_shooter_output) {
+    gimbal->ShootDisableUpdate();  // 发射机构失能计算
+  } else {
+    switch (globals->StateMachine_) {
+      case kMatch:                    // 比赛模式下，发射系统与拨盘电使能
+        gimbal->ShootEnableUpdate();  // 发射机构使能计算
+        break;
+      case kTest:
+        switch (gimbal->GimbalMove_) {
+          case kGbAimbot:
+            gimbal->ShootEnableUpdate();  // 发射机构使能计算
+            break;
+          case kGbRemote:
+          default:
+            gimbal->ShootDisableUpdate();  // 发射机构失能计算
+            break;
+        }
+        break;
+      case kNoForce:                   // 无力模式下，所有电机失能
+      default:                         // 错误状态，所有电机失能
+        gimbal->ShootDisableUpdate();  // 发射机构失能计算
+        break;
+    }
+  }
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
@@ -218,7 +224,7 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
                                        gimbal->gimbal_pitch_target_);
   globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
-                                    globals->ahrs.euler_angle().yaw, globals->down_yaw_motor->vel(),
+                                    globals->ahrs.euler_angle().yaw, -globals->down_yaw_motor->vel(),
                                     globals->hipnuc_imu->pitch(), -globals->pitch_motor->vel(), 2.0f);
   const f32 move_compensation_ = globals->down_yaw_motor->vel() / 9.0f;
   gimbal->down_yaw_torque_ = globals->gimbal_controller.output().down_yaw + move_compensation_;
@@ -289,6 +295,14 @@ void Gimbal::DaMiaoMotorEnable() {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     gimbal->pitch_enable_flag_ = true;
   }
+  if (gimbal->pitch_enable_flag_ == true && gimbal->down_yaw_enable_flag_ == true) {
+    // if (globals->down_yaw_motor->status() != 0x1F) {
+    //   globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    // }
+    if (globals->pitch_motor->status() != 0x1F) {
+      globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    }
+  }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
@@ -300,6 +314,14 @@ void Gimbal::DaMiaoMotorDisable() {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     gimbal->pitch_enable_flag_ = false;
   }
+  if (gimbal->pitch_enable_flag_ == false && gimbal->down_yaw_enable_flag_ == false) {
+    if (globals->down_yaw_motor->status() == 0x1F) {
+      globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    }
+    if (globals->pitch_motor->status() == 0x1F) {
+      globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    }
+  }
 }
 
 void Gimbal::ShootEnableUpdate() {
@@ -310,9 +332,7 @@ void Gimbal::ShootEnableUpdate() {
   if (globals->referee_data->data().shoot_data.initial_speed >= 23.5f) {
     gimbal->ammo_speed_ = 7200.0f * std::pow(23.5f / globals->referee_data->data().shoot_data.initial_speed, 2);
   }
-  if (globals->rc->dial() <= -650
-      // && heat_limit_ - heat_current_ > 100
-  ) {
+  if (globals->rc->dial() <= -650 && heat_limit_ - heat_current_ > 100) {
     if (!single_shoot_flag_) {
       globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
       single_shoot_flag_ = true;
@@ -322,14 +342,14 @@ void Gimbal::ShootEnableUpdate() {
   } else if (globals->rc->dial() >= 650 || ((globals->rc->dial() >= 100 && globals->rc->dial() < 650) ||
                                             globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
-    // if (heat_limit_ - heat_current_ > 100) {
-    globals->shoot_controller.SetShootFrequency(20.0f);
-    // } else if (heat_limit_ - heat_current_ < 40) {
-    // globals->shoot_controller.SetShootFrequency(0.0f);
-    // } else {
-    // globals->shoot_controller.SetShootFrequency(  //
-    //     std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f);
-    // }
+    if (heat_limit_ - heat_current_ > 100) {
+      globals->shoot_controller.SetShootFrequency(20.0f);
+    } else if (heat_limit_ - heat_current_ < 40) {
+      globals->shoot_controller.SetShootFrequency(0.0f);
+    } else {
+      globals->shoot_controller.SetShootFrequency(  //
+          std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f);
+    }
   } else {
     globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     single_shoot_flag_ = false;
@@ -343,7 +363,7 @@ void Gimbal::ShootEnableUpdate() {
 
 void Gimbal::ShootDisableUpdate() {
   globals->shoot_controller.SetMode(Shoot3Fric::kStop);
-  if (globals->StateMachine_ == kUnable) {
+  if (!globals->referee_data->data().robot_status.power_management_shooter_output) {
     globals->shoot_controller.Enable(false);
     globals->shoot_controller.Arm(false);
   } else {
