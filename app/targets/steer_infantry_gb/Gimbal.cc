@@ -56,13 +56,13 @@ void Gimbal::GimbalStateUpdate() {
 void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(
       static_cast<f32>(globals->rc->left_x()) +
-          660.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_x
+          30.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_x
                                                                : globals->rc->mouse_x()),  // 上部yaw轴目标值
       -660, 660, -gimbal->sensitivity_yaw_, gimbal->sensitivity_yaw_);
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(
       static_cast<f32>(globals->rc->left_y()) +
-          660.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_x
-                                                               : globals->rc->mouse_x()),  // pitch轴目标值
+          30.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_y
+                                                               : globals->rc->mouse_y()),  // pitch轴目标值
       -660, 660, -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->gimbal_yaw_target_ =
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.f, 2.f * static_cast<f32>(M_PI));  // yaw轴限位

@@ -8,7 +8,7 @@ void ChassisCommunicator::RxCallback(const hal::CanFrame *msg) {
     ReportStatus(kOk);
     heat_real_ = static_cast<u16>(msg->data[0]) << 8 | static_cast<u16>(msg->data[1]);
     heat_limit_ = static_cast<u16>(msg->data[2]) << 8 | static_cast<u16>(msg->data[3]);
-    ammo_speed_ = modules::IntToFloat(msg->data[4], 0.f, 32.f, 8);  // modules::FloatToInt( , 0.f, 32.f, 8);
+    ammo_speed_ = modules::IntToFloat(msg->data[4], 0.f, 32.f, 8);
     robot_id_ = msg->data[5] & 0x01;
     gimbal_power_state_ = msg->data[5] >> 4 & 0x01;
     chassis_power_state_ = msg->data[5] >> 5 & 0x01;
