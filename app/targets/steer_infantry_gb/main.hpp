@@ -11,6 +11,7 @@
 
 #include "aimbot_comm_can.hpp"
 #include "ChassisCommunicator.hpp"
+#include "Referee.hpp"
 
 // 状态机
 typedef enum {
@@ -41,6 +42,8 @@ inline struct GlobalWarehouse {
   rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};  ///< CAN 通信器
   rm::device::ChassisCommunicator *chassis_communicator{nullptr};   ///< CAN 通信器
   rm::hal::Serial *referee_uart{nullptr};                           ///< 裁判系统串口接口
+  rm::device::RxReferee *rx_referee{nullptr};                       ///< 裁判系统接口
+  rm::device::VT03 *image_data{nullptr};                            ///< 裁判系统数据缓冲区
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
@@ -48,8 +51,6 @@ inline struct GlobalWarehouse {
   rm::device::DeviceManager<3> device_shoot;
   rm::device::DeviceManager<1> device_nuc;
   rm::device::DeviceManager<1> device_referee;
-
-  rm::device::VT03 *image_data{nullptr};  ///< 裁判系统数据缓冲区
 
   // 云台
   rm::device::BMI088 *imu{nullptr};                                                 ///< IMU
@@ -61,10 +62,10 @@ inline struct GlobalWarehouse {
   rm::device::M3508 *dial_motor{nullptr};                                           ///< 拨盘电机
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{500.0f};   ///< 姿态解算器
-  Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
+  rm::modules::MahonyAhrs ahrs{500.0f};         ///< 姿态解算器
+  Gimbal2Dof gimbal_controller;                 ///< 二轴双 Yaw 云台控制器
   Shoot3Fric shoot_controller{9, 19.2f, true};  ///< 三摩擦轮发射机构控制器，8发拨盘
-  EncoderCounter dail_encoder_counter;    ///< 拨盘电机位置计数器
+  EncoderCounter dail_encoder_counter;          ///< 拨盘电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
 
@@ -87,10 +88,10 @@ inline struct GlobalWarehouse {
   bool music_play_flag = false;      // 音乐播放标识位
   bool music_change_flag = false;    // 音乐改动标识位
   bool speed_change_flag = false;    // 速度调整标志位
-  bool df_flag = false;   // 大符标志位
-  bool df_state = false;  // 大符状态
-  bool xf_flag = false;   // 小符标志位
-  bool xf_state = false;  // 小符状态
+  bool df_flag = false;              // 大符标志位
+  bool df_state = false;             // 大符状态
+  bool xf_flag = false;              // 小符标志位
+  bool xf_state = false;             // 小符状态
 
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
