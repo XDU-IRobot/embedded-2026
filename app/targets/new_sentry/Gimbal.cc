@@ -72,9 +72,9 @@ void Gimbal::GimbalStateUpdate() {
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.0033f, 0.0033f);
+  gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
   // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
-  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.0033f, 0.0033f);
+  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -660, 660, -0.004f, 0.004f);
   gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_, -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_, -static_cast<f32>(M_PI), M_PI);
@@ -223,11 +223,11 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
                                        gimbal->gimbal_pitch_target_);
-  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->up_yaw_motor->rpm(),
-                                    globals->ahrs.euler_angle().yaw, -globals->down_yaw_motor->vel(),
-                                    globals->hipnuc_imu->pitch(), -globals->pitch_motor->vel(), 2.0f);
-  const f32 move_compensation_ = globals->down_yaw_motor->vel() / 9.0f;
-  gimbal->down_yaw_torque_ = globals->gimbal_controller.output().down_yaw + move_compensation_;
+  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->gyro_z(),
+                                    globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
+                                    globals->hipnuc_imu->pitch(), globals->hipnuc_imu->gyro_x(), 2.0f);
+  // const f32 move_compensation_ = globals->down_yaw_motor->vel() / 9.0f;
+  // gimbal->down_yaw_torque_ = globals->gimbal_controller.output().down_yaw + move_compensation_;
   gimbal->down_yaw_torque_ = rm::modules::Clamp(gimbal->down_yaw_torque_, -10.0f, 10.0f);
   const f32 gravity_compensation_ = -1.82f * std::cos(globals->hipnuc_imu->pitch() + 0.2115f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
