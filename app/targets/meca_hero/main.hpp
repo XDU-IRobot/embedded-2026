@@ -78,7 +78,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
   std::array<rm::modules::M3508PowerModel::MotorState, 4> *motor_states{nullptr};
   // 裁判系统
-  rm::device::Referee<rm::device::RefereeRevision::kV170> ref;
+  rm::device::Referee<rm::device::RefereeRevision::kNewV110> ref;
   uint8_t rx_buffer[128]{0};
 
   rm::modules::LowPassFilterConstDt<float> gyro_z_filter;
@@ -151,7 +151,7 @@ inline struct GlobalWarehouse {
 
     // pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
 
-    pid_chassis_follow_vel = new rm::modules::PID{30, 0, 0.09, 16000, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{25, 0, 0.09, 16000, 0};
     // pid_chassis_follow_vel = new rm::modules::PID{500, 0, 0, 8000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
@@ -175,7 +175,7 @@ inline struct GlobalWarehouse {
 } *globals;
 
 // 底盘速度
-inline rm::f32 Vx, Vy, Vw;
+inline rm::i16 Vx, Vy, Vw;
 // 云台角度
 inline float target_pos_yaw, last_target_pos_yaw, target_pos_pitch;
 // 云台当前角度
@@ -292,7 +292,6 @@ inline bool key_q;
 inline bool key_e;
 inline int aimbot_target;
 inline int aimbot_state;
-inline int cooling;
 inline int heat_limit;
-inline float heat_now=0;
+inline int16_t heat_buffer;
 #endif  // BOARDC_MAIN_HPP

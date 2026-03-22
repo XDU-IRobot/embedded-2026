@@ -81,7 +81,7 @@ void MagazineControl() {
                                      custom_client->mouse_left() || (
            globals->aimbot_can_communicator->aimbot_state() == 2 && r_switch_position_now
            == rm::device::DR16::SwitchPosition::kUp)) && globals->ref.data().robot_status.shooter_barrel_heat_limit >=
-        heat_now + 100
+        globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100
       // &&
       //   shooter_4 < V_shooter_2+e_area && shooter_4 > V_shooter_2-e_area && shooter_5 <  V_shooter_2+e_area && shooter_5 > V_shooter_2-e_area && shooter_6 <  V_shooter_2+e_area &&
       //   shooter_6 > V_shooter_2-e_area && shooter_1 < V_chassis_1+e_area && shooter_1 > V_chassis_1-e_area && shooter_2 < V_chassis_1+e_area && shooter_2 > V_chassis_1-e_area &&
@@ -102,7 +102,7 @@ void MagazineControl() {
       //   target_magz += 3.141593 * 2;
       // }
 
-      heat_now+=100;
+
       counter = 840;
       // magz_compensation = 0;
     }
@@ -433,10 +433,10 @@ void ChassisPower() {
       rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
-                                            1); // 云台正位为电机编码器的+90°//逆时针旋转为增大
-    globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_vel->out(), globals->gimbal_motor_yaw->vel(),
-                                            1);
-    Vw = (globals->pid_chassis_follow_pos->out()); // * (1 - eulerangle_pitch / 0.6644 * 0.5);
+                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+    globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
+                                            0.0011);
+    Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.5);
   } else {
     Vw = 0;
   }
@@ -451,56 +451,56 @@ void ChassisPower() {
   if (l_switch_position_now == device::DR16::SwitchPosition::kUp) {
     if (globals->rc->key(rm::device::DR16::Key::kW) || globals->tc->data().keyboard_key & static_cast<int16_t>(
           rm::device::VT03::KeyboardKey::kW) || globals->custom_client->key(rm::device::DR16::Key::kW)) {
-      Vy = 10000;
-      if (Vy >= 10000) {
-        Vy = 10000;
+      Vy = 8500;
+      if (Vy >= 8500) {
+        Vy = 8500;
       }
     } else {
       if (Vy > 0) {
-        Vy -= 10000;
+        Vy -= 8500;
       }
     }
     if (globals->rc->key(rm::device::DR16::Key::kS) || globals->tc->data().keyboard_key & static_cast<int16_t>(
           rm::device::VT03::KeyboardKey::kS) || globals->custom_client->key(rm::device::DR16::Key::kS)) {
-      Vy -= 10000;
-      if (Vy <= -10000) {
-        Vy = -10000;
+      Vy -= 8500;
+      if (Vy <= -8500) {
+        Vy = -8500;
       }
     } else {
       if (Vy < 0) {
-        Vy += 10000;
+        Vy += 8500;
       }
     }
     if (globals->rc->key(rm::device::DR16::Key::kD) || globals->tc->data().keyboard_key & static_cast<int16_t>(
           rm::device::VT03::KeyboardKey::kD) || globals->custom_client->key(rm::device::DR16::Key::kD)) {
-      Vx += 10000;
-      if (Vx >= 10000) {
-        Vx = 10000;
+      Vx += 8500;
+      if (Vx >= 8500) {
+        Vx = 8500;
       }
     } else {
       if (Vx > 0) {
-        Vx -= 10000;
+        Vx -= 8500;
       }
     }
     if (globals->rc->key(rm::device::DR16::Key::kA) || globals->tc->data().keyboard_key & static_cast<int16_t>(
           rm::device::VT03::KeyboardKey::kA) || globals->custom_client->key(rm::device::DR16::Key::kA)) {
-      Vx -= 10000;
-      if (Vx <= -10000) {
-        Vx = -10000;
+      Vx -= 8500;
+      if (Vx <= -8500) {
+        Vx = -8500;
       }
     } else {
       if (Vx < 0) {
-        Vx += 10000;
+        Vx += 8500;
       }
     }
   } else {
-    Vx = globals->rc->left_x() * 5000 / 660;
-    Vy = globals->rc->left_y() * 10000 / 660;
+    Vx = globals->rc->left_x() * 7000 / 660;
+    Vy = globals->rc->left_y() * 8500 / 660;
   }
 
   rm::i16 V_wheel[4];
-  V_wheel[0] = -Vy + 1 * Vx + 1.7 * Vw;
-  V_wheel[1] = Vy + 1 * Vx + 1.7 * Vw;
+  V_wheel[0] = -Vy + 1 * Vx + 1.5 * Vw;
+  V_wheel[1] = Vy + 1 * Vx + 1.5 * Vw;
   V_wheel[2] = Vy /*- 0.1 * Vx*/ + 1 * Vw;
   V_wheel[3] = -Vy /*- 0.1 * Vx*/ + 1 * Vw;
 
@@ -529,7 +529,12 @@ void ChassisPower() {
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
   for (int i = 0; i < 4; i++) {
-    globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
+    if (globals->ref.data().power_heat_data.buffer_energy >= 55) {
+      globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
+    } else {
+      globals->chassis_motor[i]->SetCurrent(
+          static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
+    }
   }
   rm::device::DjiMotorBase::SendCommand();
 
