@@ -28,6 +28,7 @@ extern u16 robot_id;
 extern u8 len;
 extern u8 Info_Arr[128];
 
+void UiSend();
 void UI_send(rm::hal::Serial *msg, u8 *data, u8 data_len);
 
 void MainLoop() {
@@ -72,7 +73,7 @@ void GlobalWarehouse::Init() {
   supercap = new rm::device::SuperCap(*can1);
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
+  referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kDma, hal::stm32::UartMode::kDma};
   rx_referee = new rm::device::RxReferee{*referee_uart};
 
   referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
@@ -150,6 +151,7 @@ void GlobalWarehouse::SubLoop250Hz() {
 void GlobalWarehouse::SubLoop100Hz() {
   if (globals->time % 5 == 0) {
     globals->device_chassis.Update();
+    UiSend();
   }
 }
 
