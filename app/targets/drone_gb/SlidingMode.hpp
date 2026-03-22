@@ -9,9 +9,7 @@ class Gimbal2DofSMC {
  public:
   Gimbal2DofSMC() = default;
 
-  void Update(float yaw_position, float yaw_speed,
-              float pitch_position, float pitch_speed,
-              float dt = 0.001f) {
+  void Update(float yaw_position, float yaw_speed, float pitch_position, float pitch_speed, float dt = 0.001f) {
     // 1. 安全检查，防止 dt 异常导致除零或积分爆炸
     if (dt <= 1e-6f) return;
 
@@ -46,7 +44,8 @@ class Gimbal2DofSMC {
 
     // 滑模面低通滤波（可选，滤除速度评估带来的高频噪声）
     yaw_s = params_.yaw_spd.s_filter_alpha * yaw_s + (1.0f - params_.yaw_spd.s_filter_alpha) * last_.yaw_s_prev;
-    pitch_s = params_.pitch_spd.s_filter_alpha * pitch_s + (1.0f - params_.pitch_spd.s_filter_alpha) * last_.pitch_s_prev;
+    pitch_s =
+        params_.pitch_spd.s_filter_alpha * pitch_s + (1.0f - params_.pitch_spd.s_filter_alpha) * last_.pitch_s_prev;
     last_.yaw_s_prev = yaw_s;
     last_.pitch_s_prev = pitch_s;
 
@@ -71,26 +70,22 @@ class Gimbal2DofSMC {
     pitch_i_ = clamp(pitch_i_, -params_.pitch_spd.i_limit, params_.pitch_spd.i_limit);
 
     // 超螺旋控制律总输出
-    output_.yaw =
-        params_.yaw_spd.kp * yaw_s +                                          // 线性比例项
-        params_.yaw_spd.k1 * std::sqrt(std::fabs(yaw_s)) * yaw_sat +          // 超螺旋高频项
-        yaw_i_ +                                                              // 超螺旋积分项
-        target_.yaw_torque_ff;                                                // 扭矩前馈
+    output_.yaw = params_.yaw_spd.kp * yaw_s +                                  // 线性比例项
+                  params_.yaw_spd.k1 * std::sqrt(std::fabs(yaw_s)) * yaw_sat +  // 超螺旋高频项
+                  yaw_i_ +                                                      // 超螺旋积分项
+                  target_.yaw_torque_ff;                                        // 扭矩前馈
 
-    output_.pitch =
-        params_.pitch_spd.kp * pitch_s +
-        params_.pitch_spd.k1 * std::sqrt(std::fabs(pitch_s)) * pitch_sat +
-        pitch_i_ +
-        target_.pitch_torque_ff;
+    output_.pitch = params_.pitch_spd.kp * pitch_s + params_.pitch_spd.k1 * std::sqrt(std::fabs(pitch_s)) * pitch_sat +
+                    pitch_i_ + target_.pitch_torque_ff;
 
     // 最终输出限幅
     output_.yaw = clamp(output_.yaw, -params_.yaw_spd.out_limit, params_.yaw_spd.out_limit);
     output_.pitch = clamp(output_.pitch, -params_.pitch_spd.out_limit, params_.pitch_spd.out_limit);
   }
 
-  void SetTarget(float yaw_position, float pitch_position,
-                 float yaw_speed_feedforward = 0.f, float pitch_speed_feedforward = 0.f,
-                 float yaw_torque_feedforward = 0.f, float pitch_torque_feedforward = 0.f) {
+  void SetTarget(float yaw_position, float pitch_position, float yaw_speed_feedforward = 0.f,
+                 float pitch_speed_feedforward = 0.f, float yaw_torque_feedforward = 0.f,
+                 float pitch_torque_feedforward = 0.f) {
     target_.yaw_position = yaw_position;
     target_.pitch_position = pitch_position;
     target_.yaw_speed_ff = yaw_speed_feedforward;
@@ -116,19 +111,19 @@ class Gimbal2DofSMC {
 
  private:
   struct PosParams {
-    float kp{0.0f};           // 位置环P参数（相当于原单环的 lambda）
-    float max_speed{20.0f};   // 最大输出速度限制
+    float kp{0.0f};          // 位置环P参数（相当于原单环的 lambda）
+    float max_speed{20.0f};  // 最大输出速度限制
   };
 
   struct SpeedParams {
-    float kp{0.0f};           // 速度误差线性增益 (可选)
-    float k1{0.0f};           // 超螺旋强度1 (sqrt(|s|)项)
-    float k2{0.0f};           // 超螺旋强度2 (积分项增益)
-    float phi{0.0f};          // 边界层宽度 (防抖振)
-    float i_limit{5.0f};      // 积分限幅（实际扭矩物理量级）
-    float out_limit{10.0f};   // 最终输出限幅
-    float s_filter_alpha{1.0f}; // 滑模面低通滤波系数 (0~1, 1表示不滤波)
-    float leak_rate{0.5f};    // 积分泄放率 (例如 0.5 表示每秒衰减 50%)
+    float kp{0.0f};              // 速度误差线性增益 (可选)
+    float k1{0.0f};              // 超螺旋强度1 (sqrt(|s|)项)
+    float k2{0.0f};              // 超螺旋强度2 (积分项增益)
+    float phi{0.0f};             // 边界层宽度 (防抖振)
+    float i_limit{5.0f};         // 积分限幅（实际扭矩物理量级）
+    float out_limit{10.0f};      // 最终输出限幅
+    float s_filter_alpha{1.0f};  // 滑模面低通滤波系数 (0~1, 1表示不滤波)
+    float leak_rate{0.5f};       // 积分泄放率 (例如 0.5 表示每秒衰减 50%)
   };
 
   static float sat(float s, float phi) {
@@ -171,8 +166,8 @@ class Gimbal2DofSMC {
   } target_{};
 
   struct {
-    float yaw_s_prev=0.f;
-    float pitch_s_prev=0.f;
+    float yaw_s_prev = 0.f;
+    float pitch_s_prev = 0.f;
   } last_{};
 
   float yaw_i_{0.f};

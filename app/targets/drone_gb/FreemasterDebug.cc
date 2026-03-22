@@ -52,7 +52,6 @@ void FreemasterDebug() {
   Apitchpose = gimbal->pitch_motor->pos();
   Ayaw = gimbal->yaw;
 
-
   Apidoutput = gimbal->gimbal_controller.output().yaw;
   Asmcoutput = gimbal->gimbal_controller_SMC.output().yaw;
 }
