@@ -20,10 +20,11 @@ inline float follow_d = 0;
 inline struct GlobalWarehouse {
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};      ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr};  ///< 遥控器串口接口
+  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}, *uart1{nullptr};  ///< 遥控器串口接口
 
   // 设备 //
   rm::device::DR16 *rc{nullptr};  ///< 遥控器
+  rm::device::VT03 *tc{nullptr};//图传遥控器
   // rm::device::GM6020 *yaw_motor{nullptr};                                              ///< 云台 Yaw 电机
   // rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *magazine_motor{nullptr};  ///< 云台 Pitch 电机
   rm::device::BMI088 *imu{nullptr};  ///< BMI088 IMU
@@ -87,10 +88,12 @@ inline struct GlobalWarehouse {
     can2 = new rm::hal::Can{hcan2};
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     uart6 = new rm::hal::Serial{huart6, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    uart1=new rm::hal::Serial{huart1, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
     custom_client = new rm::device::CustomClient;
     // 遥控
     rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
+    tc=new rm::device::VT03;
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     /*------*/
@@ -115,17 +118,17 @@ inline struct GlobalWarehouse {
     gimbal_motor_pitch = new rm::device::M3508{*can2, 5, true};
     /*--------*/
     // PID控制器
-    pid_chassis_1 = new rm::modules::PID{20, 2, 4, 18000, 2};
-    pid_chassis_2 = new rm::modules::PID{20, 2, 4, 18000, 2};
-    pid_chassis_3 = new rm::modules::PID{40, 2, 4, 18000, 100};
-    pid_chassis_4 = new rm::modules::PID{40, 2, 4, 18000, 100};
+    pid_chassis_1 = new rm::modules::PID{20, 2, 4, 15000, 2};
+    pid_chassis_2 = new rm::modules::PID{20, 2, 4, 15000, 2};
+    pid_chassis_3 = new rm::modules::PID{40, 2, 4, 15000, 100};
+    pid_chassis_4 = new rm::modules::PID{40, 2, 4, 15000, 100};
 
-    pid_shooter_1 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};  // 20
-    pid_shooter_2 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};  // 20
-    pid_shooter_3 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
-    pid_shooter_4 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
-    pid_shooter_5 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
-    pid_shooter_6 = new rm::modules::PID{25, 0.001, 5, 16000, 1600};
+    pid_shooter_1 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};  // 20
+    pid_shooter_2 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};  // 20
+    pid_shooter_3 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
+    pid_shooter_4 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
+    pid_shooter_5 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
+    pid_shooter_6 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
 
     // pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
     pid_magz_position = new rm::modules::PID{42, 0.001, 0, 20, 0};
@@ -133,8 +136,8 @@ inline struct GlobalWarehouse {
 
     // pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
-    pid_yaw_position = new rm::modules::PID{55, 0, 0, 10, 0};
-    pid_yaw_velocity = new rm::modules::PID{8.5, 0, 0, 6, 0};
+    pid_yaw_position = new rm::modules::PID{30, 0, 0, 10, 0};
+    pid_yaw_velocity = new rm::modules::PID{12, 0, 0.05, 6, 0};
     pid_pitch_position = new rm::modules::PID{60, 0.5, 1.3, 1, 0.1};
     pid_pitch_velocity = new rm::modules::PID{9100, 3500, 40, 16000, 500};
     // pid_pitch_position = new rm::modules::PID{2000, 0, 0, 1500, 1000};
@@ -250,6 +253,8 @@ inline float pos_target = 0;
 inline float pos_real = 0;
 inline float vel_target = 0;
 inline float vel_real = 0;
+inline bool power_management_gimbal_last;
+inline bool power_management_shooter_last;
 /*----------------------------------------------
  *执行函数
  */

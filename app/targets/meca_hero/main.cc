@@ -10,6 +10,8 @@ float sum = 0;
 int count = 0;
 int autoaim_update_count = 0;
 uint32_t System_time;
+int power_management_gimbal_delay = 0;
+int power_management_shooter_delay = 0;
 
 // void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 //   if (huart->Instance == USART1) {
@@ -50,6 +52,24 @@ void G_average() {
 
 // 定频循环
 void MainLoop() {
+  if (globals->ref.data().robot_status.power_management_gimbal_output == 1 && power_management_gimbal_last == 0) {
+    power_management_gimbal_delay++;
+    if (power_management_gimbal_delay > 840 * 3) {
+      power_management_gimbal_last = 1;
+      power_management_gimbal_delay = 0;
+    }
+  } else {
+    power_management_gimbal_last = globals->ref.data().robot_status.power_management_gimbal_output;
+  }
+  if (globals->ref.data().robot_status.power_management_shooter_output == 1 && power_management_shooter_last == 0) {
+    power_management_shooter_delay++;
+    if (power_management_shooter_delay > 840 * 3) {
+      power_management_shooter_last = 1;
+      power_management_shooter_delay = 0;
+    }
+  }else {
+    power_management_shooter_last=globals->ref.data().robot_status.power_management_shooter_output;
+  }
   // 遥控器输入值
   l_switch_position_last = l_switch_position_now;
   l_switch_position_now = globals->rc->switch_l();
@@ -69,8 +89,8 @@ void MainLoop() {
   rm::device::DjiMotorBase::SendCommand();
   if (autoaim_update_count == 1) {
     CANAutoaimUpdate();
-    aimbot_target=globals->aimbot_can_communicator->aimbot_target();
-    aimbot_state=globals->aimbot_can_communicator->aimbot_state();
+    aimbot_target = globals->aimbot_can_communicator->aimbot_target();
+    aimbot_state = globals->aimbot_can_communicator->aimbot_state();
     // 改usb中断处字长检查
     // AutoaimUpdate();
     CustomClientUpdate();
@@ -79,9 +99,9 @@ void MainLoop() {
     cc_mouse_l = globals->custom_client->mouse_right();
     cc_mouse_x = globals->rc->mouse_x();
     cc_mouse_y = globals->rc->mouse_y();
-    key_a=globals->custom_client->key(rm::device::DR16::Key::kA);
-    key_d=globals->custom_client->key(rm::device::DR16::Key::kD);
-    key_e=globals->custom_client->key(rm::device::DR16::Key::kE);
+    key_a = globals->custom_client->key(rm::device::DR16::Key::kA);
+    key_d = globals->custom_client->key(rm::device::DR16::Key::kD);
+    key_e = globals->custom_client->key(rm::device::DR16::Key::kE);
     VOFA();
     autoaim_update_count = 0;
   } else {
@@ -106,6 +126,14 @@ extern "C" [[noreturn]] void AppMain(void) {
   };
   globals->uart6->AttachRxCallback(ref_rx_callback);
   globals->uart6->Begin();
+
+  rm::hal::SerialRxCallbackFunction tc_rx_callback = [&](const std::vector<uint8_t> &data, uint16_t len) {
+    for (int i = 0; i < len; i++) {
+      globals->tc->operator<<(data[i]);
+    }
+  };
+  globals->uart1->AttachRxCallback(tc_rx_callback);
+  globals->uart1->Begin();
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
