@@ -26,15 +26,8 @@ uint8_t Ashoot_hz;
 float Ashoot_speed;
 i16 Adrmp;
 i16 Armp;
-
-float Aautopitch;
-float Aautoyaw;
-f32 Ax;
-f32 Ay;
-f32 Az;
-f32 Gx;
-f32 Gy;
-f32 Gz;
+float Apidoutput;
+float Asmcoutput;
 
 // 调试接口函数
 void FreemasterDebug() {
@@ -56,18 +49,10 @@ void FreemasterDebug() {
   Ashoot_hz = gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
   Adrmp = gimbal->friction_left->rpm() + gimbal->friction_right->rpm();
   Armp = gimbal->friction_left->rpm();
-
-  Aautopitch = Aimbot.TargetPitchAngle + gimbal->err_average;
   Apitchpose = gimbal->pitch_motor->pos();
-
-  // Aautoyaw = rm::modules::Wrap(Aimbot.TargetYawAngle + M_PI, 0, 2 * M_PI);
-  Aautoyaw = Aimbot.TargetYawAngle;
   Ayaw = gimbal->yaw;
 
-  Ax = gimbal->imu->accel_x();
-  Ay = gimbal->imu->accel_y();
-  Az = gimbal->imu->accel_z();
-  Gx = gimbal->imu->gyro_x();
-  Gy = gimbal->imu->gyro_y();
-  Gz = gimbal->imu->gyro_z();
+
+  Apidoutput = gimbal->gimbal_controller.output().yaw;
+  Asmcoutput = gimbal->gimbal_controller_SMC.output().yaw;
 }

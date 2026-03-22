@@ -19,42 +19,10 @@
 #include "Referee.hpp"
 #include "FreertosDbug.hpp"
 #include "WS2812b.hpp"
+#include "SlidingMode.hpp"
 
-extern double Ayaw;
-extern double Apitch;
-extern double Aroll;
-extern double Aoutputyaw;
-extern double Aoutputpitch;
-extern double Arcyawdata;
-extern double Arcpitchdata;
-extern double Agx;
-extern double Agy;
-extern double Agz;
-extern double Apitchpose;
-extern double Atotalpitch;
-extern double Atorque;
-extern double vofa_pitch;
-extern double vofa_current;
-extern double Adirlrmp;
-extern double Adirout;
-extern double Aerr;
-extern uint16_t Ashooter_17mm_1_barrel_heat;
-extern uint8_t Aid;
-extern uint8_t Ashoot_hz;
-extern float Ashoot_speed;
-extern i16 Adrmp;
-extern i16 Armp;
-
-extern f32 Ax;
-extern f32 Ay;
-extern f32 Az;
-extern f32 Gx;
-extern f32 Gy;
-extern f32 Gz;
 
 extern void FreemasterDebug();
-extern float Aautopitch;
-extern float Aautoyaw;
 
 extern AimbotFrame_SCM_t Aimbot;
 
@@ -118,6 +86,7 @@ class Gimbal {
 
   bool DM_is_enable = false;     // 达秒使能标志位
   Gimbal2Dof gimbal_controller;  // 二轴双 Yaw 云台控制器
+  Gimbal2DofSMC gimbal_controller_SMC;
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
 
 #if NEW_DRONE_GB
@@ -227,6 +196,7 @@ class Gimbal {
     AmmoPIDInit();
 
     gimbal_controller.Enable(false);
+    gimbal_controller_SMC.Enable(false);
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
@@ -248,6 +218,39 @@ class Gimbal {
         1000.0f);  // 250
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+
+
+    // [位置外环] - 拉高增益，让位置误差更快转化为目标速度
+    gimbal_controller_SMC.params().yaw_pos.kp = 90.0f;          // 提高外环响应 (原50)
+    gimbal_controller_SMC.params().yaw_pos.max_speed = 450.0f;
+
+    // [速度内环] - 减少滤波延迟，增加一点爆发力
+    gimbal_controller_SMC.params().yaw_spd.kp = 140.0f;         // 稍微加点线性底力 (原80)
+    gimbal_controller_SMC.params().yaw_spd.k1 = 2500.0f;        // 增加非线性“咬合力” (原2000)
+    gimbal_controller_SMC.params().yaw_spd.k2 = 320.0f;
+    gimbal_controller_SMC.params().yaw_spd.phi = 12.0f;         // 边界层略微收紧，加快小误差收敛 (原25)
+    gimbal_controller_SMC.params().yaw_spd.i_limit = 8000.0f;
+    gimbal_controller_SMC.params().yaw_spd.out_limit = 25000.0f;
+    gimbal_controller_SMC.params().yaw_spd.s_filter_alpha = 0.55f; // 【关键】减轻滤波，大幅降低跟手延迟 (原0.4)
+    gimbal_controller_SMC.params().yaw_spd.leak_rate = 0.2f;
+
+
+
+    // //比较优秀的参数
+    // // [位置外环] - 拉高增益，让位置误差更快转化为目标速度
+    // gimbal_controller_SMC.params().yaw_pos.kp = 85.0f;          // 提高外环响应 (原50)
+    // gimbal_controller_SMC.params().yaw_pos.max_speed = 450.0f;
+    //
+    // // [速度内环] - 减少滤波延迟，增加一点爆发力
+    // gimbal_controller_SMC.params().yaw_spd.kp = 100.0f;         // 稍微加点线性底力 (原80)
+    // gimbal_controller_SMC.params().yaw_spd.k1 = 2200.0f;        // 增加非线性“咬合力” (原2000)
+    // gimbal_controller_SMC.params().yaw_spd.k2 = 250.0f;
+    // gimbal_controller_SMC.params().yaw_spd.phi = 12.0f;         // 边界层略微收紧，加快小误差收敛 (原25)
+    // gimbal_controller_SMC.params().yaw_spd.i_limit = 8000.0f;
+    // gimbal_controller_SMC.params().yaw_spd.out_limit = 25000.0f;
+    // gimbal_controller_SMC.params().yaw_spd.s_filter_alpha = 0.7f; // 【关键】减轻滤波，大幅降低跟手延迟 (原0.4)
+    // gimbal_controller_SMC.params().yaw_spd.leak_rate = 0.2f;
+
 #else
     gimbal_controller.pid().yaw_position.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(
         1000.0f);  // 200
@@ -284,7 +287,8 @@ class Gimbal {
         GimbalState_ = kAuto;
         break;
       case rm::device::DR16::SwitchPosition::kMid:
-        GimbalState_ = kManual;
+        if (rc->mouse_button_right())GimbalState_ = kAuto;
+        else GimbalState_ = kManual;
         break;
       default:
         GimbalState_ = kNoForce;
@@ -300,21 +304,27 @@ class Gimbal {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
         gimbal_controller.Enable(true);
+        gimbal_controller_SMC.Enable(true);
         rc_yaw_data = yaw;
         rc_pitch_data = rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
       }
       rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+      rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
+      rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
       auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
+      gimbal_controller_SMC.SetTarget(comp_yaw, comp_pitch);
 
 #if NEW_DRONE_GB
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
+      gimbal_controller_SMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
+                               pitch_motor->vel(), 0.002f);
 #else
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI) - M_PI,
                                pitch_motor->vel(), 2.f);
@@ -323,7 +333,7 @@ class Gimbal {
       pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
-
+      //yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_SMC.output().yaw, -25000, 25000));
     }
 
     // 自瞄控制 直接控制
@@ -344,9 +354,11 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {
         rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+        rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
         rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
+        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
 
@@ -367,6 +379,7 @@ class Gimbal {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         DM_is_enable = false;
         gimbal_controller.Enable(false);
+        gimbal_controller_SMC.Enable(false);
       }
       yaw_motor->SetCurrent(0);
       pitch_torque = 0;
@@ -404,7 +417,7 @@ class Gimbal {
           shoot_controller.SetLoaderSpeed(0);
         }
       } else {
-        if (rc->dial() >= 550) {
+        if (rc->dial() >= 550||rc->mouse_button_left()) {
           if (auto_reverse_flag) {
             shoot_controller.SetLoaderSpeed(-redirl_speed);
             auto_reverse_time--;
@@ -479,11 +492,6 @@ class Gimbal {
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz() {
-    RCStateUpdate();  // 遥控器更新
-    GimbalControl();  // 云台控制更新
-    AmmoControl();    // 发射机构数据更新
-    rm::device::DjiMotor<>::SendCommand(*can1);
-
     // imu处理
     imu->Update();
 
@@ -501,6 +509,11 @@ class Gimbal {
 
     GimbalImuSend(ahrs_auto.quaternion().w, ahrs_auto.quaternion().x, ahrs_auto.quaternion().y,
                   ahrs_auto.quaternion().z);
+
+    RCStateUpdate();  // 遥控器更新
+    GimbalControl();  // 云台控制更新
+    AmmoControl();    // 发射机构数据更新
+    rm::device::DjiMotor<>::SendCommand(*can1);
   }
 
   // DmMotor电机发信息
