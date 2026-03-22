@@ -34,6 +34,7 @@ void MagazineControl() {
     if (next_target_magz < -3.141593) {
       next_target_magz += 2 * 3.141593;
     }
+
     //---
     // if (globals->magazine_motor->pos()-target_magz   < -3.141593 / 6) {
     //   target_magz -= 3.141593 / 3;
@@ -73,13 +74,14 @@ void MagazineControl() {
   // }
 
   // 按下扳机(延时1s)
+
   if (counter == 0) {
     if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() || globals->tc->
          data().mouse_button_left || globals->
                                      custom_client->mouse_left() || (
            globals->aimbot_can_communicator->aimbot_state() == 2 && r_switch_position_now
            == rm::device::DR16::SwitchPosition::kUp)) && globals->ref.data().robot_status.shooter_barrel_heat_limit >=
-        globals->ref.data().robot_status.shooter_barrel_cooling_value + 100
+        heat_now + 100
       // &&
       //   shooter_4 < V_shooter_2+e_area && shooter_4 > V_shooter_2-e_area && shooter_5 <  V_shooter_2+e_area && shooter_5 > V_shooter_2-e_area && shooter_6 <  V_shooter_2+e_area &&
       //   shooter_6 > V_shooter_2-e_area && shooter_1 < V_chassis_1+e_area && shooter_1 > V_chassis_1-e_area && shooter_2 < V_chassis_1+e_area && shooter_2 > V_chassis_1-e_area &&
@@ -99,6 +101,8 @@ void MagazineControl() {
       // if (target_magz <= -3.141593 /*（π）*/) {
       //   target_magz += 3.141593 * 2;
       // }
+
+      heat_now+=100;
       counter = 840;
       // magz_compensation = 0;
     }
@@ -341,11 +345,11 @@ GimbalControl() {
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
         static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
-        static_cast<float>(globals->tc->data().mouse_x) / 32768 +
+        static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 +
         static_cast<float>(globals->custom_client->mouse_x()) * 0.000015; // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
         static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
-        static_cast<float>(globals->tc->data().mouse_y) / 32768 +
+        static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5 +
         static_cast<float>(globals->custom_client->mouse_y()) * 0.000015; // 0.00033/per
     aimbot_state_flag = 0;
   }
@@ -389,7 +393,7 @@ GimbalControl() {
 
   // 发送CAN
   globals->gimbal_motor_yaw->SetMitCommand(
-      0, 0, (0.98 - 0.4 * eulerangle_pitch / 0.6644) * globals->pid_yaw_velocity->out(), 0, 0);
+      0, 0, (0.98 - 0.5 * eulerangle_pitch / 0.6644) * globals->pid_yaw_velocity->out(), 0, 0);
   // 爬坡模式
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
       l_switch_position_now != device::DR16::SwitchPosition::kUp &&
@@ -398,7 +402,7 @@ GimbalControl() {
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
         static_cast<int16_t>((1.7 + 1.3 * globals->ahrs.euler_angle().pitch) * pitch_ff) +
-        (0.6 + 0.4 * eulerangle_pitch / 0.6644) * (globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
+        (0.5 + 0.5 * eulerangle_pitch / 0.6644) * (globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
   }
 
   // HAL_Delay(0);
@@ -425,13 +429,14 @@ void ChassisPower() {
   }
 
   // 底盘随动
-  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
+  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid || globals->rc->switch_l() ==
+      rm::device::DR16::SwitchPosition::kUp) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
-                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
-    globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
-                                            0.0011);
-    Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.5);
+                                            1); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+    globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_vel->out(), globals->gimbal_motor_yaw->vel(),
+                                            1);
+    Vw = (globals->pid_chassis_follow_pos->out()); // * (1 - eulerangle_pitch / 0.6644 * 0.5);
   } else {
     Vw = 0;
   }
@@ -439,64 +444,63 @@ void ChassisPower() {
   pos_real = globals->gimbal_motor_yaw->pos();
   vel_target = globals->pid_chassis_follow_pos->out();
   vel_real = globals->gimbal_motor_yaw->vel();
-  follow = Vw;
+  // follow = Vw;
 
   // 遥控器输入底盘速度
-  // if (globals->rc->left_x() != 0 || globals->rc->left_y() != 0) {
-  // Vx = globals->rc->left_x() * 5000 / 660;
-  // Vy = globals->rc->left_y() * 10000 / 660;
-  // }
 
-  if (globals->rc->key(rm::device::DR16::Key::kW) || globals->tc->data().keyboard_key & static_cast<int16_t>(
-        rm::device::VT03::KeyboardKey::kW) || globals->custom_client->key(rm::device::DR16::Key::kW)) {
-    Vy= 10000;
-    if (Vy >= 10000) {
+  if (l_switch_position_now == device::DR16::SwitchPosition::kUp) {
+    if (globals->rc->key(rm::device::DR16::Key::kW) || globals->tc->data().keyboard_key & static_cast<int16_t>(
+          rm::device::VT03::KeyboardKey::kW) || globals->custom_client->key(rm::device::DR16::Key::kW)) {
       Vy = 10000;
+      if (Vy >= 10000) {
+        Vy = 10000;
+      }
+    } else {
+      if (Vy > 0) {
+        Vy -= 10000;
+      }
     }
-  } else {
-    if (Vy > 0) {
+    if (globals->rc->key(rm::device::DR16::Key::kS) || globals->tc->data().keyboard_key & static_cast<int16_t>(
+          rm::device::VT03::KeyboardKey::kS) || globals->custom_client->key(rm::device::DR16::Key::kS)) {
       Vy -= 10000;
+      if (Vy <= -10000) {
+        Vy = -10000;
+      }
+    } else {
+      if (Vy < 0) {
+        Vy += 10000;
+      }
     }
-  }
-  if (globals->rc->key(rm::device::DR16::Key::kS) || globals->tc->data().keyboard_key & static_cast<int16_t>(
-        rm::device::VT03::KeyboardKey::kS) || globals->custom_client->key(rm::device::DR16::Key::kS)) {
-    Vy -= 10000;
-    if (Vy <= -10000) {
-      Vy = -10000;
+    if (globals->rc->key(rm::device::DR16::Key::kD) || globals->tc->data().keyboard_key & static_cast<int16_t>(
+          rm::device::VT03::KeyboardKey::kD) || globals->custom_client->key(rm::device::DR16::Key::kD)) {
+      Vx += 10000;
+      if (Vx >= 10000) {
+        Vx = 10000;
+      }
+    } else {
+      if (Vx > 0) {
+        Vx -= 10000;
+      }
+    }
+    if (globals->rc->key(rm::device::DR16::Key::kA) || globals->tc->data().keyboard_key & static_cast<int16_t>(
+          rm::device::VT03::KeyboardKey::kA) || globals->custom_client->key(rm::device::DR16::Key::kA)) {
+      Vx -= 10000;
+      if (Vx <= -10000) {
+        Vx = -10000;
+      }
+    } else {
+      if (Vx < 0) {
+        Vx += 10000;
+      }
     }
   } else {
-    if (Vy < 0) {
-      Vy += 10000;
-    }
-  }
-  if (globals->rc->key(rm::device::DR16::Key::kD) || globals->tc->data().keyboard_key & static_cast<int16_t>(
-        rm::device::VT03::KeyboardKey::kD) || globals->custom_client->key(rm::device::DR16::Key::kD)) {
-    Vx += 10000;
-    if (Vx >= 10000) {
-      Vx = 10000;
-    }
-  }
-  else {
-    if (Vx > 0) {
-      Vx -= 10000;
-    }
-  }
-  if (globals->rc->key(rm::device::DR16::Key::kA) || globals->tc->data().keyboard_key & static_cast<int16_t>(
-        rm::device::VT03::KeyboardKey::kA) || globals->custom_client->key(rm::device::DR16::Key::kA)) {
-    Vx -= 10000;
-    if (Vx <= -10000) {
-      Vx = -10000;
-    }
-  }
-  else {
-    if (Vx < 0) {
-      Vx += 10000;
-    }
+    Vx = globals->rc->left_x() * 5000 / 660;
+    Vy = globals->rc->left_y() * 10000 / 660;
   }
 
   rm::i16 V_wheel[4];
-  V_wheel[0] = -Vy + 1 * Vx + 1 * Vw;
-  V_wheel[1] = Vy + 1 * Vx + 1 * Vw;
+  V_wheel[0] = -Vy + 1 * Vx + 1.7 * Vw;
+  V_wheel[1] = Vy + 1 * Vx + 1.7 * Vw;
   V_wheel[2] = Vy /*- 0.1 * Vx*/ + 1 * Vw;
   V_wheel[3] = -Vy /*- 0.1 * Vx*/ + 1 * Vw;
 

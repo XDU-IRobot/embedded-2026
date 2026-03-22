@@ -52,6 +52,14 @@ void G_average() {
 
 // 定频循环
 void MainLoop() {
+  heat_limit = globals->ref.data().robot_status.shooter_barrel_heat_limit;
+  cooling = globals->ref.data().robot_status.shooter_barrel_cooling_value;
+  if (heat_now > 0) {
+    heat_now = heat_now - globals->ref.data().robot_status.shooter_barrel_cooling_value / 840.0;
+    if (heat_now < 0) {
+      heat_now = 0;
+    }
+  }
   if (globals->ref.data().robot_status.power_management_gimbal_output == 1 && power_management_gimbal_last == 0) {
     power_management_gimbal_delay++;
     if (power_management_gimbal_delay > 840 * 3) {

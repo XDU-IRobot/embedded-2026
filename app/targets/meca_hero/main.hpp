@@ -137,7 +137,7 @@ inline struct GlobalWarehouse {
     // pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
     pid_yaw_position = new rm::modules::PID{30, 0, 0, 10, 0};
-    pid_yaw_velocity = new rm::modules::PID{12, 0, 0.05, 6, 0};
+    pid_yaw_velocity = new rm::modules::PID{11, 0, 0.03, 6, 0};
     pid_pitch_position = new rm::modules::PID{60, 0.5, 1.3, 1, 0.1};
     pid_pitch_velocity = new rm::modules::PID{9100, 3500, 40, 16000, 500};
     // pid_pitch_position = new rm::modules::PID{2000, 0, 0, 1500, 1000};
@@ -146,11 +146,13 @@ inline struct GlobalWarehouse {
     // 底盘随动
 
     pid_chassis_follow_pos = new rm::modules::PID{700, 0, 0, 1500, 0};
+    // pid_chassis_follow_pos = new rm::modules::PID{5000, 0, 100, 5000, 0};
     // pid_chassis_follow_pos = new rm::modules::PID{14000, 33600, 100, 16000, 10000};
 
     // pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
 
-    pid_chassis_follow_vel = new rm::modules::PID{5, 0, 0.09, 16000, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{30, 0, 0.09, 16000, 0};
+    // pid_chassis_follow_vel = new rm::modules::PID{500, 0, 0, 8000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
       chassis_motor[i] = new rm::device::M3508(*can2, i + 1);
@@ -173,7 +175,7 @@ inline struct GlobalWarehouse {
 } *globals;
 
 // 底盘速度
-inline rm::i16 Vx, Vy, Vw;
+inline rm::f32 Vx, Vy, Vw;
 // 云台角度
 inline float target_pos_yaw, last_target_pos_yaw, target_pos_pitch;
 // 云台当前角度
@@ -197,7 +199,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4600;
-inline rm::i16 V_shooter_2 = -4150;  // 12m/s
+inline rm::i16 V_shooter_2 = -4100;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测
@@ -290,4 +292,7 @@ inline bool key_q;
 inline bool key_e;
 inline int aimbot_target;
 inline int aimbot_state;
+inline int cooling;
+inline int heat_limit;
+inline float heat_now=0;
 #endif  // BOARDC_MAIN_HPP
