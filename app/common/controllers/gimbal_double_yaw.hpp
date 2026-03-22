@@ -15,10 +15,9 @@ class GimbalDoubleYaw {
         .SetDiffFirst(false);
     pid_.down_yaw_position.SetCircular(true)
         .SetCircularCycle(M_PI * 2.0f)
-        .SetFuzzy(false)
-        .SetDiffLpfAlpha(0.7)
+        .SetFuzzy(true)
         .SetFuzzyErrorScale(M_PI)
-        .SetDiffFirst(true);
+        .SetDiffFirst(false);
     pid_.pitch_position.SetFuzzy(true).SetFuzzyErrorScale(M_PI).SetDiffFirst(false);
   }
 
