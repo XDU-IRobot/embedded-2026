@@ -187,10 +187,9 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 0);
   }
   // 小陀螺
-  if ((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) ||
-      (globals->StateMachine_ == kMatch && globals->image_update_flag
-           ? globals->image_data->data().keyboard_key >> 4 & 0x01
-           : globals->rc->key(rm::device::DR16::Key::kShift))) {
+  if ((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) || globals->image_update_flag
+          ? globals->image_data->data().keyboard_key >> 4 & 0x01
+          : globals->rc->key(rm::device::DR16::Key::kShift)) {
     globals->chassis_state |= static_cast<u8>(1 << 1);
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
   } else if (globals->rc->dial() <= -650) {
