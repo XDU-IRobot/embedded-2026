@@ -10,7 +10,7 @@ void Gimbal::GimbalTask() { gimbal->GimbalStateUpdate(); }
 void Gimbal::GimbalStateUpdate() {
   if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
     globals->StateMachine_ = kUnable;  // 如果云台设备离线或云台供电异常，进入无力模式
-    gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+    gimbal->GimbalDisableUpdate();     // 云台电机失能计算
   } else {
     switch (globals->StateMachine_) {
       case kNoForce:                    // 无力模式下，所有电机失能
@@ -34,6 +34,9 @@ void Gimbal::GimbalStateUpdate() {
     gimbal->ShootDisableUpdate();  // 发射机构失能计算
   } else {
     switch (globals->StateMachine_) {
+      case kMatch:
+        gimbal->ShootEnableUpdate();  // 发射机构使能计算
+        break;
       case kTest:  // 测试模式下，发射系统与拨盘电机失能
         switch (gimbal->GimbalMove_) {
           case kGbAimbot:
@@ -57,12 +60,12 @@ void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(
       static_cast<f32>(globals->rc->left_x()) +
           30.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_x
-                                                               : globals->rc->mouse_x()),  // 上部yaw轴目标值
+                                                              : globals->rc->mouse_x()),  // 上部yaw轴目标值
       -660, 660, -gimbal->sensitivity_yaw_, gimbal->sensitivity_yaw_);
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(
       static_cast<f32>(globals->rc->left_y()) +
           30.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_y
-                                                               : globals->rc->mouse_y()),  // pitch轴目标值
+                                                              : globals->rc->mouse_y()),  // pitch轴目标值
       -660, 660, -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->gimbal_yaw_target_ =
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.f, 2.f * static_cast<f32>(M_PI));  // yaw轴限位

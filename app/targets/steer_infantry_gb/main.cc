@@ -195,7 +195,7 @@ void GlobalWarehouse::ChassisStateUpdate() {
           : globals->rc->key(rm::device::DR16::Key::kShift)) {
     globals->chassis_state |= static_cast<u8>(1 << 1);
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
-  } else if (globals->rc->dial() <= -650) {
+  } else if (globals->StateMachine_ == kTest && globals->rc->dial() <= -650) {
     globals->chassis_state |= static_cast<u8>(1 << 2);
     globals->chassis_state &= ~static_cast<u8>(1 << 1);
   } else {
