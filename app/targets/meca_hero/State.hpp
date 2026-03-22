@@ -3,4 +3,4 @@
 class State_Management {
   State_Management();
 };
-#endif //BOARDC_STATE_HPP
+#endif  // BOARDC_STATE_HPP
