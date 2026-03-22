@@ -228,7 +228,7 @@ void Gimbal::GimbalMovePIDUpdate() {
                                     globals->hipnuc_imu->pitch(), globals->hipnuc_imu->gyro_x(), 2.0f);
   // const f32 move_compensation_ = globals->down_yaw_motor->vel() / 9.0f;
   // gimbal->down_yaw_torque_ = globals->gimbal_controller.output().down_yaw + move_compensation_;
-  gimbal->down_yaw_torque_ = rm::modules::Clamp(gimbal->down_yaw_torque_, -10.0f, 10.0f);
+  // gimbal->down_yaw_torque_ = rm::modules::Clamp(gimbal->down_yaw_torque_, -10.0f, 10.0f);
   const f32 gravity_compensation_ = -1.82f * std::cos(globals->hipnuc_imu->pitch() + 0.2115f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.0f, 10.0f);
@@ -268,6 +268,7 @@ void Gimbal::GimbalEnableUpdate() {
     gimbal->GimbalMovePIDUpdate();
   } else {
     globals->gimbal_controller.Enable(false);
+    gimbal->GimbalMovePIDUpdate();
   }
   gimbal->SetMotorCurrent();
 }
@@ -281,9 +282,9 @@ void Gimbal::GimbalDisableUpdate() {
   gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->pitch();
   gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
   gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
-  gimbal->pitch_torque_ = 0.0f;
   gimbal->GimbalMovePIDUpdate();
   gimbal->SetMotorCurrent();
+  gimbal->pitch_torque_ = 0.0f;
 }
 
 void Gimbal::DaMiaoMotorEnable() {
