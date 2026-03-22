@@ -8,55 +8,62 @@ void Gimbal::GimbalInit() {
 void Gimbal::GimbalTask() { gimbal->GimbalStateUpdate(); }
 
 void Gimbal::GimbalStateUpdate() {
-  // if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
-  //   gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-  // } else {
-  switch (globals->StateMachine_) {
-    case kNoForce:                    // 无力模式下，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      break;
+  if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
+    globals->StateMachine_ = kUnable;  // 如果云台设备离线或云台供电异常，进入无力模式
+    gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+  } else {
+    switch (globals->StateMachine_) {
+      case kNoForce:                    // 无力模式下，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
 
-    case kTest:                      // 测试模式下，发射系统与拨盘电机失能
-      gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-      break;
+      case kTest:                      // 测试模式下，发射系统与拨盘电机失能
+        gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+        break;
 
-    case kMatch:
-      gimbal->GimbalMatchUpdate();
-      break;
+      case kMatch:
+        gimbal->GimbalMatchUpdate();
+        break;
 
-    default:                          // 错误状态，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      break;
+      default:                          // 错误状态，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
+    }
   }
-  // }
-  // if (!globals->device_shoot.all_device_ok() || !globals->chassis_communicator->ammo_power_state()) {
-  //   gimbal->ShootDisableUpdate();  // 发射机构失能计算
-  // } else {
-  switch (globals->StateMachine_) {
-    case kTest:  // 测试模式下，发射系统与拨盘电机失能
-      switch (gimbal->GimbalMove_) {
-        case kGbAimbot:
-          gimbal->ShootEnableUpdate();  // 发射机构使能计算
-          break;
-        case kGbRemote:
-        default:
-          gimbal->ShootDisableUpdate();  // 发射机构失能计算
-          break;
-      }
-      break;
-    case kNoForce:                   // 无力模式下，所有电机失能
-    default:                         // 错误状态，所有电机失能
-      gimbal->ShootDisableUpdate();  // 发射机构失能计算
-      break;
+  if (!globals->device_shoot.all_device_ok() || !globals->chassis_communicator->ammo_power_state()) {
+    gimbal->ShootDisableUpdate();  // 发射机构失能计算
+  } else {
+    switch (globals->StateMachine_) {
+      case kTest:  // 测试模式下，发射系统与拨盘电机失能
+        switch (gimbal->GimbalMove_) {
+          case kGbAimbot:
+            gimbal->ShootEnableUpdate();  // 发射机构使能计算
+            break;
+          case kGbRemote:
+          default:
+            gimbal->ShootDisableUpdate();  // 发射机构失能计算
+            break;
+        }
+        break;
+      case kNoForce:                   // 无力模式下，所有电机失能
+      default:                         // 错误状态，所有电机失能
+        gimbal->ShootDisableUpdate();  // 发射机构失能计算
+        break;
+    }
   }
-  // }
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  gimbal->gimbal_yaw_target_ -= rm::modules::Map(globals->rc->left_x(),  // 上部yaw轴目标值
-                                                 -660, 660, -gimbal->sensitivity_yaw_, gimbal->sensitivity_yaw_);
-  gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(),  // pitch轴目标值
-                                                   -660, 660, -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
+  gimbal->gimbal_yaw_target_ -= rm::modules::Map(
+      static_cast<f32>(globals->rc->left_x()) +
+          660.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_x
+                                                               : globals->rc->mouse_x()),  // 上部yaw轴目标值
+      -660, 660, -gimbal->sensitivity_yaw_, gimbal->sensitivity_yaw_);
+  gimbal->gimbal_pitch_target_ -= rm::modules::Map(
+      static_cast<f32>(globals->rc->left_y()) +
+          660.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_x
+                                                               : globals->rc->mouse_x()),  // pitch轴目标值
+      -660, 660, -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->gimbal_yaw_target_ =
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.f, 2.f * static_cast<f32>(M_PI));  // yaw轴限位
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,        // pitch轴限位
@@ -142,15 +149,27 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_ - static_cast<f32>(globals->aim_speed_change) * 100.0f);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
   if (const u16 heat_delta = globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real();
-      globals->rc->dial() <= -650 && heat_delta > 100) {
+      globals->rc->dial() <= -650 || (heat_delta > 100 && (globals->df_state || globals->xf_state) &&
+                                      (globals->image_update_flag ? globals->image_data->data().mouse_button_left
+                                                                  : globals->rc->mouse_button_left()))) {
     if (!gimbal->single_shoot_flag_) {
       globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
       gimbal->single_shoot_flag_ = true;
     } else {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
-  } else if (globals->rc->dial() >= 650 || (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
-                                            globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
+  } else if ((globals->StateMachine_ == kTest &&
+              (globals->rc->dial() >= 650 || (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
+                                              globals->aimbot_communicator->aimbot_state() >> 1 & 0x01))) ||
+             (globals->StateMachine_ == kMatch &&
+              (globals->image_update_flag ? globals->image_data->data().mouse_button_left
+                                          : globals->rc->mouse_button_left()) &&  // 左键按下
+              ((globals->image_update_flag ? !globals->image_data->data().mouse_button_right
+                                           : !globals->rc->mouse_button_right()) ||  // 右键未按下
+               ((globals->image_update_flag ? globals->image_data->data().mouse_button_right
+                                            : globals->rc->mouse_button_right()) &&  // 右键按下且瞄到目标
+                globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
+                globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)))) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     if (heat_delta > 100) {
       globals->shoot_controller.SetShootFrequency(20.0f);

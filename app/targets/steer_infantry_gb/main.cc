@@ -104,82 +104,82 @@ void GlobalWarehouse::ShootPIDInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  // if (!globals->device_rc.all_device_ok()) {
-  //   globals->StateMachine_ = kUnable;
-  // } else {
-  if (globals->init_time > 0) {
-    globals->StateMachine_ = kNoForce;
-    globals->init_time--;
-    return;
-  }
-  switch (globals->rc->switch_r()) {
-    case rm::device::DR16::SwitchPosition::kUp:
-      // 右拨杆打到最上侧挡位
-      switch (globals->rc->switch_l()) {
-        case rm::device::DR16::SwitchPosition::kDown:
-          globals->StateMachine_ = kMatch;
-          break;
-        case rm::device::DR16::SwitchPosition::kMid:
-        case rm::device::DR16::SwitchPosition::kUp:
-        default:
-          globals->StateMachine_ = kNoForce;
-          break;
-      }
-      break;
+  if (!globals->device_rc.all_device_ok()) {
+    globals->StateMachine_ = kUnable;
+  } else {
+    if (globals->init_time > 0) {
+      globals->StateMachine_ = kNoForce;
+      globals->init_time--;
+      return;
+    }
+    switch (globals->rc->switch_r()) {
+      case rm::device::DR16::SwitchPosition::kUp:
+        // 右拨杆打到最上侧挡位
+        switch (globals->rc->switch_l()) {
+          case rm::device::DR16::SwitchPosition::kDown:
+            globals->StateMachine_ = kMatch;
+            break;
+          case rm::device::DR16::SwitchPosition::kMid:
+          case rm::device::DR16::SwitchPosition::kUp:
+          default:
+            globals->StateMachine_ = kNoForce;
+            break;
+        }
+        break;
 
-    case rm::device::DR16::SwitchPosition::kMid:
-      // 右拨杆打到中间挡位
-      switch (globals->rc->switch_l()) {
-        case rm::device::DR16::SwitchPosition::kDown:
-        case rm::device::DR16::SwitchPosition::kMid:
-          globals->StateMachine_ = kTest;
-          gimbal->GimbalMove_ = kGbRemote;
-          break;
-        case rm::device::DR16::SwitchPosition::kUp:
-          globals->StateMachine_ = kTest;
-          gimbal->GimbalMove_ = kGbAimbot;
-          break;
-        default:
-          globals->StateMachine_ = kNoForce;
-          break;
-      }
-      break;
+      case rm::device::DR16::SwitchPosition::kMid:
+        // 右拨杆打到中间挡位
+        switch (globals->rc->switch_l()) {
+          case rm::device::DR16::SwitchPosition::kDown:
+          case rm::device::DR16::SwitchPosition::kMid:
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbRemote;
+            break;
+          case rm::device::DR16::SwitchPosition::kUp:
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbAimbot;
+            break;
+          default:
+            globals->StateMachine_ = kNoForce;
+            break;
+        }
+        break;
 
-    case rm::device::DR16::SwitchPosition::kDown:
-      switch (globals->rc->switch_l()) {
-        case rm::device::DR16::SwitchPosition::kUp:
-          globals->Music();
-          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
-          break;
-        case rm::device::DR16::SwitchPosition::kMid:
-        case rm::device::DR16::SwitchPosition::kDown:
-        default:
-          globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
-          break;
-      }
-      break;
-    default:
-      globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
-      break;
+      case rm::device::DR16::SwitchPosition::kDown:
+        switch (globals->rc->switch_l()) {
+          case rm::device::DR16::SwitchPosition::kUp:
+            globals->Music();
+            globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+            break;
+          case rm::device::DR16::SwitchPosition::kMid:
+          case rm::device::DR16::SwitchPosition::kDown:
+          default:
+            globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+            break;
+        }
+        break;
+      default:
+        globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
+        break;
+    }
   }
-  // }
 }
 
 void GlobalWarehouse::ChassisStateUpdate() {
   // 前后左右
   globals->chassis_move_x = rm::modules::Clamp(
-      static_cast<f32>(globals->rc->right_x()) / 6.6f -
+      static_cast<f32>(globals->rc->right_x()) / 6.6f +
           static_cast<f32>(globals->image_update_flag ? (globals->image_data->data().keyboard_key >> 3 & 0x01) -
                                                             (globals->image_data->data().keyboard_key >> 2 & 0x01)
-                                                      : globals->rc->key(rm::device::DR16::Key::kA) +
-                                                            globals->rc->key(rm::device::DR16::Key::kD)) *
+                                                      : globals->rc->key(rm::device::DR16::Key::kD) -
+                                                            globals->rc->key(rm::device::DR16::Key::kA)) *
               100.0f,
       -100.0f, 100.0f);
   globals->chassis_move_y = rm::modules::Clamp(
-      static_cast<f32>(globals->rc->right_y()) / 6.6f -
+      static_cast<f32>(globals->rc->right_y()) / 6.6f +
           static_cast<f32>(globals->image_update_flag ? (globals->image_data->data().keyboard_key >> 0 & 0x01) -
                                                             (globals->image_data->data().keyboard_key >> 1 & 0x01)
-                                                      : globals->rc->key(rm::device::DR16::Key::kW) +
+                                                      : globals->rc->key(rm::device::DR16::Key::kW) -
                                                             globals->rc->key(rm::device::DR16::Key::kS)) *
               100.0f,
       -100.0f, 100.0f);
