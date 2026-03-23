@@ -199,6 +199,7 @@ void Chassis::ChassisEnableUpdate() {
 void Chassis::ChassisDisableUpdate() {
   globals->chassis_controller.Enable(false);
   chassis->ChassisMovePIDUpdate();
+  chassis->PowerLimitLoop();
   chassis->SetMotorCurrent();
 }
 
@@ -245,17 +246,8 @@ void Chassis::PowerLimitLoop() {
 }
 
 void Chassis::SetMotorCurrent() {
-  // globals->wheel_lf->SetCurrent(static_cast<i16>(chassis->output_currents_[0]));
-  // globals->wheel_rf->SetCurrent(static_cast<i16>(chassis->output_currents_[1]));
-  // globals->wheel_lb->SetCurrent(static_cast<i16>(chassis->output_currents_[2]));
-  // globals->wheel_rb->SetCurrent(static_cast<i16>(chassis->output_currents_[3]));
-
-  globals->wheel_lf->SetCurrent(
-      static_cast<i16>(globals->chassis_controller.output().lf_wheel * chassis->k_speed_power_limit_));
-  globals->wheel_rf->SetCurrent(
-      static_cast<i16>(globals->chassis_controller.output().rf_wheel * chassis->k_speed_power_limit_));
-  globals->wheel_lb->SetCurrent(
-      static_cast<i16>(globals->chassis_controller.output().lb_wheel * chassis->k_speed_power_limit_));
-  globals->wheel_rb->SetCurrent(
-      static_cast<i16>(globals->chassis_controller.output().rb_wheel * chassis->k_speed_power_limit_));
+  globals->wheel_lf->SetCurrent(static_cast<i16>(chassis->output_currents_[0]));
+  globals->wheel_rf->SetCurrent(static_cast<i16>(chassis->output_currents_[1]));
+  globals->wheel_lb->SetCurrent(static_cast<i16>(chassis->output_currents_[2]));
+  globals->wheel_rb->SetCurrent(static_cast<i16>(chassis->output_currents_[3]));
 }

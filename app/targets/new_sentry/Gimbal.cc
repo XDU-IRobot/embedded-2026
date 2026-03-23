@@ -331,9 +331,11 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
   if (globals->referee_data->data().shoot_data.initial_speed >= 23.5f) {
-    gimbal->ammo_speed_ = 7200.0f * std::pow(23.5f / globals->referee_data->data().shoot_data.initial_speed, 3);
+    gimbal->ammo_speed_ = 7200.0f * std::pow(23.5f / globals->referee_data->data().shoot_data.initial_speed, 2);
+  } else if (globals->referee_data->data().shoot_data.initial_speed <= 20.0f){
+    gimbal->ammo_speed_ = 7200.0f * std::pow(23.5f / globals->referee_data->data().shoot_data.initial_speed, 2);
   }
-  if (globals->rc->dial() <= -650 && heat_limit_ - heat_current_ > 100) {
+  if (globals->rc->dial() <= -650 && heat_limit_ - heat_current_ > 30) {
     if (!single_shoot_flag_) {
       globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
       single_shoot_flag_ = true;
@@ -345,11 +347,10 @@ void Gimbal::ShootEnableUpdate() {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     if (heat_limit_ - heat_current_ > 100) {
       globals->shoot_controller.SetShootFrequency(20.0f);
-    } else if (heat_limit_ - heat_current_ < 40) {
+    } else if (heat_limit_ - heat_current_ < 20) {
       globals->shoot_controller.SetShootFrequency(0.0f);
     } else {
-      globals->shoot_controller.SetShootFrequency(  //
-          std::pow(static_cast<f32>(heat_limit_ - heat_current_) / 100.0f, 2.0f) * 20.0f);
+      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f + 5.0f);
     }
   } else {
     globals->shoot_controller.SetMode(Shoot3Fric::kStop);
