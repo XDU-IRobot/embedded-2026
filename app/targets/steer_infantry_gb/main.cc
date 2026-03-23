@@ -79,7 +79,7 @@ void GlobalWarehouse::Init() {
   led_controller.SetPattern<modules::led_pattern::GreenBreath>();
   buzzer_controller.Play<modules::buzzer_melody::Startup>();
 
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   globals->GimbalPIDInit();
   globals->ShootPIDInit();
@@ -300,10 +300,10 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count++;
     globals->time_camera++;
     if (globals->time_camera == 10) {
-      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 19999u);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535u);
     }
-    if (globals->time_camera == 1) {
-      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0u);
+    if (globals->time_camera == 5) {
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0u);
     }
   } else {
     globals->imu_count = 0;
