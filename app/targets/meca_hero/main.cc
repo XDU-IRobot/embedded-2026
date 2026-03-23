@@ -3,6 +3,10 @@
 #include "tim.h"
 #include <librm.hpp>
 #include "buzzer_controller.hpp"
+#include "ui.h"
+#include "ui_g.h"
+#include "UI.h"
+
 rm::f32 pitch;
 rm::f32 yaw;
 
@@ -12,7 +16,6 @@ int autoaim_update_count = 0;
 uint32_t System_time;
 int power_management_gimbal_delay = 0;
 int power_management_shooter_delay = 0;
-
 // void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 //   if (huart->Instance == USART1) {
 //     // 1. 这一步至关重要：手动添加字符串结束符
@@ -78,7 +81,6 @@ void MainLoop() {
   r_switch_position_last = r_switch_position_now;
   r_switch_position_now = globals->rc->switch_r();
   // 底盘逻辑
-  // ChassisControl();
   ChassisPower();
   // 摩擦轮电机逻辑
   ShooterControl();
@@ -109,6 +111,13 @@ void MainLoop() {
   } else {
     autoaim_update_count++;
   }
+  static int count1;
+  if (count1<83) {
+    count1++;
+  }else {
+    count1=0;
+    // ui_update_g();
+  }
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
@@ -117,6 +126,8 @@ extern "C" [[noreturn]] void AppMain(void) {
    */
   globals = new GlobalWarehouse;
   globals->Init();
+  ui_init_g();
+  ui_self_id=globals->ref.data().robot_status.robot_id;
   // // 启动 DMA 接收到空闲中断
   // // rx_buffer 建议开大一点，比如 64 字节
   // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t*)rx_buffer, 64);
@@ -144,7 +155,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1);  // 84MHz / 100 / 1000 = 840Hz
   mainloop_1000hz.Start();                                   // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
+
+
   for (;;) {
-    __WFI();
+    // UI();
+    ui_update_g();
   }
 }

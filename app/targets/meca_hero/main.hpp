@@ -72,7 +72,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_chassis_follow_pos{nullptr};
   rm::modules::PID *pid_chassis_follow_vel{nullptr};
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{831.68f};  ///< mahony 姿态解算器，频率 1000Hz 831.68
+  rm::modules::MahonyAhrs ahrs{840.0f};  ///< mahony 姿态解算器，频率 1000Hz 840.0
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
@@ -199,7 +199,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4600;
-inline rm::i16 V_shooter_2 = -4100;  // 12m/s
+inline rm::i16 V_shooter_2 = -4125;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测

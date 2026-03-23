@@ -429,8 +429,8 @@ void ChassisPower() {
   }
 
   // 底盘随动
-  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid || globals->rc->switch_l() ==
-      rm::device::DR16::SwitchPosition::kUp) {
+  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid /*|| globals->rc->switch_l() ==
+      rm::device::DR16::SwitchPosition::kUp*/) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
                                             0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
