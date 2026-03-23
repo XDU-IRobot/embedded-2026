@@ -292,9 +292,9 @@ void GlobalWarehouse::Music() {
 
 void GlobalWarehouse::SubLoop500Hz() {
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_y(), globals->imu->gyro_z(),
-                                                globals->imu->gyro_x() + 0.0015f, globals->imu->accel_y(),
-                                                globals->imu->accel_z(), globals->imu->accel_x()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
+                                                globals->imu->gyro_z() + 0.0015f, -globals->imu->accel_y(),
+                                                globals->imu->accel_x(), globals->imu->accel_z()});
   // 硬触发
   if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
     globals->imu_count++;
@@ -313,10 +313,15 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count = 0;
   }
   // can 通信
-  globals->aimbot_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
-                                              -globals->ahrs.euler_angle().roll,
-                                              globals->chassis_communicator->robot_id(), globals->aim_mode,
-                                              globals->imu_count, globals->chassis_communicator->ammo_speed());
+  f32 ammo_speed;
+  if (globals->chassis_communicator->ammo_speed() > 20.0f) {
+    ammo_speed = globals->chassis_communicator->ammo_speed();
+  } else {
+    ammo_speed = 23.5f;
+  }
+  globals->aimbot_communicator->UpdateControl(
+      globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch, globals->ahrs.euler_angle().roll,
+      globals->chassis_communicator->robot_id() ? 103 : 3, globals->aim_mode, globals->imu_count, ammo_speed);
   globals->chassis_communicator->SendChassisCommand(
       globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,
       globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change);

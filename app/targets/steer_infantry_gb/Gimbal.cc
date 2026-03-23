@@ -1,13 +1,19 @@
 #include "Gimbal.hpp"
 
-f32 a, b;
+f32 a, b, c, d;
 
 void Gimbal::GimbalInit() {
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = -globals->ahrs.euler_angle().pitch;
+  gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
 }
 
-void Gimbal::GimbalTask() { gimbal->GimbalStateUpdate(); }
+void Gimbal::GimbalTask() {
+  gimbal->GimbalStateUpdate();
+  a = gimbal->gimbal_yaw_target_;
+  b = gimbal->gimbal_pitch_target_;
+  c = globals->ahrs.euler_angle().yaw;
+  d = globals->ahrs.euler_angle().pitch;
+}
 
 void Gimbal::GimbalStateUpdate() {
   if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
@@ -76,7 +82,9 @@ void Gimbal::GimbalRCTargetUpdate() {
 }
 
 void Gimbal::GimbalAimbotTargetUpdate() {
-  if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
+  if ((globals->StateMachine_ == kTest && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) ||
+      (globals->StateMachine_ == kMatch && (globals->image_update_flag ? globals->image_data->data().mouse_button_right
+                                                                       : globals->rc->mouse_button_right()))) {
     gimbal->gimbal_yaw_target_ = globals->aimbot_communicator->yaw();
     gimbal->gimbal_pitch_target_ = globals->aimbot_communicator->pitch();
   } else {
@@ -90,9 +98,9 @@ void Gimbal::GimbalMovePIDUpdate() {
 
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ff);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->yaw_motor->rpm(),
-                                    -globals->ahrs.euler_angle().pitch, globals->pitch_motor->vel());
-  gimbal->gravity_compensation_ = gimbal->k_gravity_compensation_ * std::cos(globals->ahrs.euler_angle().pitch);
-  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gimbal->gravity_compensation_;
+                                    globals->ahrs.euler_angle().pitch, globals->pitch_motor->vel());
+  f32 gravity_compensation_ = -0.74f * std::cos(globals->ahrs.euler_angle().pitch - 0.25f);
+  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
 }
 
@@ -126,7 +134,7 @@ void Gimbal::GimbalDisableUpdate() {
   globals->gimbal_controller.Enable(false);
   globals->aim_mode = 0x00;
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = -globals->ahrs.euler_angle().pitch;
+  gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
   gimbal->GimbalMovePIDUpdate();
   gimbal->SetMotorCurrent();
   gimbal->pitch_torque_ = 0.f;
@@ -153,8 +161,6 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Arm(true);
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_ - static_cast<f32>(globals->aim_speed_change) * 100.0f);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  a = globals->chassis_communicator->heat_real();
-  b = globals->chassis_communicator->heat_limit();
   if (const u16 heat_delta = globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real();
       globals->rc->dial() <= -650 || (heat_delta > 30 && (globals->df_state || globals->xf_state) &&
                                       (globals->image_update_flag ? globals->image_data->data().mouse_button_left
@@ -166,8 +172,9 @@ void Gimbal::ShootEnableUpdate() {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     }
   } else if ((globals->StateMachine_ == kTest &&
-              (globals->rc->dial() >= 650 || (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
-                                              globals->aimbot_communicator->aimbot_state() >> 1 & 0x01))) ||
+              ((globals->rc->dial() >= 10 && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
+                globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
+               globals->rc->dial() >= 650)) ||
              (globals->StateMachine_ == kMatch &&
               (globals->image_update_flag ? globals->image_data->data().mouse_button_left
                                           : globals->rc->mouse_button_left()) &&  // 左键按下
@@ -183,7 +190,8 @@ void Gimbal::ShootEnableUpdate() {
     } else if (heat_delta < 20) {
       globals->shoot_controller.SetShootFrequency(0.0f);
     } else {
-      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f + 5.0f);    }
+      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f + 5.0f);
+    }
   } else {
     globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     gimbal->single_shoot_flag_ = false;

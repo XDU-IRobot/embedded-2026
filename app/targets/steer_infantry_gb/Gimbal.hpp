@@ -17,9 +17,6 @@ inline class Gimbal {
   f32 gimbal_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据
   f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据
 
-  f32 gravity_compensation_ = 0.0f;     // 重力补偿值
-  f32 k_gravity_compensation_ = -0.8f;  // 重力补偿系数
-
   f32 ammo_speed_ = -8000.0f;  // 摩擦轮速度
 
   f32 yaw_speed_ff = 0.0f;
