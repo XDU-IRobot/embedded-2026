@@ -183,8 +183,7 @@ void Gimbal::ShootEnableUpdate() {
     } else if (heat_delta < 20) {
       globals->shoot_controller.SetShootFrequency(0.0f);
     } else {
-      globals->shoot_controller.SetShootFrequency(std::pow(static_cast<f32>(heat_delta) / 100.0f, 2.0f) * 20.0f);
-    }
+      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f + 5.0f);    }
   } else {
     globals->shoot_controller.SetMode(Shoot3Fric::kStop);
     gimbal->single_shoot_flag_ = false;
