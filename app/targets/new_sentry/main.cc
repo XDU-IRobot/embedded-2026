@@ -111,8 +111,8 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().down_yaw_position.SetKp(40.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(2.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(14.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(15.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(1.6f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(56.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.7f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
@@ -266,7 +266,7 @@ void GlobalWarehouse::SubLoop500Hz() {
 void GlobalWarehouse::SubLoop250Hz() {
   if (globals->time % 2 == 0) {
     globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
-    globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 1.0f);
+    globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 2.8f);
   }
 }
 
