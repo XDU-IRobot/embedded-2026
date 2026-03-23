@@ -82,6 +82,7 @@ inline struct GlobalWarehouse {
   u_int16_t remain_bullet_number{};  // 剩余子弹数量
   bool music_play_flag = false;      // 控制音乐播放
   bool music_change_flag = false;    // 音乐改动标识位
+  bool ui_send_choice = false;       // ui发送选择
 
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
