@@ -332,7 +332,7 @@ void Gimbal::ShootEnableUpdate() {
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
   if (globals->referee_data->data().shoot_data.initial_speed >= 23.5f) {
     gimbal->ammo_speed_ = 7200.0f * std::pow(23.5f / globals->referee_data->data().shoot_data.initial_speed, 2);
-  } else if (globals->referee_data->data().shoot_data.initial_speed <= 20.0f){
+  } else if (globals->referee_data->data().shoot_data.initial_speed <= 20.0f) {
     gimbal->ammo_speed_ = 7200.0f * std::pow(23.5f / globals->referee_data->data().shoot_data.initial_speed, 2);
   }
   if (globals->rc->dial() <= -650 && heat_limit_ - heat_current_ > 30) {
