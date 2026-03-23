@@ -145,13 +145,13 @@ inline struct GlobalWarehouse {
 
     // 底盘随动
 
-    pid_chassis_follow_pos = new rm::modules::PID{700, 0, 0, 1500, 0};
+    pid_chassis_follow_pos = new rm::modules::PID{600, 0, 0, 1500, 0};
     // pid_chassis_follow_pos = new rm::modules::PID{5000, 0, 100, 5000, 0};
     // pid_chassis_follow_pos = new rm::modules::PID{14000, 33600, 100, 16000, 10000};
 
     // pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
 
-    pid_chassis_follow_vel = new rm::modules::PID{25, 0, 0.09, 16000, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{23, 0, 0.21 , 16000, 0};
     // pid_chassis_follow_vel = new rm::modules::PID{500, 0, 0, 8000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
@@ -199,7 +199,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4600;
-inline rm::i16 V_shooter_2 = -4125;  // 12m/s
+inline rm::i16 V_shooter_2 = -4120;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测

@@ -429,14 +429,22 @@ void ChassisPower() {
   }
 
   // 底盘随动
-  if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid /*|| globals->rc->switch_l() ==
-      rm::device::DR16::SwitchPosition::kUp*/) {
+  static bool follow_state=false;
+  if (globals->tc->key_once(device::VT03::KeyboardKey::kC)) {
+    if (follow_state) {
+      follow_state=false;
+    }else {
+      follow_state=true;
+    }
+  }
+  if ((globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid || globals->rc->switch_l() ==
+      rm::device::DR16::SwitchPosition::kUp)&&follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
                                             0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
-    Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.5);
+    Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.7);
   } else {
     Vw = 0;
   }
@@ -564,7 +572,7 @@ void CANAutoaimUpdate() {
     imu_count++;
   }
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
-                                                  globals->ahrs.euler_angle().roll, 1, 0, imu_count, 12);
+                                                  globals->ahrs.euler_angle().roll, 1, 0, imu_count, globals->ref.data().shoot_data.initial_speed);
   aimbot_pitch = globals->aimbot_can_communicator->pitch() * 57.3;
   aimbot_yaw = globals->aimbot_can_communicator->yaw() * 57.3;
 }
@@ -586,3 +594,4 @@ void VOFA() {
   VOFA_Prepare_Package(swhell, shooter, 6);
   VOFA_Send_JustFloat_DMA(&huart1, shooter);
 }
+

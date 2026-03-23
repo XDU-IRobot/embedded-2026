@@ -112,10 +112,10 @@ void MainLoop() {
     autoaim_update_count++;
   }
   static int count1;
-  if (count1<83) {
+  if (count1 < 83) {
     count1++;
-  }else {
-    count1=0;
+  } else {
+    count1 = 0;
     // ui_update_g();
   }
 }
@@ -126,8 +126,7 @@ extern "C" [[noreturn]] void AppMain(void) {
    */
   globals = new GlobalWarehouse;
   globals->Init();
-  ui_init_g();
-  ui_self_id=globals->ref.data().robot_status.robot_id;
+
   // // 启动 DMA 接收到空闲中断
   // // rx_buffer 建议开大一点，比如 64 字节
   // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, (uint8_t*)rx_buffer, 64);
@@ -150,15 +149,16 @@ extern "C" [[noreturn]] void AppMain(void) {
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>()  //
+      etl::delegate<void()>::create<MainLoop>() //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1);  // 84MHz / 100 / 1000 = 840Hz
-  mainloop_1000hz.Start();                                   // 启动定时器
+  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1); // 84MHz / 100 / 1000 = 840Hz
+  mainloop_1000hz.Start(); // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
 
-
+  // ui_self_id = globals->ref.data().robot_status.robot_id;
+  // ui_init_g();
   for (;;) {
     // UI();
-    ui_update_g();
+    // ui_update_g();
   }
 }
