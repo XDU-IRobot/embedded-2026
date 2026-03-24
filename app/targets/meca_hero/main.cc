@@ -3,8 +3,8 @@
 #include "tim.h"
 #include <librm.hpp>
 #include "buzzer_controller.hpp"
-#include "ui.h"
-#include "ui_g.h"
+// #include "ui.h"
+// #include "ui_g.h"
 #include "UI.h"
 
 rm::f32 pitch;

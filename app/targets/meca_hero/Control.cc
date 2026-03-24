@@ -443,7 +443,7 @@ void ChassisPower() {
        globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) &&
       follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
-    globals->pid_chassis_follow_pos->Update(1.54, globals->gimbal_motor_yaw->pos(),
+    globals->pid_chassis_follow_pos->Update(0.54, globals->gimbal_motor_yaw->pos(),
                                             0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
@@ -580,7 +580,7 @@ void CANAutoaimUpdate() {
   }
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
                                                   globals->ahrs.euler_angle().roll, 1, 0, imu_count,
-                                                  globals->ref.data().shoot_data.initial_speed);
+                                                  11.8);
   aimbot_pitch = globals->aimbot_can_communicator->pitch();
   aimbot_yaw = -globals->aimbot_can_communicator->yaw();
 }
