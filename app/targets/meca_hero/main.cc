@@ -106,7 +106,7 @@ void MainLoop() {
     key_a = globals->custom_client->key(rm::device::DR16::Key::kA);
     key_d = globals->custom_client->key(rm::device::DR16::Key::kD);
     key_e = globals->custom_client->key(rm::device::DR16::Key::kE);
-    VOFA();
+    // VOFA();
     autoaim_update_count = 0;
   } else {
     autoaim_update_count++;
