@@ -578,6 +578,12 @@ void CANAutoaimUpdate() {
   } else {
     imu_count++;
   }
+
+  if (globals->ref.data().robot_status.robot_id > 100) {
+    team_id = 0;
+  } else {
+    team_id = 1;
+  }
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
                                                   globals->ahrs.euler_angle().roll, 1, 0, imu_count,
                                                   11.8);
