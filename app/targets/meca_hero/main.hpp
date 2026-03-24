@@ -257,6 +257,7 @@ inline float vel_target = 0;
 inline float vel_real = 0;
 inline bool power_management_gimbal_last;
 inline bool power_management_shooter_last;
+inline int shooter_m=0;
 /*----------------------------------------------
  *执行函数
  */

@@ -191,7 +191,12 @@ void ShooterControl() {
     return;
   }
   // 摩擦轮逻辑
-
+  if (globals->tc->key_once(device::VT03::KeyboardKey::kE)) {
+    shooter_m-=10;
+  }
+  if (globals->tc->key_once(device::VT03::KeyboardKey::kQ)) {
+    shooter_m+=10;
+  }
   // 目标速度PID
   if (shooter_6 > limit) {
     globals->pid_shooter_1->Update(limit, globals->shooter_motor_1->rpm());
@@ -201,12 +206,12 @@ void ShooterControl() {
     globals->pid_shooter_5->Update(limit, globals->shooter_motor_5->rpm());
     globals->pid_shooter_6->Update(limit, globals->shooter_motor_6->rpm());
   } else {
-    globals->pid_shooter_1->Update(V_shooter_1, globals->shooter_motor_1->rpm());
-    globals->pid_shooter_2->Update(V_shooter_1, globals->shooter_motor_2->rpm());
-    globals->pid_shooter_3->Update(V_shooter_1, globals->shooter_motor_3->rpm());
-    globals->pid_shooter_4->Update(V_shooter_2, globals->shooter_motor_4->rpm());
-    globals->pid_shooter_5->Update(V_shooter_2, globals->shooter_motor_5->rpm());
-    globals->pid_shooter_6->Update(V_shooter_2, globals->shooter_motor_6->rpm());
+    globals->pid_shooter_1->Update(V_shooter_1+1.5*shooter_m, globals->shooter_motor_1->rpm());
+    globals->pid_shooter_2->Update(V_shooter_1+1.5*shooter_m, globals->shooter_motor_2->rpm());
+    globals->pid_shooter_3->Update(V_shooter_1+1.5*shooter_m, globals->shooter_motor_3->rpm());
+    globals->pid_shooter_4->Update(V_shooter_2+shooter_m, globals->shooter_motor_4->rpm());
+    globals->pid_shooter_5->Update(V_shooter_2+shooter_m, globals->shooter_motor_5->rpm());
+    globals->pid_shooter_6->Update(V_shooter_2+shooter_m, globals->shooter_motor_6->rpm());
   }
 
   // 给shooter电机发送指令
@@ -573,8 +578,8 @@ void CANAutoaimUpdate() {
   }
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
                                                   globals->ahrs.euler_angle().roll, 1, 0, imu_count, globals->ref.data().shoot_data.initial_speed);
-  aimbot_pitch = globals->aimbot_can_communicator->pitch() * 57.3;
-  aimbot_yaw = globals->aimbot_can_communicator->yaw() * 57.3;
+  aimbot_pitch = globals->aimbot_can_communicator->pitch() ;
+  aimbot_yaw = -globals->aimbot_can_communicator->yaw() ;
 }
 
 void CustomClientUpdate() { globals->custom_client->Unpack(UserRxBuf, UserRxLen); }
