@@ -44,7 +44,7 @@ Float_Data AmmoCount;
 
 // 自瞄目标
 // String_Data aimbot; // 自瞄状态
-Float_Data outpost_w; // 自瞄前哨站转向
+Float_Data outpost_w;  // 自瞄前哨站转向
 
 // yaw轴夹角
 Float_Data Yaw;
@@ -53,24 +53,23 @@ Graph_Data Yaw_G;
 // 电容电压
 Float_Data CapData;
 
-
 void UIsend(Serial uartx, uint8_t *data, uint8_t len) { uartx.Write(data, len); }
 
-void UI(void ) {
+void UI(void) {
   QueueInit(&UI_send[0]);
   QueueInit(&UI_send[1]);
 
   while (1) {
-    if (globals->tc->data().keyboard_key&static_cast<int16_t>(rm::device::VT03::KeyboardKey::kZ)) {
+    if (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kZ)) {
       // robot_id = referee.data().robot_status.robot_id;
       // 固定UI
-      Line_Draw(&imagey, "yck", UI_Graph_ADD, 0, UI_Color_Green, 1, 960, 900, 960, 200); // 中心瞄准线
+      Line_Draw(&imagey, "yck", UI_Graph_ADD, 0, UI_Color_Green, 1, 960, 900, 960, 200);  // 中心瞄准线
 
       Line_Draw(&x1, "x01", UI_Graph_ADD, 0, UI_Color_White, 1, 900, 360, 1020, 360);
       Line_Draw(&x2, "x02", UI_Graph_ADD, 0, UI_Color_Orange, 1, 900, 480, 1020, 480);
       Line_Draw(&x3, "x03", UI_Graph_ADD, 0, UI_Color_Cyan, 1, 900, 510, 1020, 510);
       Line_Draw(&x4, "x04", UI_Graph_ADD, 0, UI_Color_Orange, 2, 920, 398, 960, 398);
-      Line_Draw(&x5, "x05", UI_Graph_ADD, 0, UI_Color_Purplish_red, 2, 890, 385, 950, 385); // X轴瞄准线
+      Line_Draw(&x5, "x05", UI_Graph_ADD, 0, UI_Color_Purplish_red, 2, 890, 385, 950, 385);  // X轴瞄准线
 
       Line_Draw(&ry1, "ry1", UI_Graph_ADD, 1, UI_Color_Orange, 2, 934, 388, 934, 414);
       // Line_Draw(&ry2, "ry2", UI_Graph_ADD, 1, UI_Color_Orange, 1, 940, 340, 940, 520);
@@ -78,13 +77,14 @@ void UI(void ) {
       // Line_Draw(&ry4, "ry4", UI_Graph_ADD, 1, UI_Color_Cyan, 1, 900, 380, 900, 480);  // Y轴瞄准线
 
       Line_Draw(&rfd1, "fd1", UI_Graph_ADD, 1, UI_Color_Cyan, 3, 454, 166, 690, 432);
-      Line_Draw(&rfd2, "fd2", UI_Graph_ADD, 1, UI_Color_Cyan, 3, 1451, 149, 1192, 433); // 车边缘轨道
+      Line_Draw(&rfd2, "fd2", UI_Graph_ADD, 1, UI_Color_Cyan, 3, 1451, 149, 1192, 433);  // 车边缘轨道
 
       // Char_Draw(&aimbot, "aim", UI_Graph_ADD, 1, UI_Color_Green, 25, 15, 2, 360, 800, "AIMBOT\nAUTOFIRE");
-      Char_Draw(&Mode, "mod", UI_Graph_ADD, 1, UI_Color_Green, 25, 15, 2, 1300, 800, "R F N U\nL N H P"); // 字符提示
+      Char_Draw(&Mode, "mod", UI_Graph_ADD, 1, UI_Color_Green, 25, 15, 2, 1300, 800, "R F N U\nL N H P");  // 字符提示
 
       // Float_Draw(&CapData, "cad", UI_Graph_ADD, 1, UI_Color_Green, 27, 2, 5, 7050, 150, (float)cms.cms_v * 1000);
-      Float_Draw(&Pitch, "gbp", UI_Graph_ADD, 1, UI_Color_Green, 27, 1, 3, 7300, 500, (float)-globals->ahrs.euler_angle().pitch * 1000);
+      Float_Draw(&Pitch, "gbp", UI_Graph_ADD, 1, UI_Color_Green, 27, 1, 3, 7300, 500,
+                 (float)-globals->ahrs.euler_angle().pitch * 1000);
       // Float_Draw(&AmmoSpeed, "AmmoSpeed", UI_Graph_ADD, 1, UI_Color_Purplish_red, 27, 1, 3, 7300, 560,
       //            (float)(-globals->ahrs.euler_angle().pitch * 1000));
       Float_Draw(&AmmoCount, "amc", UI_Graph_ADD, 1, UI_Color_Orange, 27, 1, 3, 7300, 620, (float)0 * 1000);
@@ -222,7 +222,8 @@ void UI(void ) {
 //                  (float)((communication.command_.ui.ui2 - 0x1F) * 1000));
 //
 //       // 总发弹统计
-//       Float_Draw(&AmmoCount, "amc", UI_Graph_Change, 1, UI_Color_Orange, 27, 1, 3, 7300, 620, (float)ammo_count * 1000);
+//       Float_Draw(&AmmoCount, "amc", UI_Graph_Change, 1, UI_Color_Orange, 27, 1, 3, 7300, 620, (float)ammo_count *
+//       1000);
 //
 //       // 自瞄模式
 //       if ((communication.command_.ui.ui1 >> 1) & 0x01) {

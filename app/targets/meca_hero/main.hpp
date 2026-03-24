@@ -151,7 +151,7 @@ inline struct GlobalWarehouse {
 
     // pid_chassis_follow = new rm::modules::PID{19000, 5000, 210, 16000, 10000};
 
-    pid_chassis_follow_vel = new rm::modules::PID{23, 0, 0.21 , 16000, 0};
+    pid_chassis_follow_vel = new rm::modules::PID{23, 0, 0.21, 16000, 0};
     // pid_chassis_follow_vel = new rm::modules::PID{500, 0, 0, 8000, 0};
     // 底盘电机
     for (int i = 0; i < 4; i++) {
@@ -257,7 +257,7 @@ inline float vel_target = 0;
 inline float vel_real = 0;
 inline bool power_management_gimbal_last;
 inline bool power_management_shooter_last;
-inline int shooter_m=0;
+inline int shooter_m = 0;
 /*----------------------------------------------
  *执行函数
  */
