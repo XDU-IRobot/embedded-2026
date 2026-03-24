@@ -579,8 +579,7 @@ void CANAutoaimUpdate() {
     imu_count++;
   }
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
-                                                  globals->ahrs.euler_angle().roll, 1, 0, imu_count,
-                                                  11.8);
+                                                  globals->ahrs.euler_angle().roll, 1, 0, imu_count, 11.8);
   aimbot_pitch = globals->aimbot_can_communicator->pitch();
   aimbot_yaw = -globals->aimbot_can_communicator->yaw();
 }
