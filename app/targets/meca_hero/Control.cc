@@ -103,7 +103,7 @@ void MagazineControl() {
       //   target_magz += 3.141593 * 2;
       // }
 
-      counter = 840;
+      counter = 420;
       // magz_compensation = 0;
     }
   } else {
@@ -431,17 +431,13 @@ void ChassisPower() {
   }
 
   // 底盘随动
-  static bool follow_state = false;
+  static bool follow_state = true;
   if (globals->tc->key_once(device::VT03::KeyboardKey::kC)) {
-    if (follow_state) {
-      follow_state = false;
-    } else {
-      follow_state = true;
-    }
+    follow_state = !follow_state;
+  } else {
+    follow_state = false;
   }
-  if ((globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid ||
-       globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) &&
-      follow_state) {
+  if (follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(0.49, globals->gimbal_motor_yaw->pos(),
                                             0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
@@ -527,15 +523,18 @@ void ChassisPower() {
     (*globals->motor_states)[i].give_current = initial_currents[i];
     (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
   }
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
-      r_switch_position_last != rm::device::DR16::SwitchPosition::kUp) {
-    overpower_count = 252;
-  }
   float buffer_energy = globals->ref.data().buff.remaining_energy;
-  if (overpower_count > 0) {
+  static bool overpower = false;
+  if (r_switch_position_now == DR16::SwitchPosition::kUp) {
+    overpower = true;
+  } else if (globals->tc->key_once(VT03::KeyboardKey::kF)) {
+    overpower = !overpower;
+  } else {
+    overpower = false;
+  }
+  if (overpower) {
     // 超功率
     power_limit = 60000; // 随便给的
-    overpower_count--;
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
                     ? 50
@@ -544,7 +543,7 @@ void ChassisPower() {
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
   for (int i = 0; i < 4; i++) {
-    if (globals->ref.data().power_heat_data.buffer_energy >= 55) {
+    if (globals->ref.data().power_heat_data.buffer_energy >= 55 || globals->cms->cms_v >= 15) {
       globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     } else {
       globals->chassis_motor[i]->SetCurrent(
@@ -579,9 +578,9 @@ void CANAutoaimUpdate() {
     imu_count++;
   }
 
-
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
-                                                  globals->ahrs.euler_angle().roll, globals->ref.data().robot_status.robot_id, 0, imu_count,
+                                                  globals->ahrs.euler_angle().roll,
+                                                  globals->ref.data().robot_status.robot_id, 1, imu_count,
                                                   11.8);
   aimbot_pitch = globals->aimbot_can_communicator->pitch();
   aimbot_yaw = -globals->aimbot_can_communicator->yaw();
@@ -603,4 +602,9 @@ void VOFA() {
   swhell[5] = shooter_6;
   VOFA_Prepare_Package(swhell, shooter, 6);
   VOFA_Send_JustFloat_DMA(&huart1, shooter);
+}
+
+void SuperCupUpdate() {
+  globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
+  globals->cms->SendCapPower(globals->ref.data().robot_status.chassis_power_limit);
 }

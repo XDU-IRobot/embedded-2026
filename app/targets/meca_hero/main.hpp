@@ -12,6 +12,7 @@
 #include "aimbot_comm_can.hpp"
 #include "CustomClient.hpp"
 #include "State.hpp"
+#include "CMS.H"
 /*-------------------------------------------------
  *变量
  */
@@ -30,6 +31,7 @@ inline struct GlobalWarehouse {
   rm::device::BMI088 *imu{nullptr};  ///< BMI088 IMU
   rm::device::AimbotCanCommunicator *aimbot_can_communicator{nullptr};
   rm::device::CustomClient *custom_client{nullptr};
+  CMS *cms{nullptr};
   // 创建电机对象
   rm::device::M3508 *chassis_motor_1{nullptr};
   rm::device::M3508 *chassis_motor_2{nullptr};
@@ -91,6 +93,7 @@ inline struct GlobalWarehouse {
     uart1 = new rm::hal::Serial{huart1, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
     custom_client = new rm::device::CustomClient;
+    cms=new CMS{*can2};
     // 遥控
     rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
     tc = new rm::device::VT03;
@@ -238,8 +241,6 @@ inline float initial_currents[4];
 inline float output_currents[4];
 // 输出功率限额
 inline float power_limit = 50.0;
-// 超功率倒计时
-inline int overpower_count = 0;
 
 inline float gyro_z;
 
