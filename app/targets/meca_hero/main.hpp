@@ -93,7 +93,7 @@ inline struct GlobalWarehouse {
     uart1 = new rm::hal::Serial{huart1, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
     custom_client = new rm::device::CustomClient;
-    cms=new CMS{*can2};
+    cms = new CMS{*can2};
     // 遥控
     rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
     tc = new rm::device::VT03;
