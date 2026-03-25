@@ -81,12 +81,12 @@ void MagazineControl() {
          (globals->aimbot_can_communicator->aimbot_state() == 2 &&
           r_switch_position_now == rm::device::DR16::SwitchPosition::kUp)) &&
         globals->ref.data().robot_status.shooter_barrel_heat_limit >=
-        globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100
-      // &&
-      //   shooter_4 < V_shooter_2+e_area && shooter_4 > V_shooter_2-e_area && shooter_5 <  V_shooter_2+e_area &&
-      //   shooter_5 > V_shooter_2-e_area && shooter_6 <  V_shooter_2+e_area && shooter_6 > V_shooter_2-e_area &&
-      //   shooter_1 < V_chassis_1+e_area && shooter_1 > V_chassis_1-e_area && shooter_2 < V_chassis_1+e_area &&
-      //   shooter_2 > V_chassis_1-e_area && shooter_3 < V_chassis_1+e_area && shooter_3 > V_chassis_1-e_area
+            globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100
+        // &&
+        //   shooter_4 < V_shooter_2+e_area && shooter_4 > V_shooter_2-e_area && shooter_5 <  V_shooter_2+e_area &&
+        //   shooter_5 > V_shooter_2-e_area && shooter_6 <  V_shooter_2+e_area && shooter_6 > V_shooter_2-e_area &&
+        //   shooter_1 < V_chassis_1+e_area && shooter_1 > V_chassis_1-e_area && shooter_2 < V_chassis_1+e_area &&
+        //   shooter_2 > V_chassis_1-e_area && shooter_3 < V_chassis_1+e_area && shooter_3 > V_chassis_1-e_area
     ) {
       // 堵转检测
       if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
@@ -103,7 +103,7 @@ void MagazineControl() {
       //   target_magz += 3.141593 * 2;
       // }
 
-      counter = 420;
+      counter = 840;
       // magz_compensation = 0;
     }
   } else {
@@ -346,13 +346,13 @@ void GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
-        static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 +
-        static_cast<float>(globals->custom_client->mouse_x()) * 0.000015; // ≈0.003/per
+                      static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
+                      static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 +
+                      static_cast<float>(globals->custom_client->mouse_x()) * 0.000015;  // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
-        static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5 +
-        static_cast<float>(globals->custom_client->mouse_y()) * 0.000015; // 0.00033/per
+                        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
+                        static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5 +
+                        static_cast<float>(globals->custom_client->mouse_y()) * 0.000015;  // 0.00033/per
     aimbot_state_flag = 0;
   }
 
@@ -577,6 +577,7 @@ void CANAutoaimUpdate() {
   } else {
     imu_count++;
   }
+
 
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
                                                   globals->ahrs.euler_angle().roll,
