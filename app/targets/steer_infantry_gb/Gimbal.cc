@@ -9,8 +9,8 @@ void Gimbal::GimbalInit() {
 
 void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
-  a = gimbal->gimbal_yaw_target_;
-  b = gimbal->gimbal_pitch_target_;
+  a = globals->aimbot_communicator->yaw();
+  b = globals->aimbot_communicator->pitch();
   c = globals->ahrs.euler_angle().yaw;
   d = globals->ahrs.euler_angle().pitch;
 }
