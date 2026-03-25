@@ -126,16 +126,16 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{40, 2, 4, 15000, 100};
     pid_chassis_4 = new rm::modules::PID{40, 2, 4, 15000, 100};
 
-    pid_shooter_1 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};  // 20
-    pid_shooter_2 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};  // 20
-    pid_shooter_3 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
-    pid_shooter_4 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
-    pid_shooter_5 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
-    pid_shooter_6 = new rm::modules::PID{25, 0.001, 5, 10000, 1600};
+    pid_shooter_1 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};  // 20
+    pid_shooter_2 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};  // 20
+    pid_shooter_3 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
+    pid_shooter_4 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
+    pid_shooter_5 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
+    pid_shooter_6 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
 
     // pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
-    pid_magz_position = new rm::modules::PID{42, 0.001, 0, 20, 0};
-    pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.0, 7, 0};
+    pid_magz_position = new rm::modules::PID{42, 0.001, 0.56, 24, 0};
+    pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.00002, 7, 0};
 
     // pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
@@ -258,7 +258,7 @@ inline float vel_target = 0;
 inline float vel_real = 0;
 inline bool power_management_gimbal_last;
 inline bool power_management_shooter_last;
-inline int shooter_m = 0;
+inline int16_t shooter_m = 0;
 /*----------------------------------------------
  *执行函数
  */
@@ -281,6 +281,8 @@ void CANAutoaimUpdate();
 void CustomClientUpdate();
 // VOFA监测
 void VOFA();
+// 超级电容
+void SuperCupUpdate();
 // 随动监测
 inline int follow;
 inline bool cc_mouse_l;

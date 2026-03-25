@@ -434,8 +434,6 @@ void ChassisPower() {
   static bool follow_state = true;
   if (globals->tc->key_once(device::VT03::KeyboardKey::kC)) {
     follow_state = !follow_state;
-  } else {
-    follow_state = false;
   }
   if (follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
@@ -529,8 +527,6 @@ void ChassisPower() {
     overpower = true;
   } else if (globals->tc->key_once(VT03::KeyboardKey::kF)) {
     overpower = !overpower;
-  } else {
-    overpower = false;
   }
   if (overpower) {
     // 超功率
