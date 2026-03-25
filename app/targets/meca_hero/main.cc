@@ -16,7 +16,7 @@ int autoaim_update_count = 0;
 uint32_t System_time;
 int power_management_gimbal_delay = 0;
 int power_management_shooter_delay = 0;
-int time_conut=0;
+int time_conut = 0;
 // void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 //   if (huart->Instance == USART1) {
 //     // 1. 这一步至关重要：手动添加字符串结束符
@@ -55,28 +55,26 @@ void G_average() {
 }
 
 void SubLoop420hz() {
-  if (time_conut%2==0) {
-
+  if (time_conut % 2 == 0) {
   }
 }
 
 void SubLoop93hz() {
-  if (time_conut%9==0) {
+  if (time_conut % 9 == 0) {
     SuperCupUpdate();
   }
 }
 
 void SubLoop10hz() {
-  if (time_conut%84==0) {
-
+  if (time_conut % 84 == 0) {
   }
 }
 
 // 定频循环
 void MainLoop() {
   time_conut++;
-  if (time_conut>=10000){
-    time_conut=0;
+  if (time_conut >= 10000) {
+    time_conut = 0;
   }
   heat_limit = globals->ref.data().robot_status.shooter_barrel_heat_limit;
   heat_buffer = globals->ref.data().power_heat_data.shooter_42mm_barrel_heat;
@@ -188,4 +186,3 @@ extern "C" [[noreturn]] void AppMain(void) {
     // ui_update_g();
   }
 }
-
