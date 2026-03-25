@@ -202,7 +202,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4500;
-inline rm::i16 V_shooter_2 = -3820;  // 12m/s
+inline rm::i16 V_shooter_2 = -3700;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测
@@ -282,7 +282,7 @@ void CustomClientUpdate();
 // VOFA监测
 void VOFA();
 // 超级电容
-void SuperCupUpdate();
+//void SuperCupUpdate();
 // 随动监测
 inline int follow;
 inline bool cc_mouse_l;
@@ -298,4 +298,6 @@ inline int aimbot_target;
 inline int aimbot_state;
 inline int heat_limit;
 inline int16_t heat_buffer;
+inline int16_t cms_v{0};
+inline int16_t cms_i{0};
 #endif  // BOARDC_MAIN_HPP

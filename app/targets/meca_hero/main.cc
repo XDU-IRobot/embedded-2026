@@ -61,12 +61,15 @@ void SubLoop420hz() {
 
 void SubLoop93hz() {
   if (time_conut % 9 == 0) {
-    SuperCupUpdate();
+    globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
   }
 }
 
 void SubLoop10hz() {
   if (time_conut % 84 == 0) {
+    globals->cms->SendCapPower(globals->ref.data().robot_status.chassis_power_limit);
+    cms_v=globals->cms->cms_v;
+    cms_i=globals->cms->cms_i;
   }
 }
 
