@@ -293,7 +293,7 @@ void GlobalWarehouse::Music() {
 void GlobalWarehouse::SubLoop500Hz() {
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
-                                                globals->imu->gyro_z() + 0.0015f, -globals->imu->accel_y(),
+                                                globals->imu->gyro_z() + 0.0001f, -globals->imu->accel_y(),
                                                 globals->imu->accel_x(), globals->imu->accel_z()});
   // 硬触发
   if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
