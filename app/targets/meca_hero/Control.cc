@@ -80,8 +80,7 @@ void MagazineControl() {
           r_switch_position_now == rm::device::DR16::SwitchPosition::kUp)) &&
         (globals->ref.data().robot_status.shooter_barrel_heat_limit >=
          globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100) &&
-        (shooter_1 < -3000 && shooter_4 < -3000)
-    ) {
+        (shooter_1 < -3000 && shooter_4 < -3000)) {
       target_magz = next_target_magz;
       counter = 600;
     }
@@ -273,8 +272,7 @@ void GimbalControl() {
   // IMU解算
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
-                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) -
-                                                         0.00425
+                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) - 0.00425
                                                 // - average1
                                                 // - globals->ahrs.euler_angle().pitch * average1 * 10 //2°
                                                 ,
@@ -327,13 +325,13 @@ void GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
-        static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 +
-        static_cast<float>(globals->custom_client->mouse_x()) * 0.000015; // ≈0.003/per
+                      static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
+                      static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 +
+                      static_cast<float>(globals->custom_client->mouse_x()) * 0.000015;  // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
-        static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5 +
-        static_cast<float>(globals->custom_client->mouse_y()) * 0.000015; // 0.00033/per
+                        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
+                        static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5 +
+                        static_cast<float>(globals->custom_client->mouse_y()) * 0.000015;  // 0.00033/per
     aimbot_state_flag = 0;
   }
 
@@ -419,7 +417,7 @@ void ChassisPower() {
   if (follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(0.49, globals->gimbal_motor_yaw->pos(),
-                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+                                            0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.7);
@@ -513,11 +511,11 @@ void ChassisPower() {
   }
   if (overpower) {
     // 超功率
-    power_limit = 60000; // 随便给的
+    power_limit = 60000;  // 随便给的
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                    ? 50
-                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                      ? 50
+                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
@@ -559,15 +557,12 @@ void CANAutoaimUpdate() {
 
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
                                                   globals->ahrs.euler_angle().roll,
-                                                  globals->ref.data().robot_status.robot_id, 1, imu_count,
-                                                  11.8);
+                                                  globals->ref.data().robot_status.robot_id, 1, imu_count, 11.8);
   aimbot_pitch = -globals->aimbot_can_communicator->pitch() / 57.3;
   aimbot_yaw = -globals->aimbot_can_communicator->yaw() / 57.3;
 }
 
-void CustomClientUpdate() {
-  globals->custom_client->Unpack(UserRxBuf, UserRxLen);
-}
+void CustomClientUpdate() { globals->custom_client->Unpack(UserRxBuf, UserRxLen); }
 
 Vofa_TxFrame shooter;
 
