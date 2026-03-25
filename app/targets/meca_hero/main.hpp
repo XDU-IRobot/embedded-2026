@@ -135,7 +135,7 @@ inline struct GlobalWarehouse {
 
     // pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
     pid_magz_position = new rm::modules::PID{42, 0.001, 0.56, 24, 0};
-    pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.00002, 7, 0};
+    pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.00002, 8, 0};
 
     // pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
@@ -187,7 +187,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = -0.244346 * 0.5;  //-6°
+inline float next_target_magz = -0.244346 * 0.62;  //-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -201,8 +201,8 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -4600;
-inline rm::i16 V_shooter_2 = -4120;  // 12m/s
+inline rm::i16 V_shooter_1 = -4300;
+inline rm::i16 V_shooter_2 = -3820;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测

@@ -72,40 +72,29 @@ void MagazineControl() {
   // } else {
   //   magz_compensation_count = 0;
   // }
-
   // 按下扳机(延时1s)
-
   if (counter == 0) {
     if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() ||
          globals->tc->data().mouse_button_left || globals->custom_client->mouse_left() ||
          (globals->aimbot_can_communicator->aimbot_state() == 2 &&
           r_switch_position_now == rm::device::DR16::SwitchPosition::kUp)) &&
-        globals->ref.data().robot_status.shooter_barrel_heat_limit >=
-            globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100
-        // &&
-        //   shooter_4 < V_shooter_2+e_area && shooter_4 > V_shooter_2-e_area && shooter_5 <  V_shooter_2+e_area &&
-        //   shooter_5 > V_shooter_2-e_area && shooter_6 <  V_shooter_2+e_area && shooter_6 > V_shooter_2-e_area &&
-        //   shooter_1 < V_chassis_1+e_area && shooter_1 > V_chassis_1-e_area && shooter_2 < V_chassis_1+e_area &&
-        //   shooter_2 > V_chassis_1-e_area && shooter_3 < V_chassis_1+e_area && shooter_3 > V_chassis_1-e_area
+        (globals->ref.data().robot_status.shooter_barrel_heat_limit >=
+         globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100) &&
+        (shooter_1 < -3000 && shooter_4 < -3000)
     ) {
-      // 堵转检测
-      if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
-        target_magz = globals->magazine_motor->pos() + 3.141593 / 90;
-      } else {
-        target_magz = next_target_magz;
-        next_target_magz -= 3.141593 / 3;
-        if (next_target_magz < -3.141593) {
-          next_target_magz += 2 * 3.141593;
-        }
-      }
-      // target_magz -= 1.0472 + magz_compensation /*（π/3）*/;
-      // if (target_magz <= -3.141593 /*（π）*/) {
-      //   target_magz += 3.141593 * 2;
-      // }
-
-      counter = 840;
-      // magz_compensation = 0;
+      target_magz = next_target_magz;
+      counter = 600;
     }
+  } else if (counter == 100) {
+    if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
+      target_magz = globals->magazine_motor->pos() + 3.141593 / 90;
+    } else {
+      next_target_magz -= 3.141593 / 3;
+      if (next_target_magz < -3.141593) {
+        next_target_magz += 2 * 3.141593;
+      }
+    }
+    counter--;
   } else {
     counter--;
   }
@@ -284,7 +273,8 @@ void GimbalControl() {
   // IMU解算
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
-                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) - 0.00425
+                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) -
+                                                         0.00425
                                                 // - average1
                                                 // - globals->ahrs.euler_angle().pitch * average1 * 10 //2°
                                                 ,
@@ -327,32 +317,23 @@ void GimbalControl() {
         l_switch_position_now != device::DR16::SwitchPosition::kUp) ||
        r_switch_position_now == device::DR16::SwitchPosition::kUp || globals->rc->mouse_button_right() ||
        globals->tc->data().mouse_button_right || globals->custom_client->mouse_right())) {
-    if (-globals->aimbot_can_communicator->yaw() - target_pos_yaw > 0.05) {
-      target_pos_yaw += 0.05;
-    } else if (-globals->aimbot_can_communicator->yaw() - target_pos_yaw < -0.05) {
-      target_pos_yaw -= 0.05;
-    } else {
-      target_pos_yaw = -globals->aimbot_can_communicator->yaw();
-    }
+    target_pos_yaw = -globals->aimbot_can_communicator->yaw() / 57.3;
+
     //-aimbot.USB_Rx.YawRelativeAngle;usb
-    if (-globals->aimbot_can_communicator->pitch() - target_pos_pitch > 0.05) {
-      target_pos_pitch += 0.05;
-    } else if (-globals->aimbot_can_communicator->pitch() - target_pos_pitch < -0.05) {
-      target_pos_pitch -= 0.05;
-    } else {
-      target_pos_pitch = -globals->aimbot_can_communicator->pitch();
-    }
+
+    target_pos_pitch = -globals->aimbot_can_communicator->pitch() / 57.3;
+
     //-aimbot.USB_Rx.PitchRelativeAngle;usb
     aimbot_state_flag = 0;
   } else {
     target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-                      static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
-                      static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 +
-                      static_cast<float>(globals->custom_client->mouse_x()) * 0.000015;  // ≈0.003/per
+        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3 +
+        static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 +
+        static_cast<float>(globals->custom_client->mouse_x()) * 0.000015; // ≈0.003/per
     target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-                        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
-                        static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5 +
-                        static_cast<float>(globals->custom_client->mouse_y()) * 0.000015;  // 0.00033/per
+        static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3) +
+        static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5 +
+        static_cast<float>(globals->custom_client->mouse_y()) * 0.000015; // 0.00033/per
     aimbot_state_flag = 0;
   }
 
@@ -431,7 +412,7 @@ void ChassisPower() {
   }
 
   // 底盘随动
-  static bool follow_state = true;
+  static bool follow_state = false;
   if (globals->tc->key_once(device::VT03::KeyboardKey::kC)) {
     follow_state = !follow_state;
   }
@@ -525,8 +506,10 @@ void ChassisPower() {
   static bool overpower = false;
   if (r_switch_position_now == DR16::SwitchPosition::kUp) {
     overpower = true;
-  } else if (globals->tc->key_once(VT03::KeyboardKey::kF)) {
-    overpower = !overpower;
+  } else if (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift)) {
+    overpower = true;
+  } else {
+    overpower = false;
   }
   if (overpower) {
     // 超功率
@@ -574,16 +557,17 @@ void CANAutoaimUpdate() {
     imu_count++;
   }
 
-
   globals->aimbot_can_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
                                                   globals->ahrs.euler_angle().roll,
                                                   globals->ref.data().robot_status.robot_id, 1, imu_count,
                                                   11.8);
-  aimbot_pitch = globals->aimbot_can_communicator->pitch();
-  aimbot_yaw = -globals->aimbot_can_communicator->yaw();
+  aimbot_pitch = -globals->aimbot_can_communicator->pitch() / 57.3;
+  aimbot_yaw = -globals->aimbot_can_communicator->yaw() / 57.3;
 }
 
-void CustomClientUpdate() { globals->custom_client->Unpack(UserRxBuf, UserRxLen); }
+void CustomClientUpdate() {
+  globals->custom_client->Unpack(UserRxBuf, UserRxLen);
+}
 
 Vofa_TxFrame shooter;
 
