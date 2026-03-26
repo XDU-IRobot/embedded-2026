@@ -69,7 +69,7 @@ inline struct GlobalWarehouse {
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};                    ///< 姿态解算器
   QuadSteeringChassis chassis_controller{0.0f, 0.45368f};  ///< 四轮转向底盘控制器
-  rm::device::GkSupercap::TxData tx_data{};
+  rm::device::GkSupercap::TxData super_cap_tx{};
 
   uint8_t time{};                    // 时间
   u_int16_t hurt_time{};             // 受伤小陀螺倒计时

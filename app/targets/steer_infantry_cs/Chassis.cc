@@ -3,6 +3,7 @@
 void Chassis::ChassisInit() {
   chassis->chassis_follow_pid_.SetCircular(true).SetCircularCycle(M_PI * 2.0f);
   chassis->chassis_follow_pid_.SetKp(15000.0f).SetKi(0.0f).SetKd(900000.0f).SetMaxOut(8000.0f).SetMaxIout(0.0f);
+  globals->super_cap_tx.enable_dcdc = true;
 }
 
 void Chassis::ChassisTask() {
@@ -176,13 +177,17 @@ void Chassis::SpeedModeChange() {
 
 void Chassis::PowerLimitLoop() {
   // 缓冲能量过低判断
-  if (globals->referee_data->data().power_heat_data.buffer_energy < 10) {
+  if (globals->referee_data->data().power_heat_data.buffer_energy < 20) {
     chassis->k_speed_power_limit_ = 0.0f;
-  } else if (globals->referee_data->data().power_heat_data.buffer_energy < 60) {
+    globals->super_cap_tx.feedback_referee_power_limit = 0;
+  } else if (globals->referee_data->data().power_heat_data.buffer_energy < 50) {
     chassis->k_speed_power_limit_ =
         static_cast<f32>(pow(static_cast<f32>(globals->referee_data->data().power_heat_data.buffer_energy) / 60.0f, 2));
+    globals->super_cap_tx.feedback_referee_power_limit =
+        globals->referee_data->data().robot_status.chassis_power_limit / 2;
   } else {
     chassis->k_speed_power_limit_ = 1.0f;
+    globals->super_cap_tx.feedback_referee_power_limit = globals->referee_data->data().robot_status.chassis_power_limit;
   }
 }
 
