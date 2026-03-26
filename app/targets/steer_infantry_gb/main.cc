@@ -203,8 +203,11 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
   }
   // 高速模式
-  if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01
-                                 : globals->rc->key(rm::device::DR16::Key::kC)) {
+  if ((globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid &&
+       globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) ||
+              globals->image_update_flag
+          ? globals->image_data->data().keyboard_key >> 13 & 0x01
+          : globals->rc->key(rm::device::DR16::Key::kC)) {
     globals->speed_change_flag = true;
   } else if (globals->speed_change_flag == 1) {
     globals->speed_change_flag = false;
