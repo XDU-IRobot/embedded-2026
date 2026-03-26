@@ -47,6 +47,7 @@ void GlobalWarehouse::Init() {
   can2 = new rm::hal::Can{hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
+  super_cap = new rm::device::GkSupercap{*can1};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
   rx_referee = new rm::device::RxReferee{*referee_uart};
@@ -203,15 +204,21 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
   }
   // 高速模式
-  if ((globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid &&
-       globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) ||
-              globals->image_update_flag
-          ? globals->image_data->data().keyboard_key >> 13 & 0x01
-          : globals->rc->key(rm::device::DR16::Key::kC)) {
-    globals->speed_change_flag = true;
-  } else if (globals->speed_change_flag == 1) {
-    globals->speed_change_flag = false;
-    globals->chassis_state ^= static_cast<u8>(1 << 3);
+  if (globals->super_cap->CapEnergy() <= 80 || globals->super_cap->ErrorCode()) {
+    globals->chassis_state &= ~static_cast<u8>(1 << 3);
+  } else if (globals->StateMachine_ == kMatch) {
+    if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01
+                                   : globals->rc->key(rm::device::DR16::Key::kC)) {
+      globals->speed_change_flag = true;
+    } else if (globals->speed_change_flag == 1) {
+      globals->speed_change_flag = false;
+      globals->chassis_state ^= static_cast<u8>(1 << 3);
+    }
+  } else if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid &&
+             globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
+    globals->chassis_state |= static_cast<u8>(1 << 3);
+  } else {
+    globals->chassis_state &= ~static_cast<u8>(1 << 3);
   }
   // 打符模式切换
   if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 9 & 0x01

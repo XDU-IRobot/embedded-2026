@@ -146,6 +146,9 @@ void Gimbal::DaMiaoMotorEnable() {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     gimbal->DM_enable_flag_ = true;
   }
+  if (globals->pitch_motor->status() != rm::device::DmMotorStatus::kEnable) {
+    gimbal->DM_enable_flag_;
+  }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
