@@ -18,6 +18,18 @@ uint32_t System_time;
 int power_management_gimbal_delay = 0;
 int power_management_shooter_delay = 0;
 int time_conut = 0;
+
+Queue_t UI_send_buffer[2];
+u32 irq;
+u32 tmp_send[7];
+
+extern u16 robot_id;
+extern u8 len;
+extern u8 Info_Arr[128];
+
+void UiRefresh();
+void UiSend();
+void UI_send(rm::hal::Serial *msg, u8 *data, u8 data_len);
 // void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 //   if (huart->Instance == USART1) {
 //     // 1. 这一步至关重要：手动添加字符串结束符
@@ -120,12 +132,18 @@ void SubLoop93hz() {
   }
 }
 
+void SubLoop40hz() {
+  if (time_conut % 21 == 0) {
+    UiSend();
+  }
+}
+
 void SubLoop10hz() {
   if (time_conut % 84 == 0) {
     globals->cms->SendCapPower(globals->ref.data().robot_status.chassis_power_limit);
     cms_v = globals->cms->cms_v;
     cms_i = globals->cms->cms_i;
-    // ui_update_g();
+    UiRefresh();
   }
 }
 
@@ -138,6 +156,7 @@ void MainLoop() {
   SubLoop840hz();
   SubLoop420hz();
   SubLoop93hz();
+  SubLoop40hz();
   SubLoop10hz();
 }
 
@@ -176,6 +195,9 @@ extern "C" [[noreturn]] void AppMain(void) {
   mainloop_1000hz.Start(); // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
 
+  // 初始化队列
+  QueueInit(&UI_send_buffer[0]);
+  QueueInit(&UI_send_buffer[1]);
   // ui_self_id = globals->ref.data().robot_status.robot_id;
   // ui_init_g();
   for (;;) {
@@ -183,3 +205,124 @@ extern "C" [[noreturn]] void AppMain(void) {
     // ui_update_g();
   }
 }
+
+void UiRefresh() {
+  // 接收机器人ID
+  robot_id = globals->ref->data().robot_status.robot_id;
+  if (globals->tc->data().keyboard_key & static_cast<int16_t>(device::VT03::KeyboardKey::kR) || globals->rc->key(
+          device::DR16::Key::kR)
+  )
+  {
+    Line_Draw(&image_x, "xxx", UI_Graph_ADD, 0, UI_Color_Orange, 2, 918, 515, 978, 515);
+    Line_Draw(&image_y, "yyy", UI_Graph_ADD, 0, UI_Color_Orange, 2, 948, 465, 948, 565);
+
+    Float_Draw(&super_cap_energy, "cms", UI_Graph_ADD, 2, UI_Color_Green, 27, 2, 5, 900, 270,
+               static_cast<f32>(globals->supercap->voltage()) * 1000.0f);
+    Float_Draw(&ammo_speed_jugde, "asj", UI_Graph_ADD, 2, UI_Color_White, 25, 2, 2, 360, 850,
+               static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
+
+
+    irq = (u32)&aimbot;
+    EnQueue(&UI_send_buffer[1], (u8 *)&irq, 4);
+    irq = (u32)&mode;
+    EnQueue(&UI_send_buffer[1], (u8 *)&irq, 4);
+
+    irq = (u32)&image_x;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&image_y;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+
+    irq = (u32)&super_cap_energy;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&ammo_speed_jugde;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+
+    irq = (u32)&get_target_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&suggest_fire_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&chassis_mode_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&buff_mode_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&speed_mode_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+  }
+  else
+  {
+    // 电容电压
+    if (chassis->speed_mode_ == kHighSpeed) {
+      Float_Draw(&super_cap_energy, "cms", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 5, 900, 270,
+                 static_cast<f32>(globals->supercap->voltage()) * 1000.0f);
+    } else {
+      Float_Draw(&super_cap_energy, "cms", UI_Graph_Change, 2, UI_Color_Main, 27, 1, 5, 900, 270,
+                 static_cast<f32>(globals->supercap->voltage()) * 1000.0f);
+    }
+    // 弹速调节
+    if (globals->gimbal_communicator->aim_speed_change() > 0) {
+      Float_Draw(&ammo_speed_jugde, "asj", UI_Graph_Change, 2, UI_Color_Green, 25, 2, 2, 360, 850,
+                 static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
+    } else if (globals->gimbal_communicator->aim_speed_change() < 0) {
+      Float_Draw(&ammo_speed_jugde, "asj", UI_Graph_Change, 2, UI_Color_Pink, 25, 2, 2, 360, 850,
+                 static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
+    } else {
+      Float_Draw(&ammo_speed_jugde, "asj", UI_Graph_Change, 2, UI_Color_White, 25, 2, 2, 360, 850,
+                 static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
+    }
+
+
+
+
+
+    irq = (u32)&super_cap_energy;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&ammo_speed_jugde;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&get_target_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&suggest_fire_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&chassis_mode_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&buff_mode_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&speed_mode_flag;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+  }
+}
+
+void UiSend() {
+  if (!IsEmpty(&UI_send_buffer[0]) && globals->ui_send_choice) {
+    if (UI_send_buffer[0].counter / 4 >= 7) {
+      for (u8 i = 0; i < 7; i++) {
+        UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[i]);
+      }
+      UI_ReFresh(7, *(Graph_Data *)tmp_send[0], *(Graph_Data *)tmp_send[1], *(Graph_Data *)tmp_send[2],
+                 *(Graph_Data *)tmp_send[3], *(Graph_Data *)tmp_send[4], *(Graph_Data *)tmp_send[5],
+                 *(Graph_Data *)tmp_send[6]);
+    } else if (UI_send_buffer[0].counter / 4 >= 5) {
+      for (u8 i = 0; i < 5; i++) {
+        UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[i]);
+      }
+      UI_ReFresh(5, *(Graph_Data *)tmp_send[0], *(Graph_Data *)tmp_send[1], *(Graph_Data *)tmp_send[2],
+                 *(Graph_Data *)tmp_send[3], *(Graph_Data *)tmp_send[4]);
+    } else if (UI_send_buffer[0].counter / 4 >= 2) {
+      for (u8 i = 0; i < 2; i++) {
+        UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[i]);
+      }
+      UI_ReFresh(2, *(Graph_Data *)tmp_send[0], *(Graph_Data *)tmp_send[1]);
+    } else {
+      UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[0]);
+      UI_ReFresh(1, *(Graph_Data *)tmp_send[0]);
+    }
+    UI_send(globals->referee_uart, Info_Arr, len);
+  }
+  if (!IsEmpty(&UI_send_buffer[1]) && !globals->ui_send_choice) {
+    UI_Pop(&UI_send_buffer[1], (u8 *)&tmp_send[0]);
+    Char_ReFresh(*(String_Data *)tmp_send[0]);
+    UI_send(globals->referee_uart, Info_Arr, len);
+  }
+  globals->ui_send_choice ^= true;
+}
+
+void UI_send(rm::hal::Serial *msg, u8 *data, u8 data_len) { msg->Write(data, data_len); }
