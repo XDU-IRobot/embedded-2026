@@ -10,9 +10,9 @@ void Chassis::ChassisTask() {
 }
 
 void Chassis::ChassisStateUpdate() {
-  // if (referee_data_buffer.data().robot_status.power_management_chassis_output == 0) {
-  //    chassis->ChassisMove_ = UNABLE;
-  // } else {
+  if (globals->referee_data->data().robot_status.power_management_chassis_output == 0) {
+     chassis->ChassisMove_ = kUnable;
+  } else {
   if ((globals->gimbal_communicator->chassis_mode() >> 0 & 0x01) == 1) {
     if ((globals->gimbal_communicator->chassis_mode() >> 3 & 0x01) == 1) {
       chassis->high_speed_mode_flag = true;
@@ -40,7 +40,7 @@ void Chassis::ChassisStateUpdate() {
     chassis->ChassisMove_ = kNoForce;
     chassis->ChassisDisableUpdate();
   }
-  // }
+  }
 }
 
 void Chassis::ChassisRCDataUpdate() {
