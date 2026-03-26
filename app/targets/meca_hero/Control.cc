@@ -83,11 +83,11 @@ void MagazineControl() {
          globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100) &&
         (shooter_1 < -3000 && shooter_4 < -3000)) {
       target_magz = next_target_magz;
-      counter = 600;
+      counter = 300;
     }
   } else if (counter == 100) {
     if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
-      target_magz = globals->magazine_motor->pos() + 3.141593 / 45;
+      target_magz = globals->magazine_motor->pos() + 3.141593 / 18;
     } else {
       next_target_magz -= 3.141593 / 3;
       if (next_target_magz < -3.141593) {
