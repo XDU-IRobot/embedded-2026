@@ -44,7 +44,7 @@ inline struct GlobalWarehouse {
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                                        ///< CAN 总线接口
   rm::device::GimbalCommunicator *gimbal_communicator{nullptr};                       ///< CAN 通信器
-  rm::device::GkSupercap *super_cap{nullptr};                                            ///< 港科超级电容
+  rm::device::GkSupercap *super_cap{nullptr};                                         ///< 港科超级电容
   rm::hal::Serial *dbus{nullptr};                                                     ///< 遥控器串口接口
   rm::device::BMI088 *imu{nullptr};                                                   ///< IMU
   rm::hal::Serial *referee_uart{nullptr};                                             ///< 裁判系统串口接口
