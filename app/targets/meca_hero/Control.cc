@@ -415,7 +415,7 @@ void GimbalControl() {
 void ChassisPower() {
   // 失能
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
-      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown) {
+      r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown||(!globals->ref.data().robot_status.power_management_chassis_output)) {
     for (int i = 0; i < 4; i++) {
       globals->chassis_motor[i]->SetCurrent(0);
     }

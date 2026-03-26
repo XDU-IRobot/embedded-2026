@@ -54,31 +54,7 @@ void G_average() {
   }
 }
 
-void SubLoop420hz() {
-  if (time_conut % 2 == 0) {
-  }
-}
-
-void SubLoop93hz() {
-  if (time_conut % 9 == 0) {
-    globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
-  }
-}
-
-void SubLoop10hz() {
-  if (time_conut % 84 == 0) {
-    globals->cms->SendCapPower(globals->ref.data().robot_status.chassis_power_limit);
-    cms_v=globals->cms->cms_v;
-    cms_i=globals->cms->cms_i;
-  }
-}
-
-// 定频循环
-void MainLoop() {
-  time_conut++;
-  if (time_conut >= 10000) {
-    time_conut = 0;
-  }
+void SubLoop840hz() {
   heat_limit = globals->ref.data().robot_status.shooter_barrel_heat_limit;
   heat_buffer = globals->ref.data().power_heat_data.shooter_42mm_barrel_heat;
   if (globals->ref.data().robot_status.power_management_gimbal_output == 1 && power_management_gimbal_last == 0) {
@@ -115,10 +91,10 @@ void MainLoop() {
   GimbalControl();
   // 发送DjiCAN信号
   rm::device::DjiMotorBase::SendCommand();
-  SubLoop420hz();
-  SubLoop93hz();
-  SubLoop10hz();
-  if (autoaim_update_count == 1) {
+}
+
+void SubLoop420hz() {
+  if (time_conut % 2 == 0) {
     CANAutoaimUpdate();
     aimbot_target = globals->aimbot_can_communicator->aimbot_target();
     aimbot_state = globals->aimbot_can_communicator->aimbot_state();
@@ -135,16 +111,34 @@ void MainLoop() {
     key_e = globals->custom_client->key(rm::device::DR16::Key::kE);
     // VOFA();
     autoaim_update_count = 0;
-  } else {
-    autoaim_update_count++;
   }
-  static int count1;
-  if (count1 < 83) {
-    count1++;
-  } else {
-    count1 = 0;
+}
+
+void SubLoop93hz() {
+  if (time_conut % 9 == 0) {
+    globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
+  }
+}
+
+void SubLoop10hz() {
+  if (time_conut % 84 == 0) {
+    globals->cms->SendCapPower(globals->ref.data().robot_status.chassis_power_limit);
+    cms_v = globals->cms->cms_v;
+    cms_i = globals->cms->cms_i;
     // ui_update_g();
   }
+}
+
+// 定频循环
+void MainLoop() {
+  time_conut++;
+  if (time_conut >= 10000) {
+    time_conut = 0;
+  }
+  SubLoop840hz();
+  SubLoop420hz();
+  SubLoop93hz();
+  SubLoop10hz();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
@@ -176,10 +170,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>()  //
+      etl::delegate<void()>::create<MainLoop>() //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1);  // 84MHz / 100 / 1000 = 840Hz
-  mainloop_1000hz.Start();                                   // 启动定时器
+  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1); // 84MHz / 100 / 1000 = 840Hz
+  mainloop_1000hz.Start(); // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
 
   // ui_self_id = globals->ref.data().robot_status.robot_id;
