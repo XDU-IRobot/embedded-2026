@@ -27,6 +27,18 @@ extern u16 robot_id;
 extern u8 len;
 extern u8 Info_Arr[128];
 
+// 瞄准参考线
+Graph_Data  image_y;
+
+// 飞坡、前进参考线
+Graph_Data rfd1, rfd2, rfd3, rfd4;
+
+// IMU
+Float_Data Pitch;
+
+// 弹速偏置
+Float_Data AmmoSpeed;
+
 void UiRefresh();
 void UiSend();
 void UI_send(rm::hal::Serial *msg, u8 *data, u8 data_len);
@@ -208,7 +220,7 @@ extern "C" [[noreturn]] void AppMain(void) {
 
 void UiRefresh() {
   // 接收机器人ID
-  robot_id = globals->ref->data().robot_status.robot_id;
+  robot_id = globals->ref.data().robot_status.robot_id;
   if (globals->tc->data().keyboard_key & static_cast<int16_t>(device::VT03::KeyboardKey::kR) || globals->rc->key(
           device::DR16::Key::kR)
   )
