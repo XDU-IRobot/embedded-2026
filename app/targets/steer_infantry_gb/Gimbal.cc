@@ -141,13 +141,17 @@ void Gimbal::GimbalDisableUpdate() {
 }
 
 void Gimbal::DaMiaoMotorEnable() {
+  if (globals->pitch_motor->status() != 0x1F && globals->pitch_motor->status() != 0x0F) {
+    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+  } else if (globals->pitch_motor->status() == 0x0F) {
+    gimbal->DM_enable_flag_ = false;
+  } else if (globals->pitch_motor->status() == 0x1F) {
+    gimbal->DM_enable_flag_ = true;
+  }
   if (gimbal->DM_enable_flag_ == false) {
     // 使达妙电机使能
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     gimbal->DM_enable_flag_ = true;
-  }
-  if (globals->pitch_motor->status() != rm::device::DmMotorStatus::kEnable) {
-    gimbal->DM_enable_flag_;
   }
 }
 
