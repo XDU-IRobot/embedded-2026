@@ -90,8 +90,8 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(1000.0f).SetKi(0.0f).SetKd(24000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(300.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(800.0f).SetKi(0.0f).SetKd(24000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKi(0.0f).SetKd(1300.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
@@ -191,9 +191,9 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 0);
   }
   // 小陀螺
-  if ((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) || globals->image_update_flag
+  if ((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) || (globals->image_update_flag
           ? globals->image_data->data().keyboard_key >> 4 & 0x01
-          : globals->rc->key(rm::device::DR16::Key::kShift)) {
+          : globals->rc->key(rm::device::DR16::Key::kShift))) {
     globals->chassis_state |= static_cast<u8>(1 << 1);
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
   } else if (globals->StateMachine_ == kTest && globals->rc->dial() <= -650) {
