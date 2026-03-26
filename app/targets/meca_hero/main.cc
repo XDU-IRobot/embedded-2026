@@ -11,8 +11,7 @@ rm::f32 pitch;
 rm::f32 yaw;
 
 float sum = 0;
-int count = 0;
-int autoaim_update_count = 0;
+int gyro_count = 0;
 uint32_t System_time;
 int power_management_gimbal_delay = 0;
 int power_management_shooter_delay = 0;
@@ -45,12 +44,12 @@ void G_average() {
   if (globals->gyro_z_filter.apply(globals->imu->gyro_z()) < 0.01 /*- 0.03 * eulerangle_pitch / 0.6644*/ &&
       globals->gyro_z_filter.apply(globals->imu->gyro_z()) > -0.01 /*- 0.03 * eulerangle_pitch / 0.6644*/) {
     sum += globals->imu->gyro_z();
-    count++;
+    gyro_count++;
   }
-  if (count == 100) {
+  if (gyro_count == 100) {
     average1 = sum / 100;
     sum = 0;
-    count = 0;
+    gyro_count = 0;
   }
 }
 
@@ -110,7 +109,6 @@ void SubLoop420hz() {
     key_d = globals->custom_client->key(rm::device::DR16::Key::kD);
     key_e = globals->custom_client->key(rm::device::DR16::Key::kE);
     // VOFA();
-    autoaim_update_count = 0;
   }
 }
 
