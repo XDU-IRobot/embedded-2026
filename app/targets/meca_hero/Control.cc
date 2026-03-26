@@ -329,19 +329,19 @@ void GimbalControl() {
     // tc->rc->cc
     if (globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-                        static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8;
+          static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8;
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-                          static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5;
+          static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5;
     } else if (globals->rc->mouse_x() != 0 || globals->rc->mouse_y() != 0) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-                        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3;  // ≈0.003/per
+          static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3; // ≈0.003/per
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-                          static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3);
+          static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3);
     } else {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-                        static_cast<float>(globals->custom_client->mouse_x()) * 0.000015;  // ≈0.003/per
+          static_cast<float>(globals->custom_client->mouse_x()) * 0.000015; // ≈0.003/per
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-                          static_cast<float>(globals->custom_client->mouse_y()) * 0.000015;  // 0.00033/per
+          static_cast<float>(globals->custom_client->mouse_y()) * 0.000015; // 0.00033/per
     }
 
     aimbot_state_flag = 0;
@@ -430,7 +430,7 @@ void ChassisPower() {
   if (follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(0.49, globals->gimbal_motor_yaw->pos(),
-                                            0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
+                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.7);
@@ -526,22 +526,40 @@ void ChassisPower() {
   }
   if (overpower) {
     // 超功率
-    power_limit = 60000;  // 随便给的
+    power_limit = 180; // 随便给的
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                      ? 50
-                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                    ? 50
+                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
-  for (int i = 0; i < 4; i++) {
-    if (globals->ref.data().power_heat_data.buffer_energy >= 55 || globals->cms->cms_v >= 15) {
-      globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
+
+  // 电容离线或电压过低则不允许超功率
+  if (globals->cms->cms_v < 15) {
+    overpower = false;
+  }
+  if (overpower) {
+    if (globals->ref.data().power_heat_data.buffer_energy <= 30) {
+      for (int i = 0; i < 4; i++)
+        globals->chassis_motor[i]->SetCurrent(
+            static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
+    }
+    else {
+      for (int i = 0; i < 4; i++)
+        globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
+    }
+  } else {
+    if (globals->ref.data().power_heat_data.buffer_energy >= 50) {
+      for (int i = 0; i < 4; i++)
+        globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     } else {
-      globals->chassis_motor[i]->SetCurrent(
-          static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
+      for (int i = 0; i < 4; i++)
+        globals->chassis_motor[i]->SetCurrent(
+            static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
     }
   }
+
   rm::device::DjiMotorBase::SendCommand();
 
   // 监测值

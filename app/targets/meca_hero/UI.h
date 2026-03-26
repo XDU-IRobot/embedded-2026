@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-extern void UI(void const *argument);
+extern void UI(void onst *argument);
 
 #ifdef __cplusplus
 }
