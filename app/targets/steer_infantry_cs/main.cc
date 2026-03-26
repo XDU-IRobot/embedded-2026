@@ -71,7 +71,7 @@ void GlobalWarehouse::Init() {
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
   gimbal_communicator = new rm::device::GimbalCommunicator(*can1);
-  supercap = new rm::device::SuperCap(*can1);
+  super_cap = new rm::device::GkSupercap(*can1);
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kDma, hal::stm32::UartMode::kDma};
@@ -140,6 +140,10 @@ void GlobalWarehouse::SubLoop500Hz() {
           globals->referee_data->data().robot_status.power_management_gimbal_output << 1 |
           globals->referee_data->data().robot_status.power_management_gimbal_output << 2,
       globals->referee_data->data().robot_status.robot_id);
+  globals->tx_data.enable_dcdc = true;
+  globals->tx_data.feedback_referee_power_limit = globals->referee_data->data().robot_status.chassis_power_limit;
+  globals->tx_data.feedback_referee_energy_buffer = globals->referee_data->data().power_heat_data.buffer_energy;
+  globals->super_cap->Update(globals->tx_data);
   chassis->ChassisTask();
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
@@ -179,7 +183,7 @@ void UiRefresh() {
     Line_Draw(&image_y, "yyy", UI_Graph_ADD, 0, UI_Color_Orange, 2, 948, 465, 948, 565);
 
     Float_Draw(&super_cap_energy, "cms", UI_Graph_ADD, 2, UI_Color_Green, 27, 2, 5, 900, 270,
-               static_cast<f32>(globals->supercap->voltage()) * 1000.0f);
+               static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
     Float_Draw(&ammo_speed_jugde, "asj", UI_Graph_ADD, 2, UI_Color_White, 25, 2, 2, 360, 850,
                static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
 
@@ -222,10 +226,10 @@ void UiRefresh() {
     // 电容电压
     if (chassis->speed_mode_ == kHighSpeed) {
       Float_Draw(&super_cap_energy, "cms", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 5, 900, 270,
-                 static_cast<f32>(globals->supercap->voltage()) * 1000.0f);
+                 static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
     } else {
       Float_Draw(&super_cap_energy, "cms", UI_Graph_Change, 2, UI_Color_Main, 27, 1, 5, 900, 270,
-                 static_cast<f32>(globals->supercap->voltage()) * 1000.0f);
+                 static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
     }
     // 弹速调节
     if (globals->gimbal_communicator->aim_speed_change() > 0) {

@@ -11,35 +11,35 @@ void Chassis::ChassisTask() {
 
 void Chassis::ChassisStateUpdate() {
   if (globals->referee_data->data().robot_status.power_management_chassis_output == 0) {
-     chassis->ChassisMove_ = kUnable;
+    chassis->ChassisMove_ = kUnable;
   } else {
-  if ((globals->gimbal_communicator->chassis_mode() >> 0 & 0x01) == 1) {
-    if ((globals->gimbal_communicator->chassis_mode() >> 3 & 0x01) == 1) {
-      chassis->high_speed_mode_flag = true;
+    if ((globals->gimbal_communicator->chassis_mode() >> 0 & 0x01) == 1) {
+      if ((globals->gimbal_communicator->chassis_mode() >> 3 & 0x01) == 1) {
+        chassis->high_speed_mode_flag = true;
+      } else {
+        chassis->high_speed_mode_flag = false;
+      }
+      if ((globals->gimbal_communicator->chassis_mode() >> 4 & 0x01) == 1) {
+        chassis->buff_state_ = kDaFu;
+      } else if ((globals->gimbal_communicator->chassis_mode() >> 5 & 0x01) == 1) {
+        chassis->buff_state_ = kXiaoFu;
+      } else {
+        chassis->buff_state_ = kNormal;
+      }
+      if ((globals->gimbal_communicator->chassis_mode() >> 1 & 0x01) == 1) {
+        chassis->ChassisMove_ = kRotate;
+        chassis->ChassisEnableUpdate();
+      } else if ((globals->gimbal_communicator->chassis_mode() >> 2 & 0x01) == 1) {
+        chassis->ChassisMove_ = kReRotate;
+        chassis->ChassisEnableUpdate();
+      } else {
+        chassis->ChassisMove_ = kFollow;
+        chassis->ChassisEnableUpdate();
+      }
     } else {
-      chassis->high_speed_mode_flag = false;
+      chassis->ChassisMove_ = kNoForce;
+      chassis->ChassisDisableUpdate();
     }
-    if ((globals->gimbal_communicator->chassis_mode() >> 4 & 0x01) == 1) {
-      chassis->buff_state_ = kDaFu;
-    } else if ((globals->gimbal_communicator->chassis_mode() >> 5 & 0x01) == 1) {
-      chassis->buff_state_ = kXiaoFu;
-    } else {
-      chassis->buff_state_ = kNormal;
-    }
-    if ((globals->gimbal_communicator->chassis_mode() >> 1 & 0x01) == 1) {
-      chassis->ChassisMove_ = kRotate;
-      chassis->ChassisEnableUpdate();
-    } else if ((globals->gimbal_communicator->chassis_mode() >> 2 & 0x01) == 1) {
-      chassis->ChassisMove_ = kReRotate;
-      chassis->ChassisEnableUpdate();
-    } else {
-      chassis->ChassisMove_ = kFollow;
-      chassis->ChassisEnableUpdate();
-    }
-  } else {
-    chassis->ChassisMove_ = kNoForce;
-    chassis->ChassisDisableUpdate();
-  }
   }
 }
 
@@ -155,16 +155,8 @@ void Chassis::ChassisDisableUpdate() {
 
 void Chassis::SpeedModeChange() {
   // 超级电容是否可开启判断
-  if (globals->supercap->voltage() < 16.0f || globals->supercap->voltage() > 35.0f ||
-      (globals->supercap->error(rm::device::SuperCapError::kOverVoltage) << 0 |
-       globals->supercap->error(rm::device::SuperCapError::kOverCurrent) << 1 |
-       globals->supercap->error(rm::device::SuperCapError::kUnderVoltage) << 2 |
-       globals->supercap->error(rm::device::SuperCapError::kInputUnderVoltage) << 3 |
-       globals->supercap->error(rm::device::SuperCapError::kNoData) << 4) == true ||
-      globals->referee_data->data().power_heat_data.buffer_energy < 30) {
-    chassis->speed_mode_ = kNormalSpeed;
-  } else if (chassis->high_speed_mode_flag == true && globals->supercap->voltage() > 18.0f &&
-             globals->referee_data->data().power_heat_data.buffer_energy > 30) {
+  if (globals->super_cap->CapEnergy() > 80 && !globals->super_cap->ErrorCode() && chassis->high_speed_mode_flag &&
+      globals->referee_data->data().power_heat_data.buffer_energy > 30) {
     chassis->speed_mode_ = kHighSpeed;
   } else {
     chassis->speed_mode_ = kNormalSpeed;

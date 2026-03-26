@@ -44,7 +44,7 @@ inline struct GlobalWarehouse {
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                                        ///< CAN 总线接口
   rm::device::GimbalCommunicator *gimbal_communicator{nullptr};                       ///< CAN 通信器
-  rm::device::SuperCap *supercap{nullptr};                                            ///< 港科超级电容
+  rm::device::GkSupercap *super_cap{nullptr};                                            ///< 港科超级电容
   rm::hal::Serial *dbus{nullptr};                                                     ///< 遥控器串口接口
   rm::device::BMI088 *imu{nullptr};                                                   ///< IMU
   rm::hal::Serial *referee_uart{nullptr};                                             ///< 裁判系统串口接口
@@ -69,6 +69,7 @@ inline struct GlobalWarehouse {
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};                    ///< 姿态解算器
   QuadSteeringChassis chassis_controller{0.0f, 0.45368f};  ///< 四轮转向底盘控制器
+  rm::device::GkSupercap::TxData tx_data{};
 
   uint8_t time{};                    // 时间
   u_int16_t hurt_time{};             // 受伤小陀螺倒计时
