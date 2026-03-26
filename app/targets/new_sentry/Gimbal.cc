@@ -288,34 +288,34 @@ void Gimbal::GimbalDisableUpdate() {
 }
 
 void Gimbal::DaMiaoMotorEnable() {
-  if (gimbal->down_yaw_enable_flag_ == false && gimbal->pitch_enable_flag_ == true) {
-    globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-    gimbal->down_yaw_enable_flag_ = true;
-  }
-  if (gimbal->pitch_enable_flag_ == false) {
-    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-    gimbal->pitch_enable_flag_ = true;
-  }
-  if (gimbal->pitch_enable_flag_ == true && gimbal->down_yaw_enable_flag_ == true) {
-    // if (globals->down_yaw_motor->status() != 0x1F) {
-    //   globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-    // }
-    if (globals->pitch_motor->status() != 0x1F) {
+  if (globals->down_yaw_motor->status() != 0x1F && globals->down_yaw_motor->status() != 0x0F) {
+    globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+  } else if (globals->pitch_motor->status() != 0x1F && globals->pitch_motor->status() != 0x0F) {
+    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+  } else {
+    if (globals->down_yaw_motor->status() == 0x0F) {
+      globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    }
+    if (globals->pitch_motor->status() == 0x0F) {
       globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     }
   }
+  // if (gimbal->down_yaw_enable_flag_ == false && gimbal->pitch_enable_flag_ == true) {
+  //   globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+  //   gimbal->down_yaw_enable_flag_ = true;
+  // }
+  // if (gimbal->pitch_enable_flag_ == false) {
+  //   globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+  //   gimbal->pitch_enable_flag_ = true;
+  // }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
-  if (gimbal->down_yaw_enable_flag_ == true && gimbal->pitch_enable_flag_ == false) {
-    globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    gimbal->down_yaw_enable_flag_ = false;
-  }
-  if (gimbal->pitch_enable_flag_ == true) {
-    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-    gimbal->pitch_enable_flag_ = false;
-  }
-  if (gimbal->pitch_enable_flag_ == false && gimbal->down_yaw_enable_flag_ == false) {
+  if (globals->down_yaw_motor->status() != 0x1F && globals->down_yaw_motor->status() != 0x0F) {
+    globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+  } else if (globals->pitch_motor->status() != 0x1F && globals->pitch_motor->status() != 0x0F) {
+    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+  } else {
     if (globals->down_yaw_motor->status() == 0x1F) {
       globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     }
@@ -323,6 +323,14 @@ void Gimbal::DaMiaoMotorDisable() {
       globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     }
   }
+  // if (gimbal->down_yaw_enable_flag_ == true && gimbal->pitch_enable_flag_ == false) {
+  //   globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+  //   gimbal->down_yaw_enable_flag_ = false;
+  // }
+  // if (gimbal->pitch_enable_flag_ == true) {
+  //   globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+  //   gimbal->pitch_enable_flag_ = false;
+  // }
 }
 
 void Gimbal::ShootEnableUpdate() {
