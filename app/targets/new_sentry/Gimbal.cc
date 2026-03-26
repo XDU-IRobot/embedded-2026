@@ -300,14 +300,6 @@ void Gimbal::DaMiaoMotorEnable() {
       globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     }
   }
-  // if (gimbal->down_yaw_enable_flag_ == false && gimbal->pitch_enable_flag_ == true) {
-  //   globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-  //   gimbal->down_yaw_enable_flag_ = true;
-  // }
-  // if (gimbal->pitch_enable_flag_ == false) {
-  //   globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-  //   gimbal->pitch_enable_flag_ = true;
-  // }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
@@ -323,14 +315,6 @@ void Gimbal::DaMiaoMotorDisable() {
       globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     }
   }
-  // if (gimbal->down_yaw_enable_flag_ == true && gimbal->pitch_enable_flag_ == false) {
-  //   globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-  //   gimbal->down_yaw_enable_flag_ = false;
-  // }
-  // if (gimbal->pitch_enable_flag_ == true) {
-  //   globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-  //   gimbal->pitch_enable_flag_ = false;
-  // }
 }
 
 void Gimbal::ShootEnableUpdate() {
@@ -338,10 +322,10 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Arm(true);
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  if (globals->referee_data->data().shoot_data.initial_speed >= 23.5f ||
-      (globals->referee_data->data().shoot_data.initial_speed >= 18.0f &&
+  if (globals->referee_data->data().shoot_data.initial_speed >= 22.0f ||
+      (globals->referee_data->data().shoot_data.initial_speed >= 15.0f &&
        globals->referee_data->data().shoot_data.initial_speed <= 21.0f)) {
-    gimbal->ammo_speed_ = 6800.0f * 23.0f / globals->referee_data->data().shoot_data.initial_speed;
+    gimbal->ammo_speed_ = 6200.0f * std::sqrt(22.0f / globals->referee_data->data().shoot_data.initial_speed);
   }
   if (globals->rc->dial() <= -650 && heat_limit_ - heat_current_ > 30) {
     if (!single_shoot_flag_) {
