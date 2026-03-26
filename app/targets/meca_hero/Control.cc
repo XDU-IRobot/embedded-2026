@@ -500,10 +500,10 @@ void ChassisPower() {
   }
 
   rm::i16 V_wheel[4];
-  V_wheel[0] = -Vy + 1 * Vx + 1.5 * Vw;
-  V_wheel[1] = Vy + 1 * Vx + 1.5 * Vw;
-  V_wheel[2] = Vy - 10 * Vx + 1 * Vw;
-  V_wheel[3] = -Vy - 10 * Vx + 1 * Vw;
+  V_wheel[0] = -Vy + 1.5 * Vx + 1.5 * Vw;
+  V_wheel[1] = Vy + 1.5 * Vx + 1.5 * Vw;
+  V_wheel[2] = Vy + 1 * Vx + 1 * Vw;
+  V_wheel[3] = -Vy + 1 * Vx + 1 * Vw;
 
   for (int i = 0; i < 4; i++) {
     globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());
