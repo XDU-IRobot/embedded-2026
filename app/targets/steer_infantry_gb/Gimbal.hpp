@@ -17,7 +17,7 @@ inline class Gimbal {
   f32 gimbal_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据
   f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据
 
-  f32 ammo_speed_ = -8000.0f;  // 摩擦轮速度
+  f32 ammo_speed_ = -6200.0f;  // 摩擦轮速度
 
   f32 yaw_speed_ff = 0.0f;
   f32 last_yaw_target = 0.0f;

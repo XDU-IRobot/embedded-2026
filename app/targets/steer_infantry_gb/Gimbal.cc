@@ -161,7 +161,7 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Arm(true);
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_ - static_cast<f32>(globals->aim_speed_change) * 100.0f);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  if (const u16 heat_delta = globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real();
+  if (const i16 heat_delta = globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real();
       globals->rc->dial() <= -650 || (heat_delta > 30 && (globals->df_state || globals->xf_state) &&
                                       (globals->image_update_flag ? globals->image_data->data().mouse_button_left
                                                                   : globals->rc->mouse_button_left()))) {
@@ -185,12 +185,12 @@ void Gimbal::ShootEnableUpdate() {
                 globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
                 globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)))) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
-    if (heat_delta > 100) {
+    if (heat_delta > 60) {
       globals->shoot_controller.SetShootFrequency(20.0f);
     } else if (heat_delta < 20) {
       globals->shoot_controller.SetShootFrequency(0.0f);
     } else {
-      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f + 5.0f);
+      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_delta) / 3.0f);
     }
   } else {
     globals->shoot_controller.SetMode(Shoot3Fric::kStop);
