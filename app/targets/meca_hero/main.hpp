@@ -282,7 +282,7 @@ void CustomClientUpdate();
 // VOFA监测
 void VOFA();
 // 超级电容
-//void SuperCupUpdate();
+// void SuperCupUpdate();
 // 随动监测
 inline int follow;
 inline bool cc_mouse_l;
