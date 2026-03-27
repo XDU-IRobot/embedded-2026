@@ -36,7 +36,7 @@ inline class Chassis {
 
   const f32 chassis_sensitivity_xy_ = 1800.0f;  // 底盘x、y轴灵敏度
   const f32 chassis_max_speed_xy_ = 10000.0f;   // 底盘x、y轴最大速度
-  const f32 chassis_max_speed_w_ = 10000.0f;    // 底盘转动最大速度
+  const f32 chassis_max_speed_w_ = 30000.0f;    // 底盘转动最大速度
   const f32 chassis_max_navigate_xyw_ = 1.0f;   // 底盘x、y、z轴导航最速度
 
  public:
