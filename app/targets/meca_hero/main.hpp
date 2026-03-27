@@ -203,8 +203,8 @@ inline float vel;
 // 扳机计数
 inline int counter = 0;
 // 摩擦轮速度
-inline rm::i16 V_shooter_1 = -4350;
-inline rm::i16 V_shooter_2 = -3600;  // 12m/s
+inline rm::i16 V_shooter_1 = -4605;
+inline rm::i16 V_shooter_2 = -3770;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测
