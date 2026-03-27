@@ -45,7 +45,11 @@ Float_Data AmmoSpeed;
 // YAW
 Graph_Data YawAngle;
 
+// 自瞄状态框选
 Graph_Data p1, p2;
+
+// 鼠标操作显示
+Graph_Data mouse_left, mouse_right;
 
 // 自瞄提示字符
 String_Data aimbotUI; // 自瞄状态
@@ -236,22 +240,30 @@ void UiRefresh() {
           device::DR16::Key::kR)
   ) {
     // Line_Draw(&image_x, "xxx", UI_Graph_ADD, 0, UI_Color_Orange, 2, 918, 515, 978, 515);
-    Line_Draw(&image_y, "yyy", UI_Graph_ADD, 0, UI_Color_Orange, 2, 948, 465, 948, 565);
+    Line_Draw(&image_y, "yyy", UI_Graph_ADD, 2, UI_Color_Orange, 2, 948, 465, 948, 565);
 
-    Float_Draw(&CapData, "cms", UI_Graph_ADD, 0, UI_Color_Main, 27, 2, 5, 7050, 150, cms_v * 1000);
-    Float_Draw(&Pitch, "gbp", UI_Graph_ADD, 0, UI_Color_Green, 27, 1, 3, 7300, 500, 0);
-    Float_Draw(&AmmoSpeed, "amm", UI_Graph_ADD, 0, UI_Color_Purplish_red, 27, 1, 3, 7300, 560, 0);
-    Arc_Draw(&YawAngle, "yaw", UI_Graph_ADD, 0, UI_Color_Green, 0, 30, 2, 960, 540, 300, 300);
+    Float_Draw(&CapData, "cms", UI_Graph_ADD, 2, UI_Color_Main, 27, 2, 5, 7050, 150, cms_v * 1000);
+    Float_Draw(&Pitch, "gbp", UI_Graph_ADD, 2, UI_Color_Green, 27, 1, 3, 7300, 500, 0);
+    Float_Draw(&AmmoSpeed, "amm", UI_Graph_ADD, 2, UI_Color_White, 27, 1, 3, 7300, 560, 0);
+    Arc_Draw(&YawAngle, "yaw", UI_Graph_ADD, 2, UI_Color_Green, 0, 30, 2, 960, 540, 300, 300);
 
-    Rectangle_Draw(&p1, "p01", UI_Graph_ADD, 0, UI_Color_Purplish_red, 0, 360, 800, 420, 750);
-    Rectangle_Draw(&p2, "p02", UI_Graph_ADD, 0, UI_Color_Purplish_red, 0, 360, 750, 420, 700);
+    Rectangle_Draw(&p1, "p01", UI_Graph_ADD, 3, UI_Color_Purplish_red, 0, 360, 800, 420, 750);
+    Rectangle_Draw(&p2, "p02", UI_Graph_ADD, 3, UI_Color_Purplish_red, 0, 360, 750, 420, 700);
 
-    Char_Draw(&aimbotUI, "aim", UI_Graph_ADD, 1, UI_Color_Green, 25, 15, 2, 360, 800, "AIMBOT\nAUTOFIRE");
+    Char_Draw(&aimbotUI, "aim", UI_Graph_ADD, 0, UI_Color_Green, 25, 15, 2, 360, 800, "AIMBOT\nAUTOFIRE");
+
+    // Circle_Draw(&mouse_left, "msl", UI_Graph_ADD, 4, UI_Color_Black, 25, 1800, 100, 50);
+    // Circle_Draw(&mouse_right, "msr", UI_Graph_ADD, 4, UI_Color_Black, 25, 1850, 100, 50);
 
     irq = (u32)&aimbotUI;
     EnQueue(&UI_send_buffer[1], (u8 *)&irq, 4);
     irq = (u32)&image_y;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+
+    // irq = (u32)&mouse_left;
+    // EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    // irq = (u32)&mouse_right;
+    // EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
 
     irq = (u32)&CapData;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
@@ -261,7 +273,7 @@ void UiRefresh() {
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
     irq = (u32)&YawAngle;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
-    
+
     irq = (u32)&p1;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
     irq = (u32)&p2;
@@ -269,49 +281,68 @@ void UiRefresh() {
   } else {
     // 电容电压
     if (!overpower) {
-      Float_Draw(&CapData, "cms", UI_Graph_Change, 0, UI_Color_Green, 27, 1, 5, 900, 270,
+      Float_Draw(&CapData, "cms", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 5, 900, 270,
                  cms_v * 1000.0f);
     } else {
-      Float_Draw(&CapData, "cms", UI_Graph_Change, 0, UI_Color_Main, 27, 1, 5, 900, 270,
+      Float_Draw(&CapData, "cms", UI_Graph_Change, 2, UI_Color_Main, 27, 1, 5, 900, 270,
                  cms_v * 1000.0f);
     }
     // 弹速调节
-    if (shooter_m > 0) {
-      Float_Draw(&AmmoSpeed, "asj", UI_Graph_Change, 0, UI_Color_Green, 25, 2, 2, 360, 850,
-                 static_cast<f32>(shooter_m) * 1000.0f);
-    } else if (shooter_m < 0) {
-      Float_Draw(&AmmoSpeed, "asj", UI_Graph_Change, 0, UI_Color_Pink, 25, 2, 2, 360, 850,
-                 static_cast<f32>(shooter_m) * 1000.0f);
+    if ((globals->rc->mouse_button_left() || globals->tc->data().mouse_button_left) && (globals->rc->
+                 mouse_button_right() || globals->tc->data().mouse_button_right))
+      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Purplish_red, 25, 2, 2, 7300, 560,
+                 -shooter_m * 100.0f);
+    else if (globals->rc->mouse_button_right() || globals->tc->data().mouse_button_right) {
+      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Yellow, 25, 2, 2, 7300, 560,
+                 -shooter_m * 100.0f);
+    } else if (globals->rc->mouse_button_left() || globals->tc->data().mouse_button_left) {
+      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Orange, 25, 2, 2, 7300, 560,
+                 -shooter_m * 100.0f);
     } else {
-      Float_Draw(&AmmoSpeed, "asj", UI_Graph_Change, 0, UI_Color_White, 25, 2, 2, 360, 850,
-                 static_cast<f32>(shooter_m) * 1000.0f);
+      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_White, 25, 2, 2, 7300, 560,
+                 -shooter_m * 100.0f);
     }
+
     // Pitch
-    Float_Draw(&Pitch, "gbp", UI_Graph_Change, 0, UI_Color_Green, 27, 1, 3, 7300, 500,
-                 eulerangle_pitch * 1000);
+    Float_Draw(&Pitch, "gbp", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 3, 7300, 500,
+               (eulerangle_pitch / 3.14f * 180) * 1000);
 
     // 底盘夹角
     if (follow_state) {
-      Arc_Draw(&YawAngle, "yaw", UI_Graph_Change, 0, UI_Color_Green, rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180  - 15, 0, 360),
-               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180  + 15, 0, 360), 2, 960, 540, 300, 300);
-    }
-    else {
-      Arc_Draw(&YawAngle, "yaw", UI_Graph_Change, 0, UI_Color_Purplish_red, rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180  - 15, 0, 360),
-               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180  + 15, 0, 360), 2, 960, 540, 300, 300);
+      Arc_Draw(&YawAngle, "yaw", UI_Graph_Change, 2, UI_Color_Green,
+               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 - 15, 0, 360),
+               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 + 15, 0, 360), 2, 960, 540,
+               300, 300);
+    } else {
+      Arc_Draw(&YawAngle, "yaw", UI_Graph_Change, 2, UI_Color_Purplish_red,
+               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 - 15, 0, 360),
+               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 + 15, 0, 360), 2, 960, 540,
+               300, 300);
     }
 
     // 自瞄模式
     if (globals->aimbot_can_communicator->aimbot_target()) {
-      Rectangle_Draw(&p1, "p01", UI_Graph_Change, 0, UI_Color_Purplish_red, 3, 350, 809, 513, 769);
+      Rectangle_Draw(&p1, "p01", UI_Graph_Change, 3, UI_Color_Purplish_red, 3, 350, 809, 513, 769);
     } else {
-      Rectangle_Draw(&p1, "p01", UI_Graph_Change, 0, UI_Color_Purplish_red, 0, 350, 809, 513, 769);
+      Rectangle_Draw(&p1, "p01", UI_Graph_Change, 3, UI_Color_Purplish_red, 0, 350, 809, 513, 769);
     }
 
-    if (globals->aimbot_can_communicator->aimbot_state()) {
-      Rectangle_Draw(&p2, "p02", UI_Graph_Change, 0, UI_Color_Purplish_red, 3, 350, 765, 555, 730);
+    if (globals->aimbot_can_communicator->aimbot_state() == 0x03) {
+      Rectangle_Draw(&p2, "p02", UI_Graph_Change, 3, UI_Color_Purplish_red, 3, 350, 765, 555, 730);
     } else {
-      Rectangle_Draw(&p2, "p02", UI_Graph_Change, 0, UI_Color_Purplish_red, 0, 350, 765, 555, 730);
+      Rectangle_Draw(&p2, "p02", UI_Graph_Change, 3, UI_Color_Purplish_red, 0, 350, 765, 555, 730);
     }
+
+    // 鼠标操作显示
+    // if (globals->tc->data().mouse_button_left || globals->rc->mouse_button_left())
+    //   Circle_Draw(&mouse_left, "msl", UI_Graph_Change, 4, UI_Color_Pink, 25, 1800, 200, 50);
+    // else
+    //   Circle_Draw(&mouse_left, "msl", UI_Graph_Change, 4, UI_Color_Pink, 0, 1800, 200, 50);
+
+    // if (globals->tc->data().mouse_button_right || globals->rc->mouse_button_right())
+    //   Circle_Draw(&mouse_right, "msr", UI_Graph_Change, 4, UI_Color_Pink, 25, 1850, 200, 50);
+    // else
+    //   Circle_Draw(&mouse_right, "msr", UI_Graph_Change, 4, UI_Color_Pink, 0, 1850, 200, 50);
 
     irq = (u32)&CapData;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
@@ -325,11 +356,17 @@ void UiRefresh() {
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
     irq = (u32)&p2;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+
+    // irq = (u32)&mouse_left;
+    // EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    // irq = (u32)&mouse_right;
+    // EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
   }
 }
 
 void UiSend() {
-  if (IsEmpty(&UI_send_buffer[1]) || (!IsEmpty(&UI_send_buffer[0]) && globals->ui_send_choice)) {
+  if ((IsEmpty(&UI_send_buffer[1]) && !IsEmpty(&UI_send_buffer[0])) || (
+        !IsEmpty(&UI_send_buffer[0]) && globals->ui_send_choice)) {
     if (UI_send_buffer[0].counter / 4 >= 7) {
       for (u8 i = 0; i < 7; i++) {
         UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[i]);
@@ -352,11 +389,11 @@ void UiSend() {
       UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[0]);
       UI_ReFresh(1, *(Graph_Data *)tmp_send[0]);
     }
-    UI_send(globals->uart1, Info_Arr, len);
+    UI_send(globals->uart6, Info_Arr, len);
   } else if (!IsEmpty(&UI_send_buffer[1]) && !globals->ui_send_choice) {
     UI_Pop(&UI_send_buffer[1], (u8 *)&tmp_send[0]);
     Char_ReFresh(*(String_Data *)tmp_send[0]);
-    UI_send(globals->uart1, Info_Arr, len);
+    UI_send(globals->uart6, Info_Arr, len);
   }
   globals->ui_send_choice ^= true;
 }
