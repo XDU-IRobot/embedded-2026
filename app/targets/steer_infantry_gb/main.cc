@@ -60,7 +60,7 @@ void GlobalWarehouse::Init() {
       {*can2, {0x03, 0x02, 12.5f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   friction_left = new rm::device::M3508{*can2, 1};
   friction_right = new rm::device::M3508{*can2, 2};
-  dial_motor = new rm::device::M3508{*can1, 3};
+  // dial_motor = new rm::device::M3508{*can1, 3};
 
   device_rc << rc;                                                // 遥控器
   device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
