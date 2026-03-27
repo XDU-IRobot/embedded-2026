@@ -77,8 +77,9 @@ void MagazineControl() {
   if (counter == 0) {
     if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() ||
          globals->tc->data().mouse_button_left || globals->custom_client->mouse_left() ||
-         (globals->aimbot_can_communicator->aimbot_state() == 0x03&&(
-          r_switch_position_now == rm::device::DR16::SwitchPosition::kUp||globals->tc->data().keyboard_key&static_cast<int16_t>(VT03::KeyboardKey::kCtrl)))) &&
+         (globals->aimbot_can_communicator->aimbot_state() == 0x03 && (
+            r_switch_position_now == rm::device::DR16::SwitchPosition::kUp || globals->tc->data().keyboard_key &
+            static_cast<int16_t>(VT03::KeyboardKey::kCtrl)))) &&
         (globals->ref.data().robot_status.shooter_barrel_heat_limit >=
          globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100) &&
         (shooter_1 < -3000 && shooter_4 < -3000)) {
@@ -316,7 +317,8 @@ void GimbalControl() {
       (((globals->rc->dial() >= 500 || globals->rc->dial() <= -500) &&
         l_switch_position_now != device::DR16::SwitchPosition::kUp) ||
        r_switch_position_now == device::DR16::SwitchPosition::kUp || globals->rc->mouse_button_right() ||
-       globals->tc->data().mouse_button_right || globals->custom_client->mouse_right()||globals->tc->data().keyboard_key&static_cast<int16_t>(VT03::KeyboardKey::kCtrl))) {
+       globals->tc->data().mouse_button_right || globals->custom_client->mouse_right() || globals->tc->data().
+       keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl))) {
     target_pos_yaw = -globals->aimbot_can_communicator->yaw() / 57.3;
 
     //-aimbot.USB_Rx.YawRelativeAngle;usb
@@ -327,7 +329,7 @@ void GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     // tc->rc->cc
-    if (globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) {
+    if ((globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) && globals->tc->offline_count < 93) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
           static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8;
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
@@ -423,8 +425,7 @@ void ChassisPower() {
   }
   if (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kC)) {
     follow_state = false;
-  }
-  else {
+  } else {
     follow_state = true;
   }
 
@@ -448,52 +449,42 @@ void ChassisPower() {
   if (l_switch_position_now == device::DR16::SwitchPosition::kUp ||
       l_switch_position_now == device::DR16::SwitchPosition::kMid) {
     if (globals->rc->key(rm::device::DR16::Key::kW) ||
-        globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW) ||
+        (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW) && globals->tc->
+         offline_count < 93) ||
         globals->custom_client->key(rm::device::DR16::Key::kW)) {
-      Vy = 8500;
-      if (Vy >= 8500) {
+      Vy += 30;
+      if (Vy >= 8400) {
         Vy = 8500;
       }
-    } else {
-      if (Vy > 0) {
-        Vy -= 8500;
-      }
-    }
-    if (globals->rc->key(rm::device::DR16::Key::kS) ||
-        globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS) ||
-        globals->custom_client->key(rm::device::DR16::Key::kS)) {
-      Vy -= 8500;
-      if (Vy <= -8500) {
+    } else if (globals->rc->key(rm::device::DR16::Key::kS) ||
+               (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS) && globals->
+                tc->offline_count < 93) ||
+               globals->custom_client->key(rm::device::DR16::Key::kS)) {
+      Vy -= 30;
+      if (Vy <= -8400) {
         Vy = -8500;
       }
     } else {
-      if (Vy < 0) {
-        Vy += 8500;
-      }
+      Vy = 0;
     }
     if (globals->rc->key(rm::device::DR16::Key::kD) ||
-        globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD) ||
+        (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD) && globals->tc->
+         offline_count < 93) ||
         globals->custom_client->key(rm::device::DR16::Key::kD)) {
-      Vx += 8500;
-      if (Vx >= 8500) {
-        Vx = 8500;
+      Vx += 30;
+      if (Vx >= 8400) {
+        Vx = 7000;
+      }
+    } else if (globals->rc->key(rm::device::DR16::Key::kA) ||
+               (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA) && globals->
+                tc->offline_count < 93) ||
+               globals->custom_client->key(rm::device::DR16::Key::kA)) {
+      Vx -= 30;
+      if (Vx <= -8400) {
+        Vx = -7000;
       }
     } else {
-      if (Vx > 0) {
-        Vx -= 8500;
-      }
-    }
-    if (globals->rc->key(rm::device::DR16::Key::kA) ||
-        globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA) ||
-        globals->custom_client->key(rm::device::DR16::Key::kA)) {
-      Vx -= 8500;
-      if (Vx <= -8500) {
-        Vx = -8500;
-      }
-    } else {
-      if (Vx < 0) {
-        Vx += 8500;
-      }
+      Vx = 0;
     }
   } else {
     Vx = globals->rc->left_x() * 7000 / 660;
@@ -503,8 +494,8 @@ void ChassisPower() {
   rm::i16 V_wheel[4];
   V_wheel[0] = -Vy + 1.5 * Vx + 1.5 * Vw;
   V_wheel[1] = Vy + 1.5 * Vx + 1.5 * Vw;
-  V_wheel[2] = Vy - 5 * Vx + 1 * Vw;
-  V_wheel[3] = -Vy - 5 * Vx + 1 * Vw;
+  V_wheel[2] = Vy - 1.5 * Vx + 1 * Vw;
+  V_wheel[3] = -Vy - 1.5 * Vx + 1 * Vw;
 
   for (int i = 0; i < 4; i++) {
     globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());
@@ -515,7 +506,7 @@ void ChassisPower() {
     (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
   }
   float buffer_energy = globals->ref.data().buff.remaining_energy;
-   overpower = false;
+  overpower = false;
   if (r_switch_position_now == DR16::SwitchPosition::kUp) {
     overpower = true;
   } else if (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift) ||
@@ -544,8 +535,7 @@ void ChassisPower() {
       for (int i = 0; i < 4; i++)
         globals->chassis_motor[i]->SetCurrent(
             static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
-    }
-    else {
+    } else {
       for (int i = 0; i < 4; i++)
         globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     }

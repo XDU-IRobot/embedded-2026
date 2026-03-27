@@ -156,6 +156,8 @@ void SubLoop420hz() {
 void SubLoop93hz() {
   if (time_conut % 9 == 0) {
     globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
+    globals->tc->offline_count++;
+
   }
 }
 
@@ -171,6 +173,7 @@ void SubLoop10hz() {
     cms_v = globals->cms->cms_v;
     cms_i = globals->cms->cms_i;
     UiRefresh();
+
   }
 }
 
@@ -289,7 +292,7 @@ void UiRefresh() {
     }
     // 弹速调节
     if ((globals->rc->mouse_button_left() || globals->tc->data().mouse_button_left) && (globals->rc->
-                 mouse_button_right() || globals->tc->data().mouse_button_right))
+          mouse_button_right() || globals->tc->data().mouse_button_right))
       Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Purplish_red, 25, 2, 2, 7300, 560,
                  -shooter_m * 100.0f);
     else if (globals->rc->mouse_button_right() || globals->tc->data().mouse_button_right) {
@@ -304,8 +307,13 @@ void UiRefresh() {
     }
 
     // Pitch
-    Float_Draw(&Pitch, "gbp", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 3, 7300, 500,
-               (eulerangle_pitch / 3.14f * 180) * 1000);
+    if (globals->rc->key(DR16::Key::kCtrl) || (globals->tc->data().keyboard_key & static_cast<int16_t>(
+                                                 VT03::KeyboardKey::kCtrl)))
+      Float_Draw(&Pitch, "gbp", UI_Graph_Change, 2, UI_Color_Purplish_red, 27, 1, 3, 7300, 500,
+                 (eulerangle_pitch / 3.14f * 180) * 1000);
+    else
+      Float_Draw(&Pitch, "gbp", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 3, 7300, 500,
+                 (eulerangle_pitch / 3.14f * 180) * 1000);
 
     // 底盘夹角
     if (follow_state) {
