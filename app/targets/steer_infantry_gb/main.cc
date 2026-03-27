@@ -45,7 +45,7 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
+  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can2};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   super_cap = new rm::device::GkSupercap{*can1};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};

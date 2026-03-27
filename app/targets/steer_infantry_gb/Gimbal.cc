@@ -9,8 +9,8 @@ void Gimbal::GimbalInit() {
 
 void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
-  a = globals->aimbot_communicator->yaw();
-  b = globals->aimbot_communicator->pitch();
+  a = gimbal->gimbal_yaw_target_;
+  b = gimbal->gimbal_pitch_target_;
   c = globals->ahrs.euler_angle().yaw;
   d = globals->ahrs.euler_angle().pitch;
 }
@@ -76,8 +76,8 @@ void Gimbal::GimbalRCTargetUpdate() {
                                                               : globals->rc->mouse_y()),  // pitch轴目标值
       -660, 660, -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->gimbal_yaw_target_ =
-      rm::modules::Wrap(gimbal->gimbal_yaw_target_, 0.f, 2.f * static_cast<f32>(M_PI));  // yaw轴限位
-  gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,        // pitch轴限位
+      rm::modules::Wrap(gimbal->gimbal_yaw_target_, -static_cast<f32>(M_PI), M_PI);  // yaw轴限位
+  gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,    // pitch轴限位
                                                     gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
 }
 
@@ -90,13 +90,17 @@ void Gimbal::GimbalAimbotTargetUpdate() {
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
+  gimbal->gimbal_yaw_target_ =
+      rm::modules::Wrap(gimbal->gimbal_yaw_target_, -static_cast<f32>(M_PI), M_PI);  // yaw轴限位
+  gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,    // pitch轴限位
+                                                    gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
 }
 
 void Gimbal::GimbalMovePIDUpdate() {
   gimbal->yaw_speed_ff = gimbal->Kf * (gimbal->gimbal_yaw_target_ - last_yaw_target) / Ts;
   gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
 
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ff);
+  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
   f32 gravity_compensation_ = -0.74f * std::cos(globals->ahrs.euler_angle().pitch - 0.25f);
