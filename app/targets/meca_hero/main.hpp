@@ -85,6 +85,8 @@ inline struct GlobalWarehouse {
 
   rm::modules::LowPassFilterConstDt<float> gyro_z_filter;
 
+  bool ui_send_choice{false};
+
   void Init() {
     can1 = new rm::hal::Can{hcan1};
     can2 = new rm::hal::Can{hcan2};
@@ -187,7 +189,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = -0.244346 * 0.62;  //-6°
+inline float next_target_magz = -0.1;  //-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -259,6 +261,7 @@ inline float vel_real = 0;
 inline bool power_management_gimbal_last;
 inline bool power_management_shooter_last;
 inline int16_t shooter_m = 0;
+inline bool overpower=false;
 /*----------------------------------------------
  *执行函数
  */
@@ -298,6 +301,7 @@ inline int aimbot_target;
 inline int aimbot_state;
 inline int heat_limit;
 inline int16_t heat_buffer;
-inline int16_t cms_v{0};
-inline int16_t cms_i{0};
+inline bool follow_state{true};
+inline float cms_v{0.0f};
+inline float cms_i{0.0f};
 #endif  // BOARDC_MAIN_HPP

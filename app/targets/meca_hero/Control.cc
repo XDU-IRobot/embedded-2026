@@ -77,8 +77,8 @@ void MagazineControl() {
   if (counter == 0) {
     if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() ||
          globals->tc->data().mouse_button_left || globals->custom_client->mouse_left() ||
-         (globals->aimbot_can_communicator->aimbot_state() == 2 &&
-          r_switch_position_now == rm::device::DR16::SwitchPosition::kUp)) &&
+         (globals->aimbot_can_communicator->aimbot_state() == 0x03&&(
+          r_switch_position_now == rm::device::DR16::SwitchPosition::kUp||globals->tc->data().keyboard_key&static_cast<int16_t>(VT03::KeyboardKey::kCtrl)))) &&
         (globals->ref.data().robot_status.shooter_barrel_heat_limit >=
          globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100) &&
         (shooter_1 < -3000 && shooter_4 < -3000)) {
@@ -316,7 +316,7 @@ void GimbalControl() {
       (((globals->rc->dial() >= 500 || globals->rc->dial() <= -500) &&
         l_switch_position_now != device::DR16::SwitchPosition::kUp) ||
        r_switch_position_now == device::DR16::SwitchPosition::kUp || globals->rc->mouse_button_right() ||
-       globals->tc->data().mouse_button_right || globals->custom_client->mouse_right())) {
+       globals->tc->data().mouse_button_right || globals->custom_client->mouse_right()||globals->tc->data().keyboard_key&static_cast<int16_t>(VT03::KeyboardKey::kCtrl))) {
     target_pos_yaw = -globals->aimbot_can_communicator->yaw() / 57.3;
 
     //-aimbot.USB_Rx.YawRelativeAngle;usb
@@ -421,12 +421,13 @@ void ChassisPower() {
     }
     return;
   }
-
-  // 底盘随动
-  static bool follow_state = false;
-  if (globals->tc->key_once(device::VT03::KeyboardKey::kC)) {
-    follow_state = !follow_state;
+  if (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kC)) {
+    follow_state = false;
   }
+  else {
+    follow_state = true;
+  }
+
   if (follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(0.49, globals->gimbal_motor_yaw->pos(),
@@ -444,7 +445,6 @@ void ChassisPower() {
   // follow = Vw;
 
   // 遥控器输入底盘速度
-
   if (l_switch_position_now == device::DR16::SwitchPosition::kUp ||
       l_switch_position_now == device::DR16::SwitchPosition::kMid) {
     if (globals->rc->key(rm::device::DR16::Key::kW) ||
@@ -503,8 +503,8 @@ void ChassisPower() {
   rm::i16 V_wheel[4];
   V_wheel[0] = -Vy + 1.5 * Vx + 1.5 * Vw;
   V_wheel[1] = Vy + 1.5 * Vx + 1.5 * Vw;
-  V_wheel[2] = Vy + 1 * Vx + 1 * Vw;
-  V_wheel[3] = -Vy + 1 * Vx + 1 * Vw;
+  V_wheel[2] = Vy - 5 * Vx + 1 * Vw;
+  V_wheel[3] = -Vy - 5 * Vx + 1 * Vw;
 
   for (int i = 0; i < 4; i++) {
     globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());
@@ -515,7 +515,7 @@ void ChassisPower() {
     (*globals->motor_states)[i].measured_current = globals->chassis_motor[i]->current();
   }
   float buffer_energy = globals->ref.data().buff.remaining_energy;
-  static bool overpower = false;
+   overpower = false;
   if (r_switch_position_now == DR16::SwitchPosition::kUp) {
     overpower = true;
   } else if (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift) ||
@@ -526,7 +526,7 @@ void ChassisPower() {
   }
   if (overpower) {
     // 超功率
-    power_limit = 180; // 随便给的
+    power_limit = 130; // 随便给的
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
                     ? 50
