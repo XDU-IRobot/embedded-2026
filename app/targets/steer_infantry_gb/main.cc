@@ -223,7 +223,7 @@ void GlobalWarehouse::ChassisStateUpdate() {
   // 打符模式切换
   if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 9 & 0x01
                                   : globals->rc->key(rm::device::DR16::Key::kF)) &&
-      !globals->xf_state) {
+      !globals->xf_state && globals->StateMachine_ == kMatch) {
     globals->df_flag = true;
   } else if (globals->df_flag) {
     globals->df_flag = false;
@@ -231,7 +231,7 @@ void GlobalWarehouse::ChassisStateUpdate() {
   }
   if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 10 & 0x01
                                   : globals->rc->key(rm::device::DR16::Key::kG)) &&
-      !globals->df_state) {
+      !globals->df_state && globals->StateMachine_ == kMatch) {
     globals->xf_flag = true;
   } else if (globals->xf_flag) {
     globals->xf_flag = false;

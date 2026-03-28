@@ -181,10 +181,10 @@ void Gimbal::ShootEnableUpdate() {
                 globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
                globals->rc->dial() >= 650)) ||
              (globals->StateMachine_ == kMatch &&
-              (globals->image_update_flag ? globals->image_data->data().mouse_button_left
+              (((globals->image_update_flag ? globals->image_data->data().mouse_button_left
                                           : globals->rc->mouse_button_left()) &&  // 左键按下
-              ((globals->image_update_flag ? !globals->image_data->data().mouse_button_right
-                                           : !globals->rc->mouse_button_right()) ||  // 右键未按下
+              (globals->image_update_flag ? !globals->image_data->data().mouse_button_right
+                                           : !globals->rc->mouse_button_right())) ||  // 右键未按下
                ((globals->image_update_flag ? globals->image_data->data().mouse_button_right
                                             : globals->rc->mouse_button_right()) &&  // 右键按下且瞄到目标
                 globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
