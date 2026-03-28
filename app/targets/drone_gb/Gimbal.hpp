@@ -330,8 +330,8 @@ class Gimbal {
 
       pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
-      yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
-      // yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_SMC.output().yaw, -25000, 25000));
+      //yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
+      yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_SMC.output().yaw, -25000, 25000));
     }
 
     // 自瞄控制 直接控制
@@ -348,7 +348,7 @@ class Gimbal {
         rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-        rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + err_average + M_PI, 0, 2 * M_PI);
+        rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + 0.03 + err_average + M_PI, 0, 2 * M_PI);
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {
         rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);

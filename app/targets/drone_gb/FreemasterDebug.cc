@@ -28,6 +28,10 @@ i16 Adrmp;
 i16 Armp;
 float Apidoutput;
 float Asmcoutput;
+float Aselfyawtarget;
+float Aautoyawtarget;
+float Aselfpitchtarget;
+float Aautopitchtarget;
 
 // 调试接口函数
 void FreemasterDebug() {
@@ -51,6 +55,12 @@ void FreemasterDebug() {
   Armp = gimbal->friction_left->rpm();
   Apitchpose = gimbal->pitch_motor->pos();
   Ayaw = gimbal->yaw;
+
+  Aautoyawtarget=Aimbot.TargetYawAngle + M_PI;
+  Aselfyawtarget=gimbal->yaw;
+  Aautopitchtarget=rm::modules::Wrap(Aimbot.TargetPitchAngle + gimbal->err_average + M_PI, 0, 2 * M_PI);
+  Aselfpitchtarget=rm::modules::Wrap(gimbal->pitch + gimbal->err_average, 0, 2 * M_PI);
+
 
   Apidoutput = gimbal->gimbal_controller.output().yaw;
   Asmcoutput = gimbal->gimbal_controller_SMC.output().yaw;
