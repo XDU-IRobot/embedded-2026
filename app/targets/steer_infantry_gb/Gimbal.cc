@@ -12,14 +12,14 @@ void Gimbal::GimbalTask() {
   a = gimbal->gimbal_yaw_target_;
   b = gimbal->gimbal_pitch_target_;
   c = globals->ahrs.euler_angle().yaw;
-  d = globals->ahrs.euler_angle().pitch;
+  d = globals->gimbal_controller.output().yaw;
 }
 
 void Gimbal::GimbalStateUpdate() {
-  if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
-    globals->StateMachine_ = kUnable;  // 如果云台设备离线或云台供电异常，进入无力模式
-    gimbal->GimbalDisableUpdate();     // 云台电机失能计算
-  } else {
+  // if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
+  //   globals->StateMachine_ = kUnable;  // 如果云台设备离线或云台供电异常，进入无力模式
+  //   gimbal->GimbalDisableUpdate();     // 云台电机失能计算
+  // } else {
     switch (globals->StateMachine_) {
       case kNoForce:                    // 无力模式下，所有电机失能
         gimbal->GimbalDisableUpdate();  // 云台电机失能计算
@@ -37,7 +37,7 @@ void Gimbal::GimbalStateUpdate() {
         gimbal->GimbalDisableUpdate();  // 云台电机失能计算
         break;
     }
-  }
+  // }
   if (!globals->device_shoot.all_device_ok() || !globals->chassis_communicator->ammo_power_state()) {
     gimbal->ShootDisableUpdate();  // 发射机构失能计算
   } else {

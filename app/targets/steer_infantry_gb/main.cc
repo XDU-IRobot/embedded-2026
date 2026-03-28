@@ -14,10 +14,10 @@ using namespace rm;
 void MainLoop() {
   globals->time++;
   globals->SubLoop500Hz();
-  globals->SubLoop250Hz();
-  globals->SubLoop100Hz();
-  globals->SubLoop50Hz();
-  globals->SubLoop10Hz();
+  if (globals->time % 2 == 0) globals->SubLoop250Hz();
+  if (globals->time % 5 == 0) globals->SubLoop100Hz();
+  if (globals->time % 10 == 0) globals->SubLoop50Hz();
+  if (globals->time % 50 == 0) globals->SubLoop10Hz();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
@@ -91,7 +91,7 @@ void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
   gimbal_controller.pid().yaw_position.SetKp(800.0f).SetKi(0.0f).SetKd(24000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKi(0.0f).SetKd(1300.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
@@ -306,22 +306,22 @@ void GlobalWarehouse::SubLoop500Hz() {
                                                 globals->imu->gyro_z() + 0.0001f, -globals->imu->accel_y(),
                                                 globals->imu->accel_x(), globals->imu->accel_z()});
   // 硬触发
-  if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
-    globals->imu_count++;
-    globals->time_camera++;
-    if (globals->time_camera == 10) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535u);
-    }
-    if (globals->time_camera == 5) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0u);
-    }
-  } else {
-    globals->imu_count = 0;
-    globals->time_camera = 0;
-  }
-  if (globals->imu_count >= 10000) {
-    globals->imu_count = 0;
-  }
+  // if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
+  //   globals->imu_count++;
+  //   globals->time_camera++;
+  //   if (globals->time_camera == 10) {
+  //     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535u);
+  //   }
+  //   if (globals->time_camera == 5) {
+  //     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0u);
+  //   }
+  // } else {
+  //   globals->imu_count = 0;
+  //   globals->time_camera = 0;
+  // }
+  // if (globals->imu_count >= 10000) {
+  //   globals->imu_count = 0;
+  // }
   // can 通信
   f32 ammo_speed;
   if (globals->chassis_communicator->ammo_speed() > 20.0f) {
@@ -342,43 +342,33 @@ void GlobalWarehouse::SubLoop500Hz() {
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
 
-void GlobalWarehouse::SubLoop250Hz() {
-  if (globals->time % 2 == 0) {
-    globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
-  }
-}
+void GlobalWarehouse::SubLoop250Hz() { globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0); }
 
 void GlobalWarehouse::SubLoop100Hz() {
-  if (globals->time % 5 == 0) {
-    globals->device_rc.Update();
-    globals->device_nuc.Update();
-    globals->device_gimbal.Update();
-    globals->device_shoot.Update();
-    globals->device_referee.Update();
-    if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
-        globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
-      if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
-        globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
-        globals->last_switch_l = globals->rc->switch_l();
-        globals->last_switch_r = globals->rc->switch_r();
-      }
+  globals->device_rc.Update();
+  globals->device_nuc.Update();
+  globals->device_gimbal.Update();
+  globals->device_shoot.Update();
+  globals->device_referee.Update();
+  if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
+      globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
+    if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
+      globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
+      globals->last_switch_l = globals->rc->switch_l();
+      globals->last_switch_r = globals->rc->switch_r();
     }
   }
 }
 
 void GlobalWarehouse::SubLoop50Hz() {
-  if (globals->time % 10 == 0) {
-    const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
-    (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
-    buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
-  }
+  const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
+  (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
+  buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
 }
 
 void GlobalWarehouse::SubLoop10Hz() {
-  if (globals->time % 50 == 0) {
-    if (globals->init_time == 0) {
-      globals->image_update_flag = globals->device_referee.all_device_ok();
-    }
-    globals->time = 0;
+  if (globals->init_time == 0) {
+    globals->image_update_flag = globals->device_referee.all_device_ok();
   }
+  globals->time = 0;
 }
