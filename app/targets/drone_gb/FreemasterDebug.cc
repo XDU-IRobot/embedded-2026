@@ -62,5 +62,5 @@ void FreemasterDebug() {
 
   Apidoutput = gimbal->gimbal_controller.output().yaw;
   Asmcoutput = gimbal->gimbal_controller_SMC.output().yaw;
-  Astasmcoutput=gimbal->gimbal_controller_STASMC.output().yaw;
+  Astasmcoutput = gimbal->gimbal_controller_STASMC.output().yaw;
 }

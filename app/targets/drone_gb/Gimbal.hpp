@@ -1,7 +1,6 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
 
-
 #include <librm.hpp>
 #include <utility>
 
@@ -23,7 +22,6 @@
 #include "ControllerFeedForward.hpp"
 #include "algorithm_enroll_test/main.hpp"
 #include "algorithm_enroll_test/main.hpp"
-
 
 extern void FreemasterDebug();
 extern double Arcyawdata;
@@ -97,7 +95,6 @@ class Gimbal {
   float pitch_min_pos = 1.6;   // TODO pitch电机最小限位
   float pitch_max_pos = 2.75;  // TODO pitch电机最大限位
 
-
   i16 encoder_dirl = 0;
   int single_shoot_time = 28;   // TODO 单发时间
   int single_shoot_mid = 0;     // 单发中间变量
@@ -168,7 +165,6 @@ class Gimbal {
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
-
     friction_left = new rm::device::M3508{*can1, 1};
     friction_right = new rm::device::M3508{*can1, 3};
     dial_motor = new rm::device::M2006{*can1, 5};
@@ -208,13 +204,11 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    yaw_ff.Init(0.002,0.5);
+    yaw_ff.Init(0.002, 0.5);
 
     // PID
-    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(
-        1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(
-        1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
 
@@ -232,65 +226,74 @@ class Gimbal {
     gimbal_controller_SMC.params().yaw_spd.s_filter_alpha = 0.55f;
     gimbal_controller_SMC.params().yaw_spd.leak_rate = 0.2f;
 
-    //STASMC
-    // // 1. 位置外环
-    // gimbal_controller_STASMC.params().yaw_pos.kp_real = 180.0f;          // 高响应外环
-    // gimbal_controller_STASMC.params().yaw_pos.max_speed_real = 600.0f;  // 最大目标速度(RPM)
-    // // 2. 动力学前馈模型
-    // // 假设：维持 1 RPM 匀速需要 15 电流；产生 1 RPM/s 加速度需要 10 电流
-    // gimbal_controller_STASMC.params().yaw_model.J_real = 80.0f;         // 【转动惯量】先给个保守值，起步瞬间给推力
-    // gimbal_controller_STASMC.params().yaw_model.B_real = 40.0f;         // 【粘性摩擦】抵消常态摩擦力
-    // gimbal_controller_STASMC.params().yaw_model.accel_alpha_real = 0.1f;// 【重度滤波】防止打杆时计算出的加速度炸裂
-    // gimbal_controller_STASMC.params().yaw_model.max_accel_real = 200.0f;// 加速度限幅
-    // // 3. 速度内环 (超螺旋 SMC)
-    // // 因为模型承担了主力，SMC 的非线性项 k1 可以适当降一点，彻底告别嗡嗡声！
-    // gimbal_controller_STASMC.params().yaw_spd.kp_real = 160.0f;         // 线性跟随
-    // gimbal_controller_STASMC.params().yaw_spd.k1_real = 1200.0f;        // (原2500，降至1500) 超螺旋非线性补偿
-    // gimbal_controller_STASMC.params().yaw_spd.k2_real = 800.0f;         // 积分增益，消除静差
-    // gimbal_controller_STASMC.params().yaw_spd.phi_real = 7.0f;         // 边界层，12 是非常安静且硬的区间
-    // gimbal_controller_STASMC.params().yaw_spd.i_limit_real = 8000.0f;   // 积分限幅
-    // gimbal_controller_STASMC.params().yaw_spd.out_limit_real = 25000.0f;
-    // gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.85f; // 滑模面适度滤波
-    // gimbal_controller_STASMC.params().yaw_spd.leak_rate_real = 0.0f;
-    // 1. 位置外环
+    // STASMC
+    //  // 1. 位置外环
+    //  gimbal_controller_STASMC.params().yaw_pos.kp_real = 180.0f;          // 高响应外环
+    //  gimbal_controller_STASMC.params().yaw_pos.max_speed_real = 600.0f;  // 最大目标速度(RPM)
+    //  // 2. 动力学前馈模型
+    //  // 假设：维持 1 RPM 匀速需要 15 电流；产生 1 RPM/s 加速度需要 10 电流
+    //  gimbal_controller_STASMC.params().yaw_model.J_real = 80.0f;         // 【转动惯量】先给个保守值，起步瞬间给推力
+    //  gimbal_controller_STASMC.params().yaw_model.B_real = 40.0f;         // 【粘性摩擦】抵消常态摩擦力
+    //  gimbal_controller_STASMC.params().yaw_model.accel_alpha_real = 0.1f;// 【重度滤波】防止打杆时计算出的加速度炸裂
+    //  gimbal_controller_STASMC.params().yaw_model.max_accel_real = 200.0f;// 加速度限幅
+    //  // 3. 速度内环 (超螺旋 SMC)
+    //  // 因为模型承担了主力，SMC 的非线性项 k1 可以适当降一点，彻底告别嗡嗡声！
+    //  gimbal_controller_STASMC.params().yaw_spd.kp_real = 160.0f;         // 线性跟随
+    //  gimbal_controller_STASMC.params().yaw_spd.k1_real = 1200.0f;        // (原2500，降至1500) 超螺旋非线性补偿
+    //  gimbal_controller_STASMC.params().yaw_spd.k2_real = 800.0f;         // 积分增益，消除静差
+    //  gimbal_controller_STASMC.params().yaw_spd.phi_real = 7.0f;         // 边界层，12 是非常安静且硬的区间
+    //  gimbal_controller_STASMC.params().yaw_spd.i_limit_real = 8000.0f;   // 积分限幅
+    //  gimbal_controller_STASMC.params().yaw_spd.out_limit_real = 25000.0f;
+    //  gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.85f; // 滑模面适度滤波
+    //  gimbal_controller_STASMC.params().yaw_spd.leak_rate_real = 0.0f;
+    //  1. 位置外环
     gimbal_controller_STASMC.params().yaw_pos.kp_real = 90.0f;          // 高响应外环
     gimbal_controller_STASMC.params().yaw_pos.max_speed_real = 450.0f;  // 最大目标速度(RPM)
     // 2. 动力学前馈模型
     // 假设：维持 1 RPM 匀速需要 15 电流；产生 1 RPM/s 加速度需要 10 电流
-    gimbal_controller_STASMC.params().yaw_model.J_real = 15.0f;         // 【转动惯量】先给个保守值，起步瞬间给推力
-    gimbal_controller_STASMC.params().yaw_model.B_real = 10.0f;         // 【粘性摩擦】抵消常态摩擦力
-    gimbal_controller_STASMC.params().yaw_model.accel_alpha_real = 0.2f;// 【重度滤波】防止打杆时计算出的加速度炸裂
-    gimbal_controller_STASMC.params().yaw_model.max_accel_real = 200.0f;// 加速度限幅
+    gimbal_controller_STASMC.params().yaw_model.J_real = 15.0f;  // 【转动惯量】先给个保守值，起步瞬间给推力
+    gimbal_controller_STASMC.params().yaw_model.B_real = 10.0f;  // 【粘性摩擦】抵消常态摩擦力
+    gimbal_controller_STASMC.params().yaw_model.accel_alpha_real = 0.2f;  // 【重度滤波】防止打杆时计算出的加速度炸裂
+    gimbal_controller_STASMC.params().yaw_model.max_accel_real = 200.0f;  // 加速度限幅
     // 3. 速度内环 (超螺旋 SMC)
     // 因为模型承担了主力，SMC 的非线性项 k1 可以适当降一点，彻底告别嗡嗡声！
-    gimbal_controller_STASMC.params().yaw_spd.kp_real = 140.0f;         // 线性跟随
-    gimbal_controller_STASMC.params().yaw_spd.k1_real = 250.0f;        // (原2500，降至1500) 超螺旋非线性补偿
-    gimbal_controller_STASMC.params().yaw_spd.k2_real = 320;         // 积分增益，消除静差
-    gimbal_controller_STASMC.params().yaw_spd.phi_real = 12.0f;         // 边界层，12 是非常安静且硬的区间
-    gimbal_controller_STASMC.params().yaw_spd.i_limit_real = 8000.0f;   // 积分限幅
+    gimbal_controller_STASMC.params().yaw_spd.kp_real = 140.0f;  // 线性跟随
+    gimbal_controller_STASMC.params().yaw_spd.k1_real = 250.0f;  // (原2500，降至1500) 超螺旋非线性补偿
+    gimbal_controller_STASMC.params().yaw_spd.k2_real = 320;     // 积分增益，消除静差
+    gimbal_controller_STASMC.params().yaw_spd.phi_real = 12.0f;  // 边界层，12 是非常安静且硬的区间
+    gimbal_controller_STASMC.params().yaw_spd.i_limit_real = 8000.0f;  // 积分限幅
     gimbal_controller_STASMC.params().yaw_spd.out_limit_real = 25000.0f;
-    gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.55f; // 滑模面适度滤波
+    gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.55f;  // 滑模面适度滤波
     gimbal_controller_STASMC.params().yaw_spd.leak_rate_real = 0.2f;
     // 1. 位置外环
-    gimbal_controller_STASMC.params().yaw_pos.kp = gimbal_controller_STASMC.params().yaw_pos.kp_real;          // 高响应外环
-    gimbal_controller_STASMC.params().yaw_pos.max_speed = gimbal_controller_STASMC.params().yaw_pos.max_speed_real;  // 最大目标速度(RPM)
+    gimbal_controller_STASMC.params().yaw_pos.kp = gimbal_controller_STASMC.params().yaw_pos.kp_real;  // 高响应外环
+    gimbal_controller_STASMC.params().yaw_pos.max_speed =
+        gimbal_controller_STASMC.params().yaw_pos.max_speed_real;  // 最大目标速度(RPM)
     // 2. 动力学前馈模型
     // 假设：维持 1 RPM 匀速需要 15 电流；产生 1 RPM/s 加速度需要 10 电流
-    gimbal_controller_STASMC.params().yaw_model.J = gimbal_controller_STASMC.params().yaw_model.J_real;         // 【转动惯量】先给个保守值，起步瞬间给推力
-    gimbal_controller_STASMC.params().yaw_model.B = gimbal_controller_STASMC.params().yaw_model.B_real;         // 【粘性摩擦】抵消常态摩擦力
-    gimbal_controller_STASMC.params().yaw_model.accel_alpha = gimbal_controller_STASMC.params().yaw_model.accel_alpha_real;// 【重度滤波】防止打杆时计算出的加速度炸裂
-    gimbal_controller_STASMC.params().yaw_model.max_accel = gimbal_controller_STASMC.params().yaw_model.max_accel_real;// 加速度限幅
+    gimbal_controller_STASMC.params().yaw_model.J =
+        gimbal_controller_STASMC.params().yaw_model.J_real;  // 【转动惯量】先给个保守值，起步瞬间给推力
+    gimbal_controller_STASMC.params().yaw_model.B =
+        gimbal_controller_STASMC.params().yaw_model.B_real;  // 【粘性摩擦】抵消常态摩擦力
+    gimbal_controller_STASMC.params().yaw_model.accel_alpha =
+        gimbal_controller_STASMC.params().yaw_model.accel_alpha_real;  // 【重度滤波】防止打杆时计算出的加速度炸裂
+    gimbal_controller_STASMC.params().yaw_model.max_accel =
+        gimbal_controller_STASMC.params().yaw_model.max_accel_real;  // 加速度限幅
     // 3. 速度内环 (超螺旋 SMC)
     // 因为模型承担了主力，SMC 的非线性项 k1 可以适当降一点，彻底告别嗡嗡声！
-    gimbal_controller_STASMC.params().yaw_spd.kp =gimbal_controller_STASMC.params().yaw_spd.kp_real;         // 线性跟随
-    gimbal_controller_STASMC.params().yaw_spd.k1 = gimbal_controller_STASMC.params().yaw_spd.k1_real;        // (原2500，降至1500) 超螺旋非线性补偿
-    gimbal_controller_STASMC.params().yaw_spd.k2 = gimbal_controller_STASMC.params().yaw_spd.k2_real;         // 积分增益，消除静差
-    gimbal_controller_STASMC.params().yaw_spd.phi = gimbal_controller_STASMC.params().yaw_spd.phi_real;         // 边界层，12 是非常安静且硬的区间
-    gimbal_controller_STASMC.params().yaw_spd.i_limit = gimbal_controller_STASMC.params().yaw_spd.i_limit_real;   // 积分限幅
+    gimbal_controller_STASMC.params().yaw_spd.kp = gimbal_controller_STASMC.params().yaw_spd.kp_real;  // 线性跟随
+    gimbal_controller_STASMC.params().yaw_spd.k1 =
+        gimbal_controller_STASMC.params().yaw_spd.k1_real;  // (原2500，降至1500) 超螺旋非线性补偿
+    gimbal_controller_STASMC.params().yaw_spd.k2 =
+        gimbal_controller_STASMC.params().yaw_spd.k2_real;  // 积分增益，消除静差
+    gimbal_controller_STASMC.params().yaw_spd.phi =
+        gimbal_controller_STASMC.params().yaw_spd.phi_real;  // 边界层，12 是非常安静且硬的区间
+    gimbal_controller_STASMC.params().yaw_spd.i_limit =
+        gimbal_controller_STASMC.params().yaw_spd.i_limit_real;  // 积分限幅
     gimbal_controller_STASMC.params().yaw_spd.out_limit = gimbal_controller_STASMC.params().yaw_spd.out_limit_real;
-    gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha = gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real; // 滑模面适度滤波
+    gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha =
+        gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real;  // 滑模面适度滤波
     gimbal_controller_STASMC.params().yaw_spd.leak_rate = gimbal_controller_STASMC.params().yaw_spd.leak_rate_real;
-
   }
 
   // 发射机构pid初始化
@@ -346,44 +349,42 @@ class Gimbal {
       rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
       rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
       auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
-      Arcyawdata=comp_yaw;
+      Arcyawdata = comp_yaw;
 
-      //PID控制器
+      // PID控制器
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
       // yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
 
-
-      //SMC控制器
+      // SMC控制器
       gimbal_controller_SMC.SetTarget(comp_yaw, comp_pitch);
       gimbal_controller_SMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                    pitch_motor->vel(), 0.002f);
       // yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_SMC.output().yaw, -25000, 25000));
 
-
-      //STASMC控制器
+      // STASMC控制器
       //****************   动态参数   ****************
-      // float pitch_deviation = std::fabs(pitch-M_PI);
-      // float scale_factor = sqrt(cos(pitch_deviation));
-      // scale_factor = rm::modules::Clamp(scale_factor, 0.5f, 1.0f);
+      //  float pitch_deviation = std::fabs(pitch-M_PI);
+      //  float scale_factor = sqrt(cos(pitch_deviation));
+      //  scale_factor = rm::modules::Clamp(scale_factor, 0.5f, 1.0f);
       //
-      // gimbal_controller_STASMC.params().yaw_pos.kp = gimbal_controller_STASMC.params().yaw_pos.kp_real * scale_factor;
-      // gimbal_controller_STASMC.params().yaw_spd.k1 = gimbal_controller_STASMC.params().yaw_spd.k1_real * scale_factor;
-      // gimbal_controller_STASMC.params().yaw_spd.kp = gimbal_controller_STASMC.params().yaw_spd.kp_real * scale_factor;
-      // gimbal_controller_STASMC.params().yaw_model.J = gimbal_controller_STASMC.params().yaw_model.J_real * scale_factor;
+      //  gimbal_controller_STASMC.params().yaw_pos.kp = gimbal_controller_STASMC.params().yaw_pos.kp_real *
+      //  scale_factor; gimbal_controller_STASMC.params().yaw_spd.k1 = gimbal_controller_STASMC.params().yaw_spd.k1_real
+      //  * scale_factor; gimbal_controller_STASMC.params().yaw_spd.kp =
+      //  gimbal_controller_STASMC.params().yaw_spd.kp_real * scale_factor;
+      //  gimbal_controller_STASMC.params().yaw_model.J = gimbal_controller_STASMC.params().yaw_model.J_real *
+      //  scale_factor;
       //*********************************************
-      gimbal_controller_STASMC.SetTarget(comp_yaw, comp_pitch,yaw_ff.Update(comp_yaw));
+      gimbal_controller_STASMC.SetTarget(comp_yaw, comp_pitch, yaw_ff.Update(comp_yaw));
       gimbal_controller_STASMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
-                                   pitch_motor->vel(), 0.002f);
+                                      pitch_motor->vel(), 0.002f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_STASMC.output().yaw, -25000, 25000));
-
 
       pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
@@ -549,10 +550,8 @@ class Gimbal {
     // imu处理
     imu->Update();
 
-
     ahrs_auto.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z(), imu->accel_y(),
                                               imu->accel_x(), -imu->accel_z()});
-
 
     pitch = ahrs_auto.euler_angle().pitch + M_PI;
     yaw = ahrs_auto.euler_angle().yaw + M_PI;
