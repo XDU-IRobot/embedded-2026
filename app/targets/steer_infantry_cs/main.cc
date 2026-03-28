@@ -141,7 +141,7 @@ void GlobalWarehouse::SubLoop500Hz() {
           globals->referee_data->data().robot_status.power_management_gimbal_output << 2,
       globals->referee_data->data().robot_status.robot_id);
   globals->super_cap_tx.feedback_referee_energy_buffer = globals->referee_data->data().power_heat_data.buffer_energy;
-  // globals->super_cap->Update(globals->super_cap_tx);
+  globals->super_cap->Update(globals->super_cap_tx);
   chassis->ChassisTask();
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
