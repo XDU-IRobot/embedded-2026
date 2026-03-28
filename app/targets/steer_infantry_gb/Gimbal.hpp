@@ -11,6 +11,7 @@ inline class Gimbal {
  public:
   StateMachineType GimbalMove_ = {kNoForce};  // 云台运动状态
 
+  f32 yaw_current_ = 0.0f;   // yaw轴力矩数据
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
  private:

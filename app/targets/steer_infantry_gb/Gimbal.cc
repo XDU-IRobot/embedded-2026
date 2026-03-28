@@ -12,7 +12,7 @@ void Gimbal::GimbalTask() {
   a = gimbal->gimbal_yaw_target_;
   b = gimbal->gimbal_pitch_target_;
   c = globals->ahrs.euler_angle().yaw;
-  d = globals->gimbal_controller.output().yaw;
+  d = gimbal->yaw_current_;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -20,23 +20,23 @@ void Gimbal::GimbalStateUpdate() {
   //   globals->StateMachine_ = kUnable;  // 如果云台设备离线或云台供电异常，进入无力模式
   //   gimbal->GimbalDisableUpdate();     // 云台电机失能计算
   // } else {
-    switch (globals->StateMachine_) {
-      case kNoForce:                    // 无力模式下，所有电机失能
-        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-        break;
+  switch (globals->StateMachine_) {
+    case kNoForce:                    // 无力模式下，所有电机失能
+      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+      break;
 
-      case kTest:                      // 测试模式下，发射系统与拨盘电机失能
-        gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-        break;
+    case kTest:                      // 测试模式下，发射系统与拨盘电机失能
+      gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+      break;
 
-      case kMatch:
-        gimbal->GimbalMatchUpdate();
-        break;
+    case kMatch:
+      gimbal->GimbalMatchUpdate();
+      break;
 
-      default:                          // 错误状态，所有电机失能
-        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-        break;
-    }
+    default:                          // 错误状态，所有电机失能
+      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+      break;
+  }
   // }
   if (!globals->device_shoot.all_device_ok() || !globals->chassis_communicator->ammo_power_state()) {
     gimbal->ShootDisableUpdate();  // 发射机构失能计算
@@ -103,6 +103,14 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
+  if (((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) ||
+       (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 4 & 0x01
+                                   : globals->rc->key(rm::device::DR16::Key::kShift))) &&
+      globals->init_time == 0) {
+    gimbal->yaw_current_ = globals->gimbal_controller.output().yaw + 11000;
+  } else {
+    gimbal->yaw_current_ = globals->gimbal_controller.output().yaw;
+  }
   f32 gravity_compensation_ = -0.74f * std::cos(globals->ahrs.euler_angle().pitch - 0.25f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
@@ -140,8 +148,9 @@ void Gimbal::GimbalDisableUpdate() {
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
   gimbal->GimbalMovePIDUpdate();
-  gimbal->SetMotorCurrent();
+  gimbal->yaw_current_ = 0.f;
   gimbal->pitch_torque_ = 0.f;
+  gimbal->SetMotorCurrent();
 }
 
 void Gimbal::DaMiaoMotorEnable() {
@@ -182,9 +191,9 @@ void Gimbal::ShootEnableUpdate() {
                globals->rc->dial() >= 650)) ||
              (globals->StateMachine_ == kMatch &&
               (((globals->image_update_flag ? globals->image_data->data().mouse_button_left
-                                          : globals->rc->mouse_button_left()) &&  // 左键按下
-              (globals->image_update_flag ? !globals->image_data->data().mouse_button_right
-                                           : !globals->rc->mouse_button_right())) ||  // 右键未按下
+                                            : globals->rc->mouse_button_left()) &&  // 左键按下
+                (globals->image_update_flag ? !globals->image_data->data().mouse_button_right
+                                            : !globals->rc->mouse_button_right())) ||  // 右键未按下
                ((globals->image_update_flag ? globals->image_data->data().mouse_button_right
                                             : globals->rc->mouse_button_right()) &&  // 右键按下且瞄到目标
                 globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
@@ -226,7 +235,7 @@ void Gimbal::ShootDisableUpdate() {
 }
 
 void Gimbal::SetMotorCurrent() {
-  globals->yaw_motor->SetCurrent(static_cast<i16>(globals->gimbal_controller.output().yaw));
+  globals->yaw_motor->SetCurrent(static_cast<i16>(gimbal->yaw_current_));
   globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
   globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
   globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));

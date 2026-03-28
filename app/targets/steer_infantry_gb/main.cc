@@ -105,7 +105,7 @@ void GlobalWarehouse::ShootPIDInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  if (!globals->device_rc.all_device_ok()) {
+  if (!globals->device_rc.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
     globals->StateMachine_ = kUnable;
   } else {
     if (globals->init_time > 0) {
