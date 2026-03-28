@@ -247,7 +247,7 @@ class Gimbal {
     // gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.85f;  // 滑模面适度滤波
     // gimbal_controller_STASMC.params().yaw_spd.leak_rate_real = 0.2f;
     //  1. 位置外环
-    gimbal_controller_STASMC.params().yaw_pos.kp_real = 250.0f;          // 高响应外环
+    gimbal_controller_STASMC.params().yaw_pos.kp_real = 250.0f;         // 高响应外环
     gimbal_controller_STASMC.params().yaw_pos.max_speed_real = 450.0f;  // 最大目标速度(RPM)
     // 2. 动力学前馈模型
     // 假设：维持 1 RPM 匀速需要 15 电流；产生 1 RPM/s 加速度需要 10 电流
@@ -259,7 +259,7 @@ class Gimbal {
     // 因为模型承担了主力，SMC 的非线性项 k1 可以适当降一点，彻底告别嗡嗡声！
     gimbal_controller_STASMC.params().yaw_spd.kp_real = 400.0f;  // 线性跟随
     gimbal_controller_STASMC.params().yaw_spd.k1_real = 640.0f;  // (原2500，降至1500) 超螺旋非线性补偿
-    gimbal_controller_STASMC.params().yaw_spd.k2_real = 1200.f;     // 积分增益，消除静差
+    gimbal_controller_STASMC.params().yaw_spd.k2_real = 1200.f;  // 积分增益，消除静差
     gimbal_controller_STASMC.params().yaw_spd.phi_real = 12.0f;  // 边界层，12 是非常安静且硬的区间
     gimbal_controller_STASMC.params().yaw_spd.i_limit_real = 8000.0f;  // 积分限幅
     gimbal_controller_STASMC.params().yaw_spd.out_limit_real = 25000.0f;
