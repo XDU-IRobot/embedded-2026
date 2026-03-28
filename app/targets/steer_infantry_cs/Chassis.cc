@@ -11,7 +11,8 @@ void Chassis::ChassisTask() {
 }
 
 void Chassis::ChassisStateUpdate() {
-  if (globals->referee_data->data().robot_status.power_management_chassis_output == 0) {
+  // if (globals->referee_data->data().robot_status.power_management_chassis_output == 0) {
+    if (1){
     chassis->ChassisMove_ = kUnable;
   } else {
     if ((globals->gimbal_communicator->chassis_mode() >> 0 & 0x01) == 1) {
