@@ -1,4 +1,4 @@
-#ifndef BOARDC_VOFA_HPP //VOFA是一款分析频域信号的软件，可以使用该软件进行系统辨识
+#ifndef BOARDC_VOFA_HPP  // VOFA是一款分析频域信号的软件，可以使用该软件进行系统辨识
 #define BOARDC_VOFA_HPP
 
 #include "usart.h"  // 包含 huart1 声明

@@ -34,7 +34,7 @@ void UsbSendMessage(uint8_t* address, uint16_t len, uint8_t id) {
 }
 
 // IMU数据发送
-void GimbalImuSend(float w, float x, float y, float z, float fire_speed=0.0f) {
+void GimbalImuSend(float w, float x, float y, float z, float fire_speed = 0.0f) {
   GimbalImu.TimeStamp = 0;
 
   GimbalImu.q0 = w;
