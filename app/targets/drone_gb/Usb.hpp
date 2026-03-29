@@ -27,6 +27,7 @@ typedef struct __attribute__((packed)) {
   float q1;            //
   float q2;            //
   float q3;            //
+  float fire_speed;    // 弹速
   uint8_t robot_id;    // 机器人id
   uint8_t mode;        // 自瞄模式
   uint8_t _EOF;        // 包尾
@@ -37,7 +38,7 @@ extern "C" {
 #endif
 void UsbReceive(uint8_t* rx_data, uint8_t len);
 void UsbSendMessage(uint8_t* address, uint16_t len, uint8_t id);
-void GimbalImuSend(float w, float x, float y, float z);
+void GimbalImuSend(float w, float x, float y, float z, float fire_speed);
 #ifdef __cplusplus
 }
 #endif
