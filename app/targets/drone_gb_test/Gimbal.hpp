@@ -21,7 +21,13 @@ double roll_=0;
 
 int16_t rc_left_x=0;
 int16_t rc_left_y=0;
+uint8_t rc_switch_l=0;
 
+
+double rc_yaw =0;
+double rc_pitch =0;
+
+float output_yaw = 0;
 
 class Gimbal {
  public:
@@ -64,8 +70,8 @@ class Gimbal {
   Gimbal2Dof gimbal_controller;
 
 #if TEST_GIMBAL
-  float pitch_min_pos = 1.6;  // 预定义宏可以快速转换限位
-  float pitch_max_pos = 2.75;
+  float pitch_min_pos = 2.6;  // 预定义宏可以快速转换限位
+  float pitch_max_pos = 3.8;
 #else
   float pitch_min_pos = 1.6;
   float pitch_max_pos = 2.75;
@@ -82,9 +88,9 @@ class Gimbal {
     rc = new rm::device::DR16{*dbus};
 
     yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x02, 0x12, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x12, 0x02, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};//设置对于can设备的报文
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x01, 0x11, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x11, 0x01, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
     device_rc << rc;
     device_gimbal << pitch_motor << yaw_motor;  // 设备管理器，可以一次性管理大多数设备
@@ -104,11 +110,11 @@ class Gimbal {
   // pid初始化
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
-    gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    gimbal_controller.pid().pitch_position.SetKp(3.8f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
 
-    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(3.6f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
   }
 
   void RCStateUpdate() {
@@ -143,10 +149,9 @@ class Gimbal {
 
       gimbal_controller.SetTarget(rc_yaw_date, rc_pitch_date);
 
-      gimbal_controller.Update(yaw, -yaw_motor->vel(), pitch, pitch_motor->vel(), 2.f);
+      gimbal_controller.Update(yaw, yaw_motor->vel(), pitch, pitch_motor->vel(), 2.f);
 
     }
-
     else {
       if (DM_is_enable == true) {  // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
@@ -177,13 +182,12 @@ class Gimbal {
 
     yaw_=yaw;       //imu测试数据
     pitch_=pitch;
-    roll_=roll;
 
-    rc_left_x = rc->left_x();
+    rc_left_x = rc->left_x();//rc测试数据
     rc_left_y = rc->left_y();
+    rc_switch_l = static_cast<uint8_t>(GimbalState_);
 
-    GimbalImuSend(ahrs_auto.quaternion().w, ahrs_auto.quaternion().x, ahrs_auto.quaternion().y,
-                  ahrs_auto.quaternion().z);
+    output_yaw = gimbal_controller.output().yaw;
   }
 
   // damiao电机控制信号
@@ -191,6 +195,8 @@ class Gimbal {
     if (time_ % 2 == 0) {
       pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
       yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
+      rc_yaw = rc_yaw_date;
+      rc_pitch = rc_pitch_date;
     }
   }
 
