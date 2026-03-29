@@ -108,6 +108,8 @@ void Gimbal::GimbalMovePIDUpdate() {
                                    : globals->rc->key(rm::device::DR16::Key::kShift))) &&
       globals->init_time == 0) {
     gimbal->yaw_current_ = globals->gimbal_controller.output().yaw + 11000;
+  } else if (globals->StateMachine_ == kTest && globals->rc->dial() <= -650 && globals->init_time == 0) {
+    gimbal->yaw_current_ = globals->gimbal_controller.output().yaw - 11000;
   } else {
     gimbal->yaw_current_ = globals->gimbal_controller.output().yaw;
   }
@@ -137,6 +139,8 @@ void Gimbal::GimbalEnableUpdate() {
     gimbal->GimbalMovePIDUpdate();
   } else {
     globals->gimbal_controller.Enable(false);
+    gimbal->yaw_current_ = 0.f;
+    gimbal->pitch_torque_ = 0.f;
   }
   gimbal->SetMotorCurrent();
 }
