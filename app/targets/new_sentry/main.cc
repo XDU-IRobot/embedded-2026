@@ -15,10 +15,10 @@ using namespace rm;
 void MainLoop() {
   globals->time++;
   globals->SubLoop500Hz();
-  globals->SubLoop250Hz();
-  globals->SubLoop100Hz();
-  globals->SubLoop50Hz();
-  globals->SubLoop10Hz();
+  if (globals->time % 2 == 0) globals->SubLoop250Hz();
+  if (globals->time % 5 == 0) globals->SubLoop100Hz();
+  if (globals->time % 10 == 0) globals->SubLoop50Hz();
+  if (globals->time % 50 == 0) globals->SubLoop10Hz();
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
@@ -63,7 +63,7 @@ void GlobalWarehouse::Init() {
   rc = new rm::device::DR16{*dbus};
   up_yaw_motor = new rm::device::GM6020{*can2, 1};
   down_yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can1, {0x05, 0x04, 3.14159, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
+      {*can1, {0x07, 0x06, 3.14159, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can2, {0x03, 0x02, 3.14159, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
   friction_left = new rm::device::M3508{*can2, 3};
@@ -264,40 +264,30 @@ void GlobalWarehouse::SubLoop500Hz() {
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
-  if (globals->time % 2 == 0) {
-    globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
-    globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 2.8f);
-  }
+  globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
+  globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 2.8f);
 }
 
 void GlobalWarehouse::SubLoop100Hz() {
-  if (globals->time % 5 == 0) {
-    globals->device_rc.Update();
-    globals->device_nuc.Update();
-    globals->device_gimbal.Update();
-    globals->device_shoot.Update();
-    globals->device_chassis.Update();
-    if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
-        globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
-      if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
-        globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
-        globals->last_switch_l = globals->rc->switch_l();
-        globals->last_switch_r = globals->rc->switch_r();
-      }
+  globals->device_rc.Update();
+  globals->device_nuc.Update();
+  globals->device_gimbal.Update();
+  globals->device_shoot.Update();
+  globals->device_chassis.Update();
+  if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
+      globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
+    if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
+      globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
+      globals->last_switch_l = globals->rc->switch_l();
+      globals->last_switch_r = globals->rc->switch_r();
     }
   }
 }
 
 void GlobalWarehouse::SubLoop50Hz() {
-  if (globals->time % 10 == 0) {
-    const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
-    (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
-    buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
-  }
+  const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
+  (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
+  buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
 }
 
-void GlobalWarehouse::SubLoop10Hz() {
-  if (globals->time % 50 == 0) {
-    globals->time = 0;
-  }
-}
+void GlobalWarehouse::SubLoop10Hz() { globals->time = 0; }
