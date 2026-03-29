@@ -103,16 +103,18 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
-  if (((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) ||
-       (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 4 & 0x01
-                                   : globals->rc->key(rm::device::DR16::Key::kShift))) &&
+  if (((gimbal->GimbalMove_ == kGbRemote && globals->rc->dial() >= 650) ||
+       (gimbal->GimbalMove_ == kGbRemote &&
+        (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 4 & 0x01
+                                    : globals->rc->key(rm::device::DR16::Key::kShift)))) &&
       globals->init_time == 0) {
     gimbal->yaw_current_ = globals->gimbal_controller.output().yaw + 11000;
-  } else if (globals->StateMachine_ == kTest && globals->rc->dial() <= -650 && globals->init_time == 0) {
+  } else if (gimbal->GimbalMove_ == kGbRemote && globals->rc->dial() <= -650 && globals->init_time == 0) {
     gimbal->yaw_current_ = globals->gimbal_controller.output().yaw - 11000;
   } else {
     gimbal->yaw_current_ = globals->gimbal_controller.output().yaw;
   }
+  gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -30000.0f, 30000.0f);
   f32 gravity_compensation_ = -0.74f * std::cos(globals->ahrs.euler_angle().pitch - 0.25f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
