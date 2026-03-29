@@ -12,8 +12,16 @@
 #include "timer_task.hpp"
 #include "controllers/gimbal_2dof.hpp"
 #include "controllers/shoot_2firc.hpp"
-#include "drone_gb/Usb.hpp"
-#include "old_sentry/main.hpp"
+#include "Usb.hpp"
+// #include "old_sentry/main.hpp"
+
+double yaw_=0;
+double pitch_=0;
+double roll_=0;
+
+int16_t rc_left_x=0;
+int16_t rc_left_y=0;
+
 
 class Gimbal {
  public:
@@ -74,9 +82,9 @@ class Gimbal {
     rc = new rm::device::DR16{*dbus};
 
     yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x02, 0x12, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x01, 0x11, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
     device_rc << rc;
     device_gimbal << pitch_motor << yaw_motor;  // 设备管理器，可以一次性管理大多数设备
@@ -87,7 +95,7 @@ class Gimbal {
 
     time_ = 0;
 
-    GimbalInit();
+    GimbalPIDInit();
 
     gimbal_controller.Enable(false);
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
@@ -167,6 +175,13 @@ class Gimbal {
     yaw = ahrs_auto.euler_angle().yaw + M_PI;
     roll = ahrs_auto.euler_angle().roll + M_PI;
 
+    yaw_=yaw;       //imu测试数据
+    pitch_=pitch;
+    roll_=roll;
+
+    rc_left_x = rc->left_x();
+    rc_left_y = rc->left_y();
+
     GimbalImuSend(ahrs_auto.quaternion().w, ahrs_auto.quaternion().x, ahrs_auto.quaternion().y,
                   ahrs_auto.quaternion().z);
   }
@@ -174,8 +189,8 @@ class Gimbal {
   // damiao电机控制信号
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
-      pitch_motor->SetPosition(0, 0, gimbal_controller.output().pitch, 0, 0);
-      yaw_motor->SetPosition(0, 0, gimbal_controller.output().yaw, 0, 0);
+      pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
+      yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
     }
   }
 
