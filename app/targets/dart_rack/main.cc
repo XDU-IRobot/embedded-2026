@@ -16,7 +16,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   dart_rack->Init();
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
-      &htim14,                                   //2.0
+      &htim14,                                   // 2.0
       etl::delegate<void()>::create<MainLoop>()  //
   };
   // mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1);  // 84MHz / 168 / 1000 = 500Hz

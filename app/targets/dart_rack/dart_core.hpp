@@ -5,6 +5,7 @@
 #include "usb.hpp"
 #include "encoder_counter.hpp"
 #include "Referee.hpp"
+#include "motor.h"
 // 状态机变量定义
 enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
 
@@ -91,25 +92,25 @@ enum class DartCount : uint8_t { kFirst = 0, kSecond = 1, kThird = 2, kFourth = 
 // 发射架核心结构体
 struct DartRack {
   DartState state_{};
-  uint16_t ticks=0;
+  uint16_t ticks = 0;
   // 硬件接口
-  rm::hal::Can *can1_{nullptr};     ///< CAN 总线接口
+  rm::hal::Can *can1_{nullptr};  ///< CAN 总线接口
   rm::hal::Can *can2_{nullptr};
-  rm::hal::Serial *dbus_{nullptr};  ///< 遥控器串口接口
-  rm::hal::Serial *referee_uart{nullptr};       ///< 裁判系统串口接口
-  rm::hal::Serial *servo_uart{nullptr};        ///< 舵机串口接口
+  rm::hal::Serial *dbus_{nullptr};         ///< 遥控器串口接口
+  rm::hal::Serial *referee_uart{nullptr};  ///< 裁判系统串口接口
+  rm::hal::Serial *servo_uart{nullptr};    ///< 舵机串口接口
   // 设备
-  rm::device::DR16 *rc_{nullptr};                    ///< 遥控器
-  rm::device::M3508 *load_motor_r_{nullptr};         ///< 右上膛电机
-  rm::device::M3508 *load_motor_l_{nullptr};         ///< 左上膛电机
-  rm::device::M2006 *trigger_motor_{nullptr};        ///< 扳机活动电机
-  rm::device::M2006 *trigger_motor_force_{nullptr};  ///< 扳机释放电机
-  rm::device::M2006 *yaw_motor_{nullptr};            ///< yaw轴调节电机
-  rm::device::M3508 *add_motor_{nullptr};            ///< 加弹电机
-  rm::device::JyMe02Can *yaw_encoder_{nullptr};      ///< 编码器
-  rm::device::HiwonderServo *add_plate_servo_{nullptr};       ///< 加弹机械臂舵机
+  rm::device::DR16 *rc_{nullptr};                        ///< 遥控器
+  rm::device::M3508 *load_motor_r_{nullptr};             ///< 右上膛电机
+  rm::device::M3508 *load_motor_l_{nullptr};             ///< 左上膛电机
+  rm::device::M2006 *trigger_motor_{nullptr};            ///< 扳机活动电机
+  rm::device::M2006 *trigger_motor_force_{nullptr};      ///< 扳机释放电机
+  rm::device::M2006 *yaw_motor_{nullptr};                ///< yaw轴调节电机
+  rm::device::M3508 *add_motor_{nullptr};                ///< 加弹电机
+  rm::device::JyMe02Can *yaw_encoder_{nullptr};          ///< 编码器
+  rm::device::HiwonderServo *add_plate_servo_{nullptr};  ///< 加弹机械臂舵机
 
-  //裁判系统
+  // 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
   rm::device::RxReferee *rx_referee{nullptr};
   // usb设备
@@ -133,17 +134,17 @@ struct DartRack {
   // 视觉结构体
 
   // yaw轴相关常量
-  static constexpr float kYawEcdMax = 52.6000f;                      //< ME02 编码器最大值
-  static constexpr float kYawEcdMin = 35.5000f;                      //< ME02 编码器最小值
+  static constexpr float kYawEcdMax = 52.6000f;                          //< ME02 编码器最大值
+  static constexpr float kYawEcdMin = 35.5000f;                          //< ME02 编码器最小值
   static constexpr float kYawEcd[4] = {46.45f, 46.45f, 46.45f, 46.45f};  //< ME02 编码器四发镖位置
   // 扳机相关常量
   static constexpr int32_t kTriggerEcdMax = 900000;
   static constexpr int32_t kTriggerEcdMin = 0;
-  static constexpr int32_t kTriggerEcd[4] = {0, 0, 0, 0};  //< 扳机四发镖位置
+  static constexpr int32_t kTriggerEcd[4] = {0, 0, 0, 0};             //< 扳机四发镖位置
   static constexpr int32_t kAddEcd[3] = {-160206, -225226, -296482};  //< 加弹三发镖位置
-  static constexpr uint16_t kAddPlateLockEcd[3] ={593,593,287} ;  //< 加弹机械臂锁定位置
+  static constexpr uint16_t kAddPlateLockEcd[3] = {593, 593, 287};    //< 加弹机械臂锁定位置
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
-  static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
+  static constexpr int32_t kLoadEcdPerDart = 650000;                  //< 上膛电机每发镖编码器最小增量
   /*
   上膛距离与扳机位置存在一定关系，理论上
   kLoadEcd[i] = kLoadEcdPerDart + kTriggerEcd[i]/扳机丝杆步长/扳机电机减速比*上膛丝杆步长*上膛电机减速比

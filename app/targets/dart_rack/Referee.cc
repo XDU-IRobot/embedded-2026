@@ -2,7 +2,6 @@
 
 #include "dart_core.hpp"
 
-
 namespace rm::device {
 RxReferee::RxReferee(rm::hal::SerialInterface &serial) : serial_(&serial) {
   static rm::hal::SerialRxCallbackFunction rx_callback =
@@ -18,4 +17,4 @@ void RxReferee::RxCallback(const std::vector<u8> &data, u16 rx_len) {
     *dart_rack->referee_data_buffer << data.at(i);
   }
 }
-}  // namespace rm::device10
+}  // namespace rm::device
