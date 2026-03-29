@@ -289,20 +289,23 @@ void DartStateLoadUpdate() {
   // 统一输出电机指令，避免函数内发生覆盖
   if (target_trigger_active) {
     dart_rack->trigger_motor_force_pid_.Update(target_trigger_speed, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+    dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
   } else {
     dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+    dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
   }
-  dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
 
   if (target_load_active) {
     dart_rack->load_motor_l_speed_pid_.Update(target_load_speed_l, dart_rack->load_motor_l_->rpm(), 1.0f);
     dart_rack->load_motor_r_speed_pid_.Update(target_load_speed_r, dart_rack->load_motor_r_->rpm(), 1.0f);
+    dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
+    dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
   } else {
     dart_rack->load_motor_l_speed_pid_.Update(0.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
     dart_rack->load_motor_r_speed_pid_.Update(0.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+    dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
+    dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
   }
-  dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
-  dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
 
   if (dart_rack->state_.manual_mode.is_trigger_lock_done == true &&
       dart_rack->state_.manual_mode.is_load_up_done == true &&
