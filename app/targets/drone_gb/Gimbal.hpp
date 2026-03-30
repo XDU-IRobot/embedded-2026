@@ -74,7 +74,7 @@ class Gimbal {
   float fire_speed_total = 0;
   int fire_count = 0;
   float fire_speed_ema = 0.0f;
-  bool  fire_speed_ema_inited = false;
+  bool fire_speed_ema_inited = false;
   float kAlpha = 0.2f;
   float kMaxStep = 0.8f;  // 防尖峰限幅
 
@@ -108,13 +108,13 @@ class Gimbal {
   float pitch_max_pos = 2.75;  // TODO pitch电机最大限位
 
   i16 encoder_dirl = 0;
-  int single_shoot_time = 28;   // TODO 单发时间
-  int single_shoot_mid = 0;     // 单发中间变量
-  bool single_flag = 0;         // 单发射击标志位
-  float dirl_speed = 5000;      // TODO 拨盘转速
-  float redirl_speed = 1000;    // TODO 拨盘反转速
-  float friction_speed = 6500;  // TODO 摩擦轮转速
-  float target_fire_speed=23.0f;// TODO 目标射速
+  int single_shoot_time = 28;       // TODO 单发时间
+  int single_shoot_mid = 0;         // 单发中间变量
+  bool single_flag = 0;             // 单发射击标志位
+  float dirl_speed = 5000;          // TODO 拨盘转速
+  float redirl_speed = 1000;        // TODO 拨盘反转速
+  float friction_speed = 6500;      // TODO 摩擦轮转速
+  float target_fire_speed = 23.0f;  // TODO 目标射速
   // 拨盘自动反转
   float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
   int auto_reverse_time_max = 150;                           // TODO 反转持续时间
@@ -327,7 +327,7 @@ class Gimbal {
         gimbal_controller_SMC.Enable(true);
         gimbal_controller_STASMC.Enable(true);
         rc_yaw_data = yaw;
-        rc_pitch_data = rm::modules::Wrap(pitch + err_average-0.02, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_pitch_data = rm::modules::Wrap(pitch + err_average - 0.02, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
       }
       rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
       rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);
@@ -363,12 +363,13 @@ class Gimbal {
 #endif
       // pitch数据暂时还是由PID控制器引出，PID控制pitch轴效果尚可
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average-0.02, 0, 2 * M_PI),
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average - 0.02, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
       // yaw控制数据由STASMC控制器引出
       gimbal_controller_STASMC.SetTarget(comp_yaw, comp_pitch, yaw_ff.Update(comp_yaw));
-      gimbal_controller_STASMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average-0.02, 0, 2 * M_PI),
-                                      pitch_motor->vel(), 0.002f);
+      gimbal_controller_STASMC.Update(yaw, -yaw_motor->rpm(),
+                                      rm::modules::Wrap(pitch + err_average - 0.02, 0, 2 * M_PI), pitch_motor->vel(),
+                                      0.002f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_STASMC.output().yaw, -25000, 25000));
 #endif
 
@@ -427,12 +428,13 @@ class Gimbal {
 #endif
       // pitch数据暂时还是由PID控制器引出，PID控制pitch轴效果尚可
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average-0.02, 0, 2 * M_PI),
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average - 0.02, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
       // yaw控制数据由STASMC控制器引出
       gimbal_controller_STASMC.SetTarget(comp_yaw, comp_pitch, yaw_ff.Update(comp_yaw));
-      gimbal_controller_STASMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average-0.02, 0, 2 * M_PI),
-                                      pitch_motor->vel(), 0.002f);
+      gimbal_controller_STASMC.Update(yaw, -yaw_motor->rpm(),
+                                      rm::modules::Wrap(pitch + err_average - 0.02, 0, 2 * M_PI), pitch_motor->vel(),
+                                      0.002f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_STASMC.output().yaw, -25000, 25000));
 #endif
       pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
@@ -560,8 +562,7 @@ class Gimbal {
 
   void Referee_control() {
     if (referee_data_buffer.data().shoot_data.initial_speed != 0 &&
-        referee_data_buffer.data().shoot_data.initial_speed != referee_fire_speed[0])
-    {
+        referee_data_buffer.data().shoot_data.initial_speed != referee_fire_speed[0]) {
       float x = referee_data_buffer.data().shoot_data.initial_speed;
       referee_fire_speed[4] = referee_fire_speed[3];
       referee_fire_speed[3] = referee_fire_speed[2];
@@ -575,14 +576,14 @@ class Gimbal {
       } else {
         float x_used = x;
         const float diff = x - fire_speed_ema;
-        if (diff >  kMaxStep) x_used = fire_speed_ema + kMaxStep;
+        if (diff > kMaxStep) x_used = fire_speed_ema + kMaxStep;
         if (diff < -kMaxStep) x_used = fire_speed_ema - kMaxStep;
         fire_speed_ema = (1.0f - kAlpha) * fire_speed_ema + kAlpha * x_used;
       }
 
       fire_speed_average = fire_speed_ema;
     }
-    friction_speed+=rm::modules::Clamp((fire_speed_average-target_fire_speed)/80.0f,-5,5);
+    friction_speed += rm::modules::Clamp((fire_speed_average - target_fire_speed) / 80.0f, -5, 5);
   }
 
   // 遥控器和imu数据解算+DjiMotor发信息
