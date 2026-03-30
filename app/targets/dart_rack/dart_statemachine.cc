@@ -54,19 +54,10 @@ void DartStateMachineUpdate(DartState &state) {
 
 // 手动模式状态机处理
 void DartStateManualUpdate() {
-  static bool wait_for_release = false; // 用于防止长按遥控器导致的连续触发下一发
-
   switch (dart_rack->state_.manual_mode.mode) {
     case ModeState::kUnable:
-      // 如果遥控器松开（不在kUp），则解除锁定
-      if (dart_rack->rc_->switch_r() != rm::device::DR16::SwitchPosition::kUp) {
-        wait_for_release = false;
-      }
-
-      // 等待进入初始化阶段：必须在解除锁定后，再次拨到 kUp 才开始下一发
-      if (!wait_for_release && dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
-        dart_rack->state_.manual_mode.mode = ModeState::kInit;
-        wait_for_release = true; // 锁定，直到下一次松开
+      if (dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
+          dart_rack->state_.manual_mode.mode = ModeState::kInit;
       } else {
         DartStateUnableUpdate();
       }
@@ -108,7 +99,8 @@ void DartStateManualUpdate() {
       break;
     case ModeState::kFire:
       // 发射逻辑
-      if (dart_rack->state_.manual_mode.fire == PhaseState::kUncomplete) {
+      if (dart_rack->state_.manual_mode.fire == PhaseState::kUncomplete && dart_rack->rc_->left_x() == 660 &&
+                dart_rack->rc_->right_x() == -660) {
         DartStateFireUpdate();
       } else if (dart_rack->state_.manual_mode.fire == PhaseState::kDone) {
         // 发射完成，返回待机状态
@@ -132,35 +124,64 @@ void DartStateUnableUpdate() {
 }
 
 void DartStateInitUpdate() {
+  // 增加静态变量用于检测由于摩擦和死区导致的来回震荡现象
+  static float last_yaw_error = 0.0f;
+  static int osc_count = 0;
+  static bool is_first_run = true;
+
   // Yaw轴根据是第几发镖初始化
   if (!dart_rack->state_.manual_mode.is_yaw_init_done) {
     float yaw_target = DartRack::kYawEcd[static_cast<uint8_t>(dart_rack->dart_count_)];
-    float yaw_current = dart_rack->yaw_encoder_->angle_deg();
+    // 直接在状态机内计算包含圈数补偿的绝对全局角度
+    float yaw_current = dart_rack->yaw_encoder_->angle_deg() +
+                        static_cast<float>(static_cast<int16_t>(dart_rack->yaw_encoder_->rotations())) * 360.0f;
     float yaw_error = yaw_target - yaw_current;
 
-    // 误差大于1度时继续进行调节
-    if (std::abs(yaw_error) > 1.0f) {
-      // 降低P系数，让运动更柔和平缓，防止冲过头
-      float target_speed = yaw_error * 150.0f;
+    // 优化的偏差处理防止突然掉头疯转（越过180度或-180度时的处理）
+    while (yaw_error > 180.0f) yaw_error -= 360.0f;
+    while (yaw_error < -180.0f) yaw_error += 360.0f;
+
+    // 限制最大规划偏差在正负15度以内
+    if (yaw_error > 15.0f) yaw_error = 15.0f;
+    else if (yaw_error < -15.0f) yaw_error = -15.0f;
+
+    // 初始化第一次偏差
+    if (is_first_run) {
+      last_yaw_error = yaw_error;
+      is_first_run = false;
+    }
+
+    // 检测误差的正负号反转 (意味着已经冲过目标点一次)
+    if (last_yaw_error * yaw_error < 0.0f) {
+      osc_count++;
+    }
+    last_yaw_error = yaw_error;
+
+    // 误差大于1.0度 并且 冲出/震荡的此时少于2次，继续进行调节（保留起步大电流克服摩擦）
+    if (std::abs(yaw_error) > 1.0f && osc_count < 2) {
+      float target_speed = yaw_error * 500.0f;
 
       // 限制最大旋转速度
-      if (target_speed > 800.0f) target_speed = 800.0f;
-      else if (target_speed < -800.0f) target_speed = -800.0f;
+      if (target_speed > 1000.0f) target_speed = 1000.0f;
+      else if (target_speed < -1000.0f) target_speed = -1000.0f;
 
-      // 设置最低起步指令克服静摩擦力
-      if (target_speed > 0.0f && target_speed < 80.0f) target_speed = 80.0f;
-      else if (target_speed < 0.0f && target_speed > -80.0f) target_speed = -80.0f;
+      // 恢复旧版的最低起步指令克服静摩擦力
+      if (target_speed > 0.0f && target_speed < 500.0f) target_speed = 500.0f;
+      else if (target_speed < 0.0f && target_speed > -500.0f) target_speed = -500.0f;
 
       dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
       dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
     } else {
-      // 到达目标范围后，直接断电清零防止由刹车引起的反转/抽搔
+      // 到达目标范围，或检测到产生来回震荡迹象后，强制妥协断电，直接视为完成
       dart_rack->yaw_motor_speed_pid_.Update(0.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
       dart_rack->yaw_motor_->SetCurrent(0);
       dart_rack->state_.manual_mode.is_yaw_init_done = true;
+      osc_count = 0; // 重置计数器供下一发使用
+      is_first_run = true;
     }
   } else {
-    // 已经满足过一次条件就将其锁在停止状态，避免云台惯性越界导致反复抽搐判断
+    // 已经满足过一次条件就将其锁在停止状态
+    dart_rack->yaw_motor_speed_pid_.Update(0.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
     dart_rack->yaw_motor_->SetCurrent(0);
   }
 
@@ -218,18 +239,29 @@ void DartStateLoadUpdate() {
   float target_load_speed_l = 0.0f;
   float target_load_speed_r = 0.0f;
 
+  static uint32_t trigger_open_time = 0;
+  static uint32_t trigger_lock_time = 0;
+
   // Phase 1: 打开撒放器 + 滑台下拉，同时进行
   if (dart_rack->state_.manual_mode.is_trigger_force_init_done == false) {
-    if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 50) {
+    // 恢复原有的撒放器堵转时间检测，防止强制通电烧毁电机
+    if (trigger_open_time < 150 && dart_rack->trigger_motor_force_odometer_.stall_time() <= 100) {
       target_trigger_active = true;
       target_trigger_speed = 1000.0f;
+      trigger_open_time++;
     } else {
       dart_rack->state_.manual_mode.is_trigger_force_init_done = true;
     }
   }
 
   if (dart_rack->state_.manual_mode.is_load_down_done == false) {
-    if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 && dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
+    // 添加对滑台是否移动离开死区的检测，防止通电起步阶段速度为0瞬间被误判为堵转
+    bool l_moved = std::abs(dart_rack->load_motor_l_odometer_.linear_ticks()) > 1000;
+    bool r_moved = std::abs(dart_rack->load_motor_r_odometer_.linear_ticks()) > 1000;
+
+    // 恢复为两个电机均必须堵转才算完成 (!l_moved || !r_moved) || ( stall_time<=100 || stall_time<=100 )
+    if ((!l_moved || !r_moved) ||
+        (dart_rack->load_motor_l_odometer_.stall_time() <= 100 && dart_rack->load_motor_r_odometer_.stall_time() <= 100)) {
       target_load_active = true;
       if (dart_rack->load_motor_r_odometer_.linear_ticks() > DartRack::kTriggerEcdMax ||
           dart_rack->load_motor_l_odometer_.linear_ticks() < -DartRack::kTriggerEcdMax) {
@@ -248,37 +280,43 @@ void DartStateLoadUpdate() {
   if (dart_rack->state_.manual_mode.is_load_down_done == true &&
       dart_rack->state_.manual_mode.is_trigger_force_init_done == true) {
 
-    // Phase 2: 锁定撒放器
+    // Phase 2: 锁定撒放器 (在滑台完全下拉即 load电机堵转后 开始)
     if (dart_rack->state_.manual_mode.is_trigger_lock_done == false) {
-      if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 100) {
+
+      // 核心修复嵌套逻辑：在撒放器锁定的这段时间里，必须强制保持load电机的下拉力和堵转状态！
+      // 否则一旦进入这个阶段target_load_active变为false从而断电，弹簧会瞬间将滑台暴力抽回导致撒放器无法咬合弦！
+      target_load_active = true;
+      if (dart_rack->load_motor_r_odometer_.linear_ticks() > DartRack::kTriggerEcdMax ||
+          dart_rack->load_motor_l_odometer_.linear_ticks() < -DartRack::kTriggerEcdMax) {
+        target_load_speed_l = -1500.0f;
+        target_load_speed_r = 1500.0f;
+      } else {
+        target_load_speed_l = -3000.0f;
+        target_load_speed_r = 3000.0f;
+      }
+
+      // 恢复扳机闭合的堵转保护
+      if (trigger_lock_time < 150 && dart_rack->trigger_motor_force_odometer_.stall_time() <= 100) {
         target_trigger_active = true;
         target_trigger_speed = -1000.0f;
+        trigger_lock_time++;
       } else {
         dart_rack->state_.manual_mode.is_trigger_lock_done = true;
       }
     }
     // Phase 3: 滑台还原
     else if (dart_rack->state_.manual_mode.is_load_up_done == false) {
-      if (dart_rack->load_motor_l_odometer_.linear_ticks() <= 0 ||
-          dart_rack->load_motor_r_odometer_.linear_ticks() >= 0 ||
-          dart_rack->state_.manual_mode.is_load_reset_done == false) {
+      bool l_done = dart_rack->load_motor_l_odometer_.linear_ticks() >= 0;
+      bool r_done = dart_rack->load_motor_r_odometer_.linear_ticks() <= 0;
 
+      if (!l_done || !r_done || dart_rack->state_.manual_mode.is_load_reset_done == false) {
         if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 &&
             dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
           target_load_active = true;
-          target_load_speed_l = 3000.0f;
-          target_load_speed_r = -3000.0f;
-        }
-      } else if (abs(dart_rack->load_motor_l_odometer_.linear_ticks() +
-                     dart_rack->load_motor_r_odometer_.linear_ticks()) >= 100000) {
-        if (dart_rack->load_motor_l_odometer_.linear_ticks() >= 0) {
-          target_load_active = true;
-          target_load_speed_l = -3000.0f;
-          target_load_speed_r = 0.0f;
-        } else if (dart_rack->load_motor_r_odometer_.linear_ticks() <= 0) {
-          target_load_active = true;
-          target_load_speed_l = 0.0f;
-          target_load_speed_r = 3000.0f;
+          target_load_speed_l = l_done ? 0.0f : 3000.0f;
+          target_load_speed_r = r_done ? 0.0f : -3000.0f;
+        } else {
+           dart_rack->state_.manual_mode.is_load_up_done = true;
         }
       } else {
         dart_rack->state_.manual_mode.is_load_up_done = true;
@@ -291,8 +329,17 @@ void DartStateLoadUpdate() {
     dart_rack->trigger_motor_force_pid_.Update(target_trigger_speed, dart_rack->trigger_motor_force_->rpm(), 1.0f);
     dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
   } else {
-    dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
-    dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
+    // 彻底摒弃复杂容易被物理弹簧扯开的电子弹簧，改用恒定维持强死力
+    if (dart_rack->state_.manual_mode.is_trigger_force_init_done == true &&
+        dart_rack->state_.manual_mode.is_trigger_lock_done == false) {
+      // 处于打开保持阶段，给予一个强劲的负保持电流 (-3000) 确保机件不会软缩回去导致看起来像提早关闭
+      dart_rack->trigger_motor_force_->SetCurrent(-1500);
+    } else if (dart_rack->state_.manual_mode.is_trigger_lock_done == true) {
+      // 处于锁定维持阶段，给予正向维持电流
+      dart_rack->trigger_motor_force_->SetCurrent(1500);
+    } else {
+      dart_rack->trigger_motor_force_->SetCurrent(0);
+    }
   }
 
   if (target_load_active) {
@@ -301,10 +348,11 @@ void DartStateLoadUpdate() {
     dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
     dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
   } else {
+    // 还原后彻底将速度PID清0并直接断电为0电流，防止因保留上次刹车产生的巨大负电流造成的迅速反抽下滑
     dart_rack->load_motor_l_speed_pid_.Update(0.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
     dart_rack->load_motor_r_speed_pid_.Update(0.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
-    dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
-    dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
+    dart_rack->load_motor_l_->SetCurrent(0);
+    dart_rack->load_motor_r_->SetCurrent(0);
   }
 
   if (dart_rack->state_.manual_mode.is_trigger_lock_done == true &&
@@ -312,6 +360,8 @@ void DartStateLoadUpdate() {
       dart_rack->state_.manual_mode.is_load_down_done == true &&
       dart_rack->state_.manual_mode.is_trigger_force_init_done == true) {
     dart_rack->state_.manual_mode.load = PhaseState::kDone;
+    trigger_open_time = 0;
+    trigger_lock_time = 0;
   }
 }
 
@@ -403,16 +453,20 @@ void DartStateFireUpdate() {
 }
 
 void DartStateAdjustUpdate() {
+  // 计算包含圈数的全段实际角度
+  float yaw_current_deg = dart_rack->yaw_encoder_->angle_deg() +
+                          static_cast<float>(static_cast<int16_t>(dart_rack->yaw_encoder_->rotations())) * 360.0f;
+
   // Yaw轴调节
   if (dart_rack->rc_->right_x() > 330) {
-    if (dart_rack->yaw_encoder_->angle_deg() <= DartRack::kYawEcdMin) {
+    if (yaw_current_deg <= DartRack::kYawEcdMin) {
       dart_rack->yaw_motor_->SetCurrent(0);
     } else {
       dart_rack->yaw_motor_speed_pid_.Update(-2000.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
       dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
     }
   } else if (dart_rack->rc_->right_x() < -330) {
-    if (dart_rack->yaw_encoder_->angle_deg() >= DartRack::kYawEcdMax) {
+    if (yaw_current_deg >= DartRack::kYawEcdMax) {
       dart_rack->yaw_motor_->SetCurrent(0);
     } else {
       dart_rack->yaw_motor_speed_pid_.Update(2000.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
@@ -510,17 +564,5 @@ void DartStateAdjustUpdate() {
   } else {
     debug_adjust_motor_running_time = 0;
     dart_rack->trigger_motor_force_->SetCurrent(0);
-  }
-  if (dart_rack->rc_->dial() < -330) {
-    dart_rack->add_motor_speed_pid_.Update(300.0f, dart_rack->add_motor_->rpm(), 1.0f);
-    dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-    dart_rack->add_plate_servo_->SetServoAngle(866, 0, 0);
-  } else if (dart_rack->rc_->dial() > 330) {
-    dart_rack->add_motor_speed_pid_.Update(-300.0f, dart_rack->add_motor_->rpm(), 1.0f);
-    dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-    dart_rack->add_plate_servo_->SetServoAngle(593, 0, 0);
-  } else {
-    dart_rack->add_motor_speed_pid_.Update(.0f, dart_rack->add_motor_->rpm(), 1.0f);
-    dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
   }
 }
