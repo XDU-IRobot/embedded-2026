@@ -113,8 +113,8 @@ class Gimbal {
     gimbal_controller.pid().pitch_position.SetKp(3.8f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
 
-    gimbal_controller.pid().yaw_position.SetKp(3.6f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(3.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(1.00f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
   }
 
   void RCStateUpdate() {
