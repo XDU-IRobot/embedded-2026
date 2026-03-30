@@ -49,6 +49,7 @@ class Gimbal {
 
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *yaw_motor{nullptr};
+  rm::device::M3508 *friction_left{nullptr};
 
   rm::device::DR16 *rc{nullptr};
 
@@ -70,7 +71,7 @@ class Gimbal {
   Gimbal2Dof gimbal_controller;
 
 #if TEST_GIMBAL
-  float pitch_min_pos = 2.6;  // 预定义宏可以快速转换限位
+  float pitch_min_pos = 2.48;  // 预定义宏可以快速转换限位
   float pitch_max_pos = 3.8;
 #else
   float pitch_min_pos = 1.6;
@@ -91,6 +92,7 @@ class Gimbal {
         *can1, {0x12, 0x02, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};//设置对于can设备的报文
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x11, 0x01, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+    friction_left = new rm::device::M3508{*can1, 6};
 
     device_rc << rc;
     device_gimbal << pitch_motor << yaw_motor;  // 设备管理器，可以一次性管理大多数设备
@@ -110,11 +112,11 @@ class Gimbal {
   // pid初始化
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().pitch_position.SetKp(3.8f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
-    gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    gimbal_controller.pid().pitch_position.SetKp(7.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(0.9f).SetKi(0.0f).SetKd(0.05f).SetMaxOut(10.0f).SetMaxIout(5.0f);
 
-    gimbal_controller.pid().yaw_position.SetKp(3.4f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(1.00f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(9.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
   }
 
   void RCStateUpdate() {
@@ -197,6 +199,8 @@ class Gimbal {
       yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
       rc_yaw = rc_yaw_date;
       rc_pitch = rc_pitch_date;
+      friction_left->SetCurrent(5);
+      rm::device::DjiMotor<rm::device::DjiMotorType::kM3508>::SendCommand();
     }
   }
 
