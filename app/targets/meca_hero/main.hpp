@@ -261,7 +261,7 @@ inline float vel_real = 0;
 inline bool power_management_gimbal_last;
 inline bool power_management_shooter_last;
 inline int16_t shooter_m = 0;
-inline bool overpower=false;
+inline bool overpower = false;
 /*----------------------------------------------
  *执行函数
  */

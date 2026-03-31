@@ -77,9 +77,9 @@ void MagazineControl() {
   if (counter == 0) {
     if ((globals->rc->dial() >= 500 || globals->rc->dial() < -500 || globals->rc->mouse_button_left() ||
          globals->tc->data().mouse_button_left || globals->custom_client->mouse_left() ||
-         (globals->aimbot_can_communicator->aimbot_state() == 0x03 && (
-            r_switch_position_now == rm::device::DR16::SwitchPosition::kUp || globals->tc->data().keyboard_key &
-            static_cast<int16_t>(VT03::KeyboardKey::kCtrl)))) &&
+         (globals->aimbot_can_communicator->aimbot_state() == 0x03 &&
+          (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp ||
+           globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl)))) &&
         (globals->ref.data().robot_status.shooter_barrel_heat_limit >=
          globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100) &&
         (shooter_1 < -3000 && shooter_4 < -3000)) {
@@ -317,8 +317,8 @@ void GimbalControl() {
       (((globals->rc->dial() >= 500 || globals->rc->dial() <= -500) &&
         l_switch_position_now != device::DR16::SwitchPosition::kUp) ||
        r_switch_position_now == device::DR16::SwitchPosition::kUp || globals->rc->mouse_button_right() ||
-       globals->tc->data().mouse_button_right || globals->custom_client->mouse_right() || globals->tc->data().
-       keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl))) {
+       globals->tc->data().mouse_button_right || globals->custom_client->mouse_right() ||
+       globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl))) {
     target_pos_yaw = -globals->aimbot_can_communicator->yaw() / 57.3;
 
     //-aimbot.USB_Rx.YawRelativeAngle;usb
@@ -331,19 +331,19 @@ void GimbalControl() {
     // tc->rc->cc
     if ((globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) && globals->tc->offline_count < 93) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-          static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8;
+                        static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8;
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-          static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5;
+                          static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5;
     } else if (globals->rc->mouse_x() != 0 || globals->rc->mouse_y() != 0) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-          static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3; // ≈0.003/per
+                        static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3;  // ≈0.003/per
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-          static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3);
+                          static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3);
     } else {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
-          static_cast<float>(globals->custom_client->mouse_x()) * 0.000015; // ≈0.003/per
+                        static_cast<float>(globals->custom_client->mouse_x()) * 0.000015;  // ≈0.003/per
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
-          static_cast<float>(globals->custom_client->mouse_y()) * 0.000015; // 0.00033/per
+                          static_cast<float>(globals->custom_client->mouse_y()) * 0.000015;  // 0.00033/per
     }
 
     aimbot_state_flag = 0;
@@ -432,7 +432,7 @@ void ChassisPower() {
   if (follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
     globals->pid_chassis_follow_pos->Update(0.49, globals->gimbal_motor_yaw->pos(),
-                                            0.0011); // 云台正位为电机编码器的+90°//逆时针旋转为增大
+                                            0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.7);
@@ -449,16 +449,16 @@ void ChassisPower() {
   if (l_switch_position_now == device::DR16::SwitchPosition::kUp ||
       l_switch_position_now == device::DR16::SwitchPosition::kMid) {
     if (globals->rc->key(rm::device::DR16::Key::kW) ||
-        (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW) && globals->tc->
-         offline_count < 93) ||
+        (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW) &&
+         globals->tc->offline_count < 93) ||
         globals->custom_client->key(rm::device::DR16::Key::kW)) {
       Vy += 30;
       if (Vy >= 8400) {
         Vy = 8500;
       }
     } else if (globals->rc->key(rm::device::DR16::Key::kS) ||
-               (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS) && globals->
-                tc->offline_count < 93) ||
+               (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS) &&
+                globals->tc->offline_count < 93) ||
                globals->custom_client->key(rm::device::DR16::Key::kS)) {
       Vy -= 30;
       if (Vy <= -8400) {
@@ -468,16 +468,16 @@ void ChassisPower() {
       Vy = 0;
     }
     if (globals->rc->key(rm::device::DR16::Key::kD) ||
-        (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD) && globals->tc->
-         offline_count < 93) ||
+        (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD) &&
+         globals->tc->offline_count < 93) ||
         globals->custom_client->key(rm::device::DR16::Key::kD)) {
       Vx += 30;
       if (Vx >= 8400) {
         Vx = 7000;
       }
     } else if (globals->rc->key(rm::device::DR16::Key::kA) ||
-               (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA) && globals->
-                tc->offline_count < 93) ||
+               (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA) &&
+                globals->tc->offline_count < 93) ||
                globals->custom_client->key(rm::device::DR16::Key::kA)) {
       Vx -= 30;
       if (Vx <= -8400) {
@@ -494,7 +494,7 @@ void ChassisPower() {
   rm::i16 V_wheel[4];
   V_wheel[0] = -Vy + 1.5 * Vx + 1.5 * Vw;
   V_wheel[1] = Vy + 1.5 * Vx + 1.5 * Vw;
-  V_wheel[2] = Vy /*- 1.5 * Vx */+ 1 * Vw;
+  V_wheel[2] = Vy /*- 1.5 * Vx */ + 1 * Vw;
   V_wheel[3] = -Vy /*- 1.5 * Vx*/ + 1 * Vw;
 
   for (int i = 0; i < 4; i++) {
@@ -517,11 +517,11 @@ void ChassisPower() {
   }
   if (overpower) {
     // 超功率
-    power_limit = 130; // 随便给的
+    power_limit = 130;  // 随便给的
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                    ? 50
-                    : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+                      ? 50
+                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
@@ -536,13 +536,11 @@ void ChassisPower() {
         globals->chassis_motor[i]->SetCurrent(
             static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
     } else {
-      for (int i = 0; i < 4; i++)
-        globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
+      for (int i = 0; i < 4; i++) globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     }
   } else {
     if (globals->ref.data().power_heat_data.buffer_energy >= 50) {
-      for (int i = 0; i < 4; i++)
-        globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
+      for (int i = 0; i < 4; i++) globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     } else {
       for (int i = 0; i < 4; i++)
         globals->chassis_motor[i]->SetCurrent(
