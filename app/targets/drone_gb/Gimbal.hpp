@@ -74,7 +74,7 @@ class Gimbal {
   float fire_speed_total = 0;
   int fire_count = 0;
   float fire_speed_ema = 0.0f;
-  bool  fire_speed_ema_inited = false;
+  bool fire_speed_ema_inited = false;
   float kAlpha = 0.2f;
   float kMaxStep = 0.8f;  // 防尖峰限幅
 
@@ -108,13 +108,13 @@ class Gimbal {
   float pitch_max_pos = 2.75;  // TODO pitch电机最大限位
 
   i16 encoder_dirl = 0;
-  int single_shoot_time = 28;   // TODO 单发时间
-  int single_shoot_mid = 0;     // 单发中间变量
-  bool single_flag = 0;         // 单发射击标志位
-  float dirl_speed = 5000;      // TODO 拨盘转速
-  float redirl_speed = 1000;    // TODO 拨盘反转速
-  float friction_speed = 6500;  // TODO 摩擦轮转速
-  float target_fire_speed=23.0f;// TODO 目标射速
+  int single_shoot_time = 28;       // TODO 单发时间
+  int single_shoot_mid = 0;         // 单发中间变量
+  bool single_flag = 0;             // 单发射击标志位
+  float dirl_speed = 5000;          // TODO 拨盘转速
+  float redirl_speed = 1000;        // TODO 拨盘反转速
+  float friction_speed = 6500;      // TODO 摩擦轮转速
+  float target_fire_speed = 23.0f;  // TODO 目标射速
   // 拨盘自动反转
   float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
   int auto_reverse_time_max = 150;                           // TODO 反转持续时间
@@ -587,8 +587,7 @@ class Gimbal {
 
   void Referee_control() {
     if (referee_data_buffer.data().shoot_data.initial_speed != 0 &&
-        referee_data_buffer.data().shoot_data.initial_speed != referee_fire_speed[0])
-    {
+        referee_data_buffer.data().shoot_data.initial_speed != referee_fire_speed[0]) {
       float x = referee_data_buffer.data().shoot_data.initial_speed;
       referee_fire_speed[4] = referee_fire_speed[3];
       referee_fire_speed[3] = referee_fire_speed[2];
@@ -602,7 +601,7 @@ class Gimbal {
       } else {
         float x_used = x;
         const float diff = x - fire_speed_ema;
-        if (diff >  kMaxStep) x_used = fire_speed_ema + kMaxStep;
+        if (diff > kMaxStep) x_used = fire_speed_ema + kMaxStep;
         if (diff < -kMaxStep) x_used = fire_speed_ema - kMaxStep;
         fire_speed_ema = (1.0f - kAlpha) * fire_speed_ema + kAlpha * x_used;
       }

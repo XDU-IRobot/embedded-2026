@@ -38,7 +38,8 @@ float Aspeed_average;
 float Apitch_err_average;
 // 调试接口函数
 void FreemasterDebug() {
-  Arcpitchdata = rm::modules::Wrap(gimbal->rc_pitch_data - gimbal->err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+  Arcpitchdata =
+      rm::modules::Wrap(gimbal->rc_pitch_data - gimbal->err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
   // Ayaw = gimbal->yaw;
   Apitch = gimbal->pitch;
   Apitch_err_average=gimbal->err_average;
@@ -66,6 +67,6 @@ void FreemasterDebug() {
   Apidoutput = gimbal->gimbal_controller.output().yaw;
   Asmcoutput = gimbal->gimbal_controller_SMC.output().yaw;
   Astasmcoutput = gimbal->gimbal_controller_STASMC.output().yaw;
-  Ainit_speed=gimbal->referee_data_buffer.data().shoot_data.initial_speed;
-  Aspeed_average=gimbal->fire_speed_average;
+  Ainit_speed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
+  Aspeed_average = gimbal->fire_speed_average;
 }
