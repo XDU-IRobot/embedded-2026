@@ -92,7 +92,7 @@ class Gimbal {
         *can1, {0x12, 0x02, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};//设置对于can设备的报文
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x11, 0x01, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
-    friction_left = new rm::device::M3508{*can1, 6};
+    friction_left = new rm::device::M3508{*can1, 5};
 
     device_rc << rc;
     device_gimbal << pitch_motor << yaw_motor;  // 设备管理器，可以一次性管理大多数设备
@@ -152,6 +152,7 @@ class Gimbal {
       gimbal_controller.SetTarget(rc_yaw_date, rc_pitch_date);
 
       gimbal_controller.Update(yaw, yaw_motor->vel(), pitch, pitch_motor->vel(), 2.f);
+      friction_left->SetCurrent(1000);
 
     }
     else {
@@ -195,12 +196,12 @@ class Gimbal {
   // damiao电机控制信号
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
-      pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
-      yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
+      //pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
+      //yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
       rc_yaw = rc_yaw_date;
       rc_pitch = rc_pitch_date;
-      friction_left->SetCurrent(5);
-      rm::device::DjiMotor<rm::device::DjiMotorType::kM3508>::SendCommand();
+
+      rm::device::DjiMotorBase::SendCommand(*can1);
     }
   }
 
