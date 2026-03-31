@@ -84,7 +84,7 @@ void MagazineControl() {
          globals->ref.data().power_heat_data.shooter_42mm_barrel_heat + 100) &&
         (shooter_1 < -3000 && shooter_4 < -3000)) {
       target_magz = next_target_magz;
-      counter = 300;
+      counter = 420;
     }
   } else if (counter == 100) {
     if (rm::modules::Wrap(target_magz - globals->magazine_motor->pos(), -3.141593, 3.141593) < -3.141593 / 18) {
@@ -494,8 +494,8 @@ void ChassisPower() {
   rm::i16 V_wheel[4];
   V_wheel[0] = -Vy + 1.5 * Vx + 1.5 * Vw;
   V_wheel[1] = Vy + 1.5 * Vx + 1.5 * Vw;
-  V_wheel[2] = Vy - 1.5 * Vx + 1 * Vw;
-  V_wheel[3] = -Vy - 1.5 * Vx + 1 * Vw;
+  V_wheel[2] = Vy /*- 1.5 * Vx */+ 1 * Vw;
+  V_wheel[3] = -Vy /*- 1.5 * Vx*/ + 1 * Vw;
 
   for (int i = 0; i < 4; i++) {
     globals->velocity_pids[i]->Update(V_wheel[i], globals->chassis_motor[i]->rpm());

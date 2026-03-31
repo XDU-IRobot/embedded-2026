@@ -136,8 +136,8 @@ inline struct GlobalWarehouse {
     pid_shooter_6 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
 
     // pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
-    pid_magz_position = new rm::modules::PID{42, 0.001, 0.56, 24, 0};
-    pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.00002, 8, 0};
+    pid_magz_position = new rm::modules::PID{42, 0.001, 0.56, 16, 0};
+    pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.00002, 7, 0};
 
     // pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
@@ -189,7 +189,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = -0.1;  //-6°
+inline float next_target_magz = 0;  //-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;

@@ -29,10 +29,12 @@ extern u8 Info_Arr[128];
 
 // 瞄准参考线
 Graph_Data image_y;
-
+Graph_Data linex0, linex1, linex2, linex3, linex4;
 // // 飞坡、前进参考线
 // Graph_Data rfd1, rfd2, rfd3, rfd4;
 
+//瞄准角度
+Float_Data linef1;
 // Cap
 Float_Data CapData;
 
@@ -244,6 +246,12 @@ void UiRefresh() {
   ) {
     // Line_Draw(&image_x, "xxx", UI_Graph_ADD, 0, UI_Color_Orange, 2, 918, 515, 978, 515);
     Line_Draw(&image_y, "yyy", UI_Graph_ADD, 2, UI_Color_Orange, 2, 948, 465, 948, 565);
+    Line_Draw(&linex0, "xx0", UI_Graph_ADD, 2, UI_Color_Purplish_red, 2, 940, 525, 980, 525);
+    Line_Draw(&linex1, "xx1", UI_Graph_ADD, 2, UI_Color_Green, 2, 900, 500, 1020, 500);
+    Line_Draw(&linex2, "xx2", UI_Graph_ADD, 2, UI_Color_Pink, 2, 910, 470, 1010, 470);
+    Line_Draw(&linex3, "xx3", UI_Graph_ADD, 2, UI_Color_Black, 2, 920, 450, 1000, 450);
+    Line_Draw(&linex4, "xx4", UI_Graph_ADD, 2, UI_Color_Cyan, 2, 930, 420, 990, 420);
+
 
     Float_Draw(&CapData, "cms", UI_Graph_ADD, 2, UI_Color_Main, 27, 2, 5, 7050, 150, cms_v * 1000);
     Float_Draw(&Pitch, "gbp", UI_Graph_ADD, 2, UI_Color_Green, 27, 1, 3, 7300, 500, 0);
@@ -263,6 +271,8 @@ void UiRefresh() {
     irq = (u32)&image_y;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
 
+    // irq = (u32)&image_y;
+    // EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
     // irq = (u32)&mouse_left;
     // EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
     // irq = (u32)&mouse_right;
@@ -280,6 +290,17 @@ void UiRefresh() {
     irq = (u32)&p1;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
     irq = (u32)&p2;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+
+    irq = (u32)&linex0;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&linex1;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&linex2;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&linex3;
+    EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
+    irq = (u32)&linex4;
     EnQueue(&UI_send_buffer[0], (u8 *)&irq, 4);
   } else {
     // 电容电压
