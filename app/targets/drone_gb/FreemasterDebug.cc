@@ -35,17 +35,18 @@ float Aautopitchtarget;
 float Astasmcoutput;
 float Ainit_speed;
 float Aspeed_average;
-
+float Apitch_err_average;
 // 调试接口函数
 void FreemasterDebug() {
   Arcpitchdata = rm::modules::Wrap(gimbal->rc_pitch_data - gimbal->err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
   // Ayaw = gimbal->yaw;
   Apitch = gimbal->pitch;
+  Apitch_err_average=gimbal->err_average;
   Aroll = gimbal->roll;
   Aoutputyaw = gimbal->gimbal_controller.output().yaw;
   Aoutputpitch = gimbal->gimbal_controller.output().pitch;
   Apitchpose = gimbal->pitch_motor->pos();
-  Atorque = gimbal->pitch_torque;
+  Atorque = gimbal->pitch_torque+gimbal->gimbal_controller.output().pitch;
   Adirlrmp = gimbal->dial_motor->encoder();
   Adirout = gimbal->shoot_controller.output().loader;
   Aerr = gimbal->err_average;
@@ -57,7 +58,7 @@ void FreemasterDebug() {
   Armp = gimbal->friction_left->rpm();
   Apitchpose = gimbal->pitch_motor->pos();
   Ayaw = gimbal->yaw;
-  Aautoyawtarget = Aimbot.TargetYawAngle + M_PI;
+  Aautoyawtarget = rm::modules::Wrap(Aimbot.TargetYawAngle + M_PI, 0, 2 * M_PI);
   Aselfyawtarget = gimbal->yaw;
   Aautopitchtarget = rm::modules::Wrap(Aimbot.TargetPitchAngle + gimbal->err_average + M_PI, 0, 2 * M_PI);
   Aselfpitchtarget = rm::modules::Wrap(gimbal->pitch + gimbal->err_average, 0, 2 * M_PI);
