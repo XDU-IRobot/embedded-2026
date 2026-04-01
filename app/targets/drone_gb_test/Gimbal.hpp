@@ -112,10 +112,10 @@ class Gimbal {
   // pid初始化
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().pitch_position.SetKp(7.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
-    gimbal_controller.pid().pitch_speed.SetKp(0.9f).SetKi(0.0f).SetKd(0.05f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    gimbal_controller.pid().pitch_position.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
 
-    gimbal_controller.pid().yaw_position.SetKp(9.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
     gimbal_controller.pid().yaw_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
   }
 
@@ -196,12 +196,12 @@ class Gimbal {
   // damiao电机控制信号
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
-      //pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
+      pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
       //yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
       rc_yaw = rc_yaw_date;
       rc_pitch = rc_pitch_date;
 
-      rm::device::DjiMotorBase::SendCommand(*can1);
+      //rm::device::DjiMotorBase::SendCommand(*can1);
     }
   }
 
