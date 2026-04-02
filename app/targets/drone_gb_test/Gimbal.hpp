@@ -15,19 +15,19 @@
 #include "Usb.hpp"
 // #include "old_sentry/main.hpp"
 
-double yaw_=0;
-double pitch_=0;
-double roll_=0;
+double yaw_ = 0;
+double pitch_ = 0;
+double roll_ = 0;
 
-int16_t rc_left_x=0;
-int16_t rc_left_y=0;
-uint8_t rc_switch_l=0;
+int16_t rc_left_x = 0;
+int16_t rc_left_y = 0;
+uint8_t rc_switch_l = 0;
 
+double rc_yaw = 0;
+double rc_pitch = 0;
 
-double rc_yaw =0;
-double rc_pitch =0;
-
-float output_yaw = 0;
+float pitch_torque = 0.0f;
+float pitch_torque_kp = 0.0f;
 
 class Gimbal {
  public:
@@ -89,7 +89,7 @@ class Gimbal {
     rc = new rm::device::DR16{*dbus};
 
     yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x12, 0x02, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};//设置对于can设备的报文
+        *can1, {0x12, 0x02, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};  // 设置对于can设备的报文
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x11, 0x01, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
     friction_left = new rm::device::M3508{*can1, 5};
@@ -152,10 +152,12 @@ class Gimbal {
       gimbal_controller.SetTarget(rc_yaw_date, rc_pitch_date);
 
       gimbal_controller.Update(yaw, yaw_motor->vel(), pitch, pitch_motor->vel(), 2.f);
-      friction_left->SetCurrent(1000);
+      // friction_left->SetCurrent(1000);
 
-    }
-    else {
+      pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
+      pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
+
+    } else {
       if (DM_is_enable == true) {  // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
@@ -183,25 +185,24 @@ class Gimbal {
     yaw = ahrs_auto.euler_angle().yaw + M_PI;
     roll = ahrs_auto.euler_angle().roll + M_PI;
 
-    yaw_=yaw;       //imu测试数据
-    pitch_=pitch;
+    yaw_ = yaw;  // imu测试数据
+    pitch_ = pitch;
 
-    rc_left_x = rc->left_x();//rc测试数据
+    rc_left_x = rc->left_x();  // rc测试数据
     rc_left_y = rc->left_y();
     rc_switch_l = static_cast<uint8_t>(GimbalState_);
-
-    output_yaw = gimbal_controller.output().yaw;
   }
 
   // damiao电机控制信号
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
-      pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
-      //yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
+      double pitch_torque_cmd = gimbal_controller.output().pitch + pitch_torque;
+      pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
+      yaw_motor->SetMitCommand(0, 0, gimbal_controller.output().yaw, 0, 0);
       rc_yaw = rc_yaw_date;
       rc_pitch = rc_pitch_date;
 
-      //rm::device::DjiMotorBase::SendCommand(*can1);
+      // rm::device::DjiMotorBase::SendCommand(*can1);
     }
   }
 
