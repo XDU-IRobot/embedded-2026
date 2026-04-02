@@ -262,6 +262,7 @@ inline bool power_management_gimbal_last;
 inline bool power_management_shooter_last;
 inline int16_t shooter_m = 0;
 inline bool overpower=false;
+inline int overpower_count=0;
 /*----------------------------------------------
  *执行函数
  */

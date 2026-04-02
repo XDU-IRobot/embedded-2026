@@ -390,9 +390,11 @@ void GimbalControl() {
   globals->gimbal_motor_yaw->SetMitCommand(
       0, 0, (0.98 - 0.5 * eulerangle_pitch / 0.6644) * globals->pid_yaw_velocity->out(), 0, 0);
   // 爬坡模式
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
-      l_switch_position_now != device::DR16::SwitchPosition::kUp &&
-      (globals->rc->dial() < 500 && globals->rc->dial() > -500)) {
+  if (((r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
+        l_switch_position_now != device::DR16::SwitchPosition::kUp) || (
+         globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift)) ||
+         globals->rc->key(DR16::Key::kShift)) &&
+       (globals->rc->dial() < 500 && globals->rc->dial() > -500)) {
     globals->gimbal_motor_pitch->SetCurrent(0);
   } else {
     globals->gimbal_motor_pitch->SetCurrent(
@@ -494,7 +496,7 @@ void ChassisPower() {
   rm::i16 V_wheel[4];
   V_wheel[0] = -Vy + 1.5 * Vx + 1.5 * Vw;
   V_wheel[1] = Vy + 1.5 * Vx + 1.5 * Vw;
-  V_wheel[2] = Vy /*- 1.5 * Vx */+ 1 * Vw;
+  V_wheel[2] = Vy /*- 1.5 * Vx */ + 1 * Vw;
   V_wheel[3] = -Vy /*- 1.5 * Vx*/ + 1 * Vw;
 
   for (int i = 0; i < 4; i++) {
@@ -517,30 +519,36 @@ void ChassisPower() {
   }
   if (overpower) {
     // 超功率
-    power_limit = 130; // 随便给的
+    power_limit = 150;
+    if (abs(eulerangle_pitch>=0.6)&&overpower_count>0) {
+      power_limit=5000;
+      overpower_count--;
+    }
   } else {
     power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
                     ? 50
                     : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+    overpower_count=300;
   }
 
   power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
 
   // 电容离线或电压过低则不允许超功率
-  if (globals->cms->cms_v < 15) {
+  if (globals->cms->cms_v < 10) {
     overpower = false;
   }
   if (overpower) {
-    if (globals->ref.data().power_heat_data.buffer_energy <= 30) {
+    if (globals->ref.data().power_heat_data.buffer_energy <= 10) {
       for (int i = 0; i < 4; i++)
         globals->chassis_motor[i]->SetCurrent(
-            static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
+            static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / (
+                                   60 * 1.5)));
     } else {
       for (int i = 0; i < 4; i++)
         globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     }
   } else {
-    if (globals->ref.data().power_heat_data.buffer_energy >= 50) {
+    if (globals->cms->cms_v >= 25.0) {
       for (int i = 0; i < 4; i++)
         globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     } else {
