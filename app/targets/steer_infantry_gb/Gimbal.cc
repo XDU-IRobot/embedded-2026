@@ -16,28 +16,28 @@ void Gimbal::GimbalTask() {
 }
 
 void Gimbal::GimbalStateUpdate() {
-  // if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
-  //   globals->StateMachine_ = kUnable;  // 如果云台设备离线或云台供电异常，进入无力模式
-  //   gimbal->GimbalDisableUpdate();     // 云台电机失能计算
-  // } else {
-  switch (globals->StateMachine_) {
-    case kNoForce:                    // 无力模式下，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      break;
+  if (!globals->device_gimbal.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
+    globals->StateMachine_ = kUnable;  // 如果云台设备离线或云台供电异常，进入无力模式
+    gimbal->GimbalDisableUpdate();     // 云台电机失能计算
+  } else {
+    switch (globals->StateMachine_) {
+      case kNoForce:                    // 无力模式下，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
 
-    case kTest:                      // 测试模式下，发射系统与拨盘电机失能
-      gimbal->GimbalEnableUpdate();  // 云台电机使能计算
-      break;
+      case kTest:                      // 测试模式下，发射系统与拨盘电机失能
+        gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+        break;
 
-    case kMatch:
-      gimbal->GimbalMatchUpdate();
-      break;
+      case kMatch:
+        gimbal->GimbalMatchUpdate();
+        break;
 
-    default:                          // 错误状态，所有电机失能
-      gimbal->GimbalDisableUpdate();  // 云台电机失能计算
-      break;
+      default:                          // 错误状态，所有电机失能
+        gimbal->GimbalDisableUpdate();  // 云台电机失能计算
+        break;
+    }
   }
-  // }
   if (!globals->device_shoot.all_device_ok() || !globals->chassis_communicator->ammo_power_state()) {
     gimbal->ShootDisableUpdate();  // 发射机构失能计算
   } else {
@@ -132,11 +132,23 @@ void Gimbal::GimbalMatchUpdate() {
 void Gimbal::GimbalEnableUpdate() {
   gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
-  globals->aim_mode = 0x01;
   if (gimbal->GimbalMove_ == kGbRemote) {
+    globals->aim_mode = 0x01;
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbot) {
+    globals->aim_mode = 0x01;
+    gimbal->GimbalAimbotTargetUpdate();
+    gimbal->GimbalMovePIDUpdate();
+  } else if (gimbal->GimbalMove_ == kGbAimbotFu) {
+    globals->aim_mode = 0x02;
+    if (globals->rc->dial() >= 650 && !globals->aim_mood_change_flag) {
+      globals->aim_mode ^= static_cast<u8>(1 << 1);
+      globals->aim_mode ^= static_cast<u8>(1 << 2);
+      globals->aim_mood_change_flag = true;
+    } else if (globals->rc->dial() <= 0) {
+      globals->aim_mood_change_flag = false;
+    }
     gimbal->GimbalAimbotTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else {

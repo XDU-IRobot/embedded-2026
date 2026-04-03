@@ -132,9 +132,12 @@ void GlobalWarehouse::RCStateUpdate() {
         // 右拨杆打到中间挡位
         switch (globals->rc->switch_l()) {
           case rm::device::DR16::SwitchPosition::kDown:
-          case rm::device::DR16::SwitchPosition::kMid:
             globals->StateMachine_ = kTest;
             gimbal->GimbalMove_ = kGbRemote;
+            break;
+          case rm::device::DR16::SwitchPosition::kMid:
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbAimbotFu;
             break;
           case rm::device::DR16::SwitchPosition::kUp:
             globals->StateMachine_ = kTest;
@@ -240,9 +243,11 @@ void GlobalWarehouse::ChassisStateUpdate() {
   if (globals->df_state) {
     globals->chassis_state |= static_cast<u8>(1 << 4);
     globals->chassis_state &= ~static_cast<u8>(1 << 5);
+    globals->aim_mode = 0x02;
   } else if (globals->xf_state) {
     globals->chassis_state |= static_cast<u8>(1 << 5);
     globals->chassis_state &= ~static_cast<u8>(1 << 4);
+    globals->aim_mode = 0x04;
   } else {
     globals->chassis_state &= ~static_cast<u8>(1 << 4);
     globals->chassis_state &= ~static_cast<u8>(1 << 5);
