@@ -16,6 +16,8 @@ u8 NavigateCanCommunicator::scan_mode() const { return scan_mode_; }
 
 u8 NavigateCanCommunicator::perception_flag() const { return perception_flag_; }
 
+u8 NavigateCanCommunicator::aimbot_mode() const { return aimbot_mode_; }
+
 void NavigateCanCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x180) {
     ReportStatus(kOk);
@@ -28,6 +30,7 @@ void NavigateCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     ReportStatus(kOk);
     scan_mode_ = msg->data[0];
     perception_flag_ = msg->data[1];
+    aimbot_mode_ = msg->data[2];
   }
 }
 

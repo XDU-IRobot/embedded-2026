@@ -86,10 +86,18 @@ void Gimbal::GimbalRCTargetUpdate() {
 
 void Gimbal::GimbalScanTargetUpdate() {
   // 上部yaw轴扫描
-  if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_) {
-    gimbal->scan_yaw_flag_ = true;
-  } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_) {
-    gimbal->scan_yaw_flag_ = false;
+  if (globals->navigate_communicator->aimbot_mode()) {
+    if (globals->up_yaw_motor->encoder() >= gimbal->max_mechanism_up_yaw_pos_) {
+      gimbal->scan_yaw_flag_ = true;
+    } else if (globals->up_yaw_motor->encoder() <= gimbal->min_mechanism_up_yaw_pos_) {
+      gimbal->scan_yaw_flag_ = false;
+    }
+  } else {
+    if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_) {
+      gimbal->scan_yaw_flag_ = true;
+    } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_) {
+      gimbal->scan_yaw_flag_ = false;
+    }
   }
   if (gimbal->scan_yaw_flag_) {
     gimbal->gimbal_up_yaw_target_ -= 0.0025f;
@@ -97,10 +105,18 @@ void Gimbal::GimbalScanTargetUpdate() {
     gimbal->gimbal_up_yaw_target_ += 0.0025f;
   }
   // pitch轴扫描
-  if (gimbal->gimbal_pitch_target_ <= gimbal->highest_aimbot_pitch_angle_) {
-    gimbal->scan_pitch_flag_ = false;
-  } else if (gimbal->gimbal_pitch_target_ >= gimbal->highest_pitch_angle_) {
-    gimbal->scan_pitch_flag_ = true;
+  if (globals->navigate_communicator->aimbot_mode()) {
+    if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_mechanism_pitch_angle_) {
+      gimbal->scan_pitch_flag_ = false;
+    } else if (gimbal->gimbal_pitch_target_ >= gimbal->highest_mechanism_pitch_angle_) {
+      gimbal->scan_pitch_flag_ = true;
+    }
+  } else {
+    if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_aimbot_pitch_angle_) {
+      gimbal->scan_pitch_flag_ = false;
+    } else if (gimbal->gimbal_pitch_target_ >= gimbal->highest_pitch_angle_) {
+      gimbal->scan_pitch_flag_ = true;
+    }
   }
   if (gimbal->scan_pitch_flag_) {
     gimbal->gimbal_pitch_target_ -= 0.005f;
@@ -171,7 +187,7 @@ void Gimbal::GimbalPerceptTargetUpdate() {
     gimbal->perception_time_ = 1000;
   }
   // pitch轴扫描
-  if (gimbal->gimbal_pitch_target_ <= gimbal->highest_aimbot_pitch_angle_) {
+  if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_aimbot_pitch_angle_) {
     gimbal->scan_pitch_flag_ = false;
   } else if (gimbal->gimbal_pitch_target_ >= gimbal->highest_pitch_angle_) {
     gimbal->scan_pitch_flag_ = true;
@@ -251,30 +267,30 @@ void Gimbal::GimbalMatchUpdate() {
 }
 
 void Gimbal::GimbalEnableUpdate() {
-  gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
-  globals->aim_mode = 0x01;
   if (gimbal->GimbalMove_ == kGbRemote) {
     gimbal->GimbalRCTargetUpdate();
-    gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbPercept) {
     gimbal->GimbalPerceptTargetUpdate();
-    gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbScan || gimbal->GimbalMove_ == kGbNavigate) {
     gimbal->GimbalScanTargetUpdate();
-    gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbot) {
     gimbal->GimbalAimbotTargetUpdate();
-    gimbal->GimbalMovePIDUpdate();
   } else {
-    globals->gimbal_controller.Enable(false);
-    gimbal->GimbalMovePIDUpdate();
+    gimbal->GimbalDisableUpdate();
+    return;
   }
+  if (globals->navigate_communicator->aimbot_mode()) {
+    globals->aim_mode = 0x02;
+  } else {
+    globals->aim_mode = 0x01;
+  }
+  gimbal->GimbalMovePIDUpdate();
+  gimbal->DaMiaoMotorEnable();
   gimbal->SetMotorCurrent();
 }
 
 void Gimbal::GimbalDisableUpdate() {
-  gimbal->DaMiaoMotorDisable();
   globals->gimbal_controller.Enable(false);
   globals->aim_mode = 0x00;
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
@@ -283,6 +299,7 @@ void Gimbal::GimbalDisableUpdate() {
   gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
   gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
   gimbal->GimbalMovePIDUpdate();
+  gimbal->DaMiaoMotorDisable();
   gimbal->SetMotorCurrent();
   gimbal->pitch_torque_ = 0.0f;
 }

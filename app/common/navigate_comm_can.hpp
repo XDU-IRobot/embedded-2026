@@ -17,6 +17,7 @@ class NavigateCanCommunicator final : public CanDevice {
   [[nodiscard]] f32 target_yaw_speed() const;
   [[nodiscard]] u8 scan_mode() const;
   [[nodiscard]] u8 perception_flag() const;
+  [[nodiscard]] u8 aimbot_mode() const;
 
   void Update();
   void RxCallback(const hal::CanFrame *msg) override;
@@ -29,6 +30,7 @@ class NavigateCanCommunicator final : public CanDevice {
   f32 target_yaw_speed_{};
   u8 scan_mode_{};
   u8 perception_flag_{};
+  u8 aimbot_mode_{};
   // 缓冲区
   u8 tx_buf_[8]{};
 };
