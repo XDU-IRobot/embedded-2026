@@ -30,6 +30,7 @@ class Fsm {
   i16 init_count_{0};
 
   bool inited_{false};
+  bool high_mode_{false};
 
   State mode_{State::kNoForce};
 

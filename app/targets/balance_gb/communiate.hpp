@@ -35,6 +35,7 @@ class ChassisCommunicator final : public device::CanDevice {
     u8 AmmoOutState;    //发射机构输出状态
     u16 HeatCurrent;    //现在瞬时热量
     u16 CoolingSpeed;   //冷却速度
+    u8 Bulletspeed;      //弹速
     u8 id;              //机器人id
   };
 

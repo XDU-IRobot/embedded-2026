@@ -6,6 +6,7 @@ using namespace rm;
 using namespace rm::device;
 uint8_t id;
 VT03 tcremote;
+i8 bulletspeed;
 
 /*
 @brief:底盘通信类的实现
@@ -19,8 +20,10 @@ void ChassisCommunicator::RxCallback(const hal::CanFrame *msg) {
     chassis_data_rx.GimbalOutState = (0x10 & static_cast<u16>(msg->data[6])) >> 4;
     chassis_data_rx.ChassisOutState = (0x20 & static_cast<u16>(msg->data[6])) >> 5;
     chassis_data_rx.AmmoOutState = (0x40 & static_cast<u16>(msg->data[6])) >> 6;
+    chassis_data_rx.Bulletspeed = static_cast<i8>(msg->data[7]);
   }
   id = chassis_data_rx.id;
+  bulletspeed = chassis_data_rx.Bulletspeed;
 }
 void ChassisCommunicator::SendChassisCommand() {
   tx_buf_[0] = global.chassis_tx->gimbal_data_tx.ChassisMoveYRequest >> 8;  // 遥控器y轴数值

@@ -20,6 +20,7 @@ void MainLoop() {
 
 extern "C" {
 void AppMain(void) {
+  Sleep(std::chrono::milliseconds(1000));  // 等待设备初始化完成
   global.bc = new BoardC;
   global.motor = new Motor;
 

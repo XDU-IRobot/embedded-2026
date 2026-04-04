@@ -61,9 +61,11 @@ class Motor {
 
   void DMInitControl();  ///< 达妙电机初始化控制
   void DMAutoControl();  ///< 自瞄云台电机跟随
+  void DMAimControl();   ///< 自瞄自动跟随
   void ShootNormalControl();  ///< 发射机构正常控制更新
   void ShootAutoControl();  ///< 发射机构自瞄控制更新
   void ShooterCounter();   ///<弹丸计数
+  void FricSpeedUpdate(); ///<摩擦轮转速更新
   void HeatUpdate();     ///< 热量闭环的热量更新
 
   void SendDMCommand();   ///<  发送达妙电机控制量
@@ -82,6 +84,9 @@ class Motor {
  private:
   int shoot_number = 0;   //发射的子弹总数
 
+  f32 left_set_speed = 0.f, right_set_speed = 0.f;
+  f32 left_fric_speed_max = 7000.f, left_fric_speed_min = 6000.f;
+  f32 right_fric_speed_max = 7000.f, right_fric_speed_min = 6000.f;
 
   f32 pitch_init = 0.f;
   f32 reset_yaw = 0.f;
@@ -94,6 +99,7 @@ class Motor {
   f32 pitch_vel_kp = 0.f,pitch_vel_ki = 0.f,pitch_vel_kd = 0.f;
 
   u16 heat_ultimate;  //计算得出的最终热量
+  u16 heat_ultimate_;  //计算得出的最终热量
 
   i16 o1 = 0;
   i16 o2 = 0;
