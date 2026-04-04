@@ -47,3 +47,8 @@ target_compile_definitions(dart_rack PRIVATE DART_RACK)
 file(GLOB_RECURSE BALANCE_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/balance_gb/*.cc)
 add_exe_target(balance_gb "${BALANCE_GB_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(balance_gb PRIVATE BALANCE_GB)
+
+# 动力学参数辨识测试
+file(GLOB_RECURSE GB_DYNAMICS_IDENT_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/gb_dynamics_ident/*.cc)
+add_exe_target(gb_dynamics_ident "${GB_DYNAMICS_IDENT_SOURCES};${COMMON_SOURCES}")
+
