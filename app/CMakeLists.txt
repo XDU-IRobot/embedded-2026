@@ -6,6 +6,9 @@ include(add_target.cmake)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/common)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/targets)
 
+# fix sprintf float issue
+add_link_options(-u _printf_float)
+
 #算法招新测试小云台
 file(GLOB_RECURSE ALGORITHM_ENROLL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/algorithm_enroll_test/*.cc)
 add_exe_target(algorithm_enroll_test "${ALGORITHM_ENROLL_TEST_SOURCES};${COMMON_SOURCES}")
