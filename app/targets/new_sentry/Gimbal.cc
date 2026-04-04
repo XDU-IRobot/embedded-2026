@@ -291,7 +291,11 @@ void Gimbal::GimbalEnableUpdate() {
     return;
   }
   if (globals->navigate_communicator->aimbot_mode()) {
-    globals->aim_mode = 0x02;
+    if (globals->referee_data->data().game_status.SyncTimeStamp >= 240) {
+      globals->aim_mode = 0x02;
+    }else {
+      globals->aim_mode = 0x03;
+    }
   } else {
     globals->aim_mode = 0x01;
   }
@@ -302,7 +306,7 @@ void Gimbal::GimbalEnableUpdate() {
 
 void Gimbal::GimbalDisableUpdate() {
   globals->gimbal_controller.Enable(false);
-  globals->aim_mode = 0x00;
+  globals->aim_mode = 0x01;
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();
   gimbal->gimbal_down_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->hipnuc_imu->pitch();
