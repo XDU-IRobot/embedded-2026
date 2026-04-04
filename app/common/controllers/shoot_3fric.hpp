@@ -23,11 +23,11 @@ class Shoot3Fric {
 
     state_.loader_position = loader_position;
     if (direction_) {
-      if (loader_position >= target_.loader_position - 5000.0f) {
+      if (loader_position >= target_.loader_position - 6500.0f) {
         single_shoot_complete_ = true;
       }
     } else {
-      if (loader_position <= target_.loader_position + 5000.0f) {
+      if (loader_position <= target_.loader_position + 6500.0f) {
         single_shoot_complete_ = true;
       }
     }

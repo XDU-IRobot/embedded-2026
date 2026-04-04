@@ -354,7 +354,8 @@ void Gimbal::ShootEnableUpdate() {
        globals->referee_data->data().shoot_data.initial_speed <= 21.0f)) {
     gimbal->ammo_speed_ = 6200.0f * std::sqrt(22.0f / globals->referee_data->data().shoot_data.initial_speed);
   }
-  if (((globals->rc->dial() <= -650 && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
+  if ((globals->rc->dial() <= -650 ||
+       (globals->rc->dial() <= -10 && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
        (globals->navigate_communicator->aimbot_mode() && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) &&
       heat_limit_ - heat_current_ > 30) {
     if (!single_shoot_flag_) {
@@ -369,7 +370,7 @@ void Gimbal::ShootEnableUpdate() {
       globals->shoot_controller.SetShootFrequency(0.0f);
       single_shoot_flag_ = false;
     }
-  } else if (globals->rc->dial() >= 650 || ((globals->rc->dial() >= 100 && globals->rc->dial() < 650) ||
+  } else if (globals->rc->dial() >= 650 || (!globals->navigate_communicator->aimbot_mode() &&
                                             globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     if (heat_limit_ - heat_current_ > 100) {
