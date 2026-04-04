@@ -359,13 +359,14 @@ void Gimbal::ShootEnableUpdate() {
       heat_limit_ - heat_current_ > 30) {
     if (!single_shoot_flag_) {
       globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
+      globals->shoot_controller.Fire();
       single_shoot_flag_ = true;
-      gimbal->single_shoot_time_ = 500;
+      gimbal->single_shoot_time_ = 200;
     } else if (gimbal->single_shoot_time_ > 0) {
-      globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+      globals->shoot_controller.SetShootFrequency(0.0f);
       gimbal->single_shoot_time_--;
     } else if (gimbal->single_shoot_time_ == 0) {
-      globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+      globals->shoot_controller.SetShootFrequency(0.0f);
       single_shoot_flag_ = false;
     }
   } else if (globals->rc->dial() >= 650 || ((globals->rc->dial() >= 100 && globals->rc->dial() < 650) ||
@@ -379,10 +380,9 @@ void Gimbal::ShootEnableUpdate() {
       globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f + 5.0f);
     }
   } else {
-    globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+    globals->shoot_controller.SetShootFrequency(0.0f);
     single_shoot_flag_ = false;
   }
-  globals->shoot_controller.Fire();
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
                                    static_cast<f32>(globals->dail_encoder_counter.linear_ticks()),
                                    globals->dial_motor->rpm());
@@ -395,9 +395,10 @@ void Gimbal::ShootDisableUpdate() {
     globals->shoot_controller.Arm(false);
   } else {
     globals->shoot_controller.Enable(true);
+    globals->shoot_controller.Arm(true);
     globals->shoot_controller.SetArmSpeed(0.0f);
+    globals->shoot_controller.SetShootFrequency(0.0f);
   }
-  globals->shoot_controller.Fire();
   globals->dail_encoder_counter.Reset(0, globals->dial_motor->encoder());
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
                                    static_cast<f32>(globals->dail_encoder_counter.linear_ticks()),

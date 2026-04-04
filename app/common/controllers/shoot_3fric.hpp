@@ -8,9 +8,7 @@
 class Shoot3Fric {
  public:
   explicit Shoot3Fric(int bullets_per_drum, float reduction_ratio, bool direction = true)
-      : direction_(direction), bullets_per_drum_(bullets_per_drum), loader_reduction_ratio_(reduction_ratio) {
-    pid_.loader_position.SetCircular(true).SetCircularCycle(2.0f * M_PI);  // 拨盘位置过零点处理
-  }
+      : direction_(direction), bullets_per_drum_(bullets_per_drum), loader_reduction_ratio_(reduction_ratio) {}
 
   /**
    * @brief     更新一步，角度单位均为弧度，速度单位均为弧度每秒
@@ -25,11 +23,11 @@ class Shoot3Fric {
 
     state_.loader_position = loader_position;
     if (direction_) {
-      if (loader_position >= target_.loader_position - 1000.0f) {
+      if (loader_position >= target_.loader_position - 5000.0f) {
         single_shoot_complete_ = true;
       }
     } else {
-      if (loader_position <= target_.loader_position + 1000.0f) {
+      if (loader_position <= target_.loader_position + 5000.0f) {
         single_shoot_complete_ = true;
       }
     }
@@ -55,14 +53,14 @@ class Shoot3Fric {
     output_.fric_3 = pid_.fric_3_speed.out();
 
     // 拨盘PID
-    if (single_shoot_complete_ == false) {
+    if (single_shoot_complete_ == false && mode_ == kSingleShot) {
       // 单发模式，位置-速度串级PID
       pid_.loader_position.Update(target_.loader_position, state_.loader_position, dt);
       int16_t single_loader_speed;
       if (direction_) {
-        single_loader_speed = 7000.0f;
+        single_loader_speed = 2000.0f;
       } else {
-        single_loader_speed = -7000.0f;
+        single_loader_speed = -2000.0f;
       }
       pid_.loader_speed.Update(single_loader_speed, state_.loader_speed, dt);
       output_.loader = pid_.loader_speed.out();
@@ -82,21 +80,18 @@ class Shoot3Fric {
       // 如果摩擦轮没有转（没有解锁），不开火
       return;
     }
-    if (mode_ == kSingleShot && single_shoot_complete_) {
+    if (mode_ == kSingleShot) {
       // 单发模式，拨盘转动一个子弹间距
-      if (direction_) {
-        target_.loader_position =
-            state_.loader_position - loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
-      } else {
-        target_.loader_position =
-            state_.loader_position + loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+      if (single_shoot_complete_) {
+        if (direction_) {
+          target_.loader_position =
+              state_.loader_position + loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+        } else {
+          target_.loader_position =
+              state_.loader_position - loader_reduction_ratio_ / static_cast<float>(bullets_per_drum_) * 8191.f;
+        }
+        single_shoot_complete_ = false;
       }
-      single_shoot_complete_ = false;
-    } else if (mode_ == kFullAuto) {
-      // 全自动模式，拨盘持续以计算得到的目标速度转动
-      target_.loader_speed = calculated_target_loader_speed_ * loader_reduction_ratio_;
-    } else {
-      target_.loader_speed = 0.0f;
     }
   }
 
@@ -118,6 +113,12 @@ class Shoot3Fric {
   void SetShootFrequency(float frequency) {
     // 计算拨盘目标速度
     calculated_target_loader_speed_ = frequency / static_cast<float>(bullets_per_drum_) * 60.0f;  // rpm
+    if (mode_ == kFullAuto) {
+      // 全自动模式，拨盘持续以计算得到的目标速度转动
+      target_.loader_speed = calculated_target_loader_speed_ * loader_reduction_ratio_;
+    } else {
+      target_.loader_speed = 0.0f;
+    }
   }
 
   /**
