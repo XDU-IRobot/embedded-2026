@@ -354,7 +354,7 @@ void Gimbal::ShootEnableUpdate() {
        globals->referee_data->data().shoot_data.initial_speed <= 21.0f)) {
     gimbal->ammo_speed_ = 6200.0f * std::sqrt(22.0f / globals->referee_data->data().shoot_data.initial_speed);
   }
-  if ((globals->rc->dial() <= -650 ||
+  if (((globals->rc->dial() <= -650 && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
        (globals->navigate_communicator->aimbot_mode() && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) &&
       heat_limit_ - heat_current_ > 30) {
     if (!single_shoot_flag_) {
