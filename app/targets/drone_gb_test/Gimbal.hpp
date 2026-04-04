@@ -115,7 +115,7 @@ class Gimbal {
     gimbal_controller.pid().pitch_position.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
 
-    gimbal_controller.pid().yaw_position.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
     gimbal_controller.pid().yaw_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(1000.0f);
   }
 
