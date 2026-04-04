@@ -1,13 +1,12 @@
 #include "main.hpp"
 
-Gimbal* gimbal=nullptr;
+Gimbal* gimbal = nullptr;
 
 void MainLoop() {
   gimbal->time_++;
   gimbal->SubLoop500Hz();
   gimbal->SubLoop250Hz();
   gimbal->SubLoop10Hz();
-
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
