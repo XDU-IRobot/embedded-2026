@@ -212,6 +212,13 @@ void Gimbal::GimbalAimbotTargetUpdate() {
          aimbot_target_yaw >= globals->hipnuc_imu->yaw()) ||
         (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ &&
          aimbot_target_yaw <= globals->hipnuc_imu->yaw())) {
+      gimbal->gimbal_up_yaw_target_ = aimbot_target_yaw;
+      gimbal->up_yaw_move_limiter_.SetTarget(aimbot_target_yaw);
+      gimbal->gimbal_up_yaw_target_ = gimbal->up_yaw_move_limiter_.Update(0.002f);
+      gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_, -static_cast<f32>(M_PI), M_PI);
+      if (gimbal->up_yaw_move_limiter_.IsAtTarget(0.001f)) {
+        gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
+      }
       gimbal->gimbal_down_yaw_target_ =
           aimbot_target_yaw - globals->hipnuc_imu->yaw() + globals->ahrs.euler_angle().yaw;
       gimbal->down_yaw_move_limiter_.SetTarget(gimbal->gimbal_down_yaw_target_);
@@ -223,6 +230,7 @@ void Gimbal::GimbalAimbotTargetUpdate() {
       }
     } else {
       gimbal->gimbal_up_yaw_target_ = aimbot_target_yaw;
+      gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
       gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
     }
     gimbal->gimbal_pitch_target_ = rm::modules::Wrap(
@@ -230,10 +238,12 @@ void Gimbal::GimbalAimbotTargetUpdate() {
         -static_cast<f32>(M_PI), M_PI);
     gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
                                                       gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
+    gimbal->aimbot_time_ = 100;
+  } else if (gimbal->aimbot_time_ > 0) {
+    gimbal->aimbot_time_--;
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
-  gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
 }
 
 void Gimbal::GimbalMovePIDUpdate() {
@@ -344,12 +354,19 @@ void Gimbal::ShootEnableUpdate() {
        globals->referee_data->data().shoot_data.initial_speed <= 21.0f)) {
     gimbal->ammo_speed_ = 6200.0f * std::sqrt(22.0f / globals->referee_data->data().shoot_data.initial_speed);
   }
-  if (globals->rc->dial() <= -650 && heat_limit_ - heat_current_ > 30) {
+  if ((globals->rc->dial() <= -650 ||
+       (globals->navigate_communicator->aimbot_mode() && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) &&
+      heat_limit_ - heat_current_ > 30) {
     if (!single_shoot_flag_) {
       globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
       single_shoot_flag_ = true;
-    } else {
+      gimbal->single_shoot_time_ = 500;
+    } else if (gimbal->single_shoot_time_ > 0) {
       globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+      gimbal->single_shoot_time_--;
+    } else if (gimbal->single_shoot_time_ == 0) {
+      globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+      single_shoot_flag_ = false;
     }
   } else if (globals->rc->dial() >= 650 || ((globals->rc->dial() >= 100 && globals->rc->dial() < 650) ||
                                             globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
