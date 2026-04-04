@@ -66,7 +66,7 @@ inline struct GlobalWarehouse {
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};         ///< 姿态解算器
   Gimbal2Dof gimbal_controller;                 ///< 二轴双 Yaw 云台控制器
-  Shoot3Fric shoot_controller{9, 19.2f, true};  ///< 三摩擦轮发射机构控制器，8发拨盘
+  Shoot3Fric shoot_controller{9, 21.6f, true};  ///< 三摩擦轮发射机构控制器，8发拨盘
   EncoderCounter dail_encoder_counter;          ///< 拨盘电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
@@ -75,7 +75,7 @@ inline struct GlobalWarehouse {
   uint16_t init_time = 1000;          // 初始化时间
   uint16_t hurt_time = 0;             // 受伤小陀螺倒计时
   uint8_t music_choice = 0;           // 音乐选择
-  uint8_t aim_mode = 0;               // 自瞄模式
+  uint8_t aim_mode = 0x01;            // 自瞄模式
   uint8_t time_camera = 0;            // 摄像头计数器
   uint16_t imu_count = 0;             // IMU计数器
   float chassis_move_x = 0;           // 底盘x轴目标速度

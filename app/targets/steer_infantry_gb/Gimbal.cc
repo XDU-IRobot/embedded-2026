@@ -5,6 +5,7 @@ f32 a, b, c, d;
 void Gimbal::GimbalInit() {
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
+  globals->dail_encoder_counter.Reset(0, globals->dial_motor->encoder());
 }
 
 void Gimbal::GimbalTask() {
@@ -12,7 +13,7 @@ void Gimbal::GimbalTask() {
   a = gimbal->gimbal_yaw_target_;
   b = gimbal->gimbal_pitch_target_;
   c = globals->ahrs.euler_angle().yaw;
-  d = gimbal->yaw_current_;
+  d = globals->ahrs.euler_angle().pitch;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -48,6 +49,7 @@ void Gimbal::GimbalStateUpdate() {
       case kTest:  // 测试模式下，发射系统与拨盘电机失能
         switch (gimbal->GimbalMove_) {
           case kGbAimbot:
+          case kGbAimbotFu:
             gimbal->ShootEnableUpdate();  // 发射机构使能计算
             break;
           case kGbRemote:
@@ -133,11 +135,9 @@ void Gimbal::GimbalEnableUpdate() {
   gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
   if (gimbal->GimbalMove_ == kGbRemote) {
-    globals->aim_mode = 0x01;
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbot) {
-    globals->aim_mode = 0x01;
     gimbal->GimbalAimbotTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbotFu) {
@@ -162,7 +162,6 @@ void Gimbal::GimbalEnableUpdate() {
 void Gimbal::GimbalDisableUpdate() {
   gimbal->DaMiaoMotorDisable();
   globals->gimbal_controller.Enable(false);
-  globals->aim_mode = 0x00;
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
   gimbal->GimbalMovePIDUpdate();
@@ -193,15 +192,20 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_ - static_cast<f32>(globals->aim_speed_change) * 100.0f);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
   if (globals->rc->dial() <= -650 ||
+      (gimbal->GimbalMove_ == kGbAimbotFu && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
       (globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real() > 30 &&
        (globals->df_state || globals->xf_state) &&
-       (globals->image_update_flag ? globals->image_data->data().mouse_button_left
-                                   : globals->rc->mouse_button_left()))) {
+       (globals->image_update_flag ? globals->image_data->data().mouse_button_right
+                                   : globals->rc->mouse_button_right()))) {
     if (!gimbal->single_shoot_flag_) {
       globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
+      globals->shoot_controller.Fire();
       gimbal->single_shoot_flag_ = true;
-    } else {
-      globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+      gimbal->single_shoot_time_ = 200;
+    } else if (gimbal->single_shoot_time_ > 0) {
+      gimbal->single_shoot_time_--;
+    } else if (gimbal->single_shoot_time_ == 0) {
+      gimbal->single_shoot_flag_ = false;
     }
   } else if ((globals->StateMachine_ == kTest &&
               ((globals->rc->dial() >= 10 && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
@@ -227,10 +231,10 @@ void Gimbal::ShootEnableUpdate() {
           3.0f);
     }
   } else {
-    globals->shoot_controller.SetMode(Shoot3Fric::kStop);
+    globals->shoot_controller.SetShootFrequency(0.0f);
     gimbal->single_shoot_flag_ = false;
   }
-  globals->shoot_controller.Fire();
+
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
                                    static_cast<f32>(globals->dail_encoder_counter.linear_ticks()),
                                    globals->dial_motor->rpm());
@@ -243,10 +247,10 @@ void Gimbal::ShootDisableUpdate() {
     globals->shoot_controller.Arm(false);
   } else {
     globals->shoot_controller.Enable(true);
+    globals->shoot_controller.Arm(true);
     globals->shoot_controller.SetArmSpeed(0.f);
+    globals->shoot_controller.SetShootFrequency(0.0f);
   }
-  globals->shoot_controller.Fire();
-  globals->dail_encoder_counter.Reset(0, globals->dial_motor->encoder());
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
                                    static_cast<f32>(globals->dail_encoder_counter.linear_ticks()),
                                    globals->dial_motor->rpm());

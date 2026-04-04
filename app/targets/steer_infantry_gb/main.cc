@@ -247,8 +247,9 @@ void GlobalWarehouse::ChassisStateUpdate() {
   } else if (globals->xf_state) {
     globals->chassis_state |= static_cast<u8>(1 << 5);
     globals->chassis_state &= ~static_cast<u8>(1 << 4);
-    globals->aim_mode = 0x04;
+    globals->aim_mode = 0x03;
   } else {
+    globals->aim_mode = 0x01;
     globals->chassis_state &= ~static_cast<u8>(1 << 4);
     globals->chassis_state &= ~static_cast<u8>(1 << 5);
   }

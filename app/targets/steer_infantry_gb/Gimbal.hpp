@@ -28,12 +28,11 @@ inline class Gimbal {
   u16 heat_limit_ = 0;    // 热量上限值
   u16 heat_current_ = 0;  // 热量实时值
 
-  bool shoot_flag_ = false;         // 开火标志
+  u16 single_shoot_time_ = 0;  // 单发时长
+
   bool single_shoot_flag_ = false;  // 单发标志
 
   bool DM_enable_flag_ = false;  // 4310电机使能标志
-
-  bool down_yaw_target_refresh_flag_ = false;  // 云台下部yaw轴目标数据刷新标志
 
   bool scan_yaw_flag_ = false;    // 扫描yaw轴方向标识位
   bool scan_pitch_flag_ = false;  // 扫描pitch轴方向标识位
