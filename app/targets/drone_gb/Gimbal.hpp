@@ -1,9 +1,9 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
-
+//测试开发分支
 #define CONTROLLER_CHOICE 2  // 控制器选择开关:0为PID，1为SMC，2为STASMC
 #define DYNAMIC_PARAMENT 0   // 动态参数开关:0关闭动态参数，1开启动态参数
-//测试开发分支
+
 #include <librm.hpp>
 #include <utility>
 
@@ -629,7 +629,7 @@ class Gimbal {
     RCStateUpdate();                             // 遥控器更新
     GimbalControl();                             // 云台控制更新
     AmmoControl();                               // 发射机构数据更新
-    rm::device::DjiMotor<>::SendCommand(*can1);  // 向大疆所有电机发数据
+    rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
   }
 
   // DmMotor电机发信息
@@ -638,7 +638,7 @@ class Gimbal {
       // 发送达秒控制信息
       double pitch_torque_cmd = gimbal_controller.output().pitch + pitch_torque;
       pitch_torque_cmd = rm::modules::Clamp(pitch_torque_cmd, -8.0, 8.0);
-      pitch_motor->SetPosition(0, 0, pitch_torque_cmd, 0, 0);
+      pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
 
       // // 达秒电机与imu数据滤波处理
       // err_sum -= err_buffer[err_buffer_ptr];
