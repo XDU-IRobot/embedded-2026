@@ -45,14 +45,12 @@ TcReceiver::TcReceiver(rm::hal::SerialInterface &serial) : serial_(&serial) {
   this->serial_->AttachRxCallback(rx_callback);
 }
 
-void TcReceiver::Begin() {
-  this->serial_->Begin();
-}
+void TcReceiver::Begin() { this->serial_->Begin(); }
 
 void TcReceiver::RxCallback(const std::vector<u8> &data, u16 rx_len) {
   for (u16 i = 0; i < rx_len; i++) {
     tcremote << data.at(i);
   }
 }
-}     // namespace rm::device
+}  // namespace rm::device
 extern "C" {}

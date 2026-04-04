@@ -8,11 +8,11 @@ using namespace rm;
 class Fsm {
  public:
   enum class State {
-    kNoForce,  // 无力模式
-    kTest,     // 测试
-    kShoot,    // 自瞄+打弹
-    kAutoShoot, // 自动开火
-    kHigh,     // 上台阶高腿长
+    kNoForce,    // 无力模式
+    kTest,       // 测试
+    kShoot,      // 自瞄+打弹
+    kAutoShoot,  // 自动开火
+    kHigh,       // 上台阶高腿长
   };
   void Transit(State new_mode);
   void Update_State();

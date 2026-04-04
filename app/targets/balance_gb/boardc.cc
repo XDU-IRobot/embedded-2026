@@ -10,7 +10,7 @@
 
 static FirstOrderFilter g_zfilter(1.f / 500.f, 0.02f);
 extern rm::hal::Can *can1;
-f32 gz,gx,gy;
+f32 gz, gx, gy;
 
 void BoardC::BoardcInit() {
   buzzer = new Buzzer;

@@ -21,7 +21,7 @@ class Shoot2Fric {
     state_.loader_speed = loader_speed;
     state_.loader_position = loader_position;
 
-    position_ = loader_position-target_.loader_position;
+    position_ = loader_position - target_.loader_position;
     if (loader_position <= target_.loader_position - 2000.0f) {
       single_shoot_complete_ = true;
     }

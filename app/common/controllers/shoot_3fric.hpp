@@ -171,11 +171,11 @@ class Shoot3Fric {
     float loader_position;  ///< 拨盘位置
   } state_{};               ///< 当前状态
   struct {
-    float fric_speed_left;       ///< 摩擦轮目标速度
-    float fric_speed_right;       ///< 摩擦轮目标速度
-    float loader_speed;     ///< 拨盘目标速度
-    float loader_position;  ///< 拨盘目标位置
-  } target_{};              ///< 目标状态
+    float fric_speed_left;   ///< 摩擦轮目标速度
+    float fric_speed_right;  ///< 摩擦轮目标速度
+    float loader_speed;      ///< 拨盘目标速度
+    float loader_position;   ///< 拨盘目标位置
+  } target_{};               ///< 目标状态
   struct {
     float fric_1;
     float fric_2;

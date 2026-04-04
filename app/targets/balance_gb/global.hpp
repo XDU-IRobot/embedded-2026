@@ -8,10 +8,10 @@
 
 struct Global {
  public:
-  BoardC *bc{nullptr};                                 ///< c板object
-  Motor *motor{nullptr};                               ///< 电机object
+  BoardC *bc{nullptr};                       ///< c板object
+  Motor *motor{nullptr};                     ///< 电机object
   ChassisCommunicator *chassis_tx{nullptr};  ///<  底盘控制器object
-  ChassisCommunicator *chassis_rx{nullptr};       ///< 接受底盘指令
+  ChassisCommunicator *chassis_rx{nullptr};  ///< 接受底盘指令
 
   Fsm fsm{};  ///< 状态机控制行为模式
  public:

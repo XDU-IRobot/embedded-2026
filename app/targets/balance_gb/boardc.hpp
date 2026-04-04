@@ -39,7 +39,7 @@ class BoardC {
   f32 pitch_c = 0.f;
   f32 roll_c = 0.f;
   f32 yaw_c = 0.f;
-  f32 kw,ks = 0.f;
+  f32 kw, ks = 0.f;
   u_int8_t time_camera = 0;  // 摄像头计数器
   u_int16_t imu_count = 0;   // IMU计数器
   void BoardcInit();

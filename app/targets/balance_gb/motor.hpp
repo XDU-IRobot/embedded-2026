@@ -21,12 +21,12 @@ class Motor {
   M3508 *ammo_left{nullptr};  ///< 左侧摩擦轮电机
   M3508 *ammo_right{nullptr};
   AimbotCanCommunicator *aimbot_comm{nullptr};
-  Gimbal2Dof gimbal_controller;           ///< 二轴双 Yaw 云台控制器
-  Shoot3Fric shoot_controller{9,18,false};  ///< 摩擦轮
+  Gimbal2Dof gimbal_controller;               ///< 二轴双 Yaw 云台控制器
+  Shoot3Fric shoot_controller{9, 18, false};  ///< 摩擦轮
   YawSpeedFeedforward *yaw_feedforward{nullptr};
   SineSweep *sweep_controller{nullptr};
   EncoderCounter dail_encoder_counter;
-  DeviceManager<2> device_aimbot;    //自瞄设备
+  DeviceManager<2> device_aimbot;  // 自瞄设备
   // modules::VofaPlotter *vofa_plotter{nullptr};
 
   enum class InitFlag {
@@ -34,7 +34,7 @@ class Motor {
     kOpposite  // 倒地自启时头向不会撞枪管的一面初始化
   };
 
-  //InitFlag init_mode{InitFlag::kNormal};
+  // InitFlag init_mode{InitFlag::kNormal};
 
  public:
   f32 rc_request_pitch = 0.f;
@@ -43,14 +43,14 @@ class Motor {
 
   f32 yaw_motor_pos = 0.f;
 
-  f32 gravity_compensation_ = 0.f,yaw_compensation_=0.f;
+  f32 gravity_compensation_ = 0.f, yaw_compensation_ = 0.f;
 
-  int single_shoot_time = 30,single_shoot_temp = 0;
+  int single_shoot_time = 30, single_shoot_temp = 0;
 
   bool reset_yaw_flag = false;
-  bool single_flag = false; //单发标志
+  bool single_flag = false;  // 单发标志
 
-  bool  change_yaw_init_flag = false;
+  bool change_yaw_init_flag = false;
 
   void MotorInit();  ///< 电机初始化
 
@@ -59,14 +59,14 @@ class Motor {
   void ShootEnable();   ///< 发射机构使能
   void ShootDisable();  ///< 发射机构失能
 
-  void DMInitControl();  ///< 达妙电机初始化控制
-  void DMAutoControl();  ///< 自瞄云台电机跟随
-  void DMAimControl();   ///< 自瞄自动跟随
+  void DMInitControl();       ///< 达妙电机初始化控制
+  void DMAutoControl();       ///< 自瞄云台电机跟随
+  void DMAimControl();        ///< 自瞄自动跟随
   void ShootNormalControl();  ///< 发射机构正常控制更新
-  void ShootAutoControl();  ///< 发射机构自瞄控制更新
-  void ShooterCounter();   ///<弹丸计数
-  void FricSpeedUpdate(); ///<摩擦轮转速更新
-  void HeatUpdate();     ///< 热量闭环的热量更新
+  void ShootAutoControl();    ///< 发射机构自瞄控制更新
+  void ShooterCounter();      ///< 弹丸计数
+  void FricSpeedUpdate();     ///< 摩擦轮转速更新
+  void HeatUpdate();          ///< 热量闭环的热量更新
 
   void SendDMCommand();   ///<  发送达妙电机控制量
   void SendDjiCommand();  ///<  发送大疆电机控制量
@@ -82,7 +82,7 @@ class Motor {
   bool DMEnable_ = true;
 
  private:
-  int shoot_number = 0;   //发射的子弹总数
+  int shoot_number = 0;  // 发射的子弹总数
 
   f32 left_set_speed = 0.f, right_set_speed = 0.f;
   f32 left_fric_speed_max = 7000.f, left_fric_speed_min = 6000.f;
@@ -93,24 +93,24 @@ class Motor {
 
   f32 shoot_frequency = 0.f;
 
-  f32 yaw_pos_kp = 0.f,yaw_pos_ki  = 0.f,yaw_pos_kd = 0.f;
-  f32 yaw_vel_kp = 0.f,yaw_vel_ki = 0.f, yaw_vel_kd = 0.f;
-  f32 pitch_pos_kp = 0.f,pitch_pos_ki=0.f,pitch_pos_kd=0.f;
-  f32 pitch_vel_kp = 0.f,pitch_vel_ki = 0.f,pitch_vel_kd = 0.f;
+  f32 yaw_pos_kp = 0.f, yaw_pos_ki = 0.f, yaw_pos_kd = 0.f;
+  f32 yaw_vel_kp = 0.f, yaw_vel_ki = 0.f, yaw_vel_kd = 0.f;
+  f32 pitch_pos_kp = 0.f, pitch_pos_ki = 0.f, pitch_pos_kd = 0.f;
+  f32 pitch_vel_kp = 0.f, pitch_vel_ki = 0.f, pitch_vel_kd = 0.f;
 
-  u16 heat_ultimate;  //计算得出的最终热量
-  u16 heat_ultimate_;  //计算得出的最终热量
+  u16 heat_ultimate;   // 计算得出的最终热量
+  u16 heat_ultimate_;  // 计算得出的最终热量
 
   i16 o1 = 0;
   i16 o2 = 0;
   i16 o3 = 0;
 
-  i16 last_right_rpm = 0;   //右摩擦轮上次转速
+  i16 last_right_rpm = 0;  // 右摩擦轮上次转速
 
   bool dm_enabled_{false};
   bool shoot_enabled_{false};
   bool single_shoot_flag_{false};
-  bool fric_on_flag_{false};  //摩擦轮启动且达到目标转速
-  bool fric_reduce_flag_{false}; //摩擦轮降速标志
-  bool shoot_one_flag_{false};  //发出一发弹丸标志位
+  bool fric_on_flag_{false};      // 摩擦轮启动且达到目标转速
+  bool fric_reduce_flag_{false};  // 摩擦轮降速标志
+  bool shoot_one_flag_{false};    // 发出一发弹丸标志位
 };

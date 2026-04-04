@@ -109,11 +109,11 @@ void Motor::MotorPidInit() {
 */
 void Motor::DMEnable() {
   gimbal_controller.Enable(true);
-    if (DMEnable_ == 1) {
-      pitch_motor->SendInstruction(DmMotorInstructions::kEnable);  // 使达妙电机使能
-      yaw_motor->SendInstruction(DmMotorInstructions::kEnable);
-      DMEnable_ = 0;
-    }
+  if (DMEnable_ == 1) {
+    pitch_motor->SendInstruction(DmMotorInstructions::kEnable);  // 使达妙电机使能
+    yaw_motor->SendInstruction(DmMotorInstructions::kEnable);
+    DMEnable_ = 0;
+  }
 }
 
 void Motor::DMDisable() {
@@ -168,7 +168,7 @@ void Motor::ShooterCounter() {
 
 void Motor::HeatUpdate() {
   heat_ultimate_ = Deadline(heat_ultimate - global.chassis_rx->chassis_data_rx.CoolingSpeed / 500.f, 0,
-                           global.chassis_rx->chassis_data_rx.HeatLimit);
+                            global.chassis_rx->chassis_data_rx.HeatLimit);
   h_ultimate_ = global.chassis_rx->chassis_data_rx.HeatCurrent;
 }
 
@@ -178,10 +178,11 @@ void Motor::HeatUpdate() {
 
 void Motor::DMInitControl() {
   rc_request_pitch = pitch_init;
-  rc_request_yaw = yaw_init ;
+  rc_request_yaw = yaw_init;
   yaw_feedforward->Update(rc_request_yaw);
   gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch, yaw_feedforward->GetYawSpeedFeedforward());
-  gimbal_controller.Update(yaw_motor_pos, global.bc->hipnuc_imu->gyro_z(), global.bc->pitch / 57.3f, -global.bc->hipnuc_imu->gyro_x());
+  gimbal_controller.Update(yaw_motor_pos, global.bc->hipnuc_imu->gyro_z(), global.bc->pitch / 57.3f,
+                           -global.bc->hipnuc_imu->gyro_x());
   if (yaw_motor_pos > rc_request_yaw + 0.03f || yaw_motor_pos < rc_request_yaw - 0.03f) {
     global.fsm.init_count_ = 0;
     global.fsm.inited_ = true;
@@ -197,7 +198,7 @@ void Motor::DMAimControl() {
     reset_yaw_flag = 1;
   }
 
-  bool aimbot_on = (aimbot_comm->aimbot_state() >> 0 & 0x01 || aimbot_comm->aimbot_state() >> 0 & 0x03) ;
+  bool aimbot_on = (aimbot_comm->aimbot_state() >> 0 & 0x01 || aimbot_comm->aimbot_state() >> 0 & 0x03);
   // ===== 检测自瞄 -> 手动切换 =====
   if (!aimbot_on && last_aimbot_state) {
     // 用当前云台角度初始化手动模式
@@ -222,13 +223,13 @@ void Motor::DMAimControl() {
     gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch, yaw_feedforward->GetYawSpeedFeedforward());
 
   } else {
-    rc_request_pitch += Map(global.bc->rc->right_y() + global.bc->rc->mouse_y() + tcremote.data().mouse_y,
-                            -660, 660, -0.2f, 0.2f);
+    rc_request_pitch +=
+        Map(global.bc->rc->right_y() + global.bc->rc->mouse_y() + tcremote.data().mouse_y, -660, 660, -0.2f, 0.2f);
 
     rc_request_pitch = Clamp(rc_request_pitch, -15.f, 24.f);
 
-    rc_request_yaw += Map(global.bc->rc->left_x() + global.bc->rc->mouse_x() + tcremote.data().mouse_x, -660,
-                          660, -0.43f, 0.43f);
+    rc_request_yaw +=
+        Map(global.bc->rc->left_x() + global.bc->rc->mouse_x() + tcremote.data().mouse_x, -660, 660, -0.43f, 0.43f);
 
     rc_request_yaw = Wrap(rc_request_yaw, -180.f, 180.f);
 
@@ -238,12 +239,12 @@ void Motor::DMAimControl() {
                                 yaw_feedforward->GetYawSpeedFeedforward());
   }
 
-  gimbal_controller.Update(global.bc->yaw / 57.3f, global.bc->hipnuc_imu->gyro_z(), global.bc->pitch / 57.3f, -global.bc->hipnuc_imu->gyro_x());
+  gimbal_controller.Update(global.bc->yaw / 57.3f, global.bc->hipnuc_imu->gyro_z(), global.bc->pitch / 57.3f,
+                           -global.bc->hipnuc_imu->gyro_x());
 
   yaw_target = (reset_yaw - rc_request_yaw) / 57.3f;
   pitch_target = rc_request_pitch;
 }
-
 
 void Motor::DMAutoControl() {
   if (reset_yaw_flag == 0) {
@@ -252,9 +253,9 @@ void Motor::DMAutoControl() {
     reset_yaw_flag = 1;
   }
   button = tcremote.data().mouse_button_right;
-  //bool aimbot_on = (aimbot_comm->aimbot_state() >> 0 & 0x01 || aimbot_comm->aimbot_state() >> 0 & 0x03) ;
+  // bool aimbot_on = (aimbot_comm->aimbot_state() >> 0 & 0x01 || aimbot_comm->aimbot_state() >> 0 & 0x03) ;
   bool aimbot_on = (aimbot_comm->aimbot_state() >> 0 & 0x01 || aimbot_comm->aimbot_state() >> 0 & 0x03) &&
-    (global.bc->rc->mouse_button_right() == 1 || tcremote.data().mouse_button_right == 1);
+                   (global.bc->rc->mouse_button_right() == 1 || tcremote.data().mouse_button_right == 1);
   // ===== 检测自瞄 -> 手动切换 =====
   if (!aimbot_on && last_aimbot_state) {
     // 用当前云台角度初始化手动模式
@@ -279,13 +280,13 @@ void Motor::DMAutoControl() {
     gimbal_controller.SetTarget(rc_request_yaw, rc_request_pitch, yaw_feedforward->GetYawSpeedFeedforward());
 
   } else {
-    rc_request_pitch += Map(global.bc->rc->right_y() + global.bc->rc->mouse_y() + tcremote.data().mouse_y,
-                            -660, 660, -0.2f, 0.2f);
+    rc_request_pitch +=
+        Map(global.bc->rc->right_y() + global.bc->rc->mouse_y() + tcremote.data().mouse_y, -660, 660, -0.2f, 0.2f);
 
     rc_request_pitch = Clamp(rc_request_pitch, -15.f, 24.f);
 
-    rc_request_yaw += Map(global.bc->rc->left_x() + global.bc->rc->mouse_x() + tcremote.data().mouse_x, -660,
-                          660, -0.43f, 0.43f);
+    rc_request_yaw +=
+        Map(global.bc->rc->left_x() + global.bc->rc->mouse_x() + tcremote.data().mouse_x, -660, 660, -0.43f, 0.43f);
 
     rc_request_yaw = Wrap(rc_request_yaw, -180.f, 180.f);
 
@@ -295,7 +296,8 @@ void Motor::DMAutoControl() {
                                 yaw_feedforward->GetYawSpeedFeedforward());
   }
 
-  gimbal_controller.Update(global.bc->yaw / 57.3f, global.bc->hipnuc_imu->gyro_z(), global.bc->pitch / 57.3f, -global.bc->hipnuc_imu->gyro_x());
+  gimbal_controller.Update(global.bc->yaw / 57.3f, global.bc->hipnuc_imu->gyro_z(), global.bc->pitch / 57.3f,
+                           -global.bc->hipnuc_imu->gyro_x());
 
   yaw_target = (reset_yaw - rc_request_yaw) / 57.3f;
   pitch_target = rc_request_pitch;
@@ -303,22 +305,22 @@ void Motor::DMAutoControl() {
 
 void Motor::FricSpeedUpdate() {
   // C键
-   if (global.bc->rc->key(DR16::Key::kC) == 1) {  // 摩擦轮转速降低
-     RcKey_KC_flag = 1;
-   }
-   if (global.bc->rc->key(DR16::Key::kC) == 0 && RcKey_KC_flag == 1) {
-     Rc_kfric_speed--;
-     RcKey_KC_flag = 0;
-   }
-   if (tcremote.data().keyboard_key >> 13 == 1) {  // 摩擦轮转速降低
-     TCRcKey_KC_flag = 1;
-   }
-   if (tcremote.data().keyboard_key >> 13 == 0 && TCRcKey_KC_flag == 1) {
-     Rc_kfric_speed--;
-     TCRcKey_KC_flag = 0;
-   }
+  if (global.bc->rc->key(DR16::Key::kC) == 1) {  // 摩擦轮转速降低
+    RcKey_KC_flag = 1;
+  }
+  if (global.bc->rc->key(DR16::Key::kC) == 0 && RcKey_KC_flag == 1) {
+    Rc_kfric_speed--;
+    RcKey_KC_flag = 0;
+  }
+  if (tcremote.data().keyboard_key >> 13 == 1) {  // 摩擦轮转速降低
+    TCRcKey_KC_flag = 1;
+  }
+  if (tcremote.data().keyboard_key >> 13 == 0 && TCRcKey_KC_flag == 1) {
+    Rc_kfric_speed--;
+    TCRcKey_KC_flag = 0;
+  }
 
-  //V键
+  // V键
   if (global.bc->rc->key(DR16::Key::kV) == 1) {  // 摩擦轮转速降低
     RcKey_KV_flag = 1;
   }
@@ -333,10 +335,9 @@ void Motor::FricSpeedUpdate() {
     Rc_kfric_speed++;
     TCRcKey_KV_flag = 0;
   }
-  left_set_speed = Clamp(6200 + 10* Rc_kfric_speed,left_fric_speed_min,left_fric_speed_max);
-  right_set_speed = Clamp(6200 + 10* Rc_kfric_speed,right_fric_speed_min,right_fric_speed_max);
- }
-
+  left_set_speed = Clamp(6200 + 10 * Rc_kfric_speed, left_fric_speed_min, left_fric_speed_max);
+  right_set_speed = Clamp(6200 + 10 * Rc_kfric_speed, right_fric_speed_min, right_fric_speed_max);
+}
 
 void Motor::ShootNormalControl() {
   FricSpeedUpdate();
@@ -346,7 +347,7 @@ void Motor::ShootNormalControl() {
   shoot_controller.SetLeftArmSpeed(left_set_speed);
   shoot_controller.SetRightArmSpeed(right_set_speed);
   if ((global.bc->rc->right_x() < -650) || global.bc->rc->mouse_button_left() == 1 ||
-      tcremote.data().mouse_button_left == 1 ||aimbot_comm->aimbot_state() >> 0 & 0x03) {
+      tcremote.data().mouse_button_left == 1 || aimbot_comm->aimbot_state() >> 0 & 0x03) {
     shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     shoot_frequency = -18.0f;
     shoot_controller.SetShootFrequency(shoot_frequency);
@@ -370,9 +371,9 @@ void Motor::ShootAutoControl() {
   HeatUpdate();
 
   if (!device_aimbot.all_device_ok()) {
-    if (( global.bc->rc->mouse_button_left() == 1 ||
-    tcremote.data().mouse_button_left == 1 || global.bc->rc->right_x() < -650) &&
-     (global.chassis_rx->chassis_data_rx.HeatLimit-global.chassis_rx->chassis_data_rx.HeatCurrent > 60)){
+    if ((global.bc->rc->mouse_button_left() == 1 || tcremote.data().mouse_button_left == 1 ||
+         global.bc->rc->right_x() < -650) &&
+        (global.chassis_rx->chassis_data_rx.HeatLimit - global.chassis_rx->chassis_data_rx.HeatCurrent > 60)) {
       shoot_controller.SetMode(Shoot3Fric::kFullAuto);
       shoot_frequency = -18.0f;
       shoot_controller.SetShootFrequency(shoot_frequency);
@@ -381,14 +382,16 @@ void Motor::ShootAutoControl() {
     }
   } else {
     heat = global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate;
-    if ((global.bc->rc->right_x() < -650)||
-        ((global.bc->rc->mouse_button_left() == 1 || tcremote.data().mouse_button_left ==1)&& (global.bc->rc->mouse_button_right() == 1 ||tcremote.data().mouse_button_right == 1)&&
+    if ((global.bc->rc->right_x() < -650) ||
+        ((global.bc->rc->mouse_button_left() == 1 || tcremote.data().mouse_button_left == 1) &&
+         (global.bc->rc->mouse_button_right() == 1 || tcremote.data().mouse_button_right == 1) &&
          aimbot_comm->aimbot_state() >> 0 & 0x03 &&
-         (global.chassis_rx->chassis_data_rx.HeatLimit-global.chassis_rx->chassis_data_rx.HeatCurrent > 60)) ||
-        (tcremote.data().mouse_button_left == 1 && (global.chassis_rx->chassis_data_rx.HeatLimit-global.chassis_rx->chassis_data_rx.HeatCurrent > 60))
+         (global.chassis_rx->chassis_data_rx.HeatLimit - global.chassis_rx->chassis_data_rx.HeatCurrent > 60)) ||
+        (tcremote.data().mouse_button_left == 1 &&
+         (global.chassis_rx->chassis_data_rx.HeatLimit - global.chassis_rx->chassis_data_rx.HeatCurrent > 60))
         // (global.bc->rc->mouse_button_left() == 1 &&
         //  global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate > 40)
-        ) {
+    ) {
       shoot_controller.SetMode(Shoot3Fric::kFullAuto);
       shoot_frequency = -18.0f;
       shoot_controller.SetShootFrequency(shoot_frequency);
@@ -410,23 +413,22 @@ void Motor::ShootAutoControl() {
 
 void Motor::SendDMCommand() {
   status = pitch_motor->status();
-  yaw_pos = yaw_motor->pos() ;
+  yaw_pos = yaw_motor->pos();
   yaw_pid_debug = gimbal_controller.output().yaw;
   global.motor->gravity_compensation_ = 1.6f * std::cos(global.bc->pitch / 57.3f + 0.29f);
   gravity_compensation = global.motor->gravity_compensation_;
   pitch_motor->SetMitCommand(0.f, 0.f, gravity_compensation + gimbal_controller.output().pitch, 0.f, 0.f);
-  //pitch_motor->SetMitCommand(0.f, 0.f, 0.f, 0.f, 0.f);
+  // pitch_motor->SetMitCommand(0.f, 0.f, 0.f, 0.f, 0.f);
   pitch_pid_debug = pitch_motor->tau();
   pitch_speed = pitch_motor->vel();
   yaw_motor->SetMitCommand(0.f, 0.f, gimbal_controller.output().yaw + global.motor->yaw_compensation_, 0.f, 0.f);
-  //yaw_motor->SetMitCommand(0.f, 0.f, 0.f, 0.f, 0.f);
+  // yaw_motor->SetMitCommand(0.f, 0.f, 0.f, 0.f, 0.f);
   pitch_tau = gravity_compensation + gimbal_controller.output().pitch;
   // pitch_motor->SetMitCommand(0.f,0.f, 0.f,0.f,0.f);
   // yaw_motor->SetMitCommand(0.f,0.f,0.f,0.f,0.f);
 }
 
 void Motor::SendDjiCommand() {
-
   rpm_left_ = ammo_left->rpm();
   rpm_right_ = -ammo_right->rpm();
   o1 = static_cast<i16>(shoot_controller.output().fric_1);
@@ -450,8 +452,8 @@ void Motor::SendDjiCommand() {
 }
 
 void Motor::Transit_initmode(bool keyboard_e) {
-  static bool last_keyboard_e = 0;   // 上一帧按键状态
-  static bool yaw_toggle_flag = 0;   // 0: 0rad, 1: -pi
+  static bool last_keyboard_e = 0;  // 上一帧按键状态
+  static bool yaw_toggle_flag = 0;  // 0: 0rad, 1: -pi
 
   if (keyboard_e && !last_keyboard_e) {
     yaw_toggle_flag = !yaw_toggle_flag;  // 翻转状态

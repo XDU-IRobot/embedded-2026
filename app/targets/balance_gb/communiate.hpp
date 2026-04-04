@@ -4,7 +4,7 @@
 #include <librm.hpp>
 
 using namespace rm;
-//using namespace rm::device;
+// using namespace rm::device;
 
 /*
 @brief:与底盘通信的can设备
@@ -21,7 +21,7 @@ class ChassisCommunicator final : public device::CanDevice {
     u8 ChassisStateRequest;   // 状态
     u8 L0Change; /* 腿长变换  0x00 低腿长  0x01  正常腿长   0x02  跳跃时先下蹲  0x03  伸腿  0x04  收腿  0x05  跳跃缓冲
                     0x06  测试高腿长*/
-    u8 ui_flag;   // ui指令
+    u8 ui_flag;  // ui指令
   };
 
   TxGimbalData gimbal_data_tx;
@@ -29,14 +29,14 @@ class ChassisCommunicator final : public device::CanDevice {
   struct RxChassisData {
     u8 GimbalInitFlag;  // 倒地自启云台控制
 
-    u16 HeatLimit;      //热量限制
-    u8 GimbalOutState;  //云台输出状态
-    u8 ChassisOutState;  //底盘输出状态
-    u8 AmmoOutState;    //发射机构输出状态
-    u16 HeatCurrent;    //现在瞬时热量
-    u16 CoolingSpeed;   //冷却速度
-    u8 Bulletspeed;      //弹速
-    u8 id;              //机器人id
+    u16 HeatLimit;       // 热量限制
+    u8 GimbalOutState;   // 云台输出状态
+    u8 ChassisOutState;  // 底盘输出状态
+    u8 AmmoOutState;     // 发射机构输出状态
+    u16 HeatCurrent;     // 现在瞬时热量
+    u16 CoolingSpeed;    // 冷却速度
+    u8 Bulletspeed;      // 弹速
+    u8 id;               // 机器人id
   };
 
   RxChassisData chassis_data_rx;
@@ -52,8 +52,8 @@ class ChassisCommunicator final : public device::CanDevice {
 @brief:接受图传数据原始字节流并转发给VT03处理的串口设备
 */
 namespace rm::device {
-class TcReceiver : public Device{
-public:
+class TcReceiver : public Device {
+ public:
   TcReceiver() = delete;
   explicit TcReceiver(hal::SerialInterface &serial);
 
@@ -63,8 +63,8 @@ public:
   // bool offline{false};
   // u16 offlinecounter{0};
 
-private:
+ private:
   hal::SerialInterface *serial_;
 };
-}
+}  // namespace rm::device
 #endif
