@@ -34,7 +34,7 @@ class Shoot3Fric {
       }
     }
     j = loader_position;
-    k =  target_.loader_position;
+    k = target_.loader_position;
 
     if (!enabled_) {
       // 无力，控制量设0直接返回
