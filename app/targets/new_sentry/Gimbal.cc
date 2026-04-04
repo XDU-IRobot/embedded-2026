@@ -293,7 +293,7 @@ void Gimbal::GimbalEnableUpdate() {
   if (globals->navigate_communicator->aimbot_mode()) {
     if (globals->referee_data->data().game_status.SyncTimeStamp >= 240) {
       globals->aim_mode = 0x02;
-    }else {
+    } else {
       globals->aim_mode = 0x03;
     }
   } else {
@@ -374,8 +374,9 @@ void Gimbal::ShootEnableUpdate() {
       globals->shoot_controller.SetShootFrequency(0.0f);
       single_shoot_flag_ = false;
     }
-  } else if (globals->rc->dial() >= 650 || (!globals->navigate_communicator->aimbot_mode() &&
-                                            globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
+  } else if (globals->rc->dial() >= 650 ||
+             (globals->rc->dial() >= 10 && !globals->navigate_communicator->aimbot_mode() &&
+              globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     if (heat_limit_ - heat_current_ > 100) {
       globals->shoot_controller.SetShootFrequency(20.0f);
