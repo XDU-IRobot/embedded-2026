@@ -67,6 +67,8 @@ inline struct GlobalWarehouse {
 
   rm::modules::PID *pid_yaw_position{nullptr};
   rm::modules::PID *pid_yaw_velocity{nullptr};
+  rm::modules::PID *pid_snipe_yaw_position{nullptr};
+  rm::modules::PID *pid_snipe_yaw_velocity{nullptr};
   rm::modules::PID *pid_pitch_position{nullptr};
   rm::modules::PID *pid_pitch_velocity{nullptr};
 
@@ -143,6 +145,8 @@ inline struct GlobalWarehouse {
     // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
     pid_yaw_position = new rm::modules::PID{30, 0, 0, 10, 0};
     pid_yaw_velocity = new rm::modules::PID{11, 0, 0.03, 6, 0};
+    pid_snipe_yaw_position=new rm::modules::PID{30, 0, 0, 10, 0};
+    pid_snipe_yaw_velocity = new rm::modules::PID{11, 0, 0.03, 6, 0};
     pid_pitch_position = new rm::modules::PID{60, 0.5, 1.3, 1, 0.1};
     pid_pitch_velocity = new rm::modules::PID{9100, 3500, 40, 16000, 500};
     // pid_pitch_position = new rm::modules::PID{2000, 0, 0, 1500, 1000};
@@ -182,7 +186,7 @@ inline struct GlobalWarehouse {
 // 底盘速度
 inline rm::i16 Vx, Vy, Vw;
 // 云台角度
-inline float target_pos_yaw, last_target_pos_yaw, target_pos_pitch;
+inline float target_pos_yaw{0},last_target_pos_pitch{0}, target_pos_pitch{0},snipe_pos_yaw{0},snipe_pos_pitch{0};
 // 云台当前角度
 inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 // imu陀螺仪

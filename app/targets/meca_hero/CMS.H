@@ -10,7 +10,7 @@ const u32 CAP_BUFFER_ID = 0x02E;
 const u32 CAP_POWER_ID = 0x02F;
 const u32 CAP_FEDBACK_ID = 0x030;
 
-const u16 OUTPUTPOWER = 300;
+const u16 OUTPUTPOWER = 360;
 const u16 INPUTPOWER = 120;
 
 class CMS final : public CanDevice {

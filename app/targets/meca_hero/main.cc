@@ -152,12 +152,13 @@ void SubLoop420hz() {
     key_d = globals->custom_client->key(rm::device::DR16::Key::kD);
     key_e = globals->custom_client->key(rm::device::DR16::Key::kE);
     // VOFA();
+    globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
   }
 }
 
 void SubLoop93hz() {
   if (time_conut % 9 == 0) {
-    globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
+
     globals->tc->offline_count++;
 
   }
@@ -340,12 +341,12 @@ void UiRefresh() {
     if (follow_state) {
       Arc_Draw(&YawAngle, "yaw", UI_Graph_Change, 2, UI_Color_Green,
                rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 - 15, 0, 360),
-               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 + 15, 0, 360), 2, 960, 540,
+               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 + 15, 0, 360), 3, 960, 540,
                300, 300);
     } else {
       Arc_Draw(&YawAngle, "yaw", UI_Graph_Change, 2, UI_Color_Purplish_red,
                rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 - 15, 0, 360),
-               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 + 15, 0, 360), 2, 960, 540,
+               rm::modules::Wrap((globals->gimbal_motor_yaw->pos() - 0.49) / 3.14f * 180 + 15, 0, 360), 3, 960, 540,
                300, 300);
     }
 
