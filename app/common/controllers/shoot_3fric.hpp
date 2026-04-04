@@ -2,8 +2,6 @@
 
 #include <librm.hpp>
 
-inline float j, k;
-
 /**
  * @brief 三摩擦轮发射机构控制器
  */
@@ -25,16 +23,14 @@ class Shoot3Fric {
 
     state_.loader_position = loader_position;
     if (direction_) {
-      if (loader_position >= target_.loader_position - 1000.0f) {
+      if (loader_position >= target_.loader_position - 5000.0f) {
         single_shoot_complete_ = true;
       }
     } else {
-      if (loader_position <= target_.loader_position + 1000.0f) {
+      if (loader_position <= target_.loader_position + 5000.0f) {
         single_shoot_complete_ = true;
       }
     }
-    j = loader_position;
-    k = target_.loader_position;
 
     if (!enabled_) {
       // 无力，控制量设0直接返回
@@ -62,9 +58,9 @@ class Shoot3Fric {
       pid_.loader_position.Update(target_.loader_position, state_.loader_position, dt);
       int16_t single_loader_speed;
       if (direction_) {
-        single_loader_speed = 3000.0f;
+        single_loader_speed = 2000.0f;
       } else {
-        single_loader_speed = -3000.0f;
+        single_loader_speed = -2000.0f;
       }
       pid_.loader_speed.Update(single_loader_speed, state_.loader_speed, dt);
       output_.loader = pid_.loader_speed.out();

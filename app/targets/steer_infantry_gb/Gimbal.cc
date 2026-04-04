@@ -234,7 +234,6 @@ void Gimbal::ShootEnableUpdate() {
     globals->shoot_controller.SetShootFrequency(0.0f);
     gimbal->single_shoot_flag_ = false;
   }
-
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
                                    static_cast<f32>(globals->dail_encoder_counter.linear_ticks()),
                                    globals->dial_motor->rpm());
