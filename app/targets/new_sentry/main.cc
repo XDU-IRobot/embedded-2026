@@ -60,7 +60,7 @@ void GlobalWarehouse::Init() {
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   hipnuc_imu = new rm::device::HipnucImuCan{*can2, 8};
 
-  wfly = new rm::device::Sbus{*dbus};
+  wfly_et16s = new WflyET16s{*dbus};
   up_yaw_motor = new rm::device::GM6020{*can2, 1};
   down_yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x07, 0x06, 3.14159, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
@@ -77,7 +77,7 @@ void GlobalWarehouse::Init() {
   wheel_lb = new rm::device::M3508{*can1, 4};
   wheel_rb = new rm::device::M3508{*can1, 2};
 
-  device_rc << wfly;                                                 // 遥控器
+  device_rc << wfly_et16s;                                         // 遥控器
   device_nuc << aimbot_communicator;                               // nuc
   device_gimbal << up_yaw_motor << down_yaw_motor << pitch_motor;  // 云台电机
   device_shoot << friction_left << friction_right << dial_motor;   // 发射机构电机
@@ -87,7 +87,7 @@ void GlobalWarehouse::Init() {
   can1->Begin();
   can2->SetFilter(0, 0);
   can2->Begin();
-  wfly->Begin();
+  wfly_et16s->Begin();
   rx_referee->Begin();
   buzzer->Init();
   led->Init();
@@ -141,35 +141,35 @@ void GlobalWarehouse::RCStateUpdate() {
       !globals->referee_data->data().robot_status.power_management_gimbal_output) {
     globals->StateMachine_ = kUnable;
   } else {
-    switch (globals->rc->switch_r()) {
-      case rm::device::DR16::SwitchPosition::kUp:
+    switch (globals->wfly_et16s->switch_position(rc_ch::SD)) {
+      case SwitchPosition::kUp:
         // 右拨杆打到最上侧挡位
-        switch (globals->rc->switch_l()) {
-          case rm::device::DR16::SwitchPosition::kDown:
+        switch (globals->wfly_et16s->switch_position(rc_ch::SA)) {
+          case SwitchPosition::kDown:
             globals->StateMachine_ = kMatch;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
-          case rm::device::DR16::SwitchPosition::kUp:
-          case rm::device::DR16::SwitchPosition::kMid:
+          case SwitchPosition::kUp:
+          case SwitchPosition::kMid:
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
         }
         break;
 
-      case rm::device::DR16::SwitchPosition::kMid:
+      case SwitchPosition::kMid:
         // 右拨杆打到中间挡位
-        switch (globals->rc->switch_l()) {
-          case rm::device::DR16::SwitchPosition::kDown:
+        switch (globals->wfly_et16s->switch_position(rc_ch::SA)) {
+          case SwitchPosition::kDown:
             globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
             gimbal->GimbalMove_ = kGbRemote;
             chassis->ChassisMove_ = kCsRemote;
             break;
-          case rm::device::DR16::SwitchPosition::kMid:
+          case SwitchPosition::kMid:
             globals->StateMachine_ = kTest;
             gimbal->GimbalMove_ = kGbScan;
             chassis->ChassisMove_ = kCsNavigate;
             break;
-          case rm::device::DR16::SwitchPosition::kUp:
+          case SwitchPosition::kUp:
             globals->StateMachine_ = kTest;
             gimbal->GimbalMove_ = kGbAimbot;
             chassis->ChassisMove_ = kNoForce;
@@ -180,12 +180,12 @@ void GlobalWarehouse::RCStateUpdate() {
         }
         break;
 
-      case rm::device::DR16::SwitchPosition::kDown:
-        switch (globals->rc->switch_l()) {
-          case rm::device::DR16::SwitchPosition::kUp:
+      case SwitchPosition::kDown:
+        switch (globals->wfly_et16s->switch_position(rc_ch::SA)) {
+          case SwitchPosition::kUp:
             globals->Music();
-          case rm::device::DR16::SwitchPosition::kMid:
-          case rm::device::DR16::SwitchPosition::kDown:
+          case SwitchPosition::kMid:
+          case SwitchPosition::kDown:
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
@@ -199,10 +199,12 @@ void GlobalWarehouse::RCStateUpdate() {
 }
 
 void GlobalWarehouse::Music() {
-  if (globals->rc->dial() >= 650) {
+  if (globals->wfly_et16s->wheel_position(rc_ch::LS) >= 650 &&
+      globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) {
     globals->music = true;
   }
-  if (globals->rc->dial() <= -650 && !globals->music_change_flag) {
+  if (globals->wfly_et16s->wheel_position(rc_ch::LS) <= -650 &&
+      globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) {
     globals->music_choice++;
     if (globals->music_choice == 3) {
       globals->music_choice = 0;
@@ -210,7 +212,7 @@ void GlobalWarehouse::Music() {
     globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
     globals->music_change_flag = true;
   }
-  if (globals->rc->dial() >= -650 && globals->rc->dial() <= 650) {
+  if (globals->wfly_et16s->wheel_position(rc_ch::LS) > -650 && globals->wfly_et16s->wheel_position(rc_ch::LS) < 650) {
     globals->music_change_flag = false;
     globals->music = false;
   }
@@ -274,12 +276,13 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_chassis.Update();
-  if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
-      globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
-    if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
+  if (globals->wfly_et16s->switch_position(rc_ch::SD) != SwitchPosition::kUnknown &&
+      globals->wfly_et16s->switch_position(rc_ch::SA) != SwitchPosition::kUnknown) {
+    if (globals->wfly_et16s->switch_position(rc_ch::SD) != globals->last_switch_l ||
+        globals->wfly_et16s->switch_position(rc_ch::SA) != globals->last_switch_r) {
       globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
-      globals->last_switch_l = globals->rc->switch_l();
-      globals->last_switch_r = globals->rc->switch_r();
+      globals->last_switch_l = globals->wfly_et16s->switch_position(rc_ch::SD);
+      globals->last_switch_r = globals->wfly_et16s->switch_position(rc_ch::SA);
     }
   }
 }

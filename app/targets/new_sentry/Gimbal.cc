@@ -72,10 +72,10 @@ void Gimbal::GimbalStateUpdate() {
 }
 
 void Gimbal::GimbalRCTargetUpdate() {
-  gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
-  // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
-  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -660, 660, -0.004f, 0.004f);
-  gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -660, 660, -0.004f, 0.004f);
+  gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->wfly_et16s->left_x(), -1, 1, -0.004f, 0.004f);
+  // gimbal->gimbal_up_yaw_target_ -= rm::modules::Map(globals->wfly_et16s->left_x(), -1, 1, -0.004f, 0.004f);
+  gimbal->gimbal_down_yaw_target_ -= rm::modules::Map(globals->wfly_et16s->left_x(), -1, 1, -0.004f, 0.004f);
+  gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->wfly_et16s->left_y(), -1, 1, -0.004f, 0.004f);
   gimbal->gimbal_up_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_, -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_, -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
@@ -358,8 +358,10 @@ void Gimbal::ShootEnableUpdate() {
        globals->referee_data->data().shoot_data.initial_speed <= 21.0f)) {
     gimbal->ammo_speed_ = 6200.0f * std::sqrt(22.0f / globals->referee_data->data().shoot_data.initial_speed);
   }
-  if ((globals->rc->dial() <= -650 ||
-       (globals->StateMachine_ == kTest && globals->rc->dial() <= -10 &&
+  if (((globals->wfly_et16s->wheel_position(rc_ch::LS) <= -650 &&
+        globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) ||
+       (globals->StateMachine_ == kTest && globals->wfly_et16s->wheel_position(rc_ch::LS) <= -10 &&
+        globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown &&
         globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
        (globals->StateMachine_ == kMatch && globals->navigate_communicator->aimbot_mode() &&
         globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) &&
@@ -376,8 +378,8 @@ void Gimbal::ShootEnableUpdate() {
       globals->shoot_controller.SetShootFrequency(0.0f);
       single_shoot_flag_ = false;
     }
-  } else if (globals->rc->dial() >= 650 ||
-             (globals->StateMachine_ == kTest && globals->rc->dial() >= 10 &&
+  } else if (globals->wfly_et16s->wheel_position(rc_ch::LS) >= 650 ||
+             (globals->StateMachine_ == kTest && globals->wfly_et16s->wheel_position(rc_ch::LS) >= 10 &&
               globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
              (globals->StateMachine_ == kMatch && !globals->navigate_communicator->aimbot_mode() &&
               globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {

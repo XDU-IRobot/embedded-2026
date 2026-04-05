@@ -13,6 +13,7 @@
 #include "controllers/shoot_3fric.hpp"
 
 #include "Referee.hpp"
+#include "WFLY.hpp"
 
 // 状态机
 typedef enum {
@@ -46,23 +47,19 @@ inline struct GlobalWarehouse {
 
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                          ///< CAN 总线接口
-  rm::device::HipnucImuCan *hipnuc_imu{nullptr};                        ///< IMU
   rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};      ///< CAN 通信器
   rm::device::NavigateCanCommunicator *navigate_communicator{nullptr};  ///< CAN 通信器
-  rm::hal::Serial *dbus{nullptr};                                       ///< 遥控器串口接口
-  rm::hal::Serial *referee_uart{nullptr};                               ///< 裁判系统串口接口
+  rm::device::HipnucImuCan *hipnuc_imu{nullptr};                        ///< IMU
+  rm::device::BMI088 *imu{nullptr};                                     ///< IMU
 
-  // 设备 //
-  rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
-  rm::device::DeviceManager<2> device_nuc;
-  rm::device::DeviceManager<3> device_gimbal;
-  rm::device::DeviceManager<3> device_shoot;
-  rm::device::DeviceManager<4> device_chassis;
+  rm::hal::Serial *dbus{nullptr};   ///< 遥控器串口接口
+  WflyET16s *wfly_et16s{nullptr};   ///< 天地飞遥控器
+
+  rm::hal::Serial *referee_uart{nullptr};                                             ///< 裁判系统串口接口
+  rm::device::RxReferee *rx_referee{nullptr};                                         ///< 裁判系统
+  rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data{nullptr};  ///< 裁判系统数据
+
   // 云台
-  rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
-  rm::device::BMI088 *imu{nullptr};                                                    ///< IMU
-  rm::device::DR16 *rc{nullptr};                                                       ///< 遥控器
-  rm::device::Sbus *wfly{nullptr};                                                     ///< 遥控器
   rm::device::GM6020 *up_yaw_motor{nullptr};                                           ///< 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *down_yaw_motor{nullptr};  ///< 云台 Yaw 下电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};     ///< 云台 Pitch 电机
@@ -75,7 +72,12 @@ inline struct GlobalWarehouse {
   rm::device::M3508 *wheel_lb{nullptr};  ///< 左后轮电机
   rm::device::M3508 *wheel_rb{nullptr};  ///< 右后轮电机
 
-  rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data{nullptr};  ///< 裁判系统数据
+  // 设备 //
+  rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
+  rm::device::DeviceManager<2> device_nuc;
+  rm::device::DeviceManager<3> device_gimbal;
+  rm::device::DeviceManager<3> device_shoot;
+  rm::device::DeviceManager<4> device_chassis;
 
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};         ///< 姿态解算器
@@ -100,8 +102,8 @@ inline struct GlobalWarehouse {
   bool last_shooter_power = false;              // 上一次发射机构电机使能状态
   bool last_chassis_power = false;              // 上一次底盘电机使能状态
 
-  rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
-  rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
+  SwitchPosition last_switch_l = SwitchPosition::kDown;  // 左拨杆上一次状态
+  SwitchPosition last_switch_r = SwitchPosition::kDown;  // 右拨杆上一次状态
 
   // 函数 //
  public:

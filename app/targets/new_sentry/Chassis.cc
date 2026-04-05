@@ -60,16 +60,17 @@ void Chassis::ChassisStateUpdate() {
 void Chassis::ChassisRCDataUpdate() {
   chassis->down_yaw_delta_ = chassis->front_down_yaw_angle_ - globals->down_yaw_motor->pos();
   chassis->down_yaw_delta_ = rm::modules::Wrap(chassis->down_yaw_delta_, -static_cast<f32>(M_PI), M_PI);
-  if (std::abs(globals->rc->right_y()) > 20 || std::abs(globals->rc->right_x()) > 20) {
-    chassis->chassis_receive_x_ = rm::modules::Map(globals->rc->right_x(), -660, 660, -chassis->chassis_sensitivity_xy_,
-                                                   chassis->chassis_sensitivity_xy_);
-    chassis->chassis_receive_y_ = rm::modules::Map(globals->rc->right_y(), -660, 660, -chassis->chassis_sensitivity_xy_,
-                                                   chassis->chassis_sensitivity_xy_);
+  if (std::abs(globals->wfly_et16s->right_y()) > 0.01 || std::abs(globals->wfly_et16s->right_x()) > 0.01) {
+    chassis->chassis_receive_x_ = rm::modules::Map(globals->wfly_et16s->right_x(), -1, 1,
+                                                   -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
+    chassis->chassis_receive_y_ = rm::modules::Map(globals->wfly_et16s->right_y(), -1, 1,
+                                                   -chassis->chassis_sensitivity_xy_, chassis->chassis_sensitivity_xy_);
   } else {
     chassis->chassis_receive_x_ = 0.0f;
     chassis->chassis_receive_y_ = 0.0f;
   }
-  if (globals->rc->dial() >= 650) {
+  if (globals->wfly_et16s->wheel_position(rc_ch::LS) >= 650 &&
+      globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) {
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) -
         chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
@@ -77,7 +78,8 @@ void Chassis::ChassisRCDataUpdate() {
         chassis->chassis_receive_y_ * std::cos(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_) +
         chassis->chassis_receive_x_ * std::sin(chassis->down_yaw_delta_ + chassis->chassis_move_delta_angle_);
     chassis->chassis_target_w_ = 4000.0f;
-  } else if (globals->rc->dial() <= -650) {
+  } else if (globals->wfly_et16s->wheel_position(rc_ch::LS) <= -650 &&
+             globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) {
     chassis->chassis_target_x_ =
         chassis->chassis_receive_x_ * std::cos(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_) -
         chassis->chassis_receive_y_ * std::sin(chassis->down_yaw_delta_ - chassis->chassis_move_delta_angle_);
