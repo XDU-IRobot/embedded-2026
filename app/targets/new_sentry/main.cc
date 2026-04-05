@@ -53,14 +53,14 @@ void GlobalWarehouse::Init() {
   can2 = new rm::hal::Can{hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
-  dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  dbus = new rm::hal::Serial{huart3, 25, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
 
   rx_referee = new rm::device::RxReferee{*globals->referee_uart};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   hipnuc_imu = new rm::device::HipnucImuCan{*can2, 8};
 
-  rc = new rm::device::DR16{*dbus};
+  wfly = new rm::device::Sbus{*dbus};
   up_yaw_motor = new rm::device::GM6020{*can2, 1};
   down_yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x07, 0x06, 3.14159, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
@@ -77,7 +77,7 @@ void GlobalWarehouse::Init() {
   wheel_lb = new rm::device::M3508{*can1, 4};
   wheel_rb = new rm::device::M3508{*can1, 2};
 
-  device_rc << rc;                                                 // 遥控器
+  device_rc << wfly;                                                 // 遥控器
   device_nuc << aimbot_communicator;                               // nuc
   device_gimbal << up_yaw_motor << down_yaw_motor << pitch_motor;  // 云台电机
   device_shoot << friction_left << friction_right << dial_motor;   // 发射机构电机
@@ -87,7 +87,7 @@ void GlobalWarehouse::Init() {
   can1->Begin();
   can2->SetFilter(0, 0);
   can2->Begin();
-  rc->Begin();
+  wfly->Begin();
   rx_referee->Begin();
   buzzer->Init();
   led->Init();

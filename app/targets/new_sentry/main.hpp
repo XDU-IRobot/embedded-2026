@@ -62,6 +62,7 @@ inline struct GlobalWarehouse {
   rm::device::RxReferee *rx_referee{nullptr};                                          ///< 裁判系统
   rm::device::BMI088 *imu{nullptr};                                                    ///< IMU
   rm::device::DR16 *rc{nullptr};                                                       ///< 遥控器
+  rm::device::Sbus *wfly{nullptr};                                                     ///< 遥控器
   rm::device::GM6020 *up_yaw_motor{nullptr};                                           ///< 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *down_yaw_motor{nullptr};  ///< 云台 Yaw 下电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};     ///< 云台 Pitch 电机
@@ -77,11 +78,11 @@ inline struct GlobalWarehouse {
   rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data{nullptr};  ///< 裁判系统数据
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{500.0f};          ///< 姿态解算器
-  GimbalDoubleYaw gimbal_controller;             ///< 二轴双 Yaw 云台控制器
-  QuadOmniChassis chassis_controller;            ///< 四轮转向底盘控制器
+  rm::modules::MahonyAhrs ahrs{500.0f};         ///< 姿态解算器
+  GimbalDoubleYaw gimbal_controller;            ///< 二轴双 Yaw 云台控制器
+  QuadOmniChassis chassis_controller;           ///< 四轮转向底盘控制器
   Shoot3Fric shoot_controller{9, 19.2f, true};  ///< 三摩擦轮发射机构控制器，8发拨盘
-  EncoderCounter dail_encoder_counter;           ///< 云台 Yaw 下部电机位置计数器
+  EncoderCounter dail_encoder_counter;          ///< 云台 Yaw 下部电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   uint8_t time = 0;                             // 时间
