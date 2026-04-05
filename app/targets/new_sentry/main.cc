@@ -276,13 +276,12 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_chassis.Update();
-  if (globals->wfly_et16s->switch_position(rc_ch::SD) != SwitchPosition::kUnknown &&
-      globals->wfly_et16s->switch_position(rc_ch::SA) != SwitchPosition::kUnknown) {
-    if (globals->wfly_et16s->switch_position(rc_ch::SD) != globals->last_switch_l ||
-        globals->wfly_et16s->switch_position(rc_ch::SA) != globals->last_switch_r) {
-      globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
-      globals->last_switch_l = globals->wfly_et16s->switch_position(rc_ch::SD);
-      globals->last_switch_r = globals->wfly_et16s->switch_position(rc_ch::SA);
+  for (i8 i = 0; i < 8; i++) {
+    if (globals->last_switch[i] != SwitchPosition::kUnknown) {
+      if (globals->last_switch[i] != globals->wfly_et16s->switch_position(i + 4)) {
+        globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
+        globals->last_switch[i] = globals->wfly_et16s->switch_position(i + 4);
+      }
     }
   }
 }

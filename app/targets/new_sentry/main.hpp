@@ -87,23 +87,25 @@ inline struct GlobalWarehouse {
   EncoderCounter dail_encoder_counter;          ///< 云台 Yaw 下部电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
-  uint8_t time = 0;                             // 时间
-  uint16_t gimbal_init_time = 0;                // 云台初始化时间
-  uint16_t shooter_init_time = 0;               // 发射机构初始化时间
-  uint16_t chassis_init_time = 0;               // 底盘初始化时间
-  uint16_t hurt_time = 0;                       // 受伤小陀螺倒计时
-  uint8_t time_camera = 0;                      // 摄像头计数器
-  uint16_t imu_count = 0;                       // IMU计数器
-  uint8_t aim_mode = 0;                         // 自瞄模式
-  uint8_t music_choice = 0;                     // 音乐选择
-  bool music = false;                           // 控制音乐播放
-  bool music_change_flag = false;               // 音乐改动标识位
-  bool last_gimbal_power = false;               // 上一次云台电机使能状态
-  bool last_shooter_power = false;              // 上一次发射机构电机使能状态
-  bool last_chassis_power = false;              // 上一次底盘电机使能状态
+  SwitchPosition last_switch[8] = {
+      SwitchPosition::kDown, SwitchPosition::kDown, SwitchPosition::kDown, SwitchPosition::kDown,
+      SwitchPosition::kUp,   SwitchPosition::kUp,   SwitchPosition::kUp,   SwitchPosition::kUp,
+  };  // 上次拨杆位置
 
-  SwitchPosition last_switch_l = SwitchPosition::kDown;  // 左拨杆上一次状态
-  SwitchPosition last_switch_r = SwitchPosition::kDown;  // 右拨杆上一次状态
+  uint8_t time = 0;                 // 时间
+  uint16_t gimbal_init_time = 0;    // 云台初始化时间
+  uint16_t shooter_init_time = 0;   // 发射机构初始化时间
+  uint16_t chassis_init_time = 0;   // 底盘初始化时间
+  uint16_t hurt_time = 0;           // 受伤小陀螺倒计时
+  uint8_t time_camera = 0;          // 摄像头计数器
+  uint16_t imu_count = 0;           // IMU计数器
+  uint8_t aim_mode = 0;             // 自瞄模式
+  uint8_t music_choice = 0;         // 音乐选择
+  bool music = false;               // 控制音乐播放
+  bool music_change_flag = false;   // 音乐改动标识位
+  bool last_gimbal_power = false;   // 上一次云台电机使能状态
+  bool last_shooter_power = false;  // 上一次发射机构电机使能状态
+  bool last_chassis_power = false;  // 上一次底盘电机使能状态
 
   // 函数 //
  public:
