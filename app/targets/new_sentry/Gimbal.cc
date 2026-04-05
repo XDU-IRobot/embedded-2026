@@ -299,8 +299,10 @@ void Gimbal::GimbalEnableUpdate() {
   } else if (globals->StateMachine_ == kTest) {
     if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kMid) {
       globals->aim_mode = 0x02;
-    } else {
+    } else if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kUp) {
       globals->aim_mode = 0x03;
+    } else {
+      globals->aim_mode = 0x01;
     }
   } else {
     globals->aim_mode = 0x01;
