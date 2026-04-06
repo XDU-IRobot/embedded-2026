@@ -199,11 +199,11 @@ void GlobalWarehouse::RCStateUpdate() {
 }
 
 void GlobalWarehouse::Music() {
-  if (globals->wfly_et16s->wheel_position(rc_ch::LS) >= 650 &&
+  if (globals->wfly_et16s->wheel_position(rc_ch::LS) >= 650 && globals->music == 0 &&
       globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) {
-    globals->music = true;
+    globals->music = 1;
   }
-  if (globals->wfly_et16s->wheel_position(rc_ch::LS) <= -650 &&
+  if (globals->wfly_et16s->wheel_position(rc_ch::LS) <= -650 && globals->music_change_flag == false &&
       globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) {
     globals->music_choice++;
     if (globals->music_choice == 3) {
@@ -212,16 +212,19 @@ void GlobalWarehouse::Music() {
     globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
     globals->music_change_flag = true;
   }
-  if (globals->wfly_et16s->wheel_position(rc_ch::LS) > -650 && globals->wfly_et16s->wheel_position(rc_ch::LS) < 650) {
+  if (globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kUp &&
+      (globals->music == 0 || globals->music == 2)) {
     globals->music_change_flag = false;
-    globals->music = false;
+    globals->music = 0;
   }
-  if (music) {
+  if (globals->music == 1) {
     if (globals->music_choice == 1) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SeeUAgain>();
+      globals->music = 2;
     }
     if (globals->music_choice == 2) {
       globals->buzzer_controller.Play<modules::buzzer_melody::SuperMario>();
+      globals->music = 2;
     }
   }
 }

@@ -101,7 +101,7 @@ inline struct GlobalWarehouse {
   uint16_t imu_count = 0;           // IMU计数器
   uint8_t aim_mode = 0;             // 自瞄模式
   uint8_t music_choice = 0;         // 音乐选择
-  bool music = false;               // 控制音乐播放
+  uint8_t music = 0;                // 控制音乐播放
   bool music_change_flag = false;   // 音乐改动标识位
   bool last_gimbal_power = false;   // 上一次云台电机使能状态
   bool last_shooter_power = false;  // 上一次发射机构电机使能状态
