@@ -133,6 +133,7 @@ void SubLoop840hz() {
   GimbalControl();
   // 发送DjiCAN信号
   rm::device::DjiMotorBase::SendCommand();
+  VOFA();
 }
 
 void SubLoop420hz() {
@@ -160,7 +161,7 @@ void SubLoop93hz() {
   if (time_conut % 9 == 0) {
 
     globals->tc->offline_count++;
-
+    // VOFA();
   }
 }
 
