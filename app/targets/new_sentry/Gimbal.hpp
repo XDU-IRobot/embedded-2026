@@ -50,13 +50,10 @@ inline class Gimbal {
   bool DF_state_ = false;  // 大符状态
   bool XF_state_ = false;  // 小符状态
 
-  const f32 highest_mechanism_pitch_angle_ = -0.3f;  // 云台打符扫描pitch轴最大（弧度制）
-  const f32 lowest_mechanism_pitch_angle_ = -0.6f;   // 云台打符扫描pitch轴最大（弧度制）
   const f32 lowest_aimbot_pitch_angle_ = -0.3f;      // 云台自瞄扫描pitch轴最大（弧度制）
   const f32 highest_pitch_angle_ = 0.6f;             // 云台pitch轴最高（弧度制）
   const f32 lowest_pitch_angle_ = -0.7f;             // 云台pitch轴最低（弧度制）
-  const u16 max_mechanism_up_yaw_pos_ = 4500;        // 云台上部yaw轴最大（编码器值）
-  const u16 min_mechanism_up_yaw_pos_ = 3600;        // 云台上部yaw轴最小（编码器值）
+  const u16 mid_up_yaw_pos_ = 4050;                  // 云台上部yaw轴最大（编码器值）
   const u16 max_up_yaw_pos_ = 5000;                  // 云台上部yaw轴最大（编码器值）
   const u16 min_up_yaw_pos_ = 3100;                  // 云台上部yaw轴最小（编码器值）
   const u16 down_yaw_move_high_ = 4700;              // 云台下部yaw轴运动高阈值（编码器值）

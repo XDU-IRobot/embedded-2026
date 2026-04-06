@@ -78,7 +78,7 @@ void GlobalWarehouse::Init() {
   wheel_rb = new rm::device::M3508{*can1, 2};
 
   device_rc << wfly_et16s;                                         // 遥控器
-  device_nuc << aimbot_communicator;                               // nuc
+  device_nuc << aimbot_communicator << navigate_communicator;      // nuc
   device_gimbal << up_yaw_motor << down_yaw_motor << pitch_motor;  // 云台电机
   device_shoot << friction_left << friction_right << dial_motor;   // 发射机构电机
   device_chassis << wheel_lf << wheel_rf << wheel_lb << wheel_rb;  // 底盘电机
@@ -126,7 +126,7 @@ void GlobalWarehouse::ShootPIDInit() {
   shoot_controller.pid().fric_1_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().fric_2_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  shoot_controller.pid().loader_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().loader_speed.SetKp(8.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::RCStateUpdate() {
@@ -184,6 +184,7 @@ void GlobalWarehouse::RCStateUpdate() {
         switch (globals->wfly_et16s->switch_position(rc_ch::SA)) {
           case SwitchPosition::kUp:
             globals->Music();
+            globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
           case SwitchPosition::kMid:
           case SwitchPosition::kDown:
           default:
@@ -279,7 +280,7 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_chassis.Update();
-  for (i8 i = 0; i < 8; i++) {
+  for (i8 i = 0; i < 7; i++) {
     if (globals->wfly_et16s->switch_position(i + 4) != SwitchPosition::kUnknown) {
       if (globals->last_switch[i] != globals->wfly_et16s->switch_position(i + 4)) {
         globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();

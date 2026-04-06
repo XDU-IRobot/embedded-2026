@@ -87,9 +87,9 @@ inline struct GlobalWarehouse {
   EncoderCounter dail_encoder_counter;          ///< 云台 Yaw 下部电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
-  SwitchPosition last_switch[8] = {
+  SwitchPosition last_switch[7] = {
       SwitchPosition::kDown, SwitchPosition::kDown, SwitchPosition::kDown, SwitchPosition::kDown,
-      SwitchPosition::kUp,   SwitchPosition::kUp,   SwitchPosition::kUp,   SwitchPosition::kUp,
+      SwitchPosition::kUp,   SwitchPosition::kUp,   SwitchPosition::kUp,
   };  // 上次拨杆位置
 
   uint8_t time = 0;                 // 时间

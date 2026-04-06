@@ -27,6 +27,7 @@ void Chassis::ChassisStateUpdate() {
       globals->down_yaw_motor->status() != 0x1F ||
       !globals->referee_data->data().robot_status.power_management_chassis_output) {
     chassis->ChassisMove_ = kUnable;
+    chassis->ChassisDisableUpdate();  // 底盘电机失能计算
   } else {
     switch (globals->StateMachine_) {
       case kNoForce:
@@ -206,7 +207,7 @@ void Chassis::ChassisDisableUpdate() {
 }
 
 void Chassis::PowerLimitLoop() {
-  float initial_currents[4];
+  f32 initial_currents[4];
   initial_currents[0] = globals->chassis_controller.output().lf_wheel;
   initial_currents[1] = globals->chassis_controller.output().rf_wheel;
   initial_currents[2] = globals->chassis_controller.output().lb_wheel;
@@ -230,7 +231,8 @@ void Chassis::PowerLimitLoop() {
                           chassis->power_info_[2].total_power + chassis->power_info_[3].total_power;
   chassis->power_model_.DistributePower<4>(chassis->motor_state_, initial_currents, chassis->chassis_power_limit_,
                                            chassis->output_currents_);
-
+  for (f32 &output_current : chassis->output_currents_)
+    output_current = rm::modules::Clamp(output_current, -30000.0f, 30000.0f);
   // 缓冲能量过低判断
   if (globals->referee_data->data().power_heat_data.buffer_energy < 10) {
     chassis->k_speed_power_limit_ = 0.0f;
