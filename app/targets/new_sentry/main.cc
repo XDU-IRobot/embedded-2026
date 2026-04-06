@@ -105,8 +105,8 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // 上部 Yaw PID 参数
-  gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().up_yaw_speed.SetKp(6000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_position.SetKp(32.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_speed.SetKp(9000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
   gimbal_controller.pid().down_yaw_position.SetKp(40.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(2.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
@@ -277,7 +277,7 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_shoot.Update();
   globals->device_chassis.Update();
   for (i8 i = 0; i < 8; i++) {
-    if (globals->last_switch[i] != SwitchPosition::kUnknown) {
+    if (globals->wfly_et16s->switch_position(i + 4) != SwitchPosition::kUnknown) {
       if (globals->last_switch[i] != globals->wfly_et16s->switch_position(i + 4)) {
         globals->buzzer_controller.Play<modules::buzzer_melody::Beeps<1>>();
         globals->last_switch[i] = globals->wfly_et16s->switch_position(i + 4);
