@@ -90,8 +90,8 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(800.0f).SetKi(0.0f).SetKd(24000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(900.0f).SetKi(0.0f).SetKd(26000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKi(0.0f).SetKd(1300.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
@@ -309,7 +309,7 @@ void GlobalWarehouse::Music() {
 void GlobalWarehouse::SubLoop500Hz() {
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
-                                                globals->imu->gyro_z() + 0.0001f, -globals->imu->accel_y(),
+                                                globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
                                                 globals->imu->accel_x(), globals->imu->accel_z()});
   // 硬触发
   // if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
