@@ -112,12 +112,10 @@ class GimbalSTASMC {
     output_.yaw =
         params_.yaw_spd.kp * yaw_s + params_.yaw_spd.k1 * std::sqrt(std::fabs(yaw_s)) * yaw_sat + yaw_i_ + yaw_model_ff;
 
-
-    Asmckp=params_.yaw_spd.kp * yaw_s;
-    Asmcsat=params_.yaw_spd.k1 * std::sqrt(std::fabs(yaw_s)) * yaw_sat;
-    Asmci=yaw_i_;
-    Asmcff=yaw_model_ff;
-
+    Asmckp = params_.yaw_spd.kp * yaw_s;
+    Asmcsat = params_.yaw_spd.k1 * std::sqrt(std::fabs(yaw_s)) * yaw_sat;
+    Asmci = yaw_i_;
+    Asmcff = yaw_model_ff;
 
     output_.pitch = params_.pitch_spd.kp * pitch_s + params_.pitch_spd.k1 * std::sqrt(std::fabs(pitch_s)) * pitch_sat +
                     pitch_i_ + pitch_model_ff;

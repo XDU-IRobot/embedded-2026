@@ -36,7 +36,7 @@ float Astasmcoutput;
 float Ainit_speed;
 float Aspeed_average;
 float Apitch_err_average;
-int Atrace=0;
+int Atrace = 0;
 float Asmckp;
 float Asmcsat;
 float Asmci;
@@ -46,7 +46,7 @@ void FreemasterDebug() {
   Arcpitchdata =
       rm::modules::Wrap(gimbal->rc_pitch_data - gimbal->err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
   // Ayaw = gimbal->yaw;
-  Arcyawdata=gimbal->rc_yaw_data;
+  Arcyawdata = gimbal->rc_yaw_data;
   Apitch = gimbal->pitch;
   Apitch_err_average = gimbal->err_average;
   Aroll = gimbal->roll;
