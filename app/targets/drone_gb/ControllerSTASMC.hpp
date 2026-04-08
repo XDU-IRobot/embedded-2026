@@ -5,6 +5,12 @@
 /**
  * @brief 二轴云台 级联双环 超螺旋滑模控制器 (位置外环 + 速度内环 STA + 动力学前馈)
  */
+
+extern float Asmckp;
+extern float Asmcsat;
+extern float Asmci;
+extern float Asmcff;
+
 class GimbalSTASMC {
  public:
   GimbalSTASMC() = default;
@@ -106,6 +112,13 @@ class GimbalSTASMC {
     output_.yaw =
         params_.yaw_spd.kp * yaw_s + params_.yaw_spd.k1 * std::sqrt(std::fabs(yaw_s)) * yaw_sat + yaw_i_ + yaw_model_ff;
 
+
+    Asmckp=params_.yaw_spd.kp * yaw_s;
+    Asmcsat=params_.yaw_spd.k1 * std::sqrt(std::fabs(yaw_s)) * yaw_sat;
+    Asmci=yaw_i_;
+    Asmcff=yaw_model_ff;
+
+
     output_.pitch = params_.pitch_spd.kp * pitch_s + params_.pitch_spd.k1 * std::sqrt(std::fabs(pitch_s)) * pitch_sat +
                     pitch_i_ + pitch_model_ff;
 
@@ -127,6 +140,7 @@ class GimbalSTASMC {
 
   void Enable(bool enable) {
     if (enable && !enabled_) {
+      ClearRuntimeData();
       // 刚开启时重置历史状态，防止突变(Derivative Kick)
       last_ = {};
       yaw_i_ = 0.f;
@@ -246,4 +260,14 @@ class GimbalSTASMC {
     float yaw;
     float pitch;
   } output_{};
+
+  void ClearRuntimeData() {
+    yaw_i_ = 0.f;
+    pitch_i_ = 0.f;
+    last_ = {};
+    target_ = {};
+    state_ = {};
+    output_ = {};
+    just_enabled_ = false;
+  }
 };
