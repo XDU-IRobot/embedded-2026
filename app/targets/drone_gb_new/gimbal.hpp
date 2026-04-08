@@ -75,7 +75,7 @@ class Gimbal {
     device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
     device_shoot << friction_left << friction_right << dial_motor;  // 发射机构电机
 
-    can1->SetFilter(0, 0);//设置滤波？
+    can1->SetFilter(0, 0);  // 设置滤波器？
     can1->Begin();
     rc->Begin();
 
@@ -90,9 +90,107 @@ class Gimbal {
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
+  }
 
-    // pitch_cmd_notch.initNotch(250.0, 3.15, 15);//控制频率 陷频频率 品质因数
-    // pitch_chirp.init(250, 0.5, 100.0, 20.0, 0.01, ChirpType::kLog);// 控制频率 扫频区间f0-f1 周期 幅度
+  void GimbalPIDInit() {
+    gimbal_controller.pid().yaw_position.SetKp(10.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(10.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+  }
+
+  void AmmoPIDInit() {
+    shoot_controller.pid().fric_1_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
+    shoot_controller.pid().fric_2_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
+    shoot_controller.pid().loader_speed.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(2000.0f);
+  }
+
+  void RCStateUpdate() {
+    switch (rc->switch_r()) {
+      case rm::device::DR16::SwitchPosition::kUp:  // 发射控制逻辑
+        AmmoState_ = kFire;
+        break;
+      case rm::device::DR16::SwitchPosition::kMid:
+        AmmoState_ = kReady;
+        break;
+      default:
+        AmmoState_ = kStop;
+        break;
+    }
+    switch (rc->switch_l()) {
+      case rm::device::DR16::SwitchPosition::kDown:  // 只有下打有力
+        GimbalState_ = kManual;
+      default:
+        GimbalState_ = kNoForce;
+    }
+  }
+
+  void GimbalControl() {
+    if (GimbalState_ == kManual) {
+      if (DM_is_enable == false) {
+        pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+        DM_is_enable = true;
+        gimbal_controller.Enable(true);
+
+        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
+        rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
+      }
+      // yaw
+      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+      rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+      // pitch
+      rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
+      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
+
+      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
+      yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
+    } else {
+      if (DM_is_enable == true) {
+        pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+        DM_is_enable = false;
+        gimbal_controller.Enable(false);
+        yaw_motor->SetCurrent(0);
+      }
+    }
+  }
+
+  // 遥控器和imu数据解算+DjiMotor发信息
+  void SubLoop500Hz() {
+    // imu数据处理
+    imu->Update();
+    ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z() - 0.0009f, imu->accel_y(),
+                                         imu->accel_x(), -imu->accel_z()});
+    pitch = ahrs.euler_angle().pitch + M_PI;
+    yaw = ahrs.euler_angle().yaw + M_PI;
+    roll = ahrs.euler_angle().roll + M_PI;
+
+    RCStateUpdate();                               // 遥控器更新
+    GimbalControl();                               // 云台控制更新
+    rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
+  }
+
+  // DmMotor电机发信息
+  void SubLoop250Hz() {
+    if (time_ % 2 == 0) {
+      // 发送达秒控制信息
+      pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
+    }
+  }
+
+  void SubLoop100Hz() {
+    if (time_ % 5 == 0) {
+    }
+  }
+  void SubLoop50Hz() {
+    if (time_ % 10 == 0) {
+    }
+  }
+  void SubLoop10Hz() {
+    if (time_ % 50 == 0) {
+      time_ = 0;
+    }
   }
 };
 
