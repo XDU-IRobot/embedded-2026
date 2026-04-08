@@ -42,3 +42,7 @@ target_compile_definitions(test_gb PRIVATE TEST_GB)
 file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
 add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)
+
+file(GLOB_RECURSE DRONE_GB_NEW_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/drone_gb_new/*.cc)
+add_exe_target(drone_gb_new "${DRONE_GB_NEW_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(drone_gb_new PRIVATE DRONE_GB_NEW)

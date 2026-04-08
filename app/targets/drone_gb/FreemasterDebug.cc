@@ -51,10 +51,10 @@ void FreemasterDebug() {
   Adirlrmp = gimbal->dial_motor->encoder();
   Adirout = gimbal->shoot_controller.output().loader;
   Aerr = gimbal->err_average;
-  Ashooter_17mm_1_barrel_heat = gimbal->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
-  Aid = gimbal->referee_data_buffer.data().robot_status.robot_id;
-  Ashoot_speed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
-  Ashoot_hz = gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
+  // Ashooter_17mm_1_barrel_heat = gimbal->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
+  // Aid = gimbal->referee_data_buffer.data().robot_status.robot_id;
+  // Ashoot_speed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
+  // Ashoot_hz = gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
   Adrmp = gimbal->friction_left->rpm() + gimbal->friction_right->rpm();
   Armp = gimbal->friction_left->rpm();
   Apitchpose = gimbal->pitch_motor->pos();
@@ -65,8 +65,8 @@ void FreemasterDebug() {
   Aselfpitchtarget = rm::modules::Wrap(gimbal->pitch + gimbal->err_average, 0, 2 * M_PI);
 
   Apidoutput = gimbal->gimbal_controller.output().yaw;
-  Asmcoutput = gimbal->gimbal_controller_SMC.output().yaw;
-  Astasmcoutput = gimbal->gimbal_controller_STASMC.output().yaw;
-  Ainit_speed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
+  // Asmcoutput = gimbal->gimbal_controller_SMC.output().yaw;
+  // Astasmcoutput = gimbal->gimbal_controller_STASMC.output().yaw;
+  // Ainit_speed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
   Aspeed_average = gimbal->fire_speed_average;
 }
