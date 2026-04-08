@@ -1,7 +1,7 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
 //测试开发分支
-#define CONTROLLER_CHOICE 2  // 控制器选择开关:0为PID，1为SMC，2为STASMC
+#define CONTROLLER_CHOICE 0  // 控制器选择开关:0为PID，1为SMC，2为STASMC
 #define DYNAMIC_PARAMENT 0   // 动态参数开关:0关闭动态参数，1开启动态参数
 
 #include <librm.hpp>
@@ -33,20 +33,20 @@ extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
 
 class Gimbal {
  public:
-  int abcdefg = 0;
-
-  Buzzer *buzzer{nullptr};  // 蜂鸣器
-  rm::modules::BuzzerController<
-      rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
-      rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
-      rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
-      rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
-      buzzer_controller;
-  LED *led{nullptr};  // RGB LED灯
-  rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
-                                rm::modules::led_pattern::GreenBreath,
-                                rm::modules::led_pattern::RgbFlow>
-      led_controller;           // RGB LED控制器
+  // int abcdefg = 0;
+  //
+  // Buzzer *buzzer{nullptr};  // 蜂鸣器
+  // rm::modules::BuzzerController<
+  //     rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
+  //     rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
+  //     rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
+  //     rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
+  //     buzzer_controller;
+  // LED *led{nullptr};  // RGB LED灯
+  // rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
+  //                               rm::modules::led_pattern::GreenBreath,
+  //                               rm::modules::led_pattern::RgbFlow>
+  //     led_controller;           // RGB LED控制器
   rm::hal::Can *can1{nullptr};  // CAN 总线接口
   rm::hal::SerialInterface *referee_uart;
   rm::device::RxReferee *rx_referee{nullptr};
@@ -104,8 +104,8 @@ class Gimbal {
   Shoot2Fric shoot_controller;            // 双摩擦轮发射机构控制器
   Feedforward yaw_ff;                     // 前馈控制器
 
-  float pitch_min_pos = 1.6;   // TODO pitch电机最小限位
-  float pitch_max_pos = 2.75;  // TODO pitch电机最大限位
+  float pitch_min_pos = 2.94;   // TODO pitch电机最小限位1.6原来的参数
+  float pitch_max_pos = 4.15;  // TODO pitch电机最大限位2.75
 
   i16 encoder_dirl = 0;
   int single_shoot_time = 28;       // TODO 单发时间
@@ -161,8 +161,8 @@ class Gimbal {
 
   // 结构体初始化
   void GimbalInit() {
-    buzzer = new Buzzer;
-    led = new LED;
+    // buzzer = new Buzzer;
+    // led = new LED;
 
     can1 = new rm::hal::Can{hcan1};
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
@@ -174,13 +174,13 @@ class Gimbal {
 
     rc = new rm::device::DR16{*dbus};
 
-    yaw_motor = new rm::device::GM6020{*can1, 6};
+    yaw_motor = new rm::device::GM6020{*can1, 2};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x01, 0x07, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x00, 0x01, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
-    friction_left = new rm::device::M3508{*can1, 1};
+    friction_left = new rm::device::M3508{*can1, 4};
     friction_right = new rm::device::M3508{*can1, 3};
-    dial_motor = new rm::device::M2006{*can1, 5};
+    dial_motor = new rm::device::M2006{*can1, 1};
 
     device_rc << rc;                                                // 遥控器
     device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
@@ -189,11 +189,11 @@ class Gimbal {
     can1->SetFilter(0, 0);
     can1->Begin();
     rc->Begin();
-    led->Init();
+    // led->Init();
     rx_referee->Begin();
-    led_controller.SetPattern<rm::modules::led_pattern::GreenBreath>();
-    buzzer->Init();
-    buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
+    // led_controller.SetPattern<rm::modules::led_pattern::GreenBreath>();
+    // buzzer->Init();
+    // buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
 
     time_ = 0;
 
@@ -222,8 +222,8 @@ class Gimbal {
 
 #if CONTROLLER_CHOICE == 0
     // PID
-    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(10.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(10.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
 #elif CONTROLLER_CHOICE == 1
@@ -486,7 +486,7 @@ class Gimbal {
       if (rc->left_x() == 660 && rc->left_y() == -660 && rc->right_x() == -660 && rc->right_y() == -660 &&
           mode_change_time == 0) {
         SINGLE_SHOOT_MOOD *= -1;
-        buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
+        // buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
         mode_change_time = 20;
       }
     }
@@ -665,21 +665,21 @@ class Gimbal {
   // 裁判系统+UI绘制
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
-      Referee_control();
+      //Referee_control();
     }
   }
 
   // 总循环
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
-      // WS212航灯输出
-      if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
-      if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
-      if (abcdefg >= 20 && abcdefg < 30) Set_LED(0, 0, 255, 0);
-      if (abcdefg >= 30) abcdefg = 0;
-      abcdefg++;
-      Set_Brightness(10);
-      WS2812_Send();
+      // // WS212航灯输出
+      // if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
+      // if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
+      // if (abcdefg >= 20 && abcdefg < 30) Set_LED(0, 0, 255, 0);
+      // if (abcdefg >= 30) abcdefg = 0;
+      // abcdefg++;
+      // Set_Brightness(10);
+      // WS2812_Send();
 
       time_ = 0;
     }
