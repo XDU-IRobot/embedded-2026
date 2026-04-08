@@ -7,10 +7,10 @@
 #define AIMBOT_DATA_RECEIVE_ID 0x2  // 接收数据帧ID 0x2
 
 typedef struct __attribute__((packed)) {
-  uint8_t _SOF;            // 包头
-  uint8_t ID;              // 接收id
-  uint8_t AimbotState;     // 自瞄状态
-  uint8_t AutoFire;        // 是否开火
+  uint8_t _SOF;         // 包头
+  uint8_t ID;           // 接收id
+  uint8_t AimbotState;  // 自瞄状态
+  uint8_t AutoFire;     // 是否开火
 
   float TargetPitchAngle;  // pitch角度
   float TargetYawAngle;    // yaw角度
