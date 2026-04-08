@@ -20,6 +20,7 @@
 #include "main.h"
 #include "can.h"
 #include "dma.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -101,6 +102,8 @@ int main(void)
   MX_TIM12_Init();
   MX_TIM14_Init();
   MX_USART2_UART_Init();
+  MX_USART6_UART_Init();
+  MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
   AppMain();
   /* USER CODE END 2 */
@@ -140,7 +143,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 6;
   RCC_OscInitStruct.PLL.PLLN = 180;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 6;
+  RCC_OscInitStruct.PLL.PLLQ = 8;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();

@@ -1,4 +1,5 @@
 #include "dart_statemachine.hpp"
+#include "lcd_init.h"
 #include <cmath>
 #include <cstdio> // Added for printf
 
@@ -155,6 +156,13 @@ void DartStateUnableUpdate() {
   dart_rack->trigger_motor_->SetCurrent(0);
   dart_rack->trigger_motor_force_->SetCurrent(0);
   dart_rack->add_motor_->SetCurrent(0);
+
+  // 只刷新一次，固定显示内容防止持续刷新
+  static bool lcd_displayed = false;
+  if (!lcd_displayed) {
+    LCD_DISPLAY();
+    lcd_displayed = true;
+  }
 }
 
 void DartStateInitUpdate() {

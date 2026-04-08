@@ -23,12 +23,18 @@ void DartRack::Init() {
     // 硬件接口初始化
     can1_ = new rm::hal::Can{hcan1};
     can2_ = new rm::hal::Can{hcan2};
+
+    // UART1 用于 DR16 遥控器接收
     dbus_ = new rm::hal::Serial{huart1, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-    referee_uart = new rm::hal::Serial{huart3, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
     rc_ = new rm::device::DR16{*dbus_};
     rc_->Begin();
+
+    // UART3 用于 RxReferee 裁判系统
+    referee_uart = new rm::hal::Serial{huart3, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
     rx_referee = new rm::device::RxReferee{*referee_uart};
     rx_referee->Begin();
+
+    // UART2 用于 HiwonderServo 串口舵机控制
     servo_uart= new rm::hal::Serial{huart2, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     add_plate_servo_ = new rm::device::HiwonderServo{*servo_uart};
     add_plate_servo_->Begin();
