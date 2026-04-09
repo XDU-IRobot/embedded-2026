@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdio> // Added for printf
 
+extern bool is_lvgl_running; // 引入定义在 main.cc 中的全局标志
+
 int32_t debug_trigger_force_encoder = 0;
 uint32_t debug_trigger_force_stall_time = 0;
 uint32_t debug_adjust_motor_running_time = 0;
@@ -47,7 +49,7 @@ void DartStateMachineUpdate(DartState &state) {
 
   // 根据遥控器左拨杆位置设置状态
   if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kDown) {
-    // 左拨杆向下，无力状态
+    // 左拨杆向下，无力状态 (开启LVGL)
     state.unable = AbleState::kOn;
     state.manual_mode.enabled = AbleState::kOff;
     state.auto_mode.enabled = AbleState::kOff;
@@ -74,10 +76,14 @@ void DartStateMachineUpdate(DartState &state) {
   }
   // 状态机处理逻辑
   if (state.unable == AbleState::kOn) {
-    DartStateClear(state);
-    DartStateUnableUpdate();
-    return;
-  } else if (state.manual_mode.enabled == AbleState::kOn) {
+    is_lvgl_running = true;
+  }else {
+       DartStateClear(state);
+       DartStateUnableUpdate();
+       is_lvgl_running = false; // 其他无力情况可选关闭
+    }
+
+  if (state.manual_mode.enabled == AbleState::kOn) {
     DartStateManualUpdate();
   } else if (state.auto_mode.enabled == AbleState::kOn) {
   } else if (state.adjust_mode.enabled == AbleState::kOn) {
