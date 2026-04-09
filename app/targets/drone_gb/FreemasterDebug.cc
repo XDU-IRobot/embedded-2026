@@ -51,7 +51,7 @@ void FreemasterDebug() {
   //     rm::modules::Wrap(gimbal->rc_pitch_data - gimbal->err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
   // Ayaw = gimbal->yaw;
   Arcyawdata = gimbal->rc_yaw_data;
-  Apitch = modules::Wrap(-gimbal->pitch-1.9101981,-M_PI,M_PI);
+  Apitch = modules::Wrap(-gimbal->pitch - 1.9101981, -M_PI, M_PI);
   Apitch_err_average = gimbal->err_average;
   Aroll = gimbal->roll;
   Aoutputyaw = gimbal->gimbal_controller.output().yaw;

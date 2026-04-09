@@ -27,7 +27,6 @@
 #include "trajectory_generator.hpp"
 #include "dynamics.hpp"
 
-
 // debuge
 extern void FreemasterDebug();
 extern double Arcyawdata;
@@ -40,8 +39,7 @@ extern float Arcpitchdata;
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
 
 class Gimbal {
-
-  int temp=0;
+  int temp = 0;
   // 跑5项傅里叶级数
   float currentyaw;
   float currentpitch;
@@ -59,12 +57,13 @@ class Gimbal {
   FourierTrajectoryGenerator<N_HARMONICS> traj_yaw_{BASE_FREQ_HZ, 0.0f, YAW_A, YAW_B};
   FourierTrajectoryGenerator<N_HARMONICS> traj_pitch_{BASE_FREQ_HZ, 0.0f, PITCH_A, PITCH_B};
 
-  static void ReportData(uint32_t timestamp_ms,float tau_yaw,float q_yaw,float dq_yaw,
-                         float tau_pitch,float q_pitch,float dq_pitch) {
+  static void ReportData(uint32_t timestamp_ms, float tau_yaw, float q_yaw, float dq_yaw, float tau_pitch,
+                         float q_pitch, float dq_pitch) {
     static char tx_buf[500];
-    sprintf(tx_buf, "%lu,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\r\n", timestamp_ms, tau_yaw, q_yaw, dq_yaw,
-      tau_pitch, q_pitch,dq_pitch);
-    while (HAL_UART_GetState(&huart1) == HAL_UART_STATE_BUSY_TX) {}// 等待上一次传输完成
+    sprintf(tx_buf, "%lu,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\r\n", timestamp_ms, tau_yaw, q_yaw, dq_yaw, tau_pitch, q_pitch,
+            dq_pitch);
+    while (HAL_UART_GetState(&huart1) == HAL_UART_STATE_BUSY_TX) {
+    }  // 等待上一次传输完成
     HAL_UART_Transmit_DMA(&huart1, reinterpret_cast<uint8_t *>(tx_buf), strlen(tx_buf));
   }
 
@@ -104,7 +103,7 @@ class Gimbal {
   double roll = 0;   // imu roll数据
   double pitch = 0;  // imu pitch数据
 
-  rm::device::GM6020Current *yaw_motor{nullptr};                                           // 云台 Yaw 上电机
+  rm::device::GM6020Current *yaw_motor{nullptr};                                    // 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  // 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                        // 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                       // 右侧摩擦轮电机
@@ -252,7 +251,7 @@ class Gimbal {
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
-    shoot_controller.Arm(false);               // 摩擦轮武装（允许转动）
+    shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
@@ -311,7 +310,6 @@ class Gimbal {
     // gimbal_controller_STASMC.params().yaw_spd.out_limit_real = 25000.0f;    // 输出限幅
     // gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.85f;  // 滑模面适度滤波
     // gimbal_controller_STASMC.params().yaw_spd.leak_rate_real = 0.2f;        // 积分泄放
-
 
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.001f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
@@ -408,7 +406,6 @@ class Gimbal {
         // currentyaw = rc_yaw_data;;
         // enter_timestamp_ms_=HAL_GetTick();
 
-
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
         gimbal_controller.Enable(true);
@@ -416,11 +413,12 @@ class Gimbal {
         gimbal_controller_STASMC.Enable(true);
         rc_yaw_data = -yaw_motor->pos_rad();
         yaw_ff.Reset(rc_yaw_data);
-        rc_pitch_data = rm::modules::Wrap(pitch_motor->pos()-err_average, -M_PI, M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_pitch_data =
+            rm::modules::Wrap(pitch_motor->pos() - err_average, -M_PI, M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
         currentpitch = rc_pitch_data;
         currentyaw = rc_yaw_data;
-        enter_timestamp_ms_=HAL_GetTick();
+        enter_timestamp_ms_ = HAL_GetTick();
       }
 
       // const uint32_t elapsed_ms = HAL_GetTick() - enter_timestamp_ms_;
@@ -431,7 +429,8 @@ class Gimbal {
       // Arcyawdata = rc_pitch_data;
       // Asendyaw=rm::modules::Wrap(-yaw_motor->pos_rad()+currentyaw, -M_PI, M_PI);
       // Asendpitch=rm::modules::Wrap(-pitch_motor->pos()+currentpitch, -M_PI, M_PI);
-      // const auto ff = gimbal_ff.ComputeFf(rc_yaw_data, rc_pitch_data, yaw_traj.dq * 2.5f, pitch_traj.dq*0.8, yaw_traj.ddq * 2.5f, pitch_traj.ddq*0.8, {0, 0, -9.81});
+      // const auto ff = gimbal_ff.ComputeFf(rc_yaw_data, rc_pitch_data, yaw_traj.dq * 2.5f, pitch_traj.dq*0.8,
+      // yaw_traj.ddq * 2.5f, pitch_traj.ddq*0.8, {0, 0, -9.81});
       // // const auto ff = gimbal_ff.ComputeFf(0.f, Asendpitch, 0.f, 0, 0.f, 0, {0, 0, -9.81});
       // auto ff_yaw=ff(0);
       // auto ff_pitch=ff(1);
@@ -457,18 +456,18 @@ class Gimbal {
       // gimbal_controller.SetTarget(comp_yaw, comp_pitch);
       // gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, -M_PI, M_PI),
       //                          pitch_motor->vel(), 2.f);
-      gimbal_controller.SetTarget(comp_yaw, comp_pitch+err_average);
-      Arcpitchdata=comp_pitch;
-      gimbal_controller.Update(-yaw_motor->pos_rad(), -yaw_motor->rpm(), rm::modules::Wrap(pitch_motor->pos(), -M_PI, M_PI),
-                               pitch_motor->vel(), 2.f);
-      gimbal_controller.output().yaw=0;
+      gimbal_controller.SetTarget(comp_yaw, comp_pitch + err_average);
+      Arcpitchdata = comp_pitch;
+      gimbal_controller.Update(-yaw_motor->pos_rad(), -yaw_motor->rpm(),
+                               rm::modules::Wrap(pitch_motor->pos(), -M_PI, M_PI), pitch_motor->vel(), 2.f);
+      gimbal_controller.output().yaw = 0;
       // gimbal_controller.output().pitch=0;
       // gimbal_controller.output().pitch+=ff_pitch;
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
 
 #elif CONTROLLER_CHOICE == 1  // SMC控制器
       gimbal_controller_SMC.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller_SMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average,-M_PI, M_PI),
+      gimbal_controller_SMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, -M_PI, M_PI),
                                    pitch_motor->vel(), 0.002f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_SMC.output().yaw, -25000, 25000));
 #elif CONTROLLER_CHOICE == 2  // STASMC控制器
@@ -484,13 +483,12 @@ class Gimbal {
 #endif
       // pitch数据暂时还是由PID控制器引出，PID控制pitch轴效果尚可
       gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.Update(-yaw_motor->pos_rad(), -yaw_motor->rpm(), rm::modules::Wrap(pitch_motor->pos(), -M_PI, M_PI),
-                               pitch_motor->vel(), 2.f);
+      gimbal_controller.Update(-yaw_motor->pos_rad(), -yaw_motor->rpm(),
+                               rm::modules::Wrap(pitch_motor->pos(), -M_PI, M_PI), pitch_motor->vel(), 2.f);
       // yaw控制数据由STASMC控制器引出
       gimbal_controller_STASMC.SetTarget(comp_yaw, comp_pitch, yaw_ff.Update(comp_yaw));
       gimbal_controller_STASMC.Update(-yaw_motor->pos_rad(), -yaw_motor->rpm(),
-                                      rm::modules::Wrap(pitch_motor->pos(), -M_PI, M_PI), pitch_motor->vel(),
-                                      0.002f);
+                                      rm::modules::Wrap(pitch_motor->pos(), -M_PI, M_PI), pitch_motor->vel(), 0.002f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_STASMC.output().yaw, -25000, 25000));
       // // pitch数据暂时还是由PID控制器引出，PID控制pitch轴效果尚可
       // gimbal_controller.SetTarget(comp_yaw, comp_pitch);
@@ -741,7 +739,7 @@ class Gimbal {
     GimbalControl();  // 云台控制更新
     AmmoControl();    // 发射机构数据更新
 
-    double pitch_torque_cmd = gimbal_controller.output().pitch ;//+ pitch_torque;
+    double pitch_torque_cmd = gimbal_controller.output().pitch;  //+ pitch_torque;
     pitch_torque_cmd = rm::modules::Clamp(pitch_torque_cmd, -8.0, 8.0);
 
     // // 达秒电机与imu数据滤波处理
