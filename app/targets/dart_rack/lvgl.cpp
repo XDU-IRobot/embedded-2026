@@ -3,10 +3,11 @@
 #include <stdint.h>
 #include "../../LVGL/lvgl.h" // 引用真正的 LVGL 库内头文件，而不是当前目录下的同名文件
 #include "lcd_init.h"
+#include "sd_card.h" // 引入自定义的 SD 卡存储及读取封装函数
 
 // 实体定义，确保链接器能找到
 float Pitch[4] = {11.11f, 22.22f, 33.33f, 44.44f};
-float Yaw[4]   = {55.55f, 66.66f, 77.77f, 88.88f};
+float Yaw[4]   = {45.55f, 45.66f, 45.77f, 45.88f};
 
 // 定义三个界面的容器
 static lv_obj_t * view_main;
@@ -117,6 +118,9 @@ static void btn_edit_confirm_cb(lv_event_t * e) {
 
     update_list_labels(); // 更新列表页面的 label
 
+    // 将改变后的数值结构存入 SD 卡文件
+    Save_Params_To_SD(Pitch, Yaw);
+
     // 隐藏编辑菜单，返回列表菜单
     lv_obj_add_flag(view_edit, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(view_list, LV_OBJ_FLAG_HIDDEN);
@@ -126,6 +130,48 @@ static void btn_edit_confirm_cb(lv_event_t * e) {
     if (btn_list_first) lv_group_focus_obj(btn_list_first); // 手动确认焦点落点
 }
 
+// --- 警告弹窗动画回调 ---
+static lv_obj_t * limit_toast_obj = NULL;
+
+static void toast_anim_cb(void * var, int32_t v) {
+    lv_obj_set_style_opa((lv_obj_t *)var, v, 0);
+}
+static void toast_anim_ready_cb(lv_anim_t * a) {
+    lv_obj_del((lv_obj_t *)a->var);
+    limit_toast_obj = NULL; // 动画播完销毁并清空指针
+}
+
+static void show_limit_warning(void) {
+    // 避免重复弹出
+    if (limit_toast_obj != NULL) return;
+
+    limit_toast_obj = lv_label_create(lv_layer_top());
+
+    // 注：若默认字体未开启中文字库，中文会乱码。这里暂时使用英文替代"不可超出限度"。如果有中文字库可用，你可以将其改回 "不可超出限度"
+    lv_label_set_text(limit_toast_obj, "Limit Exceeded!");
+
+    // 红色背景框样式
+    lv_obj_set_style_bg_color(limit_toast_obj, lv_palette_main(LV_PALETTE_RED), 0);
+    lv_obj_set_style_bg_opa(limit_toast_obj, LV_OPA_COVER, 0);
+    lv_obj_set_style_text_color(limit_toast_obj, lv_color_white(), 0);
+    lv_obj_set_style_pad_all(limit_toast_obj, 10, 0);
+    lv_obj_set_style_radius(limit_toast_obj, 8, 0);
+
+    // 在屏幕顶部居中
+    lv_obj_align(limit_toast_obj, LV_ALIGN_TOP_MID, 0, 10);
+
+    // 渐隐飞出动画
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, limit_toast_obj);
+    lv_anim_set_time(&a, 300);      // 动画持续 300ms
+    lv_anim_set_delay(&a, 600);     // 延时 600ms 后开始隐没
+    lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);
+    lv_anim_set_exec_cb(&a, toast_anim_cb);
+    lv_anim_set_ready_cb(&a, toast_anim_ready_cb);
+    lv_anim_start(&a);
+}
+
 static void btn_step_cb(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_KEY) {
@@ -133,11 +179,27 @@ static void btn_step_cb(lv_event_t * e) {
         float step = steps[idx];
         uint32_t key = lv_event_get_key(e);
 
+        float next_val = temp_val;
+
         if (key == LV_KEY_UP) { // 增
-            temp_val += step;
-            update_edit_label_value(temp_val);
+            next_val += step;
         } else if (key == LV_KEY_DOWN) { // 减
-            temp_val -= step;
+            next_val -= step;
+        }
+
+        // 限制 Yaw 的数值范围
+        if (current_category == 1) { // 1 代表 YAW
+            if (next_val > 52.60f) {
+                next_val = 52.60f;
+                show_limit_warning();
+            } else if (next_val < 35.50f) {
+                next_val = 35.50f;
+                show_limit_warning();
+            }
+        }
+
+        if (temp_val != next_val) {
+            temp_val = next_val;
             update_edit_label_value(temp_val);
         }
     }
@@ -292,6 +354,9 @@ extern "C" void init_lvgl_demo(void)
 {
   /*Initialize LVGL*/
   lv_init();
+
+  /* 尝试从 SD 卡加载上次保存的 Pitch 和 Yaw 数组；如果不存在则维持默认值 */
+  Load_Params_From_SD(Pitch, Yaw);
 
   /* 关闭 LVGL 默认的滚动和状态切换动画，提升响应速度 */
   lv_disp_set_theme(NULL, lv_theme_default_init(NULL, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), false, LV_FONT_DEFAULT));

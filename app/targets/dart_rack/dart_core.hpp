@@ -150,6 +150,7 @@ struct DartRack {
   kLoadEcd[i] = kLoadEcdPerDart + kTriggerEcd[i]/扳机丝杆步长/扳机电机减速比*上膛丝杆步长*上膛电机减速比
   */
   static constexpr int32_t kLoadEcd[4] = {665000, 670000, 675000, 680000};  //< 上膛四发镖位置
+  static constexpr float kPitchEcd[4] = {66.50f, 67.00f, 67.50f, 68.00f};
   void Init();
   void Update();
 };

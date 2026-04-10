@@ -21,7 +21,7 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-
+#include<stdio.h>
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
@@ -323,17 +323,17 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     /* USART6 clock enable */
     __HAL_RCC_USART6_CLK_ENABLE();
 
-    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOG_CLK_ENABLE();
     /**USART6 GPIO Configuration
-    PC7     ------> USART6_RX
-    PC6     ------> USART6_TX
+    PG14     ------> USART6_TX
+    PG9     ------> USART6_RX
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_6;
+    GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF8_USART6;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /* USER CODE BEGIN USART6_MspInit 1 */
 
@@ -422,10 +422,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
     __HAL_RCC_USART6_CLK_DISABLE();
 
     /**USART6 GPIO Configuration
-    PC7     ------> USART6_RX
-    PC6     ------> USART6_TX
+    PG14     ------> USART6_TX
+    PG9     ------> USART6_RX
     */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_7|GPIO_PIN_6);
+    HAL_GPIO_DeInit(GPIOG, GPIO_PIN_14|GPIO_PIN_9);
 
   /* USER CODE BEGIN USART6_MspDeInit 1 */
 
@@ -434,6 +434,9 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
-
+int fputc(int ch, FILE *f) {
+  HAL_UART_Transmit(&huart6, (uint8_t *)&ch, 1, 1000);
+  return ch;
+}
 /* USER CODE END 1 */
 

@@ -20,9 +20,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_it.h"
-#include "hal/lv_hal_tick.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "src/hal/lv_hal_tick.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -393,5 +393,13 @@ void CAN2_RX0_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+
+// 提供外部引脚中断捕获给 LVGL
+extern void lvgl_button_exti_trigger(uint16_t GPIO_Pin);
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  lvgl_button_exti_trigger(GPIO_Pin);
+}
 
 /* USER CODE END 1 */

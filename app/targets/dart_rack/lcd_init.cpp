@@ -16,7 +16,7 @@ void LCD_DISPLAY() {
   if (!has_displayed) {
     // display.DrawLine(0, 0, W - 1, H - 1, BLUE);
     display.Fill(0, 0, W - 1, H - 1, WHITE);
-    display.ShowIntNum(30, 30, 666, 3, RED, BLACK, 32);
+    // display.ShowIntNum(30, 30, 666, 3, RED, BLACK, 32);
     has_displayed = true;
   }
 }

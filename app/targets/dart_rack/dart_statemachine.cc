@@ -2,51 +2,14 @@
 #include "lcd_init.h"
 #include <cmath>
 #include <cstdio> // Added for printf
-
+#include "sd_card.h"
 extern bool is_lvgl_running; // 引入定义在 main.cc 中的全局标志
 
-int32_t debug_trigger_force_encoder = 0;
-uint32_t debug_trigger_force_stall_time = 0;
-uint32_t debug_adjust_motor_running_time = 0;
-
-// 全局观测变量，用于FreeMASTER或调试
-bool debug_trigger_force_init_done = false;
-bool debug_load_down_done = false;
-bool debug_trigger_lock_done = false;
-bool debug_load_up_done = false;
-uint32_t debug_trigger_open_time = 0;
-uint32_t debug_trigger_lock_time = 0;
-uint32_t debug_load_l_stall_time = 0;
-uint32_t debug_load_r_stall_time = 0;
-
-float debug_trigger_force_rpm = 0.0f;
-int32_t debug_load_l_encoder = 0;
-float debug_load_l_rpm = 0.0f;
-int32_t debug_load_r_encoder = 0;
-float debug_load_r_rpm = 0.0f;
-
-float debug_yaw_rpm = 0.0f;
-int32_t debug_yaw_encoder = 0;
-float debug_yaw_angle = 0.0f;
-float debug_yaw_angle_raw = 0.0f;
-float debug_yaw_pid_out = 0.0f;
+// 引入 LVGL 中使用的参数存储数组
+extern float Pitch[4];
+extern float Yaw[4];
 
 void DartStateMachineUpdate(DartState &state) {
-  // 更新用于 FreeMASTER 观测的调试变量
-  debug_trigger_force_encoder = dart_rack->trigger_motor_force_->encoder();
-  debug_trigger_force_rpm = dart_rack->trigger_motor_force_->rpm();
-  debug_trigger_force_stall_time = dart_rack->trigger_motor_force_odometer_.stall_time();
-
-  debug_load_l_encoder = dart_rack->load_motor_l_->encoder();
-  debug_load_l_rpm = dart_rack->load_motor_l_->rpm();
-  debug_load_r_encoder = dart_rack->load_motor_r_->encoder();
-  debug_load_r_rpm = dart_rack->load_motor_r_->rpm();
-
-  debug_yaw_rpm = dart_rack->yaw_motor_->rpm();
-  debug_yaw_encoder = dart_rack->yaw_motor_->encoder();
-  debug_yaw_angle_raw = dart_rack->yaw_encoder_->angle_deg();
-  debug_yaw_pid_out = dart_rack->yaw_motor_speed_pid_.out();
-
   // 根据遥控器左拨杆位置设置状态
   if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kDown) {
     // 左拨杆向下，无力状态 (开启LVGL)
@@ -69,21 +32,24 @@ void DartStateMachineUpdate(DartState &state) {
     state.adjust_mode.enabled = AbleState::kOff;
   } else if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kUp &&
              dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
+    // 左拨杆向上，右拨杆向中，调节模式
     state.unable = AbleState::kOff;
     state.manual_mode.enabled = AbleState::kOff;
     state.auto_mode.enabled = AbleState::kOff;
     state.adjust_mode.enabled = AbleState::kOn;
   }
   // 状态机处理逻辑
-  if (state.unable == AbleState::kOn) {
+  if (state.auto_mode.enabled == AbleState::kOn) {
+    // 仅仅在自动模式时开启 LVGL 调节
     is_lvgl_running = true;
-  }else {
-       DartStateClear(state);
-       DartStateUnableUpdate();
-       is_lvgl_running = false; // 其他无力情况可选关闭
-    }
+  } else {
+    is_lvgl_running = false; // 其他情况关闭LVGL阻塞
+  }
 
-  if (state.manual_mode.enabled == AbleState::kOn) {
+  if (state.unable == AbleState::kOn) {
+    DartStateClear(state);
+    DartStateUnableUpdate();
+  } else if (state.manual_mode.enabled == AbleState::kOn) {
     DartStateManualUpdate();
   } else if (state.auto_mode.enabled == AbleState::kOn) {
   } else if (state.adjust_mode.enabled == AbleState::kOn) {
@@ -109,7 +75,7 @@ void DartStateManualUpdate() {
         DartStateInitUpdate();
       } else if (dart_rack->state_.manual_mode.init == PhaseState::kDone) {
         // 初始化完成，进入下一个阶段
-        dart_rack->state_.manual_mode.mode = ModeState::kload;
+        //dart_rack->state_.manual_mode.mode = ModeState::kload;
       }
       break;
     case ModeState::kload:
@@ -179,7 +145,8 @@ void DartStateInitUpdate() {
         static uint32_t stall_count = 0;
         static bool is_first_run = true;
 
-        float yaw_target = DartRack::kYawEcd[static_cast<uint8_t>(dart_rack->dart_count_)];
+        // 使用从 SD 卡读取并缓存在内存中的 Yaw 数组作为目标角度，而不是原来的 固定宏配置
+        float yaw_target = Yaw[static_cast<uint8_t>(dart_rack->dart_count_)];
         float yaw_current = dart_rack->yaw_encoder_->angle_deg();
         float yaw_error = yaw_target - yaw_current;
 
@@ -538,7 +505,6 @@ void DartStateAdjustUpdate() {
   }
   // 扳机触发调节
   if (dart_rack->rc_->left_x() > 330) {
-    debug_adjust_motor_running_time++;
     if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 100) {
       if (dart_rack->trigger_motor_force_->encoder() <= 8000) {
         dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
@@ -552,7 +518,6 @@ void DartStateAdjustUpdate() {
       dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
     }
   } else if (dart_rack->rc_->left_x() < -330) {
-    debug_adjust_motor_running_time++;
     if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 100) {
       if (dart_rack->trigger_motor_force_->encoder() >= 5000) {
         dart_rack->trigger_motor_force_pid_.Update(-1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
@@ -566,7 +531,6 @@ void DartStateAdjustUpdate() {
       dart_rack->trigger_motor_force_->SetCurrent(static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
     }
   } else {
-    debug_adjust_motor_running_time = 0;
     dart_rack->trigger_motor_force_->SetCurrent(0);
   }
 }

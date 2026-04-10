@@ -7,6 +7,7 @@
 #include "dart_statemachine.hpp"
 #include "LCDFont.h"
 #include "lcd_init.h"
+#include "sd_card.h"
 #include "../../LVGL/lvgl.h"
 
 extern "C" void init_lvgl_demo(void);

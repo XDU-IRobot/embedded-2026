@@ -8,7 +8,6 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/LVGL)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/LVGL/src)
 
-
 # LVGL 源码
 file(GLOB_RECURSE LVGL_SOURCES ${CMAKE_CURRENT_LIST_DIR}/LVGL/*.c)
 
