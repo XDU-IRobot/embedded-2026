@@ -4,7 +4,7 @@
 #include "../../LVGL/lvgl.h" // 引用真正的 LVGL 库内头文件，而不是当前目录下的同名文件
 #include "lcd_init.h"
 #include "sd_card.h" // 引入自定义的 SD 卡存储及读取封装函数
-
+#include "ff.h"
 // 实体定义，确保链接器能找到
 float Pitch[4] = {11.11f, 22.22f, 33.33f, 44.44f};
 float Yaw[4]   = {45.55f, 45.66f, 45.77f, 45.88f};
@@ -18,15 +18,17 @@ static lv_obj_t * view_edit; // 独立的修改数值界面
 static lv_obj_t * label_list_btns[4]; // 列表界面的4个按钮文本
 static lv_obj_t * label_edit_val;     // 在编辑界面显示的 Label
 
-static int current_category = 0; // 0代表PITCH, 1代表YAW
-static int current_index = 0;    // 记录列表选中的序号
-static float temp_val = 0;
+int current_category = 0; // 0代表PITCH, 1代表YAW
+int current_index = 0;    // 记录列表选中的序号
+float temp_val = 0;
 static const float steps[4] = {10.0f, 1.0f, 0.1f, 0.01f};
 
 static lv_indev_t * keypad_indev; // 全局记录输入设备，以便切换不同的焦点组
 static lv_group_t * g_main;
 static lv_group_t * g_list;
 static lv_group_t * g_edit; // 编辑界面的焦点组
+
+bool is_editing_val = false; // Add a flag to indicate if we are inside "edit" mode
 
 // 记录下需要被聚焦的按钮对象
 static lv_obj_t * btn_pitch;
@@ -89,6 +91,8 @@ static void btn_list_to_edit_cb(lv_event_t * e) {
     temp_val = (current_category == 0) ? Pitch[current_index] : Yaw[current_index];
     update_edit_label_value(temp_val);
 
+    is_editing_val = true; // Enter edit mode
+
     // 切换到编辑菜单组，赋焦点给第一个步长按钮
     lv_indev_set_group(keypad_indev, g_edit);
     if (btn_edit_first) lv_group_focus_obj(btn_edit_first);
@@ -112,33 +116,17 @@ static void style_init(void) {
     lv_style_set_border_width(&style_btn_focused, 3);
 }
 
-static void btn_edit_confirm_cb(lv_event_t * e) {
-    if (current_category == 0) Pitch[current_index] = temp_val;
-    else Yaw[current_index] = temp_val;
-
-    update_list_labels(); // 更新列表页面的 label
-
-    // 将改变后的数值结构存入 SD 卡文件
-    Save_Params_To_SD(Pitch, Yaw);
-
-    // 隐藏编辑菜单，返回列表菜单
-    lv_obj_add_flag(view_edit, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_clear_flag(view_list, LV_OBJ_FLAG_HIDDEN);
-
-    // 切换焦点组回列表组
-    lv_indev_set_group(keypad_indev, g_list);
-    if (btn_list_first) lv_group_focus_obj(btn_list_first); // 手动确认焦点落点
-}
-
 // --- 警告弹窗动画回调 ---
 static lv_obj_t * limit_toast_obj = NULL;
 
 static void toast_anim_cb(void * var, int32_t v) {
-    lv_obj_set_style_opa((lv_obj_t *)var, v, 0);
+    lv_obj_set_style_opa((lv_obj_t *)var, v, 0); // 这里的0是lv_style_selector_t
 }
 static void toast_anim_ready_cb(lv_anim_t * a) {
     lv_obj_del((lv_obj_t *)a->var);
-    limit_toast_obj = NULL; // 动画播完销毁并清空指针
+    if ((lv_obj_t *)a->var == limit_toast_obj) {
+        limit_toast_obj = NULL; // 动画播完销毁并清空指针
+    }
 }
 
 static void show_limit_warning(void) {
@@ -171,6 +159,93 @@ static void show_limit_warning(void) {
     lv_anim_set_ready_cb(&a, toast_anim_ready_cb);
     lv_anim_start(&a);
 }
+
+static void show_save_success_toast(void) {
+    lv_obj_t * toast = lv_label_create(lv_layer_top());
+    lv_label_set_text(toast, "Saved successfully!");
+
+    // 绿色背景框样式
+    lv_obj_set_style_bg_color(toast, lv_palette_main(LV_PALETTE_GREEN), 0);
+    lv_obj_set_style_bg_opa(toast, LV_OPA_COVER, 0);
+    lv_obj_set_style_text_color(toast, lv_color_white(), 0);
+    lv_obj_set_style_pad_all(toast, 10, 0);
+    lv_obj_set_style_radius(toast, 8, 0);
+
+    // 在屏幕中央
+    lv_obj_align(toast, LV_ALIGN_CENTER, 0, 0);
+
+    // 渐隐飞出动画
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, toast);
+    lv_anim_set_time(&a, 300);      // 动画持续 300ms
+    lv_anim_set_delay(&a, 800);     // 延时 800ms 后开始隐没
+    lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);
+    lv_anim_set_exec_cb(&a, toast_anim_cb);
+    lv_anim_set_ready_cb(&a, toast_anim_ready_cb); // 可以复用这个清理回调
+    lv_anim_start(&a);
+}
+
+extern int last_sd_error_step;
+extern FRESULT last_sd_error_code;
+
+static void show_save_failed_toast(void) {
+    lv_obj_t * toast = lv_label_create(lv_layer_top());
+
+    if (last_sd_error_step == 1) {
+        lv_label_set_text_fmt(toast, "Mount Fail: %d", last_sd_error_code);
+    } else if (last_sd_error_step == 2) {
+        lv_label_set_text_fmt(toast, "Open Fail: %d", last_sd_error_code);
+    } else {
+        lv_label_set_text(toast, "Save failed!");
+    }
+
+    // 红色背景框样式
+    lv_obj_set_style_bg_color(toast, lv_palette_main(LV_PALETTE_RED), 0);
+    lv_obj_set_style_bg_opa(toast, LV_OPA_COVER, 0);
+    lv_obj_set_style_text_color(toast, lv_color_white(), 0);
+    lv_obj_set_style_pad_all(toast, 10, 0);
+    lv_obj_set_style_radius(toast, 8, 0);
+
+    // 在屏幕中央对齐
+    lv_obj_align(toast, LV_ALIGN_CENTER, 0, 0);
+
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, toast);
+    lv_anim_set_time(&a, 300);
+    lv_anim_set_delay(&a, 800);
+    lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);
+    lv_anim_set_exec_cb(&a, toast_anim_cb);
+    lv_anim_set_ready_cb(&a, toast_anim_ready_cb);
+    lv_anim_start(&a);
+}
+
+static void btn_edit_confirm_cb(lv_event_t * e) {
+    if (current_category == 0) Pitch[current_index] = temp_val;
+    else Yaw[current_index] = temp_val;
+
+    update_list_labels(); // 更新列表页面的 label
+
+    // 将改变后的数值结构存入 SD 卡文件并提示
+    bool ok = Save_Params_To_SD(Pitch, Yaw);
+    if (ok) {
+        show_save_success_toast();
+    } else {
+        show_save_failed_toast();
+    }
+
+    // 隐藏编辑菜单，返回列表菜单
+    lv_obj_add_flag(view_edit, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(view_list, LV_OBJ_FLAG_HIDDEN);
+
+    is_editing_val = false; // Exit edit mode
+
+    // 切换焦点组回列表组
+    lv_indev_set_group(keypad_indev, g_list);
+    if (btn_list_first) lv_group_focus_obj(btn_list_first); // 手动确认焦点落点
+}
+
 
 static void btn_step_cb(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
@@ -366,6 +441,9 @@ extern "C" void init_lvgl_demo(void)
 
   // 运行多层菜单逻辑
   demo_multi_level();
+
+  // 在初始化完成并且加载了SD卡参数后，主动更新一次列表页面的标签显示
+  update_list_labels();
 }
 
 /**********************

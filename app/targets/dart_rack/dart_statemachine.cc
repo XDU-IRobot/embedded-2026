@@ -9,37 +9,43 @@ extern bool is_lvgl_running; // 引入定义在 main.cc 中的全局标志
 extern float Pitch[4];
 extern float Yaw[4];
 
+extern int current_category; // 0 for Pitch, 1 for Yaw
+extern int current_index;
+extern float temp_val;
+extern bool is_editing_val;
+
 void DartStateMachineUpdate(DartState &state) {
   // 根据遥控器左拨杆位置设置状态
+  // 为了检测状态切换，由于 state 每次都被重写，不方便检测边界，我们通过在其他模式中清理 manual_mode 的状态来实现切回后重新初始化
   if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kDown) {
-    // 左拨杆向下，无力状态 (开启LVGL)
     state.unable = AbleState::kOn;
     state.manual_mode.enabled = AbleState::kOff;
-    state.auto_mode.enabled = AbleState::kOff;
+    state.lvgl_mode.enabled = AbleState::kOff;
     state.adjust_mode.enabled = AbleState::kOff;
   } else if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
     // 左拨杆向中，手动模式
     state.unable = AbleState::kOff;
     state.manual_mode.enabled = AbleState::kOn;
-    state.auto_mode.enabled = AbleState::kOff;
+    state.lvgl_mode.enabled = AbleState::kOff;
     state.adjust_mode.enabled = AbleState::kOff;
   } else if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kUp &&
              dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kUp) {
-    // 左右拨杆向上，自动模式
+    // 左右拨杆向上，自动模式(开启LVGL)
     state.unable = AbleState::kOff;
     state.manual_mode.enabled = AbleState::kOff;
-    state.auto_mode.enabled = AbleState::kOn;
+    state.lvgl_mode.enabled = AbleState::kOn;
     state.adjust_mode.enabled = AbleState::kOff;
   } else if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kUp &&
              dart_rack->rc_->switch_r() == rm::device::DR16::SwitchPosition::kMid) {
     // 左拨杆向上，右拨杆向中，调节模式
     state.unable = AbleState::kOff;
     state.manual_mode.enabled = AbleState::kOff;
-    state.auto_mode.enabled = AbleState::kOff;
+    state.lvgl_mode.enabled = AbleState::kOff;
     state.adjust_mode.enabled = AbleState::kOn;
   }
+
   // 状态机处理逻辑
-  if (state.auto_mode.enabled == AbleState::kOn) {
+  if (state.lvgl_mode.enabled == AbleState::kOn) {
     // 仅仅在自动模式时开启 LVGL 调节
     is_lvgl_running = true;
   } else {
@@ -51,7 +57,17 @@ void DartStateMachineUpdate(DartState &state) {
     DartStateUnableUpdate();
   } else if (state.manual_mode.enabled == AbleState::kOn) {
     DartStateManualUpdate();
-  } else if (state.auto_mode.enabled == AbleState::kOn) {
+  } else if (state.lvgl_mode.enabled == AbleState::kOn) {
+      // 当处于自动模式时，清除手动模式的标志位，这样当你切回手动模式(且右拨杆上去之后)，它就会重新执行 Yaw 轴初始化
+      DartManualModeClear(state.manual_mode);
+
+      // 其他电机保持休眠或锁定
+      dart_rack->load_motor_l_->SetCurrent(0);
+      dart_rack->load_motor_r_->SetCurrent(0);
+      dart_rack->trigger_motor_->SetCurrent(0);
+      dart_rack->trigger_motor_force_->SetCurrent(0);
+      dart_rack->add_motor_->SetCurrent(0);
+      dart_rack->yaw_motor_->SetCurrent(0); // 既然不想在调参时跟随转动，这里也一并锁死关闭
   } else if (state.adjust_mode.enabled == AbleState::kOn) {
     DartStateAdjustUpdate();
   } else {
@@ -112,7 +128,11 @@ void DartStateManualUpdate() {
       } else if (dart_rack->state_.manual_mode.fire == PhaseState::kDone) {
         // 发射完成，返回待机状态
         dart_rack->state_.manual_mode.mode = ModeState::kUnable;
-        dart_rack->dart_count_ = static_cast<DartCount>(static_cast<uint8_t>(dart_rack->dart_count_) + 1);
+        uint8_t next_dart = static_cast<uint8_t>(dart_rack->dart_count_) + 1;
+        if (next_dart > 3) {
+             next_dart = 0; // 四发过后回到底部重新开始
+        }
+        dart_rack->dart_count_ = static_cast<DartCount>(next_dart);
         DartManualModeClear(dart_rack->state_.manual_mode);
       }
       break;
@@ -164,8 +184,8 @@ void DartStateInitUpdate() {
             stall_count = 0;
         }
 
-        // 完成条件：进入死区(0.05度) 或 冲过头越过零点 或 依靠防反冲静摩擦停滞检测(100个周期完全停止)
-        if (std::abs(yaw_error) <= 0.05f || (last_yaw_error * yaw_error <= 0.0f) || stall_count > 100) {
+        // 完成条件：进入死区(0.05度) 或 冲过头越过零点(符号相异) 或 依靠防反冲静摩擦停滞检测(100个周期完全停止)
+        if (std::abs(yaw_error) <= 0.05f || (last_yaw_error * yaw_error < 0.0f) || stall_count > 100) {
             dart_rack->yaw_motor_speed_pid_.Clear();
             dart_rack->yaw_motor_->SetCurrent(0);
             dart_rack->state_.manual_mode.is_yaw_init_done = true;
@@ -206,18 +226,11 @@ void DartStateInitUpdate() {
     }
 
     dart_rack->state_.manual_mode.is_add_init_done = true;
-    // 打开撒放器
-    if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 50 &&
-        dart_rack->state_.manual_mode.is_trigger_force_init_done == false) {
-        dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
-        dart_rack->trigger_motor_force_->SetCurrent(
-            static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
-    } else {
-        dart_rack->trigger_motor_force_pid_.Update(0.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
-        dart_rack->trigger_motor_force_->SetCurrent(
-            static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
-        dart_rack->state_.manual_mode.is_trigger_force_init_done = true;
-    }
+
+    // 初始化阶段不再旋转撒放器，直接设为完成
+    dart_rack->state_.manual_mode.is_trigger_force_init_done = true;
+    dart_rack->trigger_motor_force_->SetCurrent(0);
+
     // 全部检查完成后，初始化完成
     if (dart_rack->state_.manual_mode.is_yaw_init_done == true &&
         dart_rack->state_.manual_mode.is_load_reset_done == true &&
@@ -283,9 +296,16 @@ void DartStateLoadUpdate() {
             dart_rack->state_.manual_mode.is_trigger_lock_done = true;
         }
     } else {
-        dart_rack->trigger_motor_force_pid_.Update(0.f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
-        dart_rack->trigger_motor_force_->SetCurrent(
-            static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
+        // 在滑台下拉阶段同时打开撒放器
+        if (dart_rack->trigger_motor_force_odometer_.stall_time() <= 50) {
+            dart_rack->trigger_motor_force_pid_.Update(1000.0f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+            dart_rack->trigger_motor_force_->SetCurrent(
+                static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
+        } else {
+            dart_rack->trigger_motor_force_pid_.Update(0.f, dart_rack->trigger_motor_force_->rpm(), 1.0f);
+            dart_rack->trigger_motor_force_->SetCurrent(
+                static_cast<rm::i16>(-dart_rack->trigger_motor_force_pid_.out()));
+        }
     }
     if (dart_rack->state_.manual_mode.is_trigger_lock_done == true) {
         // 滑台还原

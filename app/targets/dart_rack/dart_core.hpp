@@ -68,7 +68,7 @@ struct ManualMode {
 
 struct DartState {
   AbleState unable = AbleState::kOn;
-  AutoMode auto_mode;
+  AutoMode lvgl_mode;
   ManualMode manual_mode;
   AdjustMode adjust_mode;
 };
@@ -76,7 +76,7 @@ struct DartState {
 inline void DartStateClear(DartState &state)  // 清空所有状态
 {
   state.unable = AbleState::kOn;
-  state.auto_mode.enabled = AbleState::kOff;
+  state.lvgl_mode.enabled = AbleState::kOff;
   state.manual_mode.enabled = AbleState::kOff;
   state.manual_mode.ManualModeClear();
 }
