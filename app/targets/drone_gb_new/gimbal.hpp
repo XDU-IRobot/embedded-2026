@@ -9,14 +9,27 @@
 #include "ControllerPidGimbal.hpp"
 #include "ControllerPidAmmo.hpp"
 
+int anum = 0;
+int anum1 = 0;
+int Arccontrol = 0;
+
+double Apitch_ = 0;
+double Ayaw_ = 0;
+
+double Arc_pitch = 0;
+double Arc_yaw = 0;
+
 class Gimbal {
  public:
-  double yaw = 0;              // imu yaw数据
-  double roll = 0;             // imu roll数据
-  double pitch = 0;            // imu pitch数据
-  double rc_yaw_data = 0;      // 遥控器yaw数据
-  double rc_pitch_data = 0;    // 遥控器pitch数据
-  bool DM_is_enable = false;   // 达秒使能标志位
+  double yaw = 0;    // imu yaw数据
+  double roll = 0;   // imu roll数据
+  double pitch = 0;  // imu pitch数据
+
+  double rc_yaw_data = 0;    // 遥控器yaw数据
+  double rc_pitch_data = 0;  // 遥控器pitch数据
+
+  bool DM_is_enable = false;  // 达秒使能标志位
+
   float pitch_min_pos = 2.94;  // pitch电机最小限位
   float pitch_max_pos = 4.15;  // pitch电机最大限位
 
@@ -41,16 +54,17 @@ class Gimbal {
   rm::device::DR16 *rc{nullptr};  // 遥控器
 
   typedef enum {
-    kNoForce,          // 云台无力
-    kManual,           // 云台手动
-    kAuto,             // 云台自瞄
+    kNoForce,  // 云台无力
+    kManual,   // 云台手动
+    kAuto,     // 云台自瞄
+
     kStop,             // 发射机构无力
     kReady,            // 发射机构准备开火
     kFire              // 发射机构开火
   } StateMachineType;  // 遥控器状态机
 
-  StateMachineType AmmoState_ = {kNoForce};  // 初始化发射机构状态
-  StateMachineType GimbalState_ = {kStop};   // 初始化云台运动状态
+  StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
+  StateMachineType GimbalState_ = {kNoForce};  // 初始化云台运动状态
 
   Gimbal2Dof gimbal_controller;  // 二轴云台PID控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
@@ -93,8 +107,8 @@ class Gimbal {
   }
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(10.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(10.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(100.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
     gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
@@ -120,8 +134,10 @@ class Gimbal {
     switch (rc->switch_l()) {
       case rm::device::DR16::SwitchPosition::kDown:  // 只有下打有力
         GimbalState_ = kManual;
+        break;
       default:
         GimbalState_ = kNoForce;
+        break;
     }
   }
 
@@ -136,12 +152,18 @@ class Gimbal {
         rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
+      Arccontrol++;  // 调试进手控次数
       // yaw
       rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+
+      Arc_yaw = rc_yaw_data;  // 全局数据
+
       // pitch
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
+
+      Arc_pitch = rc_pitch_data;  // 全局数据
 
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
@@ -169,6 +191,7 @@ class Gimbal {
     RCStateUpdate();                               // 遥控器更新
     GimbalControl();                               // 云台控制更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
+    anum++;                                        // 调试
   }
 
   // DmMotor电机发信息
@@ -176,6 +199,7 @@ class Gimbal {
     if (time_ % 2 == 0) {
       // 发送达秒控制信息
       pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
+      anum1++;  // 调试
     }
   }
 
