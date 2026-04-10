@@ -42,3 +42,8 @@ target_compile_definitions(test_gb PRIVATE TEST_GB)
 file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
 add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)
+
+# 腿雄云台
+file(GLOB_RECURSE BALANCE_HERO_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/balance_hero_gb/*.cc)
+add_exe_target(balance_hero_gb "${BALANCE_HERO_GB_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(balance_hero_gb PRIVATE BALANCE_HERO_GB)
