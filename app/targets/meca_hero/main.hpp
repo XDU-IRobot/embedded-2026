@@ -20,15 +20,15 @@ inline float follow_d = 0;
 
 inline struct GlobalWarehouse {
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr}; ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}, *uart1{nullptr}; ///< 遥控器串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};                       ///< CAN 总线接口
+  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}, *uart1{nullptr};  ///< 遥控器串口接口
 
   // 设备 //
-  rm::device::DR16 *rc{nullptr}; ///< 遥控器
-  rm::device::VT03 *tc{nullptr}; // 图传遥控器
+  rm::device::DR16 *rc{nullptr};  ///< 遥控器
+  rm::device::VT03 *tc{nullptr};  // 图传遥控器
   // rm::device::GM6020 *yaw_motor{nullptr};                                              ///< 云台 Yaw 电机
   // rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *magazine_motor{nullptr};  ///< 云台 Pitch 电机
-  rm::device::BMI088 *imu{nullptr}; ///< BMI088 IMU
+  rm::device::BMI088 *imu{nullptr};  ///< BMI088 IMU
   rm::device::AimbotCanCommunicator *aimbot_can_communicator{nullptr};
   rm::device::CustomClient *custom_client{nullptr};
   CMS *cms{nullptr};
@@ -76,7 +76,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_chassis_follow_pos{nullptr};
   rm::modules::PID *pid_chassis_follow_vel{nullptr};
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{840.0f}; ///< mahony 姿态解算器，频率 1000Hz 840.0
+  rm::modules::MahonyAhrs ahrs{840.0f};  ///< mahony 姿态解算器，频率 1000Hz 840.0
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
@@ -86,7 +86,7 @@ inline struct GlobalWarehouse {
   uint8_t rx_buffer[128]{0};
 
   rm::modules::LowPassFilterConstDt<float> gyro_z_filter;
-  //陀螺仪修正值
+  // 陀螺仪修正值
   float gyro_rectification{0};
 
   bool ui_send_choice{false};
@@ -101,7 +101,7 @@ inline struct GlobalWarehouse {
     custom_client = new rm::device::CustomClient;
     cms = new CMS{*can2};
     // 遥控
-    rc = new rm::device::DR16{*dbus}; // 设置了遥控器以及串口
+    rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
     tc = new rm::device::VT03;
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
@@ -132,8 +132,8 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{40, 2, 4, 15000, 100};
     pid_chassis_4 = new rm::modules::PID{40, 2, 4, 15000, 100};
 
-    pid_shooter_1 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600}; // 20
-    pid_shooter_2 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600}; // 20
+    pid_shooter_1 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};  // 20
+    pid_shooter_2 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};  // 20
     pid_shooter_3 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
     pid_shooter_4 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
     pid_shooter_5 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
@@ -181,7 +181,7 @@ inline struct GlobalWarehouse {
     can1->Begin();
     can2->SetFilter(0, 0);
     can2->Begin();
-    rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
   }
 } *globals;
 
@@ -195,7 +195,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = 0; //-6°
+inline float next_target_magz = 0;  //-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -210,7 +210,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4605;
-inline rm::i16 V_shooter_2 = -3770; // 12m/s
+inline rm::i16 V_shooter_2 = -3770;  // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测
@@ -294,8 +294,8 @@ void CANAutoaimUpdate();
 void CustomClientUpdate();
 // VOFA监测
 void VOFA();
-//键盘单次检测
-// bool key_once_tc(VT03::KeyboardKey key) ;
+// 键盘单次检测
+//  bool key_once_tc(VT03::KeyboardKey key) ;
 
 bool key_once_rc(DR16::Key key);
 // 超级电容

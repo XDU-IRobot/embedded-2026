@@ -13,7 +13,7 @@ void StateMachine::StateUpdate() {
 
   last_sub_state_ = current_sub_state_;
   last_main_state_ = current_main_state_;
-  //图传最高优先级
+  // 图传最高优先级
   if (tc_switch_position == VT03::SwitchPosition::C) {
     current_main_state_ = MainState::kOffline;
     return;
@@ -21,7 +21,7 @@ void StateMachine::StateUpdate() {
     current_main_state_ = MainState::kGame;
     return;
   }
-  //DT7控制模式
+  // DT7控制模式
   switch (rc_switch_position_r) {
     case DR16::SwitchPosition::kUnknown:
       current_main_state_ = MainState::kOffline;
@@ -45,9 +45,7 @@ void StateMachine::StateUpdate() {
             break;
           }
         case MainState::kTest:
-          switch (current_sub_state_) {
-
-          }
+          switch (current_sub_state_) {}
         default:
           current_main_state_ = MainState::kTest;
           break;
