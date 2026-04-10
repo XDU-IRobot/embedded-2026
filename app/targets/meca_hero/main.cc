@@ -33,7 +33,7 @@ Graph_Data linex0, linex1, linex2, linex3, linex4;
 // // 飞坡、前进参考线
 // Graph_Data rfd1, rfd2, rfd3, rfd4;
 
-//瞄准角度
+// 瞄准角度
 Float_Data linef1;
 // Cap
 Float_Data CapData;
@@ -54,7 +54,7 @@ Graph_Data p1, p2;
 Graph_Data mouse_left, mouse_right;
 
 // 自瞄提示字符
-String_Data aimbotUI; // 自瞄状态
+String_Data aimbotUI;  // 自瞄状态
 
 void UiRefresh();
 void UiSend();
@@ -159,7 +159,6 @@ void SubLoop420hz() {
 
 void SubLoop93hz() {
   if (time_conut % 9 == 0) {
-
     globals->tc->offline_count++;
     // VOFA();
   }
@@ -177,7 +176,6 @@ void SubLoop10hz() {
     cms_v = globals->cms->cms_v;
     cms_i = globals->cms->cms_i;
     UiRefresh();
-
   }
 }
 
@@ -223,10 +221,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
       &htim13,
-      etl::delegate<void()>::create<MainLoop>() //
+      etl::delegate<void()>::create<MainLoop>()  //
   };
-  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1); // 84MHz / 100 / 1000 = 840Hz
-  mainloop_1000hz.Start(); // 启动定时器
+  mainloop_1000hz.SetPrescalerAndPeriod(100 - 1, 1000 - 1);  // 84MHz / 100 / 1000 = 840Hz
+  mainloop_1000hz.Start();                                   // 启动定时器
   globals->gyro_z_filter.set_cutoff_frequency(1000.0f, 50.0f);
 
   // 初始化队列
@@ -243,9 +241,8 @@ extern "C" [[noreturn]] void AppMain(void) {
 void UiRefresh() {
   // 接收机器人ID
   robot_id = globals->ref.data().robot_status.robot_id;
-  if (globals->tc->data().keyboard_key & static_cast<int16_t>(device::VT03::KeyboardKey::kR) || globals->rc->key(
-          device::DR16::Key::kR)
-  ) {
+  if (globals->tc->data().keyboard_key & static_cast<int16_t>(device::VT03::KeyboardKey::kR) ||
+      globals->rc->key(device::DR16::Key::kR)) {
     // Line_Draw(&image_x, "xxx", UI_Graph_ADD, 0, UI_Color_Orange, 2, 918, 515, 978, 515);
     Line_Draw(&image_y, "yyy", UI_Graph_ADD, 2, UI_Color_Orange, 2, 948, 465, 948, 565);
     Line_Draw(&linex0, "xx0", UI_Graph_ADD, 2, UI_Color_Purplish_red, 2, 940, 525, 980, 525);
@@ -253,7 +250,6 @@ void UiRefresh() {
     Line_Draw(&linex2, "xx2", UI_Graph_ADD, 2, UI_Color_Pink, 2, 910, 470, 1010, 470);
     Line_Draw(&linex3, "xx3", UI_Graph_ADD, 2, UI_Color_Black, 2, 920, 450, 1000, 450);
     Line_Draw(&linex4, "xx4", UI_Graph_ADD, 2, UI_Color_Cyan, 2, 930, 420, 990, 420);
-
 
     Float_Draw(&CapData, "cms", UI_Graph_ADD, 2, UI_Color_Main, 27, 2, 5, 7050, 150, cms_v * 1000);
     Float_Draw(&Pitch, "gbp", UI_Graph_ADD, 2, UI_Color_Green, 27, 1, 3, 7300, 500, 0);
@@ -307,31 +303,26 @@ void UiRefresh() {
   } else {
     // 电容电压
     if (!overpower) {
-      Float_Draw(&CapData, "cms", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 5, 900, 270,
-                 cms_v * 1000.0f);
+      Float_Draw(&CapData, "cms", UI_Graph_Change, 2, UI_Color_Green, 27, 1, 5, 900, 270, cms_v * 1000.0f);
     } else {
-      Float_Draw(&CapData, "cms", UI_Graph_Change, 2, UI_Color_Main, 27, 1, 5, 900, 270,
-                 cms_v * 1000.0f);
+      Float_Draw(&CapData, "cms", UI_Graph_Change, 2, UI_Color_Main, 27, 1, 5, 900, 270, cms_v * 1000.0f);
     }
     // 弹速调节
-    if ((globals->rc->mouse_button_left() || globals->tc->data().mouse_button_left) && (globals->rc->
-          mouse_button_right() || globals->tc->data().mouse_button_right))
+    if ((globals->rc->mouse_button_left() || globals->tc->data().mouse_button_left) &&
+        (globals->rc->mouse_button_right() || globals->tc->data().mouse_button_right))
       Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Purplish_red, 25, 2, 2, 7300, 560,
                  -shooter_m * 100.0f);
     else if (globals->rc->mouse_button_right() || globals->tc->data().mouse_button_right) {
-      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Yellow, 25, 2, 2, 7300, 560,
-                 -shooter_m * 100.0f);
+      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Yellow, 25, 2, 2, 7300, 560, -shooter_m * 100.0f);
     } else if (globals->rc->mouse_button_left() || globals->tc->data().mouse_button_left) {
-      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Orange, 25, 2, 2, 7300, 560,
-                 -shooter_m * 100.0f);
+      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_Orange, 25, 2, 2, 7300, 560, -shooter_m * 100.0f);
     } else {
-      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_White, 25, 2, 2, 7300, 560,
-                 -shooter_m * 100.0f);
+      Float_Draw(&AmmoSpeed, "amm", UI_Graph_Change, 2, UI_Color_White, 25, 2, 2, 7300, 560, -shooter_m * 100.0f);
     }
 
     // Pitch
-    if (globals->rc->key(DR16::Key::kCtrl) || (globals->tc->data().keyboard_key & static_cast<int16_t>(
-                                                 VT03::KeyboardKey::kCtrl)))
+    if (globals->rc->key(DR16::Key::kCtrl) ||
+        (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl)))
       Float_Draw(&Pitch, "gbp", UI_Graph_Change, 2, UI_Color_Purplish_red, 27, 1, 3, 7300, 500,
                  (eulerangle_pitch / 3.14f * 180) * 1000);
     else
@@ -396,8 +387,8 @@ void UiRefresh() {
 }
 
 void UiSend() {
-  if ((IsEmpty(&UI_send_buffer[1]) && !IsEmpty(&UI_send_buffer[0])) || (
-        !IsEmpty(&UI_send_buffer[0]) && globals->ui_send_choice)) {
+  if ((IsEmpty(&UI_send_buffer[1]) && !IsEmpty(&UI_send_buffer[0])) ||
+      (!IsEmpty(&UI_send_buffer[0]) && globals->ui_send_choice)) {
     if (UI_send_buffer[0].counter / 4 >= 7) {
       for (u8 i = 0; i < 7; i++) {
         UI_Pop(&UI_send_buffer[0], (u8 *)&tmp_send[i]);
