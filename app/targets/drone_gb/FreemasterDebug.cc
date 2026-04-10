@@ -59,8 +59,7 @@ void FreemasterDebug() {
   Ayaw = gimbal->yaw;
   Arcyawdata = gimbal->rc_yaw_data;
   Aautoyawtarget = rm::modules::Wrap(Aimbot.TargetYawAngle + M_PI, 0, 2 * M_PI);
-  Ayawpose=gimbal->yaw_motor->pos_rad();
-
+  Ayawpose = gimbal->yaw_motor->pos_rad();
 
   Aroll = gimbal->roll;
   Aoutputyaw = gimbal->gimbal_controller.output().yaw;
