@@ -1,5 +1,4 @@
-#ifndef BOARDC_STATE_HPP
-#define BOARDC_STATE_HPP
+#pragma once
 
 class StateMachine {
 public:
@@ -24,9 +23,8 @@ public:
     kRadarAimbot,
   };
 
-  void MainStateUpdate();
+  void StateUpdate();
 
-  void SubStateUpdate();
 
   [[nodiscard]] MainState getMainState() const { return current_main_state_; };
 
@@ -41,4 +39,3 @@ private:
   int waiting_count_{0};
   int count {0};
 };
-#endif  // BOARDC_STATE_HPP
