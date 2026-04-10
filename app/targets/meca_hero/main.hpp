@@ -80,7 +80,7 @@ inline struct GlobalWarehouse {
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
-  std::array<rm::modules::M3508PowerModel::MotorState, 4> *motor_states{nullptr};
+  std::array<rm::modules::MotorPowerModel::MotorState, 4> *motor_states{nullptr};
   // 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kNewV110> ref;
   uint8_t rx_buffer[128]{0};
@@ -175,7 +175,7 @@ inline struct GlobalWarehouse {
     for (int i = 2; i < 4; i++) {
       velocity_pids[i] = new rm::modules::PID(20, 0.5, 0, 16384, 5000);
     }
-    motor_states = new std::array<rm::modules::M3508PowerModel::MotorState, 4>();
+    motor_states = new std::array<rm::modules::MotorPowerModel::MotorState, 4>();
 
     can1->SetFilter(0, 0);
     can1->Begin();
@@ -242,7 +242,7 @@ inline bool magz_compensation_flag{false};
 inline int magz_compensation_count{0};
 inline float magz_compensation = 0;
 // 功率模型
-inline rm::modules::M3508PowerModel power_model;
+inline rm::modules::MotorPowerModel power_model(modules::MotorPowerModel::kM3508);
 // 初始电流
 inline float initial_currents[4];
 // 输出电流
