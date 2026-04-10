@@ -180,10 +180,10 @@ void ShooterControl() {
     return;
   }
   // 摩擦轮逻辑
-  if (globals->tc->key_once(device::VT03::KeyboardKey::kE)) {
+  if (key_once_tc(device::VT03::KeyboardKey::kE)) {
     shooter_m -= 10;
   }
-  if (globals->tc->key_once(device::VT03::KeyboardKey::kQ)) {
+  if (key_once_tc(device::VT03::KeyboardKey::kQ)) {
     shooter_m += 10;
   }
   // 目标速度PID
@@ -403,7 +403,7 @@ void GimbalControl() {
   globals->pid_snipe_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
   // 吊射模式
 
-  if (globals->tc->key_once(VT03::KeyboardKey::kG) || key_once_rc(DR16::Key::kG)) {
+  if (key_once_tc(VT03::KeyboardKey::kG) || key_once_rc(DR16::Key::kG)) {
     snipe_mode = !snipe_mode;
     if (snipe_mode) {
       snipe_pos_yaw = globals->gimbal_motor_yaw->pos();
@@ -670,20 +670,20 @@ void VOFA() {
 //   globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
 //   globals->cms->SendCapPower(globals->ref.data().robot_status.chassis_power_limit);
 // }
-// bool key_once_tc(VT03::KeyboardKey key) {
-//   static int16_t key_once_flag{0};
-//   if (globals->tc->data().keyboard_key & static_cast<int16_t>(key)) {
-//     if (!(key_once_flag & static_cast<int16_t>(key))) {
-//       // 第一次按下
-//       key_once_flag |= static_cast<int16_t>(key); // 标记已处理
-//       return true;
-//     }
-//     return false; // 已经处理过，不再响应
-//   } else {
-//     key_once_flag &= ~static_cast<int16_t>(key); // 按键松开，清除标记
-//     return false;
-//   }
-// }
+bool key_once_tc(VT03::KeyboardKey key) {
+  static int16_t key_once_flag{0};
+  if (globals->tc->data().keyboard_key & static_cast<int16_t>(key)) {
+    if (!(key_once_flag & static_cast<int16_t>(key))) {
+      // 第一次按下
+      key_once_flag |= static_cast<int16_t>(key); // 标记已处理
+      return true;
+    }
+    return false; // 已经处理过，不再响应
+  } else {
+    key_once_flag &= ~static_cast<int16_t>(key); // 按键松开，清除标记
+    return false;
+  }
+}
 // 多次调用时会有干涉
 bool key_once_rc(DR16::Key key) {
   static bool key_once_flag{false};
