@@ -12,7 +12,7 @@ float Arcpitchdata;
 double Agx;
 double Agy;
 double Agz;
-double Apitchpose;
+float Apitchpose;
 double Atotalpitch;
 double Atorque;
 double vofa_pitch;
@@ -44,15 +44,24 @@ float Asmcff;
 float Asendpitch;
 float Asendyaw;
 float Apitchff;
+float Ayawpose;
 
 // 调试接口函数
 void FreemasterDebug() {
   // Arcpitchdata =
   //     rm::modules::Wrap(gimbal->rc_pitch_data - gimbal->err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
   // Ayaw = gimbal->yaw;
-  Arcyawdata = gimbal->rc_yaw_data;
-  Apitch = modules::Wrap(-gimbal->pitch - 1.9101981, -M_PI, M_PI);
+
+  Apitch = gimbal->pitch;
   Apitch_err_average = gimbal->err_average;
+  // Apitchpose = -gimbal->pitch_motor->pos();
+
+  Ayaw = gimbal->yaw;
+  Arcyawdata = gimbal->rc_yaw_data;
+  Aautoyawtarget = rm::modules::Wrap(Aimbot.TargetYawAngle + M_PI, 0, 2 * M_PI);
+  Ayawpose=gimbal->yaw_motor->pos_rad();
+
+
   Aroll = gimbal->roll;
   Aoutputyaw = gimbal->gimbal_controller.output().yaw;
   Aoutputpitch = gimbal->gimbal_controller.output().pitch;
@@ -66,10 +75,7 @@ void FreemasterDebug() {
   Ashoot_hz = gimbal->referee_data_buffer.data().shoot_data.launching_frequency;
   Adrmp = gimbal->friction_left->rpm() + gimbal->friction_right->rpm();
   Armp = gimbal->friction_left->rpm();
-  Apitchpose = gimbal->pitch_motor->pos();
-  Ayaw = gimbal->yaw;
-  Aautoyawtarget = rm::modules::Wrap(Aimbot.TargetYawAngle + M_PI, 0, 2 * M_PI);
-  Aselfyawtarget = gimbal->yaw;
+
   Aautopitchtarget = rm::modules::Wrap(Aimbot.TargetPitchAngle + gimbal->err_average + M_PI, 0, 2 * M_PI);
   Aselfpitchtarget = rm::modules::Wrap(gimbal->pitch + gimbal->err_average, 0, 2 * M_PI);
 
