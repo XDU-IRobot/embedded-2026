@@ -27,15 +27,21 @@ void StateMachine::StateUpdate() {
   //
   last_sub_state_ = current_sub_state_;
   last_main_state_ = current_main_state_;
+  last_chassis_state_ = current_chassis_state_;
+  last_ammo_state_ = current_ammo_state_;
+  last_gimbal_state_ = current_gimbal_state_;
+
   // 图传最高优先级，图传在C强制失能，S强制进入比赛并进入子模式
   if (tc_switch_position == VT03::SwitchPosition::C) {
     current_main_state_ = MainState::kOffline;
     return;
   } else if (tc_switch_position == VT03::SwitchPosition::S) {
     current_main_state_ = MainState::kGame;
-    if (follow) {
-      current_sub_state_ = Sub
-    }
+    if (overpower) { current_sub_state_ = SubState::kOverPower; } else if (snipe) {
+      current_sub_state_ = SubState::kSnipe;
+      if (radar_aimbot) {
+      }
+    } else { current_sub_state_ = SubState::kNoAct; }
     return;
   }
   // DT7控制模式
@@ -63,11 +69,13 @@ void StateMachine::StateUpdate() {
           }
         case MainState::kTest:
           switch (rc_switch_position_l) {
-            case DR16::SwitchPosition::kDown:  // 遥控模式，随动默认开启
+            case DR16::SwitchPosition::kDown: //遥控模式，随动默认开启
               current_sub_state_ = SubState::kFollow;
               break;
             case DR16::SwitchPosition::kMid:
               current_sub_state_ = SubState::
+
+
           };
         default:
           current_main_state_ = MainState::kTest;
