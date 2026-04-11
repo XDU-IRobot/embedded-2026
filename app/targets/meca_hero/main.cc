@@ -138,7 +138,7 @@ void SubLoop840hz() {
 
 void SubLoop420hz() {
   if (time_conut % 2 == 0) {
-    CANAutoaimUpdate();
+    // CANAutoaimUpdate();
     aimbot_target = globals->aimbot_can_communicator->aimbot_target();
     aimbot_state = globals->aimbot_can_communicator->aimbot_state();
     // 改usb中断处字长检查
@@ -160,6 +160,8 @@ void SubLoop420hz() {
 void SubLoop93hz() {
   if (time_conut % 9 == 0) {
     globals->TC_manager.Update();
+    globals->Radar_manager.Update();
+    radar_yaw = globals->radar_can_communicator->yaw_mard();
     // VOFA();
   }
 }
