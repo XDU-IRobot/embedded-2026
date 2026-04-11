@@ -93,6 +93,8 @@ inline struct GlobalWarehouse {
 
   rm::modules::KeyboardHandler<> tc_keyboard();
 
+  rm::device::DeviceManager<1> TC_manager;
+
   void Init() {
     can1 = new rm::hal::Can{hcan1};
     can2 = new rm::hal::Can{hcan2};
@@ -184,6 +186,10 @@ inline struct GlobalWarehouse {
     can2->SetFilter(0, 0);
     can2->Begin();
     rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+
+    tc->SetName("TC");
+
+    TC_manager<<tc;
   }
 } *globals;
 

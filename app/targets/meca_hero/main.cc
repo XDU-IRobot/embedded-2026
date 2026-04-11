@@ -159,7 +159,7 @@ void SubLoop420hz() {
 
 void SubLoop93hz() {
   if (time_conut % 9 == 0) {
-    globals->tc->offline_count++;
+    globals->TC_manager.Update();
     // VOFA();
   }
 }

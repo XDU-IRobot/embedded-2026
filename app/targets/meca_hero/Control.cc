@@ -345,7 +345,7 @@ void GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     // tc->rc->cc
-    if ((globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) && globals->tc->offline_count < 93) {
+    if ((globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) && globals->TC_manager.all_device_ok()) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
                         static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8;
       snipe_pos_yaw -= static_cast<float>(globals->rc->right_x()) * 0.000005 * 0.5 +
@@ -508,7 +508,7 @@ void ChassisPower() {
       l_switch_position_now == device::DR16::SwitchPosition::kMid) {
     if (globals->rc->key(rm::device::DR16::Key::kW) ||
         (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW) &&
-         globals->tc->offline_count < 93) ||
+         globals->TC_manager.all_device_ok()) ||
         globals->custom_client->key(rm::device::DR16::Key::kW)) {
       Vy += 30;
       if (Vy >= 8400) {
@@ -516,7 +516,7 @@ void ChassisPower() {
       }
     } else if (globals->rc->key(rm::device::DR16::Key::kS) ||
                (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS) &&
-                globals->tc->offline_count < 93) ||
+                globals->TC_manager.all_device_ok()) ||
                globals->custom_client->key(rm::device::DR16::Key::kS)) {
       Vy -= 30;
       if (Vy <= -8400) {
@@ -527,7 +527,7 @@ void ChassisPower() {
     }
     if (globals->rc->key(rm::device::DR16::Key::kD) ||
         (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD) &&
-         globals->tc->offline_count < 93) ||
+         globals->TC_manager.all_device_ok()) ||
         globals->custom_client->key(rm::device::DR16::Key::kD)) {
       Vx += 30;
       if (Vx >= 8400) {
@@ -535,7 +535,7 @@ void ChassisPower() {
       }
     } else if (globals->rc->key(rm::device::DR16::Key::kA) ||
                (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA) &&
-                globals->tc->offline_count < 93) ||
+                globals->TC_manager.all_device_ok()) ||
                globals->custom_client->key(rm::device::DR16::Key::kA)) {
       Vx -= 30;
       if (Vx <= -8400) {
