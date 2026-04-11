@@ -12,17 +12,17 @@ void StateMachine::StateUpdate() {
   DR16::SwitchPosition rc_switch_position_r = globals->rc->switch_r();
   DR16::SwitchPosition rc_switch_position_l = globals->rc->switch_l();
 
-  //子模式状态位
-  static bool follow{true};//随动标志位
-  if (key_once_tc(VT03::KeyboardKey::kC)) follow=!follow;
-  static bool snipe{false};//部署标志位
-  if (key_once_tc(VT03::KeyboardKey::kG)) snipe=!snipe;
-  bool radar_aimbot = globals->tc->data().right_button; //部署模式下的雷达自瞄
-  bool overpower = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift); //爬坡-自动触发
-  bool aimbot = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl) | globals->tc->data().
-                right_button; //常态模式下的装甲板自瞄
-  bool autofire = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl); //自瞄决定开火标志位
-
+  // 子模式状态位
+  static bool follow{true};  // 随动标志位
+  if (key_once_tc(VT03::KeyboardKey::kC)) follow = !follow;
+  static bool snipe{false};  // 部署标志位
+  if (key_once_tc(VT03::KeyboardKey::kG)) snipe = !snipe;
+  bool radar_aimbot = globals->tc->data().right_button;  // 部署模式下的雷达自瞄
+  bool overpower = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift);  // 爬坡-自动触发
+  bool aimbot = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl) |
+                globals->tc->data().right_button;  // 常态模式下的装甲板自瞄
+  bool autofire =
+      globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl);  // 自瞄决定开火标志位
 
   //
   last_sub_state_ = current_sub_state_;
@@ -34,9 +34,9 @@ void StateMachine::StateUpdate() {
   } else if (tc_switch_position == VT03::SwitchPosition::S) {
     current_main_state_ = MainState::kGame;
     if (follow) {
-      current_sub_state_=Sub
+      current_sub_state_ = Sub
     }
-  return;
+    return;
   }
   // DT7控制模式
   switch (rc_switch_position_r) {
@@ -63,13 +63,11 @@ void StateMachine::StateUpdate() {
           }
         case MainState::kTest:
           switch (rc_switch_position_l) {
-            case DR16::SwitchPosition::kDown: //遥控模式，随动默认开启
+            case DR16::SwitchPosition::kDown:  // 遥控模式，随动默认开启
               current_sub_state_ = SubState::kFollow;
               break;
             case DR16::SwitchPosition::kMid:
               current_sub_state_ = SubState::
-
-
           };
         default:
           current_main_state_ = MainState::kTest;

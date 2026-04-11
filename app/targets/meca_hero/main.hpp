@@ -185,11 +185,11 @@ inline struct GlobalWarehouse {
     can1->Begin();
     can2->SetFilter(0, 0);
     can2->Begin();
-    rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
 
     tc->SetName("TC");
 
-    TC_manager<<tc;
+    TC_manager << tc;
   }
 } *globals;
 
