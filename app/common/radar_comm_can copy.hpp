@@ -10,13 +10,13 @@ class RadarCanCommunicator final : public CanDevice {
   RadarCanCommunicator() = delete;
   ~RadarCanCommunicator() override = default;
 
-  [[nodiscard]] u16 distance_mm() const{ return distance_mm_; };
-  [[nodiscard]] u16 planner_distance_mm() const{ return planner_distance_mm_; };
-  [[nodiscard]] i16 yaw_mard() const{ return yaw_mard_; };
-  [[nodiscard]] u8 status() const{ return status_; };
-  [[nodiscard]] bool vaild() const{ return vaild_; };
-  [[nodiscard]] bool fresh() const{ return fresh_; };
-  [[nodiscard]] u8 counter() const{ return counter_; };
+  [[nodiscard]] u16 distance_mm() const { return distance_mm_; };
+  [[nodiscard]] u16 planner_distance_mm() const { return planner_distance_mm_; };
+  [[nodiscard]] i16 yaw_mard() const { return yaw_mard_; };
+  [[nodiscard]] u8 status() const { return status_; };
+  [[nodiscard]] bool vaild() const { return vaild_; };
+  [[nodiscard]] bool fresh() const { return fresh_; };
+  [[nodiscard]] u8 counter() const { return counter_; };
 
   // void UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot_id, u8 mode, u16 imu_count, f32 bullet_speed);
   // void UpdateQuaternion(f32 w, f32 x, f32 y, f32 z);
@@ -36,5 +36,3 @@ class RadarCanCommunicator final : public CanDevice {
   u8 tx_buf_[8]{};
 };
 }  // namespace rm::device
-
-
