@@ -1,7 +1,7 @@
 #pragma once
 
 class StateMachine {
-public:
+ public:
   StateMachine() = delete;
 
   explicit StateMachine(int waiting_count) : waiting_count_(waiting_count), count(waiting_count) {}
@@ -17,25 +17,41 @@ public:
 
   enum class SubState {
     kNoAct,
-    kFollow,
-    kAimbot,
+    kOverPower,
     kSnipe,
+  };
+
+  enum class ChassisState {
+    kOffline,
+    kNormal,
+    kFollow,
+  };
+
+  enum class GimbalState {
+    kOffline,
+    kNormal,
+    kAimbot,
     kRadarAimbot,
   };
 
-  void StateUpdate();
+  enum class AmmoState {
+    kOffline,
+    kNormal,
+    kMax,
+  };
 
+  void StateUpdate();
 
   [[nodiscard]] MainState getMainState() const { return current_main_state_; };
 
   [[nodiscard]] SubState getSubState() const { return current_sub_state_; };
 
-private:
+ private:
   MainState current_main_state_{MainState::kOffline};
   MainState last_main_state_{MainState::kOffline};
   SubState current_sub_state_{SubState::kNoAct};
   SubState last_sub_state_{SubState::kNoAct};
 
   int waiting_count_{0};
-  int count {0};
+  int count{0};
 };

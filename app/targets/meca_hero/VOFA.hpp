@@ -5,7 +5,7 @@
 
 #pragma pack(1)
 struct Vofa_TxFrame {
-  float x[6];
+  float x[10];
   uint8_t tail[4] = {0x00, 0x00, 0x80, 0x7F};
 };
 

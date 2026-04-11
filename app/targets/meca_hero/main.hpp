@@ -67,6 +67,8 @@ inline struct GlobalWarehouse {
 
   rm::modules::PID *pid_yaw_position{nullptr};
   rm::modules::PID *pid_yaw_velocity{nullptr};
+  rm::modules::PID *pid_snipe_yaw_position{nullptr};
+  rm::modules::PID *pid_snipe_yaw_velocity{nullptr};
   rm::modules::PID *pid_pitch_position{nullptr};
   rm::modules::PID *pid_pitch_velocity{nullptr};
 
@@ -78,14 +80,20 @@ inline struct GlobalWarehouse {
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
-  std::array<rm::modules::M3508PowerModel::MotorState, 4> *motor_states{nullptr};
+  std::array<rm::modules::MotorPowerModel::MotorState, 4> *motor_states{nullptr};
   // 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kNewV110> ref;
   uint8_t rx_buffer[128]{0};
 
   rm::modules::LowPassFilterConstDt<float> gyro_z_filter;
+  // 陀螺仪修正值
+  float gyro_rectification{0};
 
   bool ui_send_choice{false};
+
+  rm::modules::KeyboardHandler<> tc_keyboard();
+
+  rm::device::DeviceManager<1> TC_manager;
 
   void Init() {
     can1 = new rm::hal::Can{hcan1};
@@ -136,15 +144,17 @@ inline struct GlobalWarehouse {
     pid_shooter_6 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
 
     // pid_magz_position = new rm::modules::PID{19, 0.001, 0.4, 6, 0};
-    pid_magz_position = new rm::modules::PID{42, 0.001, 0.56, 16, 0};
+    pid_magz_position = new rm::modules::PID{42, 0.001, 0.56, 24, 0};
     pid_magz_velocity = new rm::modules::PID{0.505, 0, 0.00002, 7, 0};
 
     // pid_yaw_position = new rm::modules::PID{60, 0.01, 3, 6, 0};
     // pid_yaw_velocity = new rm::modules::PID{1, 0, 0.001, 6, 0};
-    pid_yaw_position = new rm::modules::PID{30, 0, 0, 10, 0};
-    pid_yaw_velocity = new rm::modules::PID{11, 0, 0.03, 6, 0};
-    pid_pitch_position = new rm::modules::PID{60, 0.5, 1.3, 1, 0.1};
-    pid_pitch_velocity = new rm::modules::PID{9100, 3500, 40, 16000, 500};
+    pid_yaw_position = new rm::modules::PID{30, 0, 0, 15, 0};
+    pid_yaw_velocity = new rm::modules::PID{11, 0, 0.03, 9, 0};
+    pid_snipe_yaw_position = new rm::modules::PID{300, 0, 0.0, 15, 0};
+    pid_snipe_yaw_velocity = new rm::modules::PID{0.5, 0, 0.0, 9, 0};
+    pid_pitch_position = new rm::modules::PID{60, 0.5, 10, 1, 0.1};
+    pid_pitch_velocity = new rm::modules::PID{9100, 3500, 30, 16000, 500};
     // pid_pitch_position = new rm::modules::PID{2000, 0, 0, 1500, 1000};
     // pid_pitch_velocity = new rm::modules::PID{100, 0, 0, 16000, 5000};
 
@@ -169,20 +179,24 @@ inline struct GlobalWarehouse {
     for (int i = 2; i < 4; i++) {
       velocity_pids[i] = new rm::modules::PID(20, 0.5, 0, 16384, 5000);
     }
-    motor_states = new std::array<rm::modules::M3508PowerModel::MotorState, 4>();
+    motor_states = new std::array<rm::modules::MotorPowerModel::MotorState, 4>();
 
     can1->SetFilter(0, 0);
     can1->Begin();
     can2->SetFilter(0, 0);
     can2->Begin();
-    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+    rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+
+    tc->SetName("TC");
+
+    TC_manager<<tc;
   }
 } *globals;
 
 // 底盘速度
 inline rm::i16 Vx, Vy, Vw;
 // 云台角度
-inline float target_pos_yaw, last_target_pos_yaw, target_pos_pitch;
+inline float target_pos_yaw{0}, last_target_pos_pitch{0}, target_pos_pitch{0}, snipe_pos_yaw{0}, snipe_pos_pitch{0};
 // 云台当前角度
 inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 // imu陀螺仪
@@ -236,7 +250,7 @@ inline bool magz_compensation_flag{false};
 inline int magz_compensation_count{0};
 inline float magz_compensation = 0;
 // 功率模型
-inline rm::modules::M3508PowerModel power_model;
+inline rm::modules::MotorPowerModel power_model(modules::MotorPowerModel::kM3508);
 // 初始电流
 inline float initial_currents[4];
 // 输出电流
@@ -258,10 +272,14 @@ inline float pos_target = 0;
 inline float pos_real = 0;
 inline float vel_target = 0;
 inline float vel_real = 0;
+inline float pos_out{0};
+inline float vel_out{0};
 inline bool power_management_gimbal_last;
 inline bool power_management_shooter_last;
 inline int16_t shooter_m = 0;
 inline bool overpower = false;
+inline int overpower_count = 0;
+inline bool snipe_mode{false};
 /*----------------------------------------------
  *执行函数
  */
@@ -284,6 +302,11 @@ void CANAutoaimUpdate();
 void CustomClientUpdate();
 // VOFA监测
 void VOFA();
+// 键盘单次检测
+//  bool key_once_tc(VT03::KeyboardKey key) ;
+
+bool key_once_rc(DR16::Key key);
+bool key_once_tc(VT03::KeyboardKey key);
 // 超级电容
 // void SuperCupUpdate();
 // 随动监测

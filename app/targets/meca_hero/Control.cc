@@ -180,10 +180,10 @@ void ShooterControl() {
     return;
   }
   // 摩擦轮逻辑
-  if (globals->tc->key_once(device::VT03::KeyboardKey::kE)) {
+  if (key_once_tc(device::VT03::KeyboardKey::kE)) {
     shooter_m -= 10;
   }
-  if (globals->tc->key_once(device::VT03::KeyboardKey::kQ)) {
+  if (key_once_tc(device::VT03::KeyboardKey::kQ)) {
     shooter_m += 10;
   }
   // 目标速度PID
@@ -194,6 +194,13 @@ void ShooterControl() {
     globals->pid_shooter_4->Update(limit, globals->shooter_motor_4->rpm());
     globals->pid_shooter_5->Update(limit, globals->shooter_motor_5->rpm());
     globals->pid_shooter_6->Update(limit, globals->shooter_motor_6->rpm());
+  } else if (snipe_mode) {  // 1:6675 2:5150
+    globals->pid_shooter_1->Update(V_shooter_1 + 1.5 * shooter_m - 1380 * 1.5, globals->shooter_motor_1->rpm());
+    globals->pid_shooter_2->Update(V_shooter_1 + 1.5 * shooter_m - 1380 * 1.5, globals->shooter_motor_2->rpm());
+    globals->pid_shooter_3->Update(V_shooter_1 + 1.5 * shooter_m - 1380 * 1.5, globals->shooter_motor_3->rpm());
+    globals->pid_shooter_4->Update(V_shooter_2 + shooter_m - 1380, globals->shooter_motor_4->rpm());
+    globals->pid_shooter_5->Update(V_shooter_2 + shooter_m - 1380, globals->shooter_motor_5->rpm());
+    globals->pid_shooter_6->Update(V_shooter_2 + shooter_m - 1380, globals->shooter_motor_6->rpm());
   } else {
     globals->pid_shooter_1->Update(V_shooter_1 + 1.5 * shooter_m, globals->shooter_motor_1->rpm());
     globals->pid_shooter_2->Update(V_shooter_1 + 1.5 * shooter_m, globals->shooter_motor_2->rpm());
@@ -271,20 +278,27 @@ void ShooterControl() {
 inline f32 pitch_ff = 2000;
 
 void GimbalControl() {
+  pos_target = snipe_pos_yaw;
+  pos_real = globals->gimbal_motor_yaw->pos();
+  vel_target = globals->pid_snipe_yaw_position->out();
+  vel_real = globals->imu->gyro_z();
+  pos_out = globals->pid_yaw_position->out();
+  vel_out = globals->pid_yaw_velocity->out();
   // IMU解算
+
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
-                                                gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) -
-                                                         /*0.00425*/ 0.00005 - eulerangle_pitch / 0.6644 * 0.0042
-                                                // - average1
-                                                // - globals->ahrs.euler_angle().pitch * average1 * 10 //2°
-                                                ,
-                                                globals->imu->accel_x(), globals->imu->accel_y(),
-                                                globals->imu->accel_z()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{
+      globals->imu->gyro_x(), globals->imu->gyro_y(),
+      gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) + globals->gyro_rectification
+      // - average1
+      // - globals->ahrs.euler_angle().pitch * average1 * 10 //2°
+      ,
+      globals->imu->accel_x(), globals->imu->accel_y(), globals->imu->accel_z()});
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
 
+  globals->gyro_rectification = 0.0015 - eulerangle_pitch / 0.6644 * 0.0042;
   // 监测imu
   Gy = globals->imu->gyro_y();
   Gz = gyro_z;
@@ -312,6 +326,8 @@ void GimbalControl() {
   }
 
   // 遥控器输入云台角度
+  last_target_pos_pitch = target_pos_pitch;
+
   aimbot_state_flag = globals->aimbot_can_communicator->aimbot_target();
   if (aimbot_state_flag > 0 &&
       (((globals->rc->dial() >= 500 || globals->rc->dial() <= -500) &&
@@ -329,19 +345,25 @@ void GimbalControl() {
     aimbot_state_flag = 0;
   } else {
     // tc->rc->cc
-    if ((globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) && globals->tc->offline_count < 93) {
+    if ((globals->tc->data().mouse_x != 0 || globals->tc->data().mouse_y != 0) && globals->TC_manager.all_device_ok()) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
                         static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8;
+      snipe_pos_yaw -= static_cast<float>(globals->rc->right_x()) * 0.000005 * 0.5 +
+                       static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 * 0.5;
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
                           static_cast<float>(globals->tc->data().mouse_y) / 32768 * 0.5;
     } else if (globals->rc->mouse_x() != 0 || globals->rc->mouse_y() != 0) {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
                         static_cast<float>(globals->rc->mouse_x()) / 32768.0 * 3;  // ≈0.003/per
+      snipe_pos_yaw -= static_cast<float>(globals->rc->right_x()) * 0.000005 * 0.5 +
+                       static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 * 0.5;
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
                           static_cast<float>(globals->rc->mouse_y() / 32768.0 * 3);
     } else {
       target_pos_yaw += static_cast<float>(globals->rc->right_x()) * 0.000005 +
                         static_cast<float>(globals->custom_client->mouse_x()) * 0.000015;  // ≈0.003/per
+      snipe_pos_yaw -= static_cast<float>(globals->rc->right_x()) * 0.000005 * 0.5 +
+                       static_cast<float>(globals->tc->data().mouse_x) / 32768 * 0.8 * 0.5;
       target_pos_pitch += static_cast<float>(globals->rc->right_y()) * 0.0000005 +
                           static_cast<float>(globals->custom_client->mouse_y()) * 0.000015;  // 0.00033/per
     }
@@ -359,8 +381,8 @@ void GimbalControl() {
   // pitch限位
   if (target_pos_pitch < 0) {
     target_pos_pitch = 0;
-  } else if (target_pos_pitch > 0.6644) {
-    target_pos_pitch = 0.6644;
+  } else if (target_pos_pitch > 0.7505) {
+    target_pos_pitch = 0.7505;
   }
 
   // PID计算
@@ -380,24 +402,64 @@ void GimbalControl() {
 
   // yawPID计算（双环）
   globals->pid_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
-  globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw - 0.005, 0.001);
-  globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(), -globals->imu->gyro_z(), 0.001);
+  globals->pid_snipe_yaw_position->SetCircular(true).SetCircularCycle(3.141593 * 2);
+  // 吊射模式
+
+  if (key_once_tc(VT03::KeyboardKey::kG) || key_once_rc(DR16::Key::kG)) {
+    snipe_mode = !snipe_mode;
+    if (snipe_mode) {
+      snipe_pos_yaw = globals->gimbal_motor_yaw->pos();
+      snipe_pos_pitch = eulerangle_pitch;
+    } else {
+      target_pos_yaw = eulerangle_yaw;
+    }
+  }
+  // yawPID计算
+  /*if (!snipe_mode) {*/
+  globals->pid_yaw_position->Update(target_pos_yaw, -globals->ahrs.euler_angle().yaw, 0.001);
+  globals->pid_yaw_velocity->Update(globals->pid_yaw_position->out(),
+                                    -globals->imu->gyro_z() - globals->gyro_rectification, 0.001);
+  /*} else {
+    globals->pid_snipe_yaw_position->Update(snipe_pos_yaw, globals->gimbal_motor_yaw->pos(), 0.001);
+    globals->pid_snipe_yaw_velocity->Update(globals->pid_snipe_yaw_position->out(),
+                                            globals->imu->gyro_z() + globals->gyro_rectification, 0.001);
+  }*/
+
   // pitchPID计算
   globals->pid_pitch_position->Update(target_pos_pitch, -globals->ahrs.euler_angle().pitch, 1);
   globals->pid_pitch_velocity->Update(globals->pid_pitch_position->out(), -globals->imu->gyro_y(), 0.001);
 
   // 发送CAN
+  /*if (!snipe_mode) {*/
   globals->gimbal_motor_yaw->SetMitCommand(
-      0, 0, (0.98 - 0.5 * eulerangle_pitch / 0.6644) * globals->pid_yaw_velocity->out(), 0, 0);
+      0, 0, (0.98 - 0.5 * eulerangle_pitch / 0.6644) * globals->pid_yaw_velocity->out(), 0, 1.4);
+  // globals->gimbal_motor_yaw->SetMitCommand(
+  //        0.61, 0,0, 50, 1.6);
+  /*} else {
+    globals->gimbal_motor_yaw->SetMitCommand(
+        0, 0, -(0.98 - 0.5 * eulerangle_pitch / 0.6644) * globals->pid_snipe_yaw_velocity->out(), 0, 0);
+  }*/
   // 爬坡模式
-  if (r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
-      l_switch_position_now != device::DR16::SwitchPosition::kUp &&
+  if (((r_switch_position_now == rm::device::DR16::SwitchPosition::kUp &&
+        l_switch_position_now != device::DR16::SwitchPosition::kUp) ||
+       (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift)) ||
+       globals->rc->key(DR16::Key::kShift)) &&
       (globals->rc->dial() < 500 && globals->rc->dial() > -500)) {
     globals->gimbal_motor_pitch->SetCurrent(0);
   } else {
+    // 前馈管理
+    if (last_target_pos_pitch != target_pos_pitch || abs(target_pos_pitch - eulerangle_pitch) > 0.008727 /*0.5°*/) {
+      if (target_pos_pitch > last_target_pos_pitch) {
+        pitch_ff = 2000;
+      } else {
+        pitch_ff = -500;
+      }
+    } else {
+      pitch_ff = 0;
+    }
     globals->gimbal_motor_pitch->SetCurrent(
-        static_cast<int16_t>((1.7 + 1.3 * globals->ahrs.euler_angle().pitch) * pitch_ff) +
-        (0.5 + 0.5 * eulerangle_pitch / 0.6644) * (globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
+        static_cast<int16_t>((1 + globals->ahrs.euler_angle().pitch / 0.7505) * pitch_ff) +
+        (1 - 0.3 * eulerangle_pitch / 0.7505) * (globals->pid_pitch_velocity->out()) /*+out_feedforward*/);
   }
 
   // HAL_Delay(0);
@@ -417,13 +479,14 @@ void ChassisPower() {
   // 失能
   if (r_switch_position_now == rm::device::DR16::SwitchPosition::kDown ||
       r_switch_position_now == rm::device::DR16::SwitchPosition::kUnknown ||
-      (!globals->ref.data().robot_status.power_management_chassis_output)) {
+      (!globals->ref.data().robot_status.power_management_chassis_output) || snipe_mode) {
     for (int i = 0; i < 4; i++) {
       globals->chassis_motor[i]->SetCurrent(0);
     }
     return;
   }
-  if (globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kC)) {
+  if ((globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kC)) ||
+      globals->rc->key(DR16::Key::kC)) {
     follow_state = false;
   } else {
     follow_state = true;
@@ -431,18 +494,15 @@ void ChassisPower() {
 
   if (follow_state) {
     globals->pid_chassis_follow_pos->SetCircular(true).SetCircularCycle(3.141593 * 2);
-    globals->pid_chassis_follow_pos->Update(0.49, globals->gimbal_motor_yaw->pos(),
-                                            0.0011);  // 云台正位为电机编码器的+90°//逆时针旋转为增大
+    globals->pid_chassis_follow_pos->Update(0.61, globals->gimbal_motor_yaw->pos(),
+                                            0.0011);  // 逆时针旋转为增大
     globals->pid_chassis_follow_vel->Update(globals->pid_chassis_follow_pos->out(), globals->gimbal_motor_yaw->vel(),
                                             0.0011);
     Vw = static_cast<rm::i16>(globals->pid_chassis_follow_vel->out()) * (1 - eulerangle_pitch / 0.6644 * 0.7);
   } else {
     Vw = 0;
   }
-  pos_target = 1.54;
-  pos_real = globals->gimbal_motor_yaw->pos();
-  vel_target = globals->pid_chassis_follow_pos->out();
-  vel_real = globals->gimbal_motor_yaw->vel();
+
   // follow = Vw;
 
   // 遥控器输入底盘速度
@@ -450,7 +510,7 @@ void ChassisPower() {
       l_switch_position_now == device::DR16::SwitchPosition::kMid) {
     if (globals->rc->key(rm::device::DR16::Key::kW) ||
         (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW) &&
-         globals->tc->offline_count < 93) ||
+         globals->TC_manager.all_device_ok()) ||
         globals->custom_client->key(rm::device::DR16::Key::kW)) {
       Vy += 30;
       if (Vy >= 8400) {
@@ -458,7 +518,7 @@ void ChassisPower() {
       }
     } else if (globals->rc->key(rm::device::DR16::Key::kS) ||
                (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS) &&
-                globals->tc->offline_count < 93) ||
+                globals->TC_manager.all_device_ok()) ||
                globals->custom_client->key(rm::device::DR16::Key::kS)) {
       Vy -= 30;
       if (Vy <= -8400) {
@@ -469,7 +529,7 @@ void ChassisPower() {
     }
     if (globals->rc->key(rm::device::DR16::Key::kD) ||
         (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD) &&
-         globals->tc->offline_count < 93) ||
+         globals->TC_manager.all_device_ok()) ||
         globals->custom_client->key(rm::device::DR16::Key::kD)) {
       Vx += 30;
       if (Vx >= 8400) {
@@ -477,7 +537,7 @@ void ChassisPower() {
       }
     } else if (globals->rc->key(rm::device::DR16::Key::kA) ||
                (globals->tc->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA) &&
-                globals->tc->offline_count < 93) ||
+                globals->TC_manager.all_device_ok()) ||
                globals->custom_client->key(rm::device::DR16::Key::kA)) {
       Vx -= 30;
       if (Vx <= -8400) {
@@ -492,8 +552,8 @@ void ChassisPower() {
   }
 
   rm::i16 V_wheel[4];
-  V_wheel[0] = -Vy + 1.5 * Vx + 1.5 * Vw;
-  V_wheel[1] = Vy + 1.5 * Vx + 1.5 * Vw;
+  V_wheel[0] = -Vy /*+ 1.5 * Vx */ + 1.5 * Vw;
+  V_wheel[1] = Vy /*+ 1.5 * Vx*/ + 1.5 * Vw;
   V_wheel[2] = Vy /*- 1.5 * Vx */ + 1 * Vw;
   V_wheel[3] = -Vy /*- 1.5 * Vx*/ + 1 * Vw;
 
@@ -515,31 +575,36 @@ void ChassisPower() {
   } else {
     overpower = false;
   }
-  if (overpower) {
-    // 超功率
-    power_limit = 130;  // 随便给的
-  } else {
-    power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
-                      ? 50
-                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
-  }
-
-  power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
-
   // 电容离线或电压过低则不允许超功率
   if (globals->cms->cms_v < 15) {
     overpower = false;
   }
   if (overpower) {
-    if (globals->ref.data().power_heat_data.buffer_energy <= 30) {
+    // 超功率
+    power_limit = 180;
+    if (abs(eulerangle_pitch) >= 0.6 && overpower_count > 0) {
+      power_limit = 360;
+      overpower_count--;
+    }
+  } else {
+    power_limit = globals->ref.data().robot_status.chassis_power_limit == 0
+                      ? 50
+                      : static_cast<float>(globals->ref.data().robot_status.chassis_power_limit);
+    overpower_count = 400;
+  }
+
+  power_model.DistributePower<4>(*globals->motor_states, initial_currents, power_limit, output_currents);
+
+  if (overpower) {
+    if (globals->ref.data().power_heat_data.buffer_energy <= 15) {
       for (int i = 0; i < 4; i++)
         globals->chassis_motor[i]->SetCurrent(
-            static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / 60));
+            static_cast<int16_t>(output_currents[i] * (globals->ref.data().power_heat_data.buffer_energy) / (60 * 2)));
     } else {
       for (int i = 0; i < 4; i++) globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     }
   } else {
-    if (globals->ref.data().power_heat_data.buffer_energy >= 50) {
+    if (globals->cms->cms_v >= 25.0) {
       for (int i = 0; i < 4; i++) globals->chassis_motor[i]->SetCurrent(static_cast<int16_t>(output_currents[i]));
     } else {
       for (int i = 0; i < 4; i++)
@@ -588,16 +653,18 @@ void CustomClientUpdate() { globals->custom_client->Unpack(UserRxBuf, UserRxLen)
 Vofa_TxFrame shooter;
 
 void VOFA() {
-  float swhell[6];
-  // swhell[0]=-globals->aimbot_can_communicator->yaw();
-  // swhell[1]=-globals->aimbot_can_communicator->pitch();
-  swhell[0] = globals->imu->gyro_z();
+  float swhell[10];
+  swhell[0] = shooter_1;
   swhell[1] = shooter_2;
   swhell[2] = shooter_3;
   swhell[3] = shooter_4;
   swhell[4] = shooter_5;
   swhell[5] = shooter_6;
-  VOFA_Prepare_Package(swhell, shooter, 6);
+  swhell[6] = eulerangle_pitch;
+  swhell[7] = eulerangle_yaw;
+  swhell[8] = eulerangle_roll;
+  swhell[9] = globals->imu->accel_x();
+  VOFA_Prepare_Package(swhell, shooter, 10);
   VOFA_Send_JustFloat_DMA(&huart1, shooter);
 }
 
@@ -605,3 +672,32 @@ void VOFA() {
 //   globals->cms->SendCapBuffer(globals->ref.data().power_heat_data.buffer_energy);
 //   globals->cms->SendCapPower(globals->ref.data().robot_status.chassis_power_limit);
 // }
+bool key_once_tc(VT03::KeyboardKey key) {
+  static int16_t key_once_flag{0};
+  if (globals->tc->data().keyboard_key & static_cast<int16_t>(key)) {
+    if (!(key_once_flag & static_cast<int16_t>(key))) {
+      // 第一次按下
+      key_once_flag |= static_cast<int16_t>(key); // 标记已处理
+      return true;
+    }
+    return false; // 已经处理过，不再响应
+  } else {
+    key_once_flag &= ~static_cast<int16_t>(key); // 按键松开，清除标记
+    return false;
+  }
+}
+// 多次调用时会有干涉
+bool key_once_rc(DR16::Key key) {
+  static bool key_once_flag{false};
+  if (globals->rc->key(key)) {
+    if (!(key_once_flag)) {
+      // 第一次按下
+      key_once_flag = true;  // 标记已处理
+      return true;
+    }
+    return false;  // 已经处理过，不再响应
+  } else {
+    key_once_flag = false;  // 按键松开，清除标记
+    return false;
+  }
+}
