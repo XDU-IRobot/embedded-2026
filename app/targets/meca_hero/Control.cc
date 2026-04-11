@@ -675,12 +675,12 @@ bool key_once_tc(VT03::KeyboardKey key) {
   if (globals->tc->data().keyboard_key & static_cast<int16_t>(key)) {
     if (!(key_once_flag & static_cast<int16_t>(key))) {
       // 第一次按下
-      key_once_flag |= static_cast<int16_t>(key); // 标记已处理
+      key_once_flag |= static_cast<int16_t>(key);  // 标记已处理
       return true;
     }
-    return false; // 已经处理过，不再响应
+    return false;  // 已经处理过，不再响应
   } else {
-    key_once_flag &= ~static_cast<int16_t>(key); // 按键松开，清除标记
+    key_once_flag &= ~static_cast<int16_t>(key);  // 按键松开，清除标记
     return false;
   }
 }
