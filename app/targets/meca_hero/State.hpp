@@ -65,7 +65,6 @@ class StateMachine {
   GimbalState current_gimbal_state_{GimbalState::kOffline};
   GimbalState last_gimbal_state_{GimbalState::kNormal};
 
-
   int waiting_count_{0};
   int count{0};
 };
