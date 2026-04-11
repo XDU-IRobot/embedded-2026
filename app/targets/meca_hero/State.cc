@@ -78,8 +78,6 @@ void StateMachine::StateUpdate() {
             //   break;
             // case DR16::SwitchPosition::kMid:
             //   current_sub_state_ = SubState::
-
-
           };
         default:
           current_main_state_ = MainState::kTest;
