@@ -13,6 +13,7 @@
 #include "CustomClient.hpp"
 #include "State.hpp"
 #include "CMS.H"
+#include "radar_comm_can copy.hpp"
 /*-------------------------------------------------
  *变量
  */
@@ -20,18 +21,19 @@ inline float follow_d = 0;
 
 inline struct GlobalWarehouse {
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};                       ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}, *uart1{nullptr};  ///< 遥控器串口接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr}; ///< CAN 总线接口
+  rm::hal::Serial *dbus{nullptr}, *uart6{nullptr}, *uart1{nullptr}; ///< 遥控器串口接口
 
   // 设备 //
-  rm::device::DR16 *rc{nullptr};  ///< 遥控器
-  rm::device::VT03 *tc{nullptr};  // 图传遥控器
+  rm::device::DR16 *rc{nullptr}; ///< 遥控器
+  rm::device::VT03 *tc{nullptr}; // 图传遥控器
   // rm::device::GM6020 *yaw_motor{nullptr};                                              ///< 云台 Yaw 电机
   // rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *magazine_motor{nullptr};  ///< 云台 Pitch 电机
-  rm::device::BMI088 *imu{nullptr};  ///< BMI088 IMU
+  rm::device::BMI088 *imu{nullptr}; ///< BMI088 IMU
   rm::device::AimbotCanCommunicator *aimbot_can_communicator{nullptr};
   rm::device::CustomClient *custom_client{nullptr};
   CMS *cms{nullptr};
+  RadarCanCommunicator *radar_can_communicator{nullptr};
   // 创建电机对象
   rm::device::M3508 *chassis_motor_1{nullptr};
   rm::device::M3508 *chassis_motor_2{nullptr};
@@ -76,7 +78,7 @@ inline struct GlobalWarehouse {
   rm::modules::PID *pid_chassis_follow_pos{nullptr};
   rm::modules::PID *pid_chassis_follow_vel{nullptr};
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{840.0f};  ///< mahony 姿态解算器，频率 1000Hz 840.0
+  rm::modules::MahonyAhrs ahrs{840.0f}; ///< mahony 姿态解算器，频率 1000Hz 840.0
   // 底盘功率检测
   rm::device::M3508 *chassis_motor[4] = {nullptr, nullptr, nullptr, nullptr};
   rm::modules::PID *velocity_pids[4] = {nullptr, nullptr, nullptr, nullptr};
@@ -94,6 +96,7 @@ inline struct GlobalWarehouse {
   rm::modules::KeyboardHandler<> tc_keyboard();
 
   rm::device::DeviceManager<1> TC_manager;
+  rm::device::DeviceManager<1> Radar_manager;
 
   void Init() {
     can1 = new rm::hal::Can{hcan1};
@@ -101,11 +104,12 @@ inline struct GlobalWarehouse {
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     uart6 = new rm::hal::Serial{huart6, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     uart1 = new rm::hal::Serial{huart1, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-    aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
+    // aimbot_can_communicator = new rm::device::AimbotCanCommunicator{*can1};
     custom_client = new rm::device::CustomClient;
     cms = new CMS{*can2};
+    radar_can_communicator = new RadarCanCommunicator{*can1};
     // 遥控
-    rc = new rm::device::DR16{*dbus};  // 设置了遥控器以及串口
+    rc = new rm::device::DR16{*dbus}; // 设置了遥控器以及串口
     tc = new rm::device::VT03;
     // IMU
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
@@ -136,8 +140,8 @@ inline struct GlobalWarehouse {
     pid_chassis_3 = new rm::modules::PID{40, 2, 4, 15000, 100};
     pid_chassis_4 = new rm::modules::PID{40, 2, 4, 15000, 100};
 
-    pid_shooter_1 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};  // 20
-    pid_shooter_2 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};  // 20
+    pid_shooter_1 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600}; // 20
+    pid_shooter_2 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600}; // 20
     pid_shooter_3 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
     pid_shooter_4 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
     pid_shooter_5 = new rm::modules::PID{30, 0.000001, 0, 10000, 1600};
@@ -185,11 +189,12 @@ inline struct GlobalWarehouse {
     can1->Begin();
     can2->SetFilter(0, 0);
     can2->Begin();
-    rc->Begin();  // 启动遥控器接收，这行或许比较适合放到AppMain里面？
+    rc->Begin(); // 启动遥控器接收，这行或许比较适合放到AppMain里面？
 
     tc->SetName("TC");
 
     TC_manager << tc;
+    Radar_manager << radar_can_communicator;
   }
 } *globals;
 
@@ -203,7 +208,7 @@ inline float eulerangle_yaw, eulerangle_pitch, eulerangle_roll;
 inline float Gy, Gz, Gx;
 // 拨盘增加角度
 inline float target_magz = 0;
-inline float next_target_magz = 0;  //-6°
+inline float next_target_magz = 0; //-6°
 inline float target_velocity;
 // 左摇杆状态
 inline rm::device::DR16::SwitchPosition l_switch_position_now = rm::device::DR16::SwitchPosition::kUnknown;
@@ -218,7 +223,7 @@ inline float vel;
 inline int counter = 0;
 // 摩擦轮速度
 inline rm::i16 V_shooter_1 = -4605;
-inline rm::i16 V_shooter_2 = -3770;  // 12m/s
+inline rm::i16 V_shooter_2 = -3770; // 12m/s
 inline rm::i16 e_area = 100;
 inline rm::i16 limit = -3000;
 // 摩擦轮速度监测
@@ -298,6 +303,7 @@ void Referee();
 // 自瞄更新
 void AutoaimUpdate();
 void CANAutoaimUpdate();
+void RadarUpdate();
 // 自定义客户端
 void CustomClientUpdate();
 // VOFA监测
@@ -327,4 +333,5 @@ inline int16_t heat_buffer;
 inline bool follow_state{true};
 inline float cms_v{0.0f};
 inline float cms_i{0.0f};
+inline float radar_yaw{0};
 #endif  // BOARDC_MAIN_HPP
