@@ -17,10 +17,27 @@ class StateMachine {
 
   enum class SubState {
     kNoAct,
-    kFollow,
-    kAimbot,
+    kOverPower,
     kSnipe,
+  };
+
+  enum class ChassisState {
+    kOffline,
+    kNormal,
+    kFollow,
+  };
+
+  enum class GimbalState {
+    kOffline,
+    kNormal,
+    kAimbot,
     kRadarAimbot,
+  };
+
+  enum class AmmoState {
+    kOffline,
+    kNormal,
+    kMax,
   };
 
   void StateUpdate();
