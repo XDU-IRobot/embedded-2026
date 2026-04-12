@@ -402,7 +402,6 @@ void Gimbal::ShootEnableUpdate() {
     }
   } else {
     globals->shoot_controller.SetShootFrequency(0.0f);
-    single_shoot_flag_ = false;
   }
   if (gimbal->single_shoot_time_ > 0) {
     gimbal->single_shoot_time_--;
