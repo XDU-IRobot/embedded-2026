@@ -383,12 +383,8 @@ void Gimbal::ShootEnableUpdate() {
       globals->shoot_controller.Fire();
       single_shoot_flag_ = true;
       gimbal->single_shoot_time_ = 200;
-    } else if (gimbal->single_shoot_time_ > 0) {
+    } else {
       globals->shoot_controller.SetShootFrequency(0.0f);
-      gimbal->single_shoot_time_--;
-    } else if (gimbal->single_shoot_time_ == 0) {
-      globals->shoot_controller.SetShootFrequency(0.0f);
-      single_shoot_flag_ = false;
     }
   } else if (globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown ||  // 手动强制连发
              (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kDown &&
@@ -406,6 +402,11 @@ void Gimbal::ShootEnableUpdate() {
     }
   } else {
     globals->shoot_controller.SetShootFrequency(0.0f);
+    single_shoot_flag_ = false;
+  }
+  if (gimbal->single_shoot_time_ > 0) {
+    gimbal->single_shoot_time_--;
+  } else if (gimbal->single_shoot_time_ == 0) {
     single_shoot_flag_ = false;
   }
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
