@@ -125,7 +125,7 @@ void GlobalWarehouse::ChassisPIDInit() {
 void GlobalWarehouse::ShootPIDInit() {
   shoot_controller.pid().fric_1_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().fric_2_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
-  shoot_controller.pid().loader_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().loader_position.SetKp(0.3f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_speed.SetKp(8.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
 }
 

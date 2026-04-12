@@ -83,7 +83,7 @@ inline struct GlobalWarehouse {
   rm::modules::MahonyAhrs ahrs{500.0f};         ///< 姿态解算器
   GimbalDoubleYaw gimbal_controller;            ///< 二轴双 Yaw 云台控制器
   QuadOmniChassis chassis_controller;           ///< 四轮转向底盘控制器
-  Shoot3Fric shoot_controller{9, 19.2f, true};  ///< 三摩擦轮发射机构控制器，8发拨盘
+  Shoot3Fric shoot_controller{9, 17.0666f, true};  ///< 三摩擦轮发射机构控制器，8发拨盘
   EncoderCounter dail_encoder_counter;          ///< 云台 Yaw 下部电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态

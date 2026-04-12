@@ -23,11 +23,11 @@ class Shoot3Fric {
 
     state_.loader_position = loader_position;
     if (direction_) {
-      if (loader_position >= target_.loader_position - 6500.0f) {
+      if (loader_position >= target_.loader_position - 1500.0f) {
         single_shoot_complete_ = true;
       }
     } else {
-      if (loader_position <= target_.loader_position + 6500.0f) {
+      if (loader_position <= target_.loader_position + 1500.0f) {
         single_shoot_complete_ = true;
       }
     }
@@ -55,12 +55,13 @@ class Shoot3Fric {
     // 拨盘PID
     if (single_shoot_complete_ == false && mode_ == kSingleShot) {
       // 单发模式，位置-速度串级PID
-      pid_.loader_position.Update(target_.loader_position, state_.loader_position, dt);
+      // pid_.loader_position.Update(target_.loader_position, state_.loader_position, dt);
+      // pid_.loader_speed.Update(pid_.loader_position.out(), state_.loader_speed, dt);
       int16_t single_loader_speed;
       if (direction_) {
-        single_loader_speed = 2000.0f;
+        single_loader_speed = 1500.0f;
       } else {
-        single_loader_speed = -2000.0f;
+        single_loader_speed = -1500.0f;
       }
       pid_.loader_speed.Update(single_loader_speed, state_.loader_speed, dt);
       output_.loader = pid_.loader_speed.out();
