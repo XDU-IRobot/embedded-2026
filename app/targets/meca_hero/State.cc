@@ -9,20 +9,20 @@ DR16::SwitchPosition rc_switch_position_l;
 void StateMachine::DT7Switch() {
   // DT7控制模式
   switch (rc_switch_position_r) {
-    case DR16::SwitchPosition::kUnknown: ///保险
+    case DR16::SwitchPosition::kUnknown:  /// 保险
       current_main_state_ = MainState::kOffline;
       break;
 
-    case DR16::SwitchPosition::kDown: ///失能
+    case DR16::SwitchPosition::kDown:  /// 失能
       current_main_state_ = MainState::kOffline;
       break;
 
-    case DR16::SwitchPosition::kMid: ///调试
+    case DR16::SwitchPosition::kMid:  /// 调试
       switch (current_main_state_) {
         case MainState::kOffline:
           current_main_state_ = MainState::kWaiting;
           break;
-        case MainState::kWaiting: ////使能时间段
+        case MainState::kWaiting:  ////使能时间段
           if (count > 0) {
             count--;
           } else {
@@ -32,10 +32,10 @@ void StateMachine::DT7Switch() {
           }
         case MainState::kTest:
           switch (rc_switch_position_l) {
-            case DR16::SwitchPosition::kDown: /// 普通遥控
+            case DR16::SwitchPosition::kDown:  /// 普通遥控
               current_sub_state_ = SubState::kNormal;
               break;
-            case DR16::SwitchPosition::kMid: /// 超功率+上坡（应该直接加pitch无力
+            case DR16::SwitchPosition::kMid:  /// 超功率+上坡（应该直接加pitch无力
               current_sub_state_ = SubState::kOverPower;
               break;
             case DR16::SwitchPosition::kUp:
@@ -89,16 +89,16 @@ void StateMachine::StateUpdate() {
   rc_switch_position_r = globals->rc->switch_r();
 
   // 子模式状态位
-  static bool follow{true}; // 随动标志位
+  static bool follow{true};  // 随动标志位
   if (key_once_tc(VT03::KeyboardKey::kC)) follow = !follow;
-  static bool snipe{false}; // 部署标志位
+  static bool snipe{false};  // 部署标志位
   if (key_once_tc(VT03::KeyboardKey::kG)) snipe = !snipe;
-  bool radar_aimbot = globals->tc->data().right_button; // 部署模式下的雷达自瞄
-  bool overpower = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift); // 爬坡-自动触发
+  bool radar_aimbot = globals->tc->data().right_button;  // 部署模式下的雷达自瞄
+  bool overpower = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kShift);  // 爬坡-自动触发
   bool aimbot = globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl) |
-                globals->tc->data().right_button; // 常态模式下的装甲板自瞄
+                globals->tc->data().right_button;  // 常态模式下的装甲板自瞄
   bool autofire =
-      globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl); // 自瞄决定开火标志位
+      globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl);  // 自瞄决定开火标志位
 
   //
   last_sub_state_ = current_sub_state_;

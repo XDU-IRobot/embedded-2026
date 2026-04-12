@@ -1,11 +1,10 @@
 #pragma once
 
 class StateMachine {
-public:
+ public:
   StateMachine() = delete;
 
-  explicit StateMachine(int waiting_count) : waiting_count_(waiting_count), count(waiting_count) {
-  }
+  explicit StateMachine(int waiting_count) : waiting_count_(waiting_count), count(waiting_count) {}
 
   void SetWaitingCount(int count) { waiting_count_ = count; }
 
@@ -47,14 +46,13 @@ public:
   void StateUpdate();
   void DT7Switch();
 
-
   [[nodiscard]] MainState getMainState() const { return current_main_state_; };
   [[nodiscard]] SubState getSubState() const { return current_sub_state_; };
   [[nodiscard]] ChassisState getChassisState() const { return current_chassis_state_; };
   [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; };
   [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; };
 
-private:
+ private:
   MainState current_main_state_{MainState::kOffline};
   MainState last_main_state_{MainState::kOffline};
 
