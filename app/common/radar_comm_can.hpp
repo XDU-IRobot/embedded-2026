@@ -12,7 +12,7 @@ class RadarCanCommunicator final : public CanDevice {
 
   [[nodiscard]] u16 distance_mm() const { return distance_mm_; };
   [[nodiscard]] u16 planner_distance_mm() const { return planner_distance_mm_; };
-  [[nodiscard]] float yaw_mard() const { return static_cast<float>(yaw_mard_/1000.0); };
+  [[nodiscard]] float yaw_mard() const { return static_cast<float>(yaw_mard_ / 1000.0); };
   [[nodiscard]] u8 status() const { return status_; };
   [[nodiscard]] bool vaild() const { return vaild_; };
   [[nodiscard]] bool fresh() const { return fresh_; };
