@@ -299,7 +299,7 @@ void GimbalControl() {
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
 
-  globals->gyro_rectification = 0.0015 - eulerangle_pitch / 0.6644 * 0.0042;
+  globals->gyro_rectification = 0.00040 - eulerangle_pitch / 0.6644 * 0.0042;
   // 监测imu
   Gy = globals->imu->gyro_y();
   Gz = gyro_z;
@@ -330,7 +330,8 @@ void GimbalControl() {
   last_target_pos_pitch = target_pos_pitch;
 
   aimbot_state_flag = globals->aimbot_can_communicator->aimbot_target();
-  if (/*aimbot_state_flag > 0*/(globals->radar_can_communicator->vaild() && globals->radar_can_communicator->fresh()&&globals->Radar_manager.all_device_ok()) &&
+  if (/*aimbot_state_flag > 0*/(globals->radar_can_communicator->vaild() && globals->radar_can_communicator->fresh() &&
+                                globals->Radar_manager.all_device_ok()) &&
                                (((globals->rc->dial() >= 500 || globals->rc->dial() <= -500) &&
                                  l_switch_position_now != device::DR16::SwitchPosition::kUp) ||
                                 r_switch_position_now == device::DR16::SwitchPosition::kUp || globals->rc->
@@ -338,7 +339,13 @@ void GimbalControl() {
                                 globals->tc->data().mouse_button_right || globals->custom_client->mouse_right() ||
                                 globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kCtrl))) {
     /*target_pos_yaw = -globals->aimbot_can_communicator->yaw() / 57.3;*/
-    target_pos_yaw -= globals->radar_can_communicator->yaw_mard();
+    static int count{0};
+    if (count < 840 * 2) {
+      count++;
+    } else {
+      target_pos_yaw = eulerangle_yaw - globals->radar_can_communicator->yaw_mard();
+      count = 0;
+    }
 
     //-aimbot.USB_Rx.YawRelativeAngle;usb
 
@@ -488,9 +495,9 @@ void ChassisPower() {
   }
   if ((globals->tc->data().keyboard_key & static_cast<int16_t>(VT03::KeyboardKey::kC)) ||
       globals->rc->key(DR16::Key::kC)) {
-    follow_state = false;
-  } else {
     follow_state = true;
+  } else {
+    follow_state = false;
   }
 
   if (follow_state) {
