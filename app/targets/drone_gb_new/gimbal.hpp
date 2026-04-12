@@ -109,8 +109,8 @@ class Gimbal {
   void GimbalPIDInit() {
     gimbal_controller.pid().yaw_position.SetKp(150.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
     gimbal_controller.pid().yaw_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
-    gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    gimbal_controller.pid().pitch_position.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
 
   void AmmoPIDInit() {
@@ -132,7 +132,10 @@ class Gimbal {
         break;
     }
     switch (rc->switch_l()) {
-      case rm::device::DR16::SwitchPosition::kDown:  // 只有下打有力
+      case rm::device::DR16::SwitchPosition::kUp:  // 上打自瞄
+        GimbalState_ = kAuto;
+        break;
+      case rm::device::DR16::SwitchPosition::kMid:  // 手动
         GimbalState_ = kManual;
         break;
       default:
@@ -169,6 +172,38 @@ class Gimbal {
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     }
+    // else if (GimbalState_ == kAuto) {
+    //   if (DM_is_enable == false) {  // 使达妙电机使能
+    //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    //     DM_is_enable = true;
+    //     gimbal_controller.Enable(true);
+    //     // gimbal_controller_SMC.Enable(true);
+    //     // gimbal_controller_STASMC.Enable(true);
+    //     rc_yaw_data = yaw;
+    //     rc_pitch_data = rm::modules::Wrap(pitch , 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+    //     rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
+    //   }
+    //
+    //   if (Aimbot.AimbotState) {
+    //     rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
+    //     rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+    //
+    //     rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + M_PI, 0, 2 * M_PI);
+    //     rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
+    //   } else {
+    //     rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+    //
+    //     rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+    //
+    //     rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
+    //
+    //     rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
+    //   }
+    //   gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
+    //   gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch , 0, 2 * M_PI),
+    //                            pitch_motor->vel(), 2.f);
+    //   yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
+    // }
     else {
       if (DM_is_enable == true) {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
@@ -178,6 +213,9 @@ class Gimbal {
       }
     }
   }
+
+  // void AmmoControl();      // 摩擦轮控制
+  // void Referee_control();  // 裁判系统链路
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz() {
@@ -189,8 +227,12 @@ class Gimbal {
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
 
+    Ayaw_=yaw;
+    Apitch_=pitch;
+
     RCStateUpdate();                               // 遥控器更新
     GimbalControl();                               // 云台控制更新
+    // AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
     anum++;                                        // 调试
   }
@@ -210,6 +252,7 @@ class Gimbal {
   }
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
+      // Referee_control();
     }
   }
   void SubLoop10Hz() {

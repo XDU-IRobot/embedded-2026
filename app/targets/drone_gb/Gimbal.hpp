@@ -33,23 +33,23 @@ extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
 
 class Gimbal {
  public:
-  // int abcdefg = 0;
-  //
-  // Buzzer *buzzer{nullptr};  // 蜂鸣器
-  // rm::modules::BuzzerController<
-  //     rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
-  //     rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
-  //     rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
-  //     rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
-  //     buzzer_controller;
-  // LED *led{nullptr};  // RGB LED灯
-  // rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
-  //                               rm::modules::led_pattern::GreenBreath,
-  //                               rm::modules::led_pattern::RgbFlow>
-  //     led_controller;           // RGB LED控制器
+  int abcdefg = 0;
+
+  Buzzer *buzzer{nullptr};  // 蜂鸣器
+  rm::modules::BuzzerController<
+      rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup, rm::modules::buzzer_melody::Success,
+      rm::modules::buzzer_melody::Error, rm::modules::buzzer_melody::SuperMario, rm::modules::buzzer_melody::SeeUAgain,
+      rm::modules::buzzer_melody::TheLick, rm::modules::buzzer_melody::Beeps<1>, rm::modules::buzzer_melody::Beeps<2>,
+      rm::modules::buzzer_melody::Beeps<3>, rm::modules::buzzer_melody::Beeps<4>, rm::modules::buzzer_melody::Beeps<5>>
+      buzzer_controller;
+  LED *led{nullptr};  // RGB LED灯
+  rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
+                                rm::modules::led_pattern::GreenBreath,
+                                rm::modules::led_pattern::RgbFlow>
+      led_controller;           // RGB LED控制器
   rm::hal::Can *can1{nullptr};  // CAN 总线接口
-  // rm::hal::SerialInterface *referee_uart;  //裁判系统串口
-  // rm::device::RxReferee *rx_referee{nullptr};
+  rm::hal::SerialInterface *referee_uart;  //裁判系统串口
+  rm::device::RxReferee *rx_referee{nullptr};
   rm::hal::Serial *dbus{nullptr};              // 遥控器串口接口
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
@@ -107,19 +107,19 @@ class Gimbal {
   float pitch_min_pos = 2.94;   // TODO pitch电机最小限位1.6原来的参数
   float pitch_max_pos = 4.15;  // TODO pitch电机最大限位2.75
 
-  // i16 encoder_dirl = 0;
-  // int single_shoot_time = 28;       // TODO 单发时间
-  // int single_shoot_mid = 0;         // 单发中间变量
-  // bool single_flag = 0;             // 单发射击标志位
-  // float dirl_speed = 5000;          // TODO 拨盘转速
-  // float redirl_speed = 1000;        // TODO 拨盘反转速
-  // float friction_speed = 6500;      // TODO 摩擦轮转速
-  // float target_fire_speed = 23.0f;  // TODO 目标射速
-  // // 拨盘自动反转
-  // float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
-  // int auto_reverse_time_max = 150;                           // TODO 反转持续时间
-  // int auto_reverse_time = 0;                                 // 持续时间变量
-  // bool auto_reverse_flag = false;                            // 反转标志位
+  i16 encoder_dirl = 0;
+  int single_shoot_time = 28;       // TODO 单发时间
+  int single_shoot_mid = 0;         // 单发中间变量
+  bool single_flag = 0;             // 单发射击标志位
+  float dirl_speed = 5000;          // TODO 拨盘转速
+  float redirl_speed = 1000;        // TODO 拨盘反转速
+  float friction_speed = 6500;      // TODO 摩擦轮转速
+  float target_fire_speed = 23.0f;  // TODO 目标射速
+  // 拨盘自动反转
+  float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
+  int auto_reverse_time_max = 150;                           // TODO 反转持续时间
+  int auto_reverse_time = 0;                                 // 持续时间变量
+  bool auto_reverse_flag = false;                            // 反转标志位
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
   bool roll_comp_enable = true;  // TODO 滚转补偿开关
@@ -497,127 +497,127 @@ class Gimbal {
     }
   }
 
-  // 发射机构控制
-  // void AmmoControl() {
-  //   // 发射状态
-  //   if (AmmoState_ == kFire) {
-  //     shoot_controller.Enable(true);
-  //     shoot_controller.Arm(true);
-  //     shoot_controller.SetMode(Shoot2Fric::kFullAuto);
-  //
-  //     if (SINGLE_SHOOT_MOOD == 1) {
-  //       if (Aimbot.AimbotState & (0x1 << 3) || (encoder_dirl < 550 && rc->dial() >= 550)) single_flag = true;
-  //       encoder_dirl = rc->dial();
-  //
-  //       if (single_flag) {
-  //         if (single_shoot_mid >= single_shoot_time) {
-  //           single_flag = false;
-  //           single_shoot_mid = 0;
-  //         } else {
-  //           shoot_controller.SetLoaderSpeed(dirl_speed);
-  //           single_shoot_mid++;
-  //         }
-  //       } else {
-  //         shoot_controller.SetLoaderSpeed(0);
-  //       }
-  //     } else {
-  //       if (rc->dial() >= 550 || rc->mouse_button_left()) {
-  //         if (auto_reverse_flag) {
-  //           shoot_controller.SetLoaderSpeed(-redirl_speed);
-  //           auto_reverse_time--;
-  //           auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
-  //         } else {
-  //           if (GimbalState_ == kAuto) {
-  //             if (Aimbot.AimbotState && Aimbot.AutoFire) {
-  //               shoot_controller.SetLoaderSpeed(dirl_speed);
-  //             } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
-  //               shoot_controller.SetLoaderSpeed(0.0f);
-  //             } else {
-  //               shoot_controller.SetLoaderSpeed(dirl_speed);
-  //             }
-  //           } else {
-  //             shoot_controller.SetLoaderSpeed(dirl_speed);
-  //           }
-  //         }
-  //       } else if (rc->dial() <= -600) {
-  //         shoot_controller.SetLoaderSpeed(-redirl_speed);
-  //       } else {
-  //         shoot_controller.SetLoaderSpeed(0.0f);
-  //       }
-  //
-  //       // 自动反转逻辑
-  //       if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
-  //         auto_reverse_buffer[4] = auto_reverse_buffer[3];
-  //         auto_reverse_buffer[3] = auto_reverse_buffer[2];
-  //         auto_reverse_buffer[2] = auto_reverse_buffer[1];
-  //         auto_reverse_buffer[1] = auto_reverse_buffer[0];
-  //         auto_reverse_buffer[0] = dial_motor->encoder();
-  //         if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
-  //           auto_reverse_flag = true;
-  //           auto_reverse_time = auto_reverse_time_max;
-  //         }
-  //       }
-  //     }
-  //     shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
-  //     shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
-  //
-  //     friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
-  //     friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
-  //     dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
-  //
-  //   }
-  //
-  //   // 准备状态
-  //   else if (AmmoState_ == kReady) {
-  //     shoot_controller.Enable(true);
-  //     shoot_controller.Arm(true);
-  //
-  //     shoot_controller.SetMode(Shoot2Fric::kStop);
-  //     shoot_controller.SetArmSpeed(0.0f);
-  //
-  //     shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
-  //
-  //     friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
-  //     friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
-  //     dial_motor->SetCurrent(0);
-  //   }
-  //
-  //   // 停止状态
-  //   else {
-  //     shoot_controller.Enable(false);
-  //     shoot_controller.Arm(false);
-  //     friction_left->SetCurrent(0);
-  //     friction_right->SetCurrent(0);
-  //     dial_motor->SetCurrent(0);
-  //   }
-  // }
-  //
-  // void Referee_control() {
-  //   if (referee_data_buffer.data().shoot_data.initial_speed != 0 &&
-  //       referee_data_buffer.data().shoot_data.initial_speed != referee_fire_speed[0]) {
-  //     float x = referee_data_buffer.data().shoot_data.initial_speed;
-  //     referee_fire_speed[4] = referee_fire_speed[3];
-  //     referee_fire_speed[3] = referee_fire_speed[2];
-  //     referee_fire_speed[2] = referee_fire_speed[1];
-  //     referee_fire_speed[1] = referee_fire_speed[0];
-  //     referee_fire_speed[0] = x;
-  //
-  //     if (!fire_speed_ema_inited) {
-  //       fire_speed_ema = x;
-  //       fire_speed_ema_inited = true;
-  //     } else {
-  //       float x_used = x;
-  //       const float diff = x - fire_speed_ema;
-  //       if (diff > kMaxStep) x_used = fire_speed_ema + kMaxStep;
-  //       if (diff < -kMaxStep) x_used = fire_speed_ema - kMaxStep;
-  //       fire_speed_ema = (1.0f - kAlpha) * fire_speed_ema + kAlpha * x_used;
-  //     }
-  //
-  //     fire_speed_average = fire_speed_ema;
-  //   }
-  //   if (fire_speed_average > 15)
-  //     friction_speed += rm::modules::Clamp((fire_speed_average - target_fire_speed) / 80.0f, -5, 5);
-  // }
+  //发射机构控制
+  void AmmoControl() {
+    // 发射状态
+    if (AmmoState_ == kFire) {
+      shoot_controller.Enable(true);
+      shoot_controller.Arm(true);
+      shoot_controller.SetMode(Shoot2Fric::kFullAuto);
+
+      if (SINGLE_SHOOT_MOOD == 1) {
+        if (Aimbot.AimbotState & (0x1 << 3) || (encoder_dirl < 550 && rc->dial() >= 550)) single_flag = true;
+        encoder_dirl = rc->dial();
+
+        if (single_flag) {
+          if (single_shoot_mid >= single_shoot_time) {
+            single_flag = false;
+            single_shoot_mid = 0;
+          } else {
+            shoot_controller.SetLoaderSpeed(dirl_speed);
+            single_shoot_mid++;
+          }
+        } else {
+          shoot_controller.SetLoaderSpeed(0);
+        }
+      } else {
+        if (rc->dial() >= 550 || rc->mouse_button_left()) {
+          if (auto_reverse_flag) {
+            shoot_controller.SetLoaderSpeed(-redirl_speed);
+            auto_reverse_time--;
+            auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
+          } else {
+            if (GimbalState_ == kAuto) {
+              if (Aimbot.AimbotState && Aimbot.AutoFire) {
+                shoot_controller.SetLoaderSpeed(dirl_speed);
+              } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
+                shoot_controller.SetLoaderSpeed(0.0f);
+              } else {
+                shoot_controller.SetLoaderSpeed(dirl_speed);
+              }
+            } else {
+              shoot_controller.SetLoaderSpeed(dirl_speed);
+            }
+          }
+        } else if (rc->dial() <= -600) {
+          shoot_controller.SetLoaderSpeed(-redirl_speed);
+        } else {
+          shoot_controller.SetLoaderSpeed(0.0f);
+        }
+
+        // 自动反转逻辑
+        if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
+          auto_reverse_buffer[4] = auto_reverse_buffer[3];
+          auto_reverse_buffer[3] = auto_reverse_buffer[2];
+          auto_reverse_buffer[2] = auto_reverse_buffer[1];
+          auto_reverse_buffer[1] = auto_reverse_buffer[0];
+          auto_reverse_buffer[0] = dial_motor->encoder();
+          if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
+            auto_reverse_flag = true;
+            auto_reverse_time = auto_reverse_time_max;
+          }
+        }
+      }
+      shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
+      shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
+
+      friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
+      friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
+      dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
+
+    }
+
+    // 准备状态
+    else if (AmmoState_ == kReady) {
+      shoot_controller.Enable(true);
+      shoot_controller.Arm(true);
+
+      shoot_controller.SetMode(Shoot2Fric::kStop);
+      shoot_controller.SetArmSpeed(0.0f);
+
+      shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
+
+      friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
+      friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
+      dial_motor->SetCurrent(0);
+    }
+
+    // 停止状态
+    else {
+      shoot_controller.Enable(false);
+      shoot_controller.Arm(false);
+      friction_left->SetCurrent(0);
+      friction_right->SetCurrent(0);
+      dial_motor->SetCurrent(0);
+    }
+  }
+
+  void Referee_control() {
+    if (referee_data_buffer.data().shoot_data.initial_speed != 0 &&
+        referee_data_buffer.data().shoot_data.initial_speed != referee_fire_speed[0]) {
+      float x = referee_data_buffer.data().shoot_data.initial_speed;
+      referee_fire_speed[4] = referee_fire_speed[3];
+      referee_fire_speed[3] = referee_fire_speed[2];
+      referee_fire_speed[2] = referee_fire_speed[1];
+      referee_fire_speed[1] = referee_fire_speed[0];
+      referee_fire_speed[0] = x;
+
+      if (!fire_speed_ema_inited) {
+        fire_speed_ema = x;
+        fire_speed_ema_inited = true;
+      } else {
+        float x_used = x;
+        const float diff = x - fire_speed_ema;
+        if (diff > kMaxStep) x_used = fire_speed_ema + kMaxStep;
+        if (diff < -kMaxStep) x_used = fire_speed_ema - kMaxStep;
+        fire_speed_ema = (1.0f - kAlpha) * fire_speed_ema + kAlpha * x_used;
+      }
+
+      fire_speed_average = fire_speed_ema;
+    }
+    if (fire_speed_average > 15)
+      friction_speed += rm::modules::Clamp((fire_speed_average - target_fire_speed) / 80.0f, -5, 5);
+  }
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz() {
