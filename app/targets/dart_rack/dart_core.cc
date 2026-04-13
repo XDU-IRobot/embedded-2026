@@ -5,7 +5,7 @@
 #include "dart_core.hpp"
 
 DartRack *dart_rack;
-float yaw;
+float yaw_mot;
 void DartRack::Init() {
   // PID初始化
   load_motor_l_speed_pid_.SetKp(5).SetKi(1).SetKd(0).SetMaxOut(10000).SetMaxIout(0);

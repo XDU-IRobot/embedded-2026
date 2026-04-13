@@ -20,6 +20,7 @@ void Gimbal::GimbalStateUpdate() {
         switch (gimbal->GimbalMove_) {
           case kGbRemote:
             gimbal->GimbalEnableUpdate();  // 云台电机使能计算
+            break;
           case kGbAimbot:
             gimbal->GimbalDisableUpdate();  // 云台电机失能计算
             break;
@@ -38,7 +39,7 @@ void Gimbal::GimbalStateUpdate() {
 void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(globals->rc->left_x(), -globals->rc_max_value_, globals->rc_max_value_,
                                                  -gimbal->sensitivity_, gimbal->sensitivity_);  // 上部yaw轴目标值
-  gimbal->gimbal_pitch_target_ -= rm::modules::Map(globals->rc->left_y(), -globals->rc_max_value_,  // pitch轴目标值
+  gimbal->gimbal_pitch_target_ += rm::modules::Map(globals->rc->left_y(), -globals->rc_max_value_,  // pitch轴目标值
                                                    globals->rc_max_value_, -gimbal->sensitivity_, gimbal->sensitivity_);
   gimbal->gimbal_yaw_target_ =
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, -static_cast<f32>(M_PI), M_PI);  // yaw轴周期限位
@@ -112,7 +113,9 @@ void Gimbal::DaMiaoMotorEnable() {
   if (gimbal->DM_enable_flag_ == false) {
     // 使达妙电机使能
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    HAL_Delay(0.003);
     globals->yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    HAL_Delay(0.003);
     gimbal->DM_enable_flag_ = true;
   }
 }
@@ -120,8 +123,11 @@ void Gimbal::DaMiaoMotorEnable() {
 void Gimbal::DaMiaoMotorDisable() {
   if (gimbal->DM_enable_flag_ == true) {
     // 使达妙电机失能
+    // while (globals->yaw_motor->status())
     globals->yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    HAL_Delay(0.003);
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    HAL_Delay(0.003);
     gimbal->DM_enable_flag_ = false;
   }
 }

@@ -48,21 +48,21 @@ void GlobalWarehouse::Init() {
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  chassis_communicate = new Communicate{*can2};
 
   rc = new rm::device::DR16{*dbus};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   yaw_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can2, {0x21, 0x11, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
-      {*can2, {0x22, 0x12, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
+      {*can2, {0x13, 0x12, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   dial_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>
-      {*can2, {0x10, 0x09, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
-  friction_left = new rm::device::M3508{*can1, 2};
-  friction_right = new rm::device::M3508{*can1, 3};
+      {*can2, {0x10, 0x09, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}},true};
+  friction_left = new rm::device::M3508{*can1, 2,};
+  friction_right = new rm::device::M3508{*can1, 3,true};
   friction_up = new rm::device::M3508{*can1, 1};
 
   yaw_speed_feedforward = new YawSpeedFeedforward(0.002, 1);
-  shoot3_fric = new Shoot3Fric(6,1.f);
 
   can1->SetFilter(0, 0);
   can2->SetFilter(0, 0);
@@ -79,28 +79,43 @@ void GlobalWarehouse::Init() {
 
   globals->GimbalPIDInit();
   gimbal->GimbalInit();
+  globals->ShootInit();
 }
 
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
-  gimbal_controller.pid().yaw_speed.SetKp(0.4f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.f);
+  gimbal_controller.pid().yaw_position.SetKp(48.0f).SetKi(0.0f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
+  gimbal_controller.pid().yaw_speed.SetKp(1.2f).SetKi(0.04f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.8f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(18.0f).SetKi(0.f).SetKd(2.0f).SetMaxOut(10000.0f).SetMaxIout(0.f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.f).SetKd(0.15f).SetMaxOut(10.0f).SetMaxIout(0.f);
+  gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.f).SetKd(0.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.f).SetKd(0.f).SetMaxOut(10.0f).SetMaxIout(0.f);
+}
+
+void GlobalWarehouse::ShootInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  if (globals->device_rc.all_device_ok()) switch (globals->rc->switch_r()) {
+  //if (globals->device_rc.all_device_ok())
+    switch (globals->rc->switch_r()) {
       case rm::device::DR16::SwitchPosition::kUp:
         // 右拨杆打到最上侧挡位
         switch (globals->rc->switch_l()) {
           case rm::device::DR16::SwitchPosition::kDown:
+            globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+            gimbal->GimbalMove_ = kGbRemote;
+            break;
           case rm::device::DR16::SwitchPosition::kMid:
+            globals->StateMachine_ = kNoForce;
+            gimbal->GimbalMove_ = kNoForce;
+            break;
           case rm::device::DR16::SwitchPosition::kUp:
+            globals->StateMachine_ = kNoForce;
+            gimbal->GimbalMove_ = kNoForce;
+            break;
           default:
-            globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+            globals->StateMachine_ = kNoForce;
+            gimbal->GimbalMove_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
             break;
         }
         break;
@@ -122,15 +137,63 @@ void GlobalWarehouse::RCStateUpdate() {
             break;
           default:
             globals->StateMachine_ = kNoForce;
+            gimbal->GimbalMove_ = kNoForce;
             break;
         }
         break;
 
       case rm::device::DR16::SwitchPosition::kDown:
+        globals->StateMachine_ = kNoForce;
+        gimbal->GimbalMove_ = kNoForce;
+        break;
       default:
         globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
+        gimbal->GimbalMove_ = kNoForce;
         break;
     }
+}
+
+void GlobalWarehouse::CommunicateUpdate() {
+  switch (rc->switch_r()) {
+    case DR16::SwitchPosition::kMid :
+      mychassis._command.chassis.state = ChassisState::FOLLOW;
+      break;
+    case DR16::SwitchPosition::kUp :
+      mychassis._command.chassis.state = ChassisState::ROTATE;
+      break;
+    case DR16::SwitchPosition::kDown :
+      mychassis._command.chassis.state = ChassisState::UNABLE;
+      break;
+    default:
+      mychassis._command.chassis.state = ChassisState::UNABLE;
+      break;
+  }
+
+  switch (rc->switch_l()) {
+    case DR16::SwitchPosition::kUp :
+      mychassis._command.chassis.leg_length = LegLength::HIGH;
+      break;
+    case DR16::SwitchPosition::kMid :
+      mychassis._command.chassis.leg_length = LegLength::NORMAL;
+      break;
+    case DR16::SwitchPosition::kDown:
+      mychassis._command.chassis.leg_length = LegLength::LOW;
+      break;
+    default:
+      mychassis._command.chassis.leg_length = LegLength::LOW;
+      break;
+  }
+
+  mychassis._command.chassis.move_x = static_cast<int8_t>(rc->left_x() * 127.0f / 660.0f);
+  mychassis._command.chassis.move_y = static_cast<int8_t>(rc->left_y() * 127.0f / 660.0f);
+
+  mychassis._command.ui.ui1 = 0;
+  mychassis._command.ui.ui2 = 0;
+  mychassis._command.ui.ui3 = 0;
+  mychassis._command.ui.ui4 = 0;
+
+  chassis_communicate->SendChassisCommand();
+
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
@@ -142,11 +205,15 @@ void GlobalWarehouse::SubLoop500Hz() {
 
   globals->RCStateUpdate();
   gimbal->GimbalTask();
+  globals->CommunicateUpdate();
 
   // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
   // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
   globals->yaw_motor->SetPosition(0, 0, 0 ,0, 0);
   globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
+  globals->dial_motor->SetPosition(0,0,0,0,0);
+
+  Deubg();
 }
 
 void GlobalWarehouse::SubLoop250Hz() {
@@ -175,4 +242,30 @@ void GlobalWarehouse::SubLoop10Hz() {
   if (globals->time_ % 50 == 0) {
     globals->time_ = 0;
   }
+}
+
+f32 fric_l,fric_r,fric_up,yaw_mot,pitch_mot,dial_mot_pos,dial_mot_rpm,yaw,pitch,roll,yaw_t,pitch_t,left_x,yaw_satus;
+rm::device::DR16::SwitchPosition left_s,right_s;
+f32 yaw_pid_out,pitch_pid_out,fric_l_out,fric_r_out,fric_up_out,yaw_pos;
+void GlobalWarehouse::Deubg() {
+    fric_l = friction_left->rpm();
+    fric_r = friction_right->rpm();
+    fric_up = friction_up->rpm();
+    yaw_mot = yaw_motor->pos();
+    pitch_mot = pitch_motor->pos();
+    dial_mot_pos = dial_motor->pos();
+    dial_mot_rpm = dial_motor->vel();
+    yaw = ahrs.euler_angle().yaw;
+    pitch = ahrs.euler_angle().pitch;
+    roll = ahrs.euler_angle().roll;
+    yaw_t = gimbal_controller.target().yaw_position;
+    pitch_t = gimbal_controller.target().pitch_position;
+    left_x = rc->left_x();
+    left_s = rc->switch_l();
+    right_s = rc->switch_r();
+    yaw_satus = yaw_motor->status();
+    yaw_pid_out = gimbal_controller.pid().yaw_position.out();
+    pitch_pid_out = gimbal_controller.pid().pitch_position.out();
+    yaw_pos = yaw_motor->pos();
+
 }

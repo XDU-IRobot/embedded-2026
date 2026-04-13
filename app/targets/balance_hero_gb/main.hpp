@@ -9,7 +9,7 @@
 #include "yaw_speed_feedforward.hpp"
 #include "gimbal_solver_withRoll.hpp"
 #include "aimbot_comm_can.hpp"
-#include "controllers/shoot_3fric.hpp"
+#include "Communicate.h"
 
 // 状态机
 typedef enum {
@@ -58,9 +58,10 @@ inline struct GlobalWarehouse {
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};             ///< 姿态解算器
   Gimbal2Dof gimbal_controller;                     ///< 二轴双 Yaw 云台控制器
-  Shoot3Fric *shoot3_fric;
   YawSpeedFeedforward *yaw_speed_feedforward;       ///< yaw轴速度前馈
   Gimbal_Solver_WithRoll *gimbal_solver_with_roll;  ///< roll轴补偿
+
+  Communicate *chassis_communicate{nullptr};
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
   u_int8_t time_ = 0;                           // 主程序计数器
@@ -87,14 +88,18 @@ inline struct GlobalWarehouse {
 
   void SubLoop10Hz();
 
+  void Deubg();
+
  private:
   void GimbalPIDInit();
 
   void ChassisPIDInit();
 
-  void ShootPIDInit();
+  void ShootInit();
 
   void RCStateUpdate();
+
+  void CommunicateUpdate();
 } *globals;
 
 #endif  // MAIN_HPP
