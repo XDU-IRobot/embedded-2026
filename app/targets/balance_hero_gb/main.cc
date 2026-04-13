@@ -86,8 +86,8 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(48.0f).SetKi(0.0f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
-  gimbal_controller.pid().yaw_speed.SetKp(1.2f).SetKi(0.04f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.8f);
+  gimbal_controller.pid().yaw_position.SetKp(40.0f).SetKi(0.0f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
+  gimbal_controller.pid().yaw_speed.SetKp(1.f).SetKi(0.04f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.8f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.f).SetKd(0.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
   gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.f).SetKd(0.f).SetMaxOut(10.0f).SetMaxIout(0.f);
@@ -189,10 +189,11 @@ void GlobalWarehouse::CommunicateUpdate() {
   // 当准备进入跟随或小陀螺模式时，若 yaw 未到达特定角度，则先发送 UNABLE 并转动 yaw 电机
   float target_yaw_angle = -0.981f; // 示例：特定的偏航角度
   if (is_yaw_aligning) {
-    if (std::abs(yaw_motor->pos() - target_yaw_angle) > 0.05f) {
+    if (std::abs(yaw_motor->pos() - target_yaw_angle) > 0.02f) {
       mychassis._command.chassis.state = ChassisState::UNABLE;
       gimbal_controller.SetTarget(target_yaw_angle, 0, 0);
       gimbal_controller.Update(yaw_motor->pos(), yaw_motor->vel(), 0, 0);
+      gimbal->SetGimbalYawTarget(ahrs.euler_angle().yaw);
     } else {
       is_yaw_aligning = false;
       mychassis._command.chassis.state = target_state;

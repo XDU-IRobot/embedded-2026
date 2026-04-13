@@ -16,7 +16,7 @@ inline class Gimbal {
 
   bool DM_enable_flag_ = false;  // 4310电机使能标志
 
-  const f32 sensitivity_ = 0.004f;          // 云台灵敏度 0.004f
+  const f32 sensitivity_ = 0.008f;          // 云台灵敏度 0.004f
   const f32 highest_pitch_angle_ = 0.78f;  // 云台pitch轴最高 0.615f（弧度制）
   const f32 lowest_pitch_angle_ = -0.39f;  // 云台pitch轴最低 -0.675f（弧度制）
 
@@ -24,6 +24,14 @@ inline class Gimbal {
   void GimbalInit();
 
   void GimbalTask();
+
+  void SetGimbalYawTarget(f32 target_yaw_angle) {
+        gimbal_yaw_target_ = target_yaw_angle;
+  }
+
+  void SetGimbalPitchTarget(f32 target_pitch_angle) {
+        gimbal_pitch_target_ = target_pitch_angle;
+  }
 
  private:
   void GimbalStateUpdate();
