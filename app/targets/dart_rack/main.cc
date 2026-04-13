@@ -42,9 +42,9 @@ extern "C" [[noreturn]] void AppMain(void) {
     if (is_lvgl_running) {
       // 只有在无力状态下才会进入并执行屏幕刷新和计算
       lv_timer_handler();
-      HAL_Delay(5); // 休息5ms，防止占满CPU
+      HAL_Delay(5);  // 休息5ms，防止占满CPU
     } else {
-      __WFI(); // 休眠等待下一个中断
+      __WFI();  // 休眠等待下一个中断
     }
   }
 }

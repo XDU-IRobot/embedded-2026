@@ -525,39 +525,39 @@ void LCD::ShowPicture(uint16_t x, uint16_t y, uint16_t length, uint16_t width, c
 
 #include "../../LVGL/lvgl.h"
 
-extern "C" void my_disp_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
-    uint16_t x1 = area->x1;
-    uint16_t y1 = area->y1;
-    uint16_t x2 = area->x2;
-    uint16_t y2 = area->y2;
+extern "C" void my_disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
+  uint16_t x1 = area->x1;
+  uint16_t y1 = area->y1;
+  uint16_t x2 = area->x2;
+  uint16_t y2 = area->y2;
 
-    // 设置区域
-    display.Address_Set(x1, y1, x2, y2);
+  // 设置区域
+  display.Address_Set(x1, y1, x2, y2);
 
-    uint32_t w = x2 - x1 + 1;
-    uint32_t h = y2 - y1 + 1;
-    uint32_t len = w * h;
+  uint32_t w = x2 - x1 + 1;
+  uint32_t h = y2 - y1 + 1;
+  uint32_t len = w * h;
 
-    DC_Set();
-    CS_Clr();
+  DC_Set();
+  CS_Clr();
 
-    // 批量发送提高速度
-    uint16_t buf_size = 512;
-    static uint16_t tx_buf[512]; // 使用 static 避免发生 Stack Overflow 导致系统卡死
-    uint32_t i = 0;
+  // 批量发送提高速度
+  uint16_t buf_size = 512;
+  static uint16_t tx_buf[512];  // 使用 static 避免发生 Stack Overflow 导致系统卡死
+  uint32_t i = 0;
 
-    while(i < len) {
-        uint32_t chunk_len = (len - i > buf_size) ? buf_size : (len - i);
-        for(uint32_t j = 0; j < chunk_len; j++) {
-            uint16_t c = lv_color_to16(color_p[i + j]);
-            tx_buf[j] = (c >> 8) | (c << 8); // 转换字节序
-        }
-        HAL_SPI_Transmit(&hspi4, (uint8_t*)tx_buf, chunk_len * 2, HAL_MAX_DELAY);
-        i += chunk_len;
+  while (i < len) {
+    uint32_t chunk_len = (len - i > buf_size) ? buf_size : (len - i);
+    for (uint32_t j = 0; j < chunk_len; j++) {
+      uint16_t c = lv_color_to16(color_p[i + j]);
+      tx_buf[j] = (c >> 8) | (c << 8);  // 转换字节序
     }
+    HAL_SPI_Transmit(&hspi4, (uint8_t *)tx_buf, chunk_len * 2, HAL_MAX_DELAY);
+    i += chunk_len;
+  }
 
-    CS_Set();
+  CS_Set();
 
-    // 必须高速LVGL：刷屏完成了
-    lv_disp_flush_ready(disp_drv);
+  // 必须高速LVGL：刷屏完成了
+  lv_disp_flush_ready(disp_drv);
 }
