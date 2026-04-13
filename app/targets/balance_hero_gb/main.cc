@@ -6,6 +6,7 @@
 
  #include "main.hpp"
  #include "Gimbal.hpp"
+#include <cmath>
 
 using namespace rm;
 
@@ -93,6 +94,7 @@ void GlobalWarehouse::GimbalPIDInit() {
 }
 
 void GlobalWarehouse::ShootInit() {
+
 }
 
 void GlobalWarehouse::RCStateUpdate() {
@@ -154,19 +156,49 @@ void GlobalWarehouse::RCStateUpdate() {
 }
 
 void GlobalWarehouse::CommunicateUpdate() {
+  ChassisState target_state = ChassisState::UNABLE;
   switch (rc->switch_r()) {
     case DR16::SwitchPosition::kMid :
-      mychassis._command.chassis.state = ChassisState::FOLLOW;
+      target_state = ChassisState::FOLLOW;
       break;
     case DR16::SwitchPosition::kUp :
-      mychassis._command.chassis.state = ChassisState::ROTATE;
+      target_state = ChassisState::ROTATE;
       break;
     case DR16::SwitchPosition::kDown :
-      mychassis._command.chassis.state = ChassisState::UNABLE;
+      target_state = ChassisState::UNABLE;
       break;
     default:
-      mychassis._command.chassis.state = ChassisState::UNABLE;
+      target_state = ChassisState::UNABLE;
       break;
+  }
+
+  static ChassisState last_raw_state = ChassisState::UNABLE;
+  static bool is_yaw_aligning = false;
+
+  // 检测到从 UNABLE 切换到 FOLLOW 或 ROTATE 时，启动偏航对齐
+  if (target_state != last_raw_state) {
+    if ((target_state == ChassisState::FOLLOW || target_state == ChassisState::ROTATE) &&
+        last_raw_state == ChassisState::UNABLE) {
+      is_yaw_aligning = true;
+    } else if (target_state == ChassisState::UNABLE) {
+      is_yaw_aligning = false;
+    }
+    last_raw_state = target_state;
+  }
+
+  // 当准备进入跟随或小陀螺模式时，若 yaw 未到达特定角度，则先发送 UNABLE 并转动 yaw 电机
+  float target_yaw_angle = -0.981f; // 示例：特定的偏航角度
+  if (is_yaw_aligning) {
+    if (std::abs(yaw_motor->pos() - target_yaw_angle) > 0.05f) {
+      mychassis._command.chassis.state = ChassisState::UNABLE;
+      gimbal_controller.SetTarget(target_yaw_angle, 0, 0);
+      gimbal_controller.Update(yaw_motor->pos(), yaw_motor->vel(), 0, 0);
+    } else {
+      is_yaw_aligning = false;
+      mychassis._command.chassis.state = target_state;
+    }
+  } else {
+    mychassis._command.chassis.state = target_state;
   }
 
   switch (rc->switch_l()) {
@@ -209,7 +241,7 @@ void GlobalWarehouse::SubLoop500Hz() {
 
   // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
   // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
-  globals->yaw_motor->SetPosition(0, 0, 0 ,0, 0);
+  globals->yaw_motor->SetPosition(0, 0, gimbal_controller.output().yaw ,0, 0);
   globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
   globals->dial_motor->SetPosition(0,0,0,0,0);
 
