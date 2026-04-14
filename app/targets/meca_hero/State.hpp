@@ -17,7 +17,7 @@ class StateMachine {
 
   enum class SubState {
     kNormal,
-    kOverPower,//加速和上坡2in1
+    kOverPower,  // 加速和上坡2in1
     kSnipe,
   };
 

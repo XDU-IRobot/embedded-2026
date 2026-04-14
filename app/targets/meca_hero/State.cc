@@ -34,9 +34,9 @@ void StateMachine::DT7Switch() {
         case MainState::kTest:
           switch (rc_switch_position_l) {
             case DR16::SwitchPosition::kDown:  /// 普通遥控
-              //随动切换
+              // 随动切换
               current_sub_state_ = SubState::kNormal;
-              if (globals->rc->dial()>400){
+              if (globals->rc->dial() > 400) {
                 current_chassis_state_ = ChassisState::kFollow;
               } else {
                 current_chassis_state_ = ChassisState::kNormal;
@@ -128,8 +128,7 @@ void StateMachine::StateUpdate() {
         count_ = waiting_count_;
         if (count_ > 0) {
           count_--;
-        }
-        else {
+        } else {
           current_main_state_ = MainState::kGame;
           count_ = waiting_count_;
         }
@@ -143,18 +142,16 @@ void StateMachine::StateUpdate() {
           current_sub_state_ = SubState::kNormal;
         }
         // 模块状态
-        if(follow) {
+        if (follow) {
           current_chassis_state_ = ChassisState::kFollow;
         } else {
           current_chassis_state_ = ChassisState::kNormal;
         }
 
-        if ()
-        break;
+        if () break;
       default:
         current_main_state_ = MainState::kGame;
         break;
-
     }
     current_main_state_ = MainState::kGame;
 
