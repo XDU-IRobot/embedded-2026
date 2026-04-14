@@ -53,7 +53,7 @@ class StateMachine {
     } else {
       current_main_state_ = MainState::kTest;
       count_ = waiting_count_;
-    }                                                                                                              
+    }
   }
   void TestFollowSwitch() {
     static int count{waiting_count_};
