@@ -130,12 +130,12 @@ void GlobalWarehouse::RCStateUpdate() {
             gimbal->GimbalMove_ = kGbRemote;
             break;
           case rm::device::DR16::SwitchPosition::kMid:
-            globals->StateMachine_ = kNoForce;
-            gimbal->GimbalMove_ = kNoForce;
+            globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+            gimbal->GimbalMove_ = kGbRemote;
             break;
           case rm::device::DR16::SwitchPosition::kUp:
-            globals->StateMachine_ = kNoForce;
-            gimbal->GimbalMove_ = kNoForce;
+            globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+            gimbal->GimbalMove_ = kGbRemote;
             break;
           default:
             globals->StateMachine_ = kNoForce;

@@ -74,8 +74,14 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 void Gimbal::GimbalMovePIDUpdate() {
   //前馈，无roll轴补偿
   globals->yaw_speed_feedforward->Update(gimbal_yaw_target_);
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_
-                                          ,globals->yaw_speed_feedforward->GetYawSpeedFeedforward());
+  if (gimbal->GimbalMove_ == kGbRemote && globals->rc->switch_l() == DR16::SwitchPosition::kDown && globals->rc->switch_r() == DR16::SwitchPosition::kUp) {
+    globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_
+                                        ,globals->yaw_speed_feedforward->GetYawSpeedFeedforward() - 10);
+  }else {
+    globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_
+                                        ,globals->yaw_speed_feedforward->GetYawSpeedFeedforward() );
+  }
+
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->yaw_motor->vel(),
                                        globals->ahrs.euler_angle().pitch, globals->pitch_motor->vel());
 }
