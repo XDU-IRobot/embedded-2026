@@ -45,14 +45,14 @@ class StateMachine {
 
   void StateUpdate();
   void DT7Switch();
-  void Waiting (){
+  void Waiting() {
     count_ = waiting_count_;  ////使能时间段
     if (count_ > 0) {
       count_--;
     } else {
       current_main_state_ = MainState::kTest;
       count_ = waiting_count_;
-    }                                                                                                              
+    }
   }
 
   [[nodiscard]] MainState getMainState() const { return current_main_state_; };
