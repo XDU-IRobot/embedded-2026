@@ -23,14 +23,8 @@ void StateMachine::DT7Switch() {
           current_main_state_ = MainState::kWaiting;
           break;
         case MainState::kWaiting:
-          count_ = waiting_count_;  ////使能时间段
-          if (count_ > 0) {
-            count_--;
-          } else {
-            current_main_state_ = MainState::kTest;
-            count_ = waiting_count_;
-            break;
-          }
+          Waiting();
+          break;
         case MainState::kTest:
           switch (rc_switch_position_l) {
             case DR16::SwitchPosition::kDown:  /// 普通遥控
@@ -67,14 +61,8 @@ void StateMachine::DT7Switch() {
           current_main_state_ = MainState::kWaiting;
           break;
         case MainState::kWaiting:
-          count_ = waiting_count_;
-          if (count_ > 0) {
-            count_--;
-          } else {
-            current_main_state_ = MainState::kGame;
-            count_ = waiting_count_;
-            break;
-          }
+          Waiting();
+          break;
         default:
           current_main_state_ = MainState::kGame;
           break;
