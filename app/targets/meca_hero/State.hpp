@@ -1,5 +1,6 @@
 #pragma once
 
+#include "main.hpp"
 class StateMachine {
  public:
   StateMachine() = delete;
@@ -45,7 +46,7 @@ class StateMachine {
 
   void StateUpdate();
   void DT7Switch();
-  void Waiting (){
+  void Waiting(){
     count_ = waiting_count_;  ////使能时间段
     if (count_ > 0) {
       count_--;
@@ -54,6 +55,21 @@ class StateMachine {
       count_ = waiting_count_;
     }                                                                                                              
   }
+  void TestFollowSwitch() {
+    static int count{waiting_count_};
+    if (abs(globals->rc->dial()) > 400) {
+      if (waiting_count_ > 0) {
+        count--;
+        return;
+      } else {
+        count = waiting_count_;
+      }
+      }
+      if(current_chassis_state_ == ChassisState::kNormal) {last_chassis_state_ = current_chassis_state_;current_chassis_state_ = ChassisState::kFollow;}
+      else if (current_chassis_state_ == ChassisState::kFollow) {current_chassis_state_ = last_chassis_state_; last_chassis_state_ = ChassisState::kFollow;}
+    }
+  }
+  
 
   [[nodiscard]] MainState getMainState() const { return current_main_state_; };
   [[nodiscard]] SubState getSubState() const { return current_sub_state_; };

@@ -28,13 +28,9 @@ void StateMachine::DT7Switch() {
         case MainState::kTest:
           switch (rc_switch_position_l) {
             case DR16::SwitchPosition::kDown:  /// 普通遥控
-              // 随动切换
               current_sub_state_ = SubState::kNormal;
-              if (globals->rc->dial() > 400) {
-                current_chassis_state_ = ChassisState::kFollow;
-              } else {
-                current_chassis_state_ = ChassisState::kNormal;
-              }
+              /// 随动切换
+              FollowSwitch();
               break;
             case DR16::SwitchPosition::kMid:  /// 超功率+上坡（应该直接加pitch无力
               current_sub_state_ = SubState::kOverPower;
