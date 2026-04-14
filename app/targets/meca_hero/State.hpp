@@ -17,7 +17,7 @@ class StateMachine {
 
   enum class SubState {
     kNormal,
-    kOverPower,
+    kOverPower,//加速和上坡2in1
     kSnipe,
   };
 
@@ -40,7 +40,7 @@ class StateMachine {
     kOffline,
     kNoForce,
     kNormal,
-    kMax,
+    kSnipe,
   };
 
   void StateUpdate();
@@ -69,5 +69,5 @@ class StateMachine {
   GimbalState last_gimbal_state_{GimbalState::kNormal};
 
   int waiting_count_{0};
-  int count{0};
+  int count_{0};
 };

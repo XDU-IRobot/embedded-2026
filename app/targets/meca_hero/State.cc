@@ -6,8 +6,8 @@ VT03::SwitchPosition tc_switch_position;
 DR16::SwitchPosition rc_switch_position_r;
 DR16::SwitchPosition rc_switch_position_l;
 
+/// @brief:DT7遥控器切换状态
 void StateMachine::DT7Switch() {
-  // DT7控制模式
   switch (rc_switch_position_r) {
     case DR16::SwitchPosition::kUnknown:  /// 保险
       current_main_state_ = MainState::kOffline;
@@ -22,18 +22,25 @@ void StateMachine::DT7Switch() {
         case MainState::kOffline:
           current_main_state_ = MainState::kWaiting;
           break;
-        case MainState::kWaiting:  ////使能时间段
-          if (count > 0) {
-            count--;
+        case MainState::kWaiting:
+          count_ = waiting_count_;  ////使能时间段
+          if (count_ > 0) {
+            count_--;
           } else {
             current_main_state_ = MainState::kTest;
-            count = waiting_count_;
+            count_ = waiting_count_;
             break;
           }
         case MainState::kTest:
           switch (rc_switch_position_l) {
             case DR16::SwitchPosition::kDown:  /// 普通遥控
+              //随动切换
               current_sub_state_ = SubState::kNormal;
+              if (globals->rc->dial()>400){
+                current_chassis_state_ = ChassisState::kFollow;
+              } else {
+                current_chassis_state_ = ChassisState::kNormal;
+              }
               break;
             case DR16::SwitchPosition::kMid:  /// 超功率+上坡（应该直接加pitch无力
               current_sub_state_ = SubState::kOverPower;
@@ -60,11 +67,12 @@ void StateMachine::DT7Switch() {
           current_main_state_ = MainState::kWaiting;
           break;
         case MainState::kWaiting:
-          if (count > 0) {
-            count--;
+          count_ = waiting_count_;
+          if (count_ > 0) {
+            count_--;
           } else {
             current_main_state_ = MainState::kGame;
-            count = waiting_count_;
+            count_ = waiting_count_;
             break;
           }
         default:
@@ -79,7 +87,7 @@ void StateMachine::DT7Switch() {
 }
 
 /**
- * @brief:
+ * @brief:状态机更新函数
  * @note:
  **/
 void StateMachine::StateUpdate() {
@@ -114,8 +122,17 @@ void StateMachine::StateUpdate() {
   } else if (tc_switch_position == VT03::SwitchPosition::S) {
     switch (current_main_state_) {
       case MainState::kOffline:
+        current_main_state_ = MainState::kWaiting;
         break;
       case MainState::kWaiting:
+        count_ = waiting_count_;
+        if (count_ > 0) {
+          count_--;
+        }
+        else {
+          current_main_state_ = MainState::kGame;
+          count_ = waiting_count_;
+        }
         break;
       case MainState::kGame:
         if (snipe) {
@@ -125,7 +142,19 @@ void StateMachine::StateUpdate() {
         } else {
           current_sub_state_ = SubState::kNormal;
         }
+        // 模块状态
+        if(follow) {
+          current_chassis_state_ = ChassisState::kFollow;
+        } else {
+          current_chassis_state_ = ChassisState::kNormal;
+        }
+
+        if ()
         break;
+      default:
+        current_main_state_ = MainState::kGame;
+        break;
+
     }
     current_main_state_ = MainState::kGame;
 
