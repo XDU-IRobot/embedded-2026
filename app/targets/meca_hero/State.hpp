@@ -2,12 +2,16 @@
 
 #include "main.hpp"
 #include "librm.hpp"
+#include "librm/device/remote/dr16.hpp"
+#include "librm/device/remote/dr16.hpp"
+#include "librm/device/remote/vt03.hpp"
 
 class StateMachine {
- public:
+public:
   StateMachine() = delete;
 
-  explicit StateMachine(int waiting_count) : waiting_count_(waiting_count), count(waiting_count) {}
+  explicit StateMachine(int waiting_count) : waiting_count_(waiting_count), count_(waiting_count) {
+  }
 
   void SetWaitingCount(int count) { waiting_count_ = count; }
 
@@ -20,7 +24,7 @@ class StateMachine {
 
   enum class SubState {
     kNormal,
-    kOverPower,  // 加速和上坡2in1
+    kOverPower, // 加速和上坡2in1
     kSnipe,
   };
 
@@ -48,7 +52,15 @@ class StateMachine {
 
   void StateUpdate();
   void DT7Switch();
-  bool Waiting(int waiting_count) {  ////使能时间段
+
+  /**
+   * @brief 非阻塞延时函数
+   * @param waiting_count
+   * @return bool
+   * @note 状态机切换过程中需要进行使能操作时，应有一定的反应时间，一般利用该函数停留在Waiting状态，通过监测状态切换到Waiting来决定是否发送使能信息
+   */
+  bool Waiting(int waiting_count) {
+    ////使能时间段
     static bool first_flag{true};
     if (first_flag) {
       count_ = waiting_count;
@@ -63,13 +75,17 @@ class StateMachine {
       return true;
     }
   }
+
+  /**
+   * @brief Test模式下随动切换
+   */
   void TestFollowSwitch() {
     if (abs(globals->rc->dial()) > 400) {
       if (Waiting(waiting_count_ / 2)) {
-        if (current_chassis_state_ == ChassisState::kNormal) {
+        if (current_chassis_state_ != ChassisState::kFollow) {
           last_chassis_state_ = current_chassis_state_;
           current_chassis_state_ = ChassisState::kFollow;
-        } else if (current_chassis_state_ == ChassisState::kFollow) {
+        } else {
           current_chassis_state_ = last_chassis_state_;
           last_chassis_state_ = ChassisState::kFollow;
         }
@@ -77,13 +93,13 @@ class StateMachine {
     }
   }
 
-  [[nodiscard]] MainState getMainState() const { return current_main_state_; };
-  [[nodiscard]] SubState getSubState() const { return current_sub_state_; };
-  [[nodiscard]] ChassisState getChassisState() const { return current_chassis_state_; };
-  [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; };
-  [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; };
+  [[nodiscard]] MainState getMainState() const { return current_main_state_; }
+  [[nodiscard]] SubState getSubState() const { return current_sub_state_; }
+  [[nodiscard]] ChassisState getChassisState() const { return current_chassis_state_; }
+  [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; }
+  [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; }
 
- private:
+private:
   MainState current_main_state_{MainState::kOffline};
   MainState last_main_state_{MainState::kOffline};
 
@@ -99,9 +115,9 @@ class StateMachine {
   GimbalState current_gimbal_state_{GimbalState::kOffline};
   GimbalState last_gimbal_state_{GimbalState::kNormal};
 
-  rm::device::VT03::SwitchPosition tc_switch_position;
-  rm::device::DR16::SwitchPosition rc_switch_position_r;
-  rm::device::DR16::SwitchPosition rc_switch_position_l;
+  rm::device::VT03::SwitchPosition tc_switch_position{VT03::SwitchPosition::N};
+  rm::device::DR16::SwitchPosition rc_switch_position_r{DR16::SwitchPosition::kUnknown};
+  rm::device::DR16::SwitchPosition rc_switch_position_l{DR16::SwitchPosition::kUnknown};
 
   int waiting_count_{0};
   int count_{0};
