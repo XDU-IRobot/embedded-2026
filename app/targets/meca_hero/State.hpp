@@ -7,11 +7,10 @@
 #include "librm/device/remote/vt03.hpp"
 
 class StateMachine {
-public:
+ public:
   StateMachine() = delete;
 
-  explicit StateMachine(int waiting_count) : waiting_count_(waiting_count), count_(waiting_count) {
-  }
+  explicit StateMachine(int waiting_count) : waiting_count_(waiting_count), count_(waiting_count) {}
 
   void SetWaitingCount(int count) { waiting_count_ = count; }
 
@@ -24,7 +23,7 @@ public:
 
   enum class SubState {
     kNormal,
-    kOverPower, // 加速和上坡2in1
+    kOverPower,  // 加速和上坡2in1
     kSnipe,
   };
 
@@ -57,7 +56,8 @@ public:
    * @brief 非阻塞延时函数
    * @param waiting_count
    * @return bool
-   * @note 状态机切换过程中需要进行使能操作时，应有一定的反应时间，一般利用该函数停留在Waiting状态，通过监测状态切换到Waiting来决定是否发送使能信息
+   * @note
+   * 状态机切换过程中需要进行使能操作时，应有一定的反应时间，一般利用该函数停留在Waiting状态，通过监测状态切换到Waiting来决定是否发送使能信息
    */
   bool Waiting(int waiting_count) {
     ////使能时间段
@@ -99,7 +99,7 @@ public:
   [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; }
   [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; }
 
-private:
+ private:
   MainState current_main_state_{MainState::kOffline};
   MainState last_main_state_{MainState::kOffline};
 
