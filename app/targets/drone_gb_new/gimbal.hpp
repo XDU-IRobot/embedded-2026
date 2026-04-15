@@ -9,15 +9,21 @@
 #include "ControllerPidGimbal.hpp"
 #include "ControllerPidAmmo.hpp"
 
-int anum = 0;
+int anum = 0;//判断是否进程正常
 int anum1 = 0;
 int Arccontrol = 0;
 
-double Apitch_ = 0;
+double Apitch_ = 0;//实际位置
 double Ayaw_ = 0;
 
-double Arc_pitch = 0;
+double Arc_pitch = 0;//目标位置
 double Arc_yaw = 0;
+
+int16_t Arc_dirl = 0;//回传数据
+int16_t Arpm_right = 0;
+int16_t Arpm_left = 0;
+int16_t Arc_leftx = 0;
+int16_t Arc_lefty = 0;
 
 class Gimbal {
  public:
@@ -32,6 +38,10 @@ class Gimbal {
 
   float pitch_min_pos = 2.94;  // pitch电机最小限位
   float pitch_max_pos = 4.15;  // pitch电机最大限位
+
+  float dirl_speed = 5000;      // TODO 拨盘转速
+  float redirl_speed = 1000;    // TODO 拨盘反转速
+  float friction_speed = 6500;  // TODO 摩擦轮转速
 
   rm::hal::Can *can1{nullptr};     // CAN 总线接口
   rm::hal::Serial *dbus{nullptr};  // 遥控器串口接口
@@ -81,8 +91,8 @@ class Gimbal {
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x01, 0x05, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
-    friction_left = new rm::device::M3508{*can1, 4};
-    friction_right = new rm::device::M3508{*can1, 3};
+    friction_left = new rm::device::M3508{*can1, 4, 1};
+    friction_right = new rm::device::M3508{*can1, 3, 1};
     dial_motor = new rm::device::M2006{*can1, 1};
 
     device_rc << rc;                                                // 遥控器
@@ -107,10 +117,10 @@ class Gimbal {
   }
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(150.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().yaw_speed.SetKp(60.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().pitch_position.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
-    gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    gimbal_controller.pid().yaw_position.SetKp(200.0f).SetKi(0.001f).SetKd(0.1f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(0.7f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
 
   void AmmoPIDInit() {
@@ -157,8 +167,9 @@ class Gimbal {
       }
       Arccontrol++;  // 调试进手控次数
       // yaw
-      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
-      rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+
+       rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       Arc_yaw = rc_yaw_data;  // 全局数据
 
@@ -172,7 +183,7 @@ class Gimbal {
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     }
-    // else if (GimbalState_ == kAuto) {
+    // else if (GimbalState_ == kAuto) {//自瞄模式控制
     //   if (DM_is_enable == false) {  // 使达妙电机使能
     //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     //     DM_is_enable = true;
@@ -214,8 +225,56 @@ class Gimbal {
     }
   }
 
-  // void AmmoControl();      // 摩擦轮控制
-  // void Referee_control();  // 裁判系统链路
+  void AmmoControl() {
+    // 发射状态
+    if (AmmoState_ == kFire) {
+      shoot_controller.Enable(true);
+      shoot_controller.Arm(true);
+      shoot_controller.SetMode(Shoot2Fric::kFullAuto);
+
+      if (rc->dial() >= 550) {
+        shoot_controller.SetLoaderSpeed(dirl_speed);
+      } else if (rc->dial() <= -600) {
+        shoot_controller.SetLoaderSpeed(-redirl_speed);
+      } else {
+        shoot_controller.SetLoaderSpeed(0);
+      }
+
+      shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
+      shoot_controller.Update(-friction_left->rpm(), -friction_right->rpm(), dial_motor->rpm());
+
+      friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
+      friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
+      dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
+
+    }
+
+    // 准备状态
+    else if (AmmoState_ == kReady) {
+      shoot_controller.Enable(true);
+      shoot_controller.Arm(true);
+
+      shoot_controller.SetMode(Shoot2Fric::kStop);
+      shoot_controller.SetArmSpeed(0.0f);
+
+      shoot_controller.Update(-friction_left->rpm(), -friction_right->rpm(), dial_motor->rpm());
+
+      friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
+      friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
+      dial_motor->SetCurrent(0);
+
+    }
+
+    // 停止状态
+    else {
+      shoot_controller.Enable(false);
+      shoot_controller.Arm(false);
+      friction_left->SetCurrent(0);
+      friction_right->SetCurrent(0);
+      dial_motor->SetCurrent(0);
+    }
+  }
+  // void Referee_control();  // 裁判系统常规链路
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz() {
@@ -227,12 +286,17 @@ class Gimbal {
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
 
-    Ayaw_=yaw;
-    Apitch_=pitch;
+    Ayaw_ = yaw;      // 调试
+    Apitch_ = pitch;  //
+    Arc_dirl = rc->dial();
+    Arpm_left = friction_left->rpm();
+    Arpm_right = friction_right->rpm();
+    Arc_leftx = rc->left_x();
+    Arc_lefty = rc->left_y();
 
     RCStateUpdate();                               // 遥控器更新
     GimbalControl();                               // 云台控制更新
-    // AmmoControl();                                 // 发射机构更新
+    AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
     anum++;                                        // 调试
   }

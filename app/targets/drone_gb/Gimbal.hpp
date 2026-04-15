@@ -102,7 +102,7 @@ class Gimbal {
   // Gimbal2DofSMC gimbal_controller_SMC;    // 二轴云台SMC控制器
   // GimbalSTASMC gimbal_controller_STASMC;  // 二轴云台STASMC控制器
   Shoot2Fric shoot_controller;            // 双摩擦轮发射机构控制器
-  // Feedforward yaw_ff;                     // 前馈控制器
+  Feedforward yaw_ff;                     // 前馈控制器
 
   float pitch_min_pos = 2.94;   // TODO pitch电机最小限位1.6原来的参数
   float pitch_max_pos = 4.15;  // TODO pitch电机最大限位2.75
@@ -135,29 +135,29 @@ class Gimbal {
   // pitch补偿系数
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.9f;  // TODO 重力补偿参数
-  // pitch滤波器（效果不好，未启用）
-  // Biquad pitch_cmd_notch;
-  // ChirpGenerator pitch_chirp;
+  //pitch滤波器（效果不好，未启用）
+  Biquad pitch_cmd_notch;
+  ChirpGenerator pitch_chirp;
 
-  // rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer;  ///< 裁判系统数据缓冲区
+  rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer;  ///< 裁判系统数据缓冲区
 
-  // 小角度 roll 补偿：将 roll 误差分解到 yaw/pitch
-  // std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
-  //   if (!roll_comp_enable) {
-  //     return {yaw_target, pitch_target};
-  //   }
-  //   // 水平姿态 roll ≈ M_PI（上方 SubLoop500Hz 中做了 +M_PI）
-  //   double roll_err = roll - 6.25;
-  //   roll_err = rm::modules::Clamp(roll_err, -roll_comp_limit, roll_comp_limit);
-  //
-  //   // 近似分解：机体 roll 对于当前朝向 yaw，投影到 yaw/pitch
-  //   double yaw_correction = roll_comp_kp * roll_err * std::sin(yaw_target);
-  //   double pitch_correction = -roll_comp_kp * roll_err * std::cos(yaw_target);
-  //
-  //   double new_yaw = rm::modules::Wrap(yaw_target + yaw_correction, 0, 2 * M_PI);
-  //   double new_pitch = rm::modules::Clamp(pitch_target + pitch_correction, pitch_min_pos, pitch_max_pos);
-  //   return {new_yaw, new_pitch};
-  // }
+  //小角度 roll 补偿：将 roll 误差分解到 yaw/pitch
+  std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
+    if (!roll_comp_enable) {
+      return {yaw_target, pitch_target};
+    }
+    // 水平姿态 roll ≈ M_PI（上方 SubLoop500Hz 中做了 +M_PI）
+    double roll_err = roll - 6.25;
+    roll_err = rm::modules::Clamp(roll_err, -roll_comp_limit, roll_comp_limit);
+
+    // 近似分解：机体 roll 对于当前朝向 yaw，投影到 yaw/pitch
+    double yaw_correction = roll_comp_kp * roll_err * std::sin(yaw_target);
+    double pitch_correction = -roll_comp_kp * roll_err * std::cos(yaw_target);
+
+    double new_yaw = rm::modules::Wrap(yaw_target + yaw_correction, 0, 2 * M_PI);
+    double new_pitch = rm::modules::Clamp(pitch_target + pitch_correction, pitch_min_pos, pitch_max_pos);
+    return {new_yaw, new_pitch};
+  }
 
   // 结构体初始化
   void GimbalInit() {
@@ -217,8 +217,8 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    // yaw_ff.Init(0.002, 5);//手控前馈参数
-    // yaw_ff.Init(0.002, 1);//注释
+    yaw_ff.Init(0.002, 5);//手控前馈参数
+    yaw_ff.Init(0.002, 1);//注释
 
 #if CONTROLLER_CHOICE == 0
     // PID
