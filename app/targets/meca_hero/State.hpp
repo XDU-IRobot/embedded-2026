@@ -1,6 +1,8 @@
 #pragma once
 
 #include "main.hpp"
+#include "librm.hpp"
+
 class StateMachine {
  public:
   StateMachine() = delete;
@@ -46,29 +48,30 @@ class StateMachine {
 
   void StateUpdate();
   void DT7Switch();
-  void Waiting(){
-    count_ = waiting_count_;  ////使能时间段
+  bool Waiting(int waiting_count){ ////使能时间段
+    static bool first_flag{true};
+    if (first_flag) {
+      count_ = waiting_count;
+      first_flag = false;
+    }
     if (count_ > 0) {
       count_--;
+      return false;
     } else {
-      current_main_state_ = MainState::kTest;
-      count_ = waiting_count_;
+      count_ = waiting_count;
+      first_flag = true;
+      return true;
     }
   }
   void TestFollowSwitch() {
-    static int count{waiting_count_};
     if (abs(globals->rc->dial()) > 400) {
-      if (waiting_count_ > 0) {
-        count--;
-        return;
-      } else {
-        count = waiting_count_;
+      if (Waiting(waiting_count_/2)) {
+        if(current_chassis_state_ == ChassisState::kNormal) {last_chassis_state_ = current_chassis_state_;current_chassis_state_ = ChassisState::kFollow;}
+        else if (current_chassis_state_ == ChassisState::kFollow) {current_chassis_state_ = last_chassis_state_; last_chassis_state_ = ChassisState::kFollow;}
       }
-      }
-      if(current_chassis_state_ == ChassisState::kNormal) {last_chassis_state_ = current_chassis_state_;current_chassis_state_ = ChassisState::kFollow;}
-      else if (current_chassis_state_ == ChassisState::kFollow) {current_chassis_state_ = last_chassis_state_; last_chassis_state_ = ChassisState::kFollow;}
     }
   }
+  
   
 
   [[nodiscard]] MainState getMainState() const { return current_main_state_; };
@@ -92,6 +95,10 @@ class StateMachine {
 
   GimbalState current_gimbal_state_{GimbalState::kOffline};
   GimbalState last_gimbal_state_{GimbalState::kNormal};
+
+  rm::device::VT03::SwitchPosition tc_switch_position;
+  rm::device::DR16::SwitchPosition rc_switch_position_r;
+  rm::device::DR16::SwitchPosition rc_switch_position_l;
 
   int waiting_count_{0};
   int count_{0};
