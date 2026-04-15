@@ -48,7 +48,7 @@ class StateMachine {
 
   void StateUpdate();
   void DT7Switch();
-  bool Waiting(int waiting_count){ ////使能时间段
+  bool Waiting(int waiting_count) {  ////使能时间段
     static bool first_flag{true};
     if (first_flag) {
       count_ = waiting_count;
@@ -65,14 +65,17 @@ class StateMachine {
   }
   void TestFollowSwitch() {
     if (abs(globals->rc->dial()) > 400) {
-      if (Waiting(waiting_count_/2)) {
-        if(current_chassis_state_ == ChassisState::kNormal) {last_chassis_state_ = current_chassis_state_;current_chassis_state_ = ChassisState::kFollow;}
-        else if (current_chassis_state_ == ChassisState::kFollow) {current_chassis_state_ = last_chassis_state_; last_chassis_state_ = ChassisState::kFollow;}
+      if (Waiting(waiting_count_ / 2)) {
+        if (current_chassis_state_ == ChassisState::kNormal) {
+          last_chassis_state_ = current_chassis_state_;
+          current_chassis_state_ = ChassisState::kFollow;
+        } else if (current_chassis_state_ == ChassisState::kFollow) {
+          current_chassis_state_ = last_chassis_state_;
+          last_chassis_state_ = ChassisState::kFollow;
+        }
       }
     }
   }
-  
-  
 
   [[nodiscard]] MainState getMainState() const { return current_main_state_; };
   [[nodiscard]] SubState getSubState() const { return current_sub_state_; };
@@ -80,18 +83,18 @@ class StateMachine {
   [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; };
   [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; };
 
-private:
-MainState current_main_state_{MainState::kOffline};
-MainState last_main_state_{MainState::kOffline};
+ private:
+  MainState current_main_state_{MainState::kOffline};
+  MainState last_main_state_{MainState::kOffline};
 
-SubState current_sub_state_{SubState::kNormal};
-SubState last_sub_state_{SubState::kNormal};
+  SubState current_sub_state_{SubState::kNormal};
+  SubState last_sub_state_{SubState::kNormal};
 
-ChassisState current_chassis_state_{ChassisState::kOffline};
-ChassisState last_chassis_state_{ChassisState::kNormal};
+  ChassisState current_chassis_state_{ChassisState::kOffline};
+  ChassisState last_chassis_state_{ChassisState::kNormal};
 
-AmmoState current_ammo_state_{AmmoState::kNormal};
-AmmoState last_ammo_state_{AmmoState::kNormal};
+  AmmoState current_ammo_state_{AmmoState::kNormal};
+  AmmoState last_ammo_state_{AmmoState::kNormal};
 
   GimbalState current_gimbal_state_{GimbalState::kOffline};
   GimbalState last_gimbal_state_{GimbalState::kNormal};
@@ -100,7 +103,6 @@ AmmoState last_ammo_state_{AmmoState::kNormal};
   rm::device::DR16::SwitchPosition rc_switch_position_r;
   rm::device::DR16::SwitchPosition rc_switch_position_l;
 
-int waiting_count_{0};
-int count_{0};
-}
-;
+  int waiting_count_{0};
+  int count_{0};
+};

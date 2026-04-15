@@ -19,7 +19,7 @@ void StateMachine::DT7Switch() {
           current_main_state_ = MainState::kWaiting;
           break;
         case MainState::kWaiting:
-          if(Waiting(waiting_count_)) current_main_state_ = MainState::kTest;
+          if (Waiting(waiting_count_)) current_main_state_ = MainState::kTest;
           break;
         case MainState::kTest:
           switch (rc_switch_position_l) {
@@ -53,7 +53,7 @@ void StateMachine::DT7Switch() {
           current_main_state_ = MainState::kWaiting;
           break;
         case MainState::kWaiting:
-          if(Waiting(waiting_count_)) current_main_state_ = MainState::kGame;
+          if (Waiting(waiting_count_)) current_main_state_ = MainState::kGame;
           break;
         default:
           current_main_state_ = MainState::kGame;
@@ -98,7 +98,7 @@ void StateMachine::StateUpdate() {
         current_main_state_ = MainState::kWaiting;
         break;
       case MainState::kWaiting:
-        if(Waiting()) current_main_state_ = MainState::kGame;
+        if (Waiting()) current_main_state_ = MainState::kGame;
         break;
       case MainState::kGame:
         if (snipe) {
