@@ -57,11 +57,7 @@ void GlobalWarehouse::Init() {
       {*can2, {0x21, 0x11, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can2, {0x13, 0x12, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}}};
-  dial_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>
-      {*can2, {0x10, 0x09, 3.141593f, 30.0f, 10.0f, {0.f, 500.f}, {0.f, 5.f}},true};
-  friction_left = new rm::device::M3508{*can1, 2,};
-  friction_right = new rm::device::M3508{*can1, 3,true};
-  friction_up = new rm::device::M3508{*can1, 1};
+  shoot_controller = new Shoot_Controller{*can2,*can1};
 
   yaw_speed_feedforward = new YawSpeedFeedforward(0.002, 1);
 
@@ -81,13 +77,14 @@ void GlobalWarehouse::Init() {
   globals->GimbalPIDInit();
   gimbal->GimbalInit();
   globals->ShootInit();
+  shoot_controller->Init();
 }
 
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(40.0f).SetKi(0.0f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
-  gimbal_controller.pid().yaw_speed.SetKp(1.f).SetKi(0.04f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.8f);
+  gimbal_controller.pid().yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(3.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
+  gimbal_controller.pid().yaw_speed.SetKp(0.6f).SetKi(0.04f).SetKd(0.2f).SetMaxOut(10.0f).SetMaxIout(0.8f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.f).SetKd(0.f).SetMaxOut(10000.0f).SetMaxIout(0.f);
   gimbal_controller.pid().pitch_speed.SetKp(0.4f).SetKi(0.f).SetKd(0.f).SetMaxOut(10.0f).SetMaxIout(0.f);
@@ -217,6 +214,8 @@ void GlobalWarehouse::CommunicateUpdate() {
       break;
   }
 
+  mychassis._command.chassis.state = ChassisState::UNABLE;
+
   mychassis._command.chassis.move_x = static_cast<int8_t>(rc->left_x() * 127.0f / 660.0f);
   mychassis._command.chassis.move_y = static_cast<int8_t>(rc->left_y() * 127.0f / 660.0f);
 
@@ -239,12 +238,11 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   globals->CommunicateUpdate();
+  shoot_controller->Task();
 
-  // globals->yaw_motor->SetPosition(0, 0, globals->gimbal_controller.output().yaw, 0, 0);
-  // globals->pitch_motor->SetPosition(0, 0, globals->gimbal_controller.output().pitch, 0, 0);
-  globals->yaw_motor->SetPosition(0, 0, gimbal_controller.output().yaw ,0, 0);
+  // globals->yaw_motor->SetPosition(0, 0, gimbal_controller.output().yaw ,0, 0);
+  globals->yaw_motor->SetPosition(0, 0, 0,0, 0);
   globals->pitch_motor->SetPosition(0, 0, 0, 0, 0);
-  globals->dial_motor->SetPosition(0,0,0,0,0);
 
   Deubg();
 }
@@ -281,13 +279,13 @@ f32 fric_l,fric_r,fric_up,yaw_mot,pitch_mot,dial_mot_pos,dial_mot_rpm,yaw,pitch,
 rm::device::DR16::SwitchPosition left_s,right_s;
 f32 yaw_pid_out,pitch_pid_out,fric_l_out,fric_r_out,fric_up_out,yaw_pos;
 void GlobalWarehouse::Deubg() {
-    fric_l = friction_left->rpm();
-    fric_r = friction_right->rpm();
-    fric_up = friction_up->rpm();
+    // fric_l = friction_left->rpm();
+    // fric_r = friction_right->rpm();
+    // fric_up = friction_up->rpm();
     yaw_mot = yaw_motor->pos();
     pitch_mot = pitch_motor->pos();
-    dial_mot_pos = dial_motor->pos();
-    dial_mot_rpm = dial_motor->vel();
+    // dial_mot_pos = dial_motor->pos();
+    // dial_mot_rpm = dial_motor->vel();
     yaw = ahrs.euler_angle().yaw;
     pitch = ahrs.euler_angle().pitch;
     roll = ahrs.euler_angle().roll;

@@ -10,6 +10,7 @@
 #include "gimbal_solver_withRoll.hpp"
 #include "aimbot_comm_can.hpp"
 #include "Communicate.h"
+#include "shoot.hpp"
 
 // 状态机
 typedef enum {
@@ -50,10 +51,7 @@ inline struct GlobalWarehouse {
   rm::device::DR16 *rc{nullptr};                                                    ///< 遥控器
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *yaw_motor{nullptr};    ///< 云台 Yaw 电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  ///< 云台 Pitch 电机
-  rm::device::M3508 *friction_left{nullptr};
-  rm::device::M3508 *friction_right{nullptr};
-  rm::device::M3508 *friction_up{nullptr};
-  rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *dial_motor{nullptr};
+  Shoot_Controller *shoot_controller{nullptr};
 
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};             ///< 姿态解算器
