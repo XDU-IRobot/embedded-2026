@@ -80,18 +80,18 @@ class StateMachine {
   [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; };
   [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; };
 
- private:
-  MainState current_main_state_{MainState::kOffline};
-  MainState last_main_state_{MainState::kOffline};
+private:
+MainState current_main_state_{MainState::kOffline};
+MainState last_main_state_{MainState::kOffline};
 
-  SubState current_sub_state_{SubState::kNormal};
-  SubState last_sub_state_{SubState::kNormal};
+SubState current_sub_state_{SubState::kNormal};
+SubState last_sub_state_{SubState::kNormal};
 
-  ChassisState current_chassis_state_{ChassisState::kOffline};
-  ChassisState last_chassis_state_{ChassisState::kNormal};
+ChassisState current_chassis_state_{ChassisState::kOffline};
+ChassisState last_chassis_state_{ChassisState::kNormal};
 
-  AmmoState current_ammo_state_{AmmoState::kNormal};
-  AmmoState last_ammo_state_{AmmoState::kNormal};
+AmmoState current_ammo_state_{AmmoState::kNormal};
+AmmoState last_ammo_state_{AmmoState::kNormal};
 
   GimbalState current_gimbal_state_{GimbalState::kOffline};
   GimbalState last_gimbal_state_{GimbalState::kNormal};
@@ -100,6 +100,7 @@ class StateMachine {
   rm::device::DR16::SwitchPosition rc_switch_position_r;
   rm::device::DR16::SwitchPosition rc_switch_position_l;
 
-  int waiting_count_{0};
-  int count_{0};
-};
+int waiting_count_{0};
+int count_{0};
+}
+;
