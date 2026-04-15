@@ -39,7 +39,7 @@ struct Command {
 };
 
 class Chassis_Command {
-public:
+ public:
   Chassis_Command() = default;
   ~Chassis_Command() = default;
   Command _command{{ChassisState::UNABLE, LegLength::NORMAL, 0, 0}, {0, 0, 0, 0}};
