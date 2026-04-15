@@ -93,6 +93,14 @@ class StateMachine {
     }
   }
 
+  /**
+   * @brief 实现拨轮切换状态
+   * @return
+   */
+  void DialSwitch(
+
+
+
   [[nodiscard]] MainState getMainState() const { return current_main_state_; }
   [[nodiscard]] SubState getSubState() const { return current_sub_state_; }
   [[nodiscard]] ChassisState getChassisState() const { return current_chassis_state_; }
