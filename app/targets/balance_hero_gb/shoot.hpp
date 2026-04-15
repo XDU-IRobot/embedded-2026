@@ -6,8 +6,8 @@ enum ShootState { kStop, kInitialize, kReady, kShooting, kCooling };
 constexpr float kBoosrterZeroPoint = 0.345f;
 
 class Shoot_Controller {
-public:
-  Shoot_Controller(rm::hal::Can &booster_can,rm::hal::Can &fric_can);
+ public:
+  Shoot_Controller(rm::hal::Can &booster_can, rm::hal::Can &fric_can);
 
   rm::device::M3508 *friction_left{nullptr};
   rm::device::M3508 *friction_right{nullptr};
@@ -25,10 +25,11 @@ public:
   void Enable(bool enable);
 
   void Task();
-private:
+
+ private:
   ShootState rotor_state_ = ShootState::kStop;
-  bool  booster_enable_ = false;
-  bool  booster_disable_ = false;
+  bool booster_enable_ = false;
+  bool booster_disable_ = false;
 
   float now_angle_ = 0.0f;
   float next_angle_ = 0.0f;
@@ -38,7 +39,5 @@ private:
 
   void Update();
 };
-
-
 
 #endif  // BOARDC_SHOOT_HPP
