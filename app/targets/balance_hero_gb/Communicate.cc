@@ -12,6 +12,14 @@ void Communicate::RxCallback(const hal::CanFrame *msg) {
   // referee_.realheat = (msg->data[2] << 8) | msg->data[3];
   // referee_.maxheat = (msg->data[4] << 8) | msg->data[5];
   // referee_.cooling = (msg->data[6] << 8) | msg->data[7];
+
+  // 发送端规则 → 接收端完全对齐（1:1 对应，无误差）
+  referee_.powerstate = msg->data[0] & 0x07;                      // 低3位：功率输出使能（和发送端一致）
+  referee_.robot_id = (msg->data[0] >> 4) & 0x0F;                // 高4位：机器人ID（发送端标准规则）
+  referee_.speed = IntToFloat(msg->data[1], 12, 18, 8);          // 射速（不变，已正确）
+  referee_.realheat = (msg->data[2] << 8) | msg->data[3];        // 当前热量（不变，已正确）
+  referee_.maxheat = (msg->data[4] << 8) | msg->data[5];         // 最大热量（不变，已正确）
+  referee_.cooling = (msg->data[6] << 8) | msg->data[7];         // 冷却速率（不变，已正确）
 }
 
 void Communicate::SendChassisCommand() {
