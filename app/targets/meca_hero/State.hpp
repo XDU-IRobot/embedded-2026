@@ -101,11 +101,16 @@ class StateMachine {
 
 
 
-  [[nodiscard]] MainState getMainState() const { return current_main_state_; }
-  [[nodiscard]] SubState getSubState() const { return current_sub_state_; }
-  [[nodiscard]] ChassisState getChassisState() const { return current_chassis_state_; }
-  [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; }
-  [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; }
+  [[nodiscard]] MainState getMainState() const {
+    return current_main_state_; }
+  [[nodiscard]] SubState getSubState() const {
+    return current_sub_state_; }
+  [[nodiscard]] ChassisState getChassisState() const {
+    return current_chassis_state_; }
+  [[nodiscard]] GimbalState getGimbalState() const {
+    return current_gimbal_state_; }
+  [[nodiscard]] AmmoState getAmmoState() const {
+    return current_ammo_state_; }
 
  private:
   MainState current_main_state_{MainState::kOffline};
