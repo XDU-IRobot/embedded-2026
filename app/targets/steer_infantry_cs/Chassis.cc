@@ -170,6 +170,7 @@ void Chassis::SpeedModeChange() {
       chassis->k_speed_limit =
           static_cast<f32>(globals->referee_data->data().robot_status.chassis_power_limit) / 30.0f + 0.6f;
     }
+    chassis->k_speed_limit = rm::modules::Clamp(chassis->k_speed_limit, 0.0f, 6.0f);
   } else {
     chassis->k_speed_limit = 2.0f;
   }
