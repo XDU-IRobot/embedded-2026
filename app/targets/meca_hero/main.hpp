@@ -34,6 +34,7 @@ inline struct GlobalWarehouse {
   rm::device::CustomClient *custom_client{nullptr};
   CMS *cms{nullptr};
   RadarCanCommunicator *radar_can_communicator{nullptr};
+  StateMachine state_machine{840};
   // 创建电机对象
   rm::device::M3508 *chassis_motor_1{nullptr};
   rm::device::M3508 *chassis_motor_2{nullptr};

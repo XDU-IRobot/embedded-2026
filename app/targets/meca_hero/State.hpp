@@ -1,10 +1,8 @@
 #pragma once
-
-#include "main.hpp"
+//
+// #include "main.hpp"
 #include "librm.hpp"
-#include "librm/device/remote/dr16.hpp"
-#include "librm/device/remote/dr16.hpp"
-#include "librm/device/remote/vt03.hpp"
+
 
 class StateMachine {
  public:
@@ -37,6 +35,7 @@ class StateMachine {
   enum class GimbalState {
     kOffline,
     kNoForce,
+    kWaiting,
     kNormal,
     kAimbot,
     kRadarAimbot,
@@ -45,6 +44,7 @@ class StateMachine {
   enum class AmmoState {
     kOffline,
     kNoForce,
+    kWaiting,
     kNormal,
     kSnipe,
   };
@@ -79,8 +79,8 @@ class StateMachine {
   /**
    * @brief Test模式下随动切换
    */
-  void TestFollowSwitch() {
-    if (abs(globals->rc->dial()) > 400) {
+  void TestFollowSwitch(int dial) {
+    if (abs(dial) > 400) {
       if (Waiting(waiting_count_ / 2)) {
         if (current_chassis_state_ != ChassisState::kFollow) {
           last_chassis_state_ = current_chassis_state_;
@@ -97,7 +97,7 @@ class StateMachine {
    * @brief 实现拨轮切换状态
    * @return
    */
-  void DialSwitch(
+  void DialSwitch();
 
 
 
@@ -123,9 +123,9 @@ class StateMachine {
   GimbalState current_gimbal_state_{GimbalState::kOffline};
   GimbalState last_gimbal_state_{GimbalState::kNormal};
 
-  rm::device::VT03::SwitchPosition tc_switch_position{VT03::SwitchPosition::N};
-  rm::device::DR16::SwitchPosition rc_switch_position_r{DR16::SwitchPosition::kUnknown};
-  rm::device::DR16::SwitchPosition rc_switch_position_l{DR16::SwitchPosition::kUnknown};
+  rm::device::VT03::SwitchPosition tc_switch_position{rm::device::VT03::SwitchPosition::N};
+  rm::device::DR16::SwitchPosition rc_switch_position_r{rm::device::DR16::SwitchPosition::kUnknown};
+  rm::device::DR16::SwitchPosition rc_switch_position_l{rm::device::DR16::SwitchPosition::kUnknown};
 
   int waiting_count_{0};
   int count_{0};

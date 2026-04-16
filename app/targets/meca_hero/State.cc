@@ -28,7 +28,7 @@ void StateMachine::DT7Switch() {
             case rm::device::DR16::SwitchPosition::kDown:  /// 普通遥控
               current_sub_state_ = SubState::kNormal;
               /// 随动切换
-              TestFollowSwitch();
+              TestFollowSwitch(globals->rc->dial());
               break;
             case rm::device::DR16::SwitchPosition::kMid:  /// 超功率+上坡（应该直接加pitch无力
               current_sub_state_ = SubState::kOverPower;
@@ -103,7 +103,7 @@ void StateMachine::StateUpdate() {
         current_main_state_ = MainState::kWaiting;
         break;
       case MainState::kWaiting:
-        if (Waiting()) current_main_state_ = MainState::kGame;
+        if (Waiting(waiting_count_)) current_main_state_ = MainState::kGame;
         break;
       case MainState::kGame:
         if (snipe) {
