@@ -18,7 +18,7 @@ void GimbalHero::AhrsUpdate() {
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{
       globals->imu->gyro_x(), globals->imu->gyro_y(),
-      gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) + globals->gyro_rectification,
+      gyro_z = globals->gyro_z_filter.apply(globals->imu->gyro_z()) + hyperparameters_.gyro_rectification_,
       globals->imu->accel_x(), globals->imu->accel_y(), globals->imu->accel_z()});
   eulerangle_yaw = -globals->ahrs.euler_angle().yaw;
   eulerangle_pitch = -globals->ahrs.euler_angle().pitch;
@@ -31,6 +31,9 @@ bool GimbalHero::Enable() {
   // 主状态检测
   if (globals->state_machine.getMainState() == StateMachine::MainState::kOffline) {
     UnableUpdate();
+    return false;
+  }else if (globals->state_machine.getMainState() == StateMachine::MainState::kWaiting) {
+    EnableUpdate();
     return false;
   }
   // Gimbal状态检测
@@ -46,7 +49,7 @@ bool GimbalHero::Enable() {
       return false;
     case StateMachine::GimbalState::kWaiting:
       EnableUpdate();
-      return true;
+      return false;
     case StateMachine::GimbalState::kNormal:
       return true;
     case StateMachine::GimbalState::kAimbot:
@@ -59,4 +62,5 @@ bool GimbalHero::Enable() {
 void GimbalHero::GimbalUpdate() {
   AhrsUpdate();
   if (!Enable()) return;
+
 }

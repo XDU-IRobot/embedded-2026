@@ -99,10 +99,15 @@ class StateMachine {
   void DialSwitch();
 
   [[nodiscard]] MainState getMainState() const { return current_main_state_; }
+  [[nodiscard]] MainState getLastMainState() const { return last_main_state_; }
   [[nodiscard]] SubState getSubState() const { return current_sub_state_; }
+  [[nodiscard]] SubState getLastSubState() const { return last_sub_state_; }
   [[nodiscard]] ChassisState getChassisState() const { return current_chassis_state_; }
+  [[nodiscard]] ChassisState getLastChassisState() const { return last_chassis_state_; }
   [[nodiscard]] GimbalState getGimbalState() const { return current_gimbal_state_; }
+  [[nodiscard]] GimbalState getlastGimbalState() const { return last_gimbal_state_; }
   [[nodiscard]] AmmoState getAmmoState() const { return current_ammo_state_; }
+  [[nodiscard]] AmmoState getlastAmmoState() const { return last_ammo_state_; }
 
  private:
   MainState current_main_state_{MainState::kOffline};
