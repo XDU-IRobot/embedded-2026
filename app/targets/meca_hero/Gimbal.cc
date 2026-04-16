@@ -32,7 +32,7 @@ bool GimbalHero::Enable() {
   if (globals->state_machine.getMainState() == StateMachine::MainState::kOffline) {
     UnableUpdate();
     return false;
-  }else if (globals->state_machine.getMainState() == StateMachine::MainState::kWaiting) {
+  } else if (globals->state_machine.getMainState() == StateMachine::MainState::kWaiting) {
     EnableUpdate();
     return false;
   }
@@ -62,5 +62,4 @@ bool GimbalHero::Enable() {
 void GimbalHero::GimbalUpdate() {
   AhrsUpdate();
   if (!Enable()) return;
-
 }

@@ -5,7 +5,7 @@
 #include "librm.hpp"
 
 class GimbalHero {
-public:
+ public:
   GimbalHero() = default;
 
   void GimbalUpdate();
@@ -17,15 +17,14 @@ public:
     float euler_roll_{0};
   } monitor_;
 
-private:
+ private:
   // 调参变量
   struct {
-    f32 gyro_rectification_{}; // 陀螺仪Z轴修正值
-    int pitch_ff_{}; // pitch轴PID前馈
+    f32 gyro_rectification_{};  // 陀螺仪Z轴修正值
+    int pitch_ff_{};            // pitch轴PID前馈
   } hyperparameters_;
 
-
-  bool Enable(); //
+  bool Enable();  //
   void UnableUpdate();
   void EnableUpdate();
   void AhrsUpdate();
