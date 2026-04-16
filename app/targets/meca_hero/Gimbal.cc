@@ -6,7 +6,6 @@ void GimbalHero::EnableUpdate() {
   globals->gimbal_motor_yaw->SendInstruction(rm::device::DmMotorInstructions::kEnable);
 }
 
-
 void GimbalHero::UnableUpdate() {
   globals->gimbal_motor_yaw->SetMitCommand(0, 0, 0, 0, 0);
   globals->gimbal_motor_pitch->SetCurrent(0);
@@ -26,18 +25,15 @@ void GimbalHero::AhrsUpdate() {
   eulerangle_roll = -globals->ahrs.euler_angle().roll;
 }
 
-void GimbalHero::AimbotControl() {
-
-}
-
+void GimbalHero::AimbotControl() {}
 
 bool GimbalHero::Enable() {
-  //主状态检测
-  if (globals->state_machine.getMainState()==StateMachine::MainState::kOffline) {
+  // 主状态检测
+  if (globals->state_machine.getMainState() == StateMachine::MainState::kOffline) {
     UnableUpdate();
     return false;
   }
-  //Gimbal状态检测
+  // Gimbal状态检测
   switch (globals->state_machine.getGimbalState()) {
     default:
       UnableUpdate();
@@ -63,5 +59,4 @@ bool GimbalHero::Enable() {
 void GimbalHero::GimbalUpdate() {
   AhrsUpdate();
   if (!Enable()) return;
-
 }
