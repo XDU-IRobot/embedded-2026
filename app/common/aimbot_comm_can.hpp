@@ -20,9 +20,11 @@ class AimbotCanCommunicator final : public CanDevice {
   void UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot_id, u8 mode, u16 imu_count, i8 bullet_speed);
   void RxCallback(const hal::CanFrame *msg) override;
 
+  u8 aimbot_state_{};
+
  private:
   // 收nuc
-  u8 aimbot_state_{};
+
   u8 aimbot_target_{};
   f32 yaw_{};
   f32 pitch_{};

@@ -15,6 +15,9 @@ f32 pitch_con, yaw_con, pitch_ecd, yaw_ecd;
 u8 init_flag;
 u8 RcKey_KB_flag = 0, RcKey_KB_value = 0, TCRcKey_KB_flag = 0;
 u8 RcKey_KQ_flag = 0, RcKey_KQ_value = 0, TCRcKey_KQ_flag = 0;
+u8 TCRcKey_KF_flag = 0, TCRcKey_KF_value = 0;
+u8 TCRcKey_KG_flag = 0, TCRcKey_KG_value = 0;
+u8 TCRcKey_KE_flag = 0, TCRcKey_KE_value = 0;
 f32 yaw_aim;
 f32 debug_w, debug_x, debug_y, debug_z;
 u8 uiflag, robot_id;
@@ -40,8 +43,11 @@ void Fsm::Transit(State new_mode) {
       global.motor->ShootDisable();
     } else if (new_mode == State::kShoot) {
       global.motor->DMEnable();
+      global.motor->ShootDisable();
+    } else if (new_mode == State::kAutoFu) {
+      global.motor->DMEnable();
       global.motor->ShootEnable();
-    } else if (new_mode == State::kHigh) {
+    }else if (new_mode == State::kHigh) {
       global.motor->DMEnable();
       global.motor->ShootEnable();
     } else if (new_mode == State::kAutoShoot) {
@@ -115,7 +121,9 @@ void Fsm::Update_State() {
       case DR16::SwitchPosition::kMid:
         if (global.bc->rc->switch_l() == DR16::SwitchPosition::kMid) {
           Transit(State::kShoot);
-        } else {
+        } else if (global.bc->rc->switch_l() == DR16::SwitchPosition::kUp) {
+          Transit(State::kAutoFu);
+        }else {
           Transit(State::kTest);
           if (enable_count == 300) {
             global.motor->yaw_motor->SendInstruction(DmMotorInstructions::kClearError);
@@ -133,7 +141,6 @@ void Fsm::Update_State() {
           Transit(State::kHigh);
         } else {
           Transit(State::kAutoShoot);
-
           if (enable_count < 500) {
             enable_count++;
           } else {
@@ -153,7 +160,7 @@ void Fsm::Update_State() {
 
 void Fsm::Update_Test() {
   global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x01;  // 正常起立状态
-  global.chassis_tx->gimbal_data_tx.L0Change = 0x01;             // 正常腿长
+  global.chassis_tx->gimbal_data_tx.L0Change = 0x00;             // 正常腿长
 
   // 控制腿的状态
   // if (global.bc->rc->right_x() > 650 || global.bc->tcremote.data().keyboard_key >> 9 == 1) {
@@ -202,14 +209,14 @@ void Fsm::Update_Test() {
   // }
 
   // 判断是否小陀螺
-  if (global.bc->rc->dial() == 660 ||
+  if (global.bc->rc->dial() >= 600 ||
       (global.bc->rc->key(DR16::Key::kShift) == 1 && global.bc->rc->key(DR16::Key::kCtrl) == 1) ||
       tcremote.data().keyboard_key >> 4 == 1) {
-    global.chassis_tx->gimbal_data_tx.L0Change = 0x07;  // 小陀螺正转
+    global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x02;  // 正常起立状态
     global.motor->yaw_compensation_ = -0.6f;
   } else if (global.bc->rc->dial() == -660 || global.bc->rc->key(DR16::Key::kShift) == 1 ||
              (tcremote.data().keyboard_key >> 4 == 1 && tcremote.data().keyboard_key >> 5 == 1)) {
-    global.chassis_tx->gimbal_data_tx.L0Change = 0x08;  // 小陀螺反转
+    global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x03;  // 跳跃
     global.motor->yaw_compensation_ = 0.f;
   } else {
     global.motor->yaw_compensation_ = 0.f;
@@ -238,7 +245,8 @@ void Fsm::Update_Test() {
   }
 
   global.chassis_tx->gimbal_data_tx.ChassisMoveYRequest =
-      global.bc->rc->left_y() + global.bc->kw * 660.f - global.bc->ks * 660.f;
+      static_cast<int8_t>(global.bc->rc->left_y() * 127.0f / 660.0f) + global.bc->kw * 660.f - global.bc->ks * 660.f;
+  global.chassis_tx->gimbal_data_tx.ChassisMoveXRequest = global.bc->rc->left_x();
 }
 
 void Fsm::Update_Chassis_Request() {
@@ -247,21 +255,41 @@ void Fsm::Update_Chassis_Request() {
       global.chassis_tx->gimbal_data_tx.ChassisMoveYRequest = 0;
       global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;
       global.chassis_tx->gimbal_data_tx.L0Change = 0x01;
+      inited_ = false;
       break;
     case State::kTest:
-      Update_Test();
+      if (init_count_ == 300) {
+        Update_Test();
+      }else {
+        global.chassis_tx->gimbal_data_tx.ChassisMoveYRequest = 0;
+        global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;
+        global.chassis_tx->gimbal_data_tx.L0Change = 0x01;
+      }
       break;
     case State::kShoot:
       Update_Test();
-      // global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
-      // global.motor->yaw_compensation_ = 0.f;
+      global.chassis_tx->gimbal_data_tx.L0Change = 0x01;
+      break;
+    case State::kAutoFu:
+      Update_Test();
+      global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
       break;
     case State::kHigh:
       Update_Test();
-      global.chassis_tx->gimbal_data_tx.L0Change = 0x06;  // 伸腿
+      //global.chassis_tx->gimbal_data_tx.L0Change = 0x06;  // 伸腿
       break;
     case State::kAutoShoot:
       Update_Test();
+      if (tcremote.data().keyboard_key >> 7 == 1) {  // E键飞坡腿长更新
+        TCRcKey_KE_flag = 1;
+      }
+      if (tcremote.data().keyboard_key >> 7 == 0 && TCRcKey_KE_flag == 1) {
+        TCRcKey_KE_value ++;
+        TCRcKey_KE_flag = 0;
+      }
+      if (TCRcKey_KE_value % 2 ==1) {
+        //global.chassis_tx->gimbal_data_tx.L0Change = 0x09;
+      }else{}
       // global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
       //  global.motor->yaw_compensation_ = 0.f;
       break;
@@ -281,10 +309,14 @@ void Fsm::Update_Control() {
     case State::kNoForce:
       RcKey_KB_flag = 0, RcKey_KB_value = 0, TCRcKey_KB_flag = 0;
       RcKey_KQ_flag = 0, RcKey_KQ_value = 0, TCRcKey_KQ_flag = 0;
+      TCRcKey_KF_flag = 0, TCRcKey_KF_value = 0;
+      TCRcKey_KG_flag = 0, TCRcKey_KG_value = 0;
+      TCRcKey_KE_flag = 0, TCRcKey_KE_value = 0;
       global.motor->CalcYawPos(global.motor->yaw_motor->pos());
       init_count_ = 0;
       global.motor->reset_yaw_flag = 0;
       global.motor->change_yaw_init_flag = false;
+      global.motor->aimbot_comm->aimbot_state_ = 0;
       break;
     case State::kTest:
       global.motor->CalcYawPos(global.motor->yaw_motor->pos());
@@ -297,30 +329,6 @@ void Fsm::Update_Control() {
       } else {
         global.motor->DMAutoControl();
       }
-      // }
-      // switch (global.motor->init_mode) {
-      //   case Motor::InitFlag::kNormal:
-      //     global.motor->yaw_init = 0.f;
-      //     if (init_count_ < 300) {
-      //       init_count_++;
-      //       global.motor->DMInitControl();
-      //     } else {
-      //       global.motor->DMAutoControl();
-      //     }
-      //     break;
-      //   case Motor::InitFlag::kOpposite:
-      //     global.motor->yaw_init = -3.1f;
-      //     global.motor->yaw_init = 0.f;
-      //     if (init_count_ < 300) {
-      //       init_count_++;
-      //       global.motor->DMInitControl();
-      //     } else {
-      //       global.motor->DMAutoControl();
-      //     }
-      //     break;
-      //   default:
-      //     break;
-      // }
       break;
     case State::kHigh:
       global.motor->DMAutoControl();
@@ -330,17 +338,41 @@ void Fsm::Update_Control() {
       global.motor->DMAimControl();
       global.motor->ShootNormalControl();
       break;
+    case State::kAutoFu:
+      global.motor->DMAimControl();
+      global.motor->ShootAutoFuControl();
+      break;
     case State::kAutoShoot:
-      global.motor->CalcYawPos(global.motor->yaw_motor->pos());
-      // global.motor->Transit_initmode(static_cast<Motor::InitFlag>(global.chassis_rx->chassis_data_rx.GimbalInitFlag));
-      // global.motor->Transit_initmode((tcremote.data().keyboard_key >> 7) & 0x01 ||
-      //(global.bc->rc->key(DR16::Key::kE) == 1));
-      if (init_count_ < 300) {
-        init_count_++;
-        global.motor->DMInitControl();
-      } else {
-        global.motor->DMAutoControl();
+      //更新自瞄模式
+      if (tcremote.data().keyboard_key >> 9 == 1) {  // F键小符更新
+        TCRcKey_KF_flag = 1;
       }
+      if (tcremote.data().keyboard_key >> 9 == 0 && TCRcKey_KF_flag == 1) {
+        TCRcKey_KF_value ++;
+        TCRcKey_KF_flag = 0;
+      }
+      // if (tcremote.data().keyboard_key >> 10 == 1) {  // G键大符更新
+      //   TCRcKey_KG_flag = 1;
+      // }
+      // if (tcremote.data().keyboard_key >> 10 == 0 && TCRcKey_KG_flag == 1) {
+      //   TCRcKey_KG_value ++;
+      //   TCRcKey_KG_flag = 0;
+      // }
+      if (TCRcKey_KF_value % 3 == 1) {
+        auto_mode_ = 2;
+      }else if (TCRcKey_KF_value % 3 == 2) {
+        auto_mode_ = 3;
+      }else {
+        auto_mode_ = 1;
+      }
+
+      global.motor->CalcYawPos(global.motor->yaw_motor->pos());
+      // if (init_count_ < 300) {
+      //   init_count_++;
+      //   global.motor->DMInitControl();
+      // } else {
+        global.motor->DMAutoControl();
+     // }
       global.motor->ShootAutoControl();
       break;
     default:
@@ -382,9 +414,6 @@ void Fsm::Update_500HZ() {
   if (global.chassis_rx->chassis_data_rx.Bulletspeed == 0) {
     global.chassis_rx->chassis_data_rx.Bulletspeed = 21;
   }
-  global.motor->aimbot_comm->UpdateControl(global.bc->hipnuc_imu->yaw(), global.bc->hipnuc_imu->pitch(),
-                                           -global.bc->hipnuc_imu->roll(), robot_id, 1, global.bc->imu_count,
-                                           global.chassis_rx->chassis_data_rx.Bulletspeed);
   debug_w = global.bc->hipnuc_imu->quat_w();
   debug_x = global.bc->hipnuc_imu->quat_x();
   debug_y = global.bc->hipnuc_imu->quat_y();
@@ -397,6 +426,10 @@ void Fsm::Update_500HZ() {
 
   // 发送Dji电机信息
   global.motor->SendDjiCommand();
+
+  global.motor->aimbot_comm->UpdateControl(global.bc->hipnuc_imu->yaw(), global.bc->hipnuc_imu->pitch(),
+                                           -global.bc->hipnuc_imu->roll(), robot_id, auto_mode_, global.bc->imu_count,
+                                           global.chassis_rx->chassis_data_rx.Bulletspeed);
 
   init_flag = global.chassis_rx->chassis_data_rx.GimbalInitFlag;
 }

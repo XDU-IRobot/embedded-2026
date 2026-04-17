@@ -22,7 +22,7 @@ class Motor {
   M3508 *ammo_right{nullptr};
   AimbotCanCommunicator *aimbot_comm{nullptr};
   Gimbal2Dof gimbal_controller;               ///< 二轴双 Yaw 云台控制器
-  Shoot3Fric shoot_controller{9, 18, false};  ///< 摩擦轮
+  Shoot3Fric shoot_controller{9, 42.75, false};  ///< 摩擦轮
   YawSpeedFeedforward *yaw_feedforward{nullptr};
   SineSweep *sweep_controller{nullptr};
   EncoderCounter dail_encoder_counter;
@@ -45,7 +45,7 @@ class Motor {
 
   f32 gravity_compensation_ = 0.f, yaw_compensation_ = 0.f;
 
-  int single_shoot_time = 30, single_shoot_temp = 0;
+  int single_shoot_time_ = 200, single_shoot_temp = 0;
 
   bool reset_yaw_flag = false;
   bool single_flag = false;  // 单发标志
@@ -64,6 +64,7 @@ class Motor {
   void DMAimControl();        ///< 自瞄自动跟随
   void ShootNormalControl();  ///< 发射机构正常控制更新
   void ShootAutoControl();    ///< 发射机构自瞄控制更新
+  void ShootAutoFuControl();  ///< 发射机构打符控制更新
   void ShooterCounter();      ///< 弹丸计数
   void FricSpeedUpdate();     ///< 摩擦轮转速更新
   void HeatUpdate();          ///< 热量闭环的热量更新
@@ -88,7 +89,7 @@ class Motor {
   f32 left_fric_speed_max = 7000.f, left_fric_speed_min = 6000.f;
   f32 right_fric_speed_max = 7000.f, right_fric_speed_min = 6000.f;
 
-  f32 pitch_init = 0.f;
+  f32 pitch_init = -18.f;
   f32 reset_yaw = 0.f;
 
   f32 shoot_frequency = 0.f;
@@ -99,7 +100,7 @@ class Motor {
   f32 pitch_vel_kp = 0.f, pitch_vel_ki = 0.f, pitch_vel_kd = 0.f;
 
   u16 heat_ultimate;   // 计算得出的最终热量
-  u16 heat_ultimate_;  // 计算得出的最终热量
+  float heat_ultimate_;  // 计算得出的最终热量
 
   i16 o1 = 0;
   i16 o2 = 0;
@@ -112,5 +113,7 @@ class Motor {
   bool single_shoot_flag_{false};
   bool fric_on_flag_{false};      // 摩擦轮启动且达到目标转速
   bool fric_reduce_flag_{false};  // 摩擦轮降速标志
-  bool shoot_one_flag_{false};    // 发出一发弹丸标志位
+  bool shoot_one_flag_{false};    // 打弹标志
+  bool last_is_three = false;   // 上一周期是否处于“发三”状态
+  int shoot_cycle_counter_ = 0;   // 距离上次发射的周期数（仅在持续3状态时累加）
 };

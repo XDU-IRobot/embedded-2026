@@ -18,6 +18,7 @@ class ChassisCommunicator final : public device::CanDevice {
 
   struct TxGimbalData {
     i16 ChassisMoveYRequest;  // y轴运动控制
+    i16 ChassisMoveXRequest;  // x轴运动控制
     u8 ChassisStateRequest;   // 状态
     u8 L0Change; /* 腿长变换  0x00 低腿长  0x01  正常腿长   0x02  跳跃时先下蹲  0x03  伸腿  0x04  收腿  0x05  跳跃缓冲
                     0x06  测试高腿长*/

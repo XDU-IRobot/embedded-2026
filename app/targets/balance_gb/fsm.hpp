@@ -13,6 +13,7 @@ class Fsm {
     kShoot,      // 自瞄+打弹
     kAutoShoot,  // 自动开火
     kHigh,       // 上台阶高腿长
+    kAutoFu,     //  自动打符
   };
   void Transit(State new_mode);
   void Update_State();
@@ -33,6 +34,8 @@ class Fsm {
   bool high_mode_{false};
 
   State mode_{State::kNoForce};
+
+  u8 auto_mode_{1};
 
  private:
 };
