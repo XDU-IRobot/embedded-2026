@@ -4,6 +4,8 @@
 
 ## CI status
 
+[![Branch Status](https://branch-status-card.vercel.app/api/branch-status?repo=XDU-IRobot%2Fembedded-2026&base=main&stale_days=30&theme=light&exclude=dependabot%2F*%2Crenovate%2F*)](https://github.com/XDU-IRobot/embedded-2026/branches)
+
 | 模块        | 编译测试状态                                                                                                                                                                                                                       |
 |-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 舵轮底盘      | [![build-steer_infantry_cs](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml/badge.svg)](https://github.com/XDU-IRobot/embedded-2026/actions/workflows/build-steer_infantry_cs.yml) |
