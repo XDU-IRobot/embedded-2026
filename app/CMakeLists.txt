@@ -44,12 +44,12 @@ add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)
 
 #新步兵云台
-file(GLOB_RECURSE BALANCE_INFANTRY_CHASSIS_NEW_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/balance_infantry_gimbal_new/*.cc)
-add_exe_target(balance_infantry_chassis_new "${BALANCE_INFANTRY_CHASSIS_NEW_SOURCES};${COMMON_SOURCES}")
+file(GLOB_RECURSE BALANCE_INFANTRY_GIMBAL_NEW_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/balance_infantry_gimbal_new/*.cc)
+add_exe_target(balance_infantry_gimbal_new "${BALANCE_INFANTRY_GIMBAL_NEW_SOURCES};${COMMON_SOURCES}")
 # 添加这个目标的私有包含路径
-target_include_directories(balance_infantry_chassis_new PRIVATE
+target_include_directories(balance_infantry_gimbal_new PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/targets/balance_infantry_gimbal_new
         ${CMAKE_CURRENT_LIST_DIR}/targets/balance_infantry_gimbal_new/fsm
         ${CMAKE_CURRENT_LIST_DIR}/targets/balance_infantry_gimbal_new/fsm/state
 )
-target_compile_definitions(balance_infantry_chassis_new PRIVATE BALANCE_INFANTRY_CHASSIS_NEW_SOURCES)
+target_compile_definitions(balance_infantry_gimbal_new PRIVATE BALANCE_INFANTRY_GIMBAL_NEW_SOURCES)
