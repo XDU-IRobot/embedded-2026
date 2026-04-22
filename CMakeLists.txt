@@ -15,6 +15,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
+add_compile_options(-Wall -fdata-sections -ffunction-sections)
+add_link_options(
+        -Wl,--gc-sections
+        -Wl,-u,_printf_float
+        -Wl,-u,_scanf_float
+)
 
 # Define the build type
 if (NOT CMAKE_BUILD_TYPE)
