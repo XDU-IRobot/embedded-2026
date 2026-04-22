@@ -108,7 +108,7 @@ struct DartRack {
   rm::device::M2006 *yaw_motor_{nullptr};                ///< yaw轴调节电机
   rm::device::M3508 *add_motor_{nullptr};                ///< 加弹电机
   rm::device::JyMe02Can *yaw_encoder_{nullptr};          ///< 编码器
-  rm::device::HiwonderServo *add_plate_servo_{nullptr};  ///< 加弹机械臂舵机
+  rm::device::HiwonderServo *add_servo_{nullptr};  ///< 加弹机械底部舵机
 
   // 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
@@ -144,6 +144,7 @@ struct DartRack {
   static constexpr int32_t kAddEcd[3] = {-160206, -225226, -296482};  //< 加弹三发镖位置
   static constexpr uint16_t kAddPlateLockEcd[3] = {593, 593, 287};    //< 加弹机械臂锁定位置
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
+
   static constexpr int32_t kLoadEcdPerDart = 650000;                  //< 上膛电机每发镖编码器最小增量
   /*
   上膛距离与扳机位置存在一定关系，理论上

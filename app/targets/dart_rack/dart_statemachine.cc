@@ -379,7 +379,7 @@ void DartStateAddUpdate() {
     if (dart_rack->state_.manual_mode.is_add_down_done == true &&
         dart_rack->state_.manual_mode.is_add_plate_done == false) {
       if (dart_rack->ticks <= 1000) {
-        dart_rack->add_plate_servo_->SetServoAngle(DartRack::kAddPlateUnlockEcd[add_index], add_index, 0);
+        dart_rack->add_servo_->SetServoAngle(DartRack::kAddPlateUnlockEcd[add_index], add_index, 0);
         dart_rack->ticks++;
         dart_rack->add_motor_speed_pid_.Update(.0f, dart_rack->add_motor_->rpm(), 1.0f);
         dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
@@ -399,7 +399,7 @@ void DartStateAddUpdate() {
         dart_rack->state_.manual_mode.is_add_up_done = true;
         dart_rack->add_motor_speed_pid_.Update(.0f, dart_rack->add_motor_->rpm(), 1.0f);
         dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-        // dart_rack->add_plate_servo_->SetServoAngle(
+        // dart_rack->add_servo_->SetServoAngle(
         //     DartRack::[add_index], add_index, 0);
       }
     }
@@ -482,7 +482,7 @@ void DartStateAdjustUpdate() {
   }
   // 上膛调节
   if (dart_rack->rc_->left_y() > 330) {
-    dart_rack->add_plate_servo_->SetServoAngle(593, 0, 0);
+    dart_rack->add_servo_->SetServoAngle(593, 0, 0);
     if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 &&
         dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
       dart_rack->load_motor_l_speed_pid_.Update(3000.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
@@ -496,7 +496,7 @@ void DartStateAdjustUpdate() {
       dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
     }
   } else if (dart_rack->rc_->left_y() < -330) {
-    dart_rack->add_plate_servo_->SetServoAngle(204, 1, 0);
+    dart_rack->add_servo_->SetServoAngle(204, 1, 0);
 
     if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 &&
         dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
@@ -511,7 +511,7 @@ void DartStateAdjustUpdate() {
       dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
     }
   } else {
-    dart_rack->add_plate_servo_->SetServoAngle(214, 2, 0);
+    dart_rack->add_servo_->SetServoAngle(214, 2, 0);
 
     dart_rack->load_motor_l_speed_pid_.Update(0.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
     dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));

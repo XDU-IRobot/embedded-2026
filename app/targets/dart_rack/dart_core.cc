@@ -35,8 +35,9 @@ void DartRack::Init() {
 
   // UART2 用于 HiwonderServo 串口舵机控制
   servo_uart = new rm::hal::Serial{huart2, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  add_plate_servo_ = new rm::device::HiwonderServo{*servo_uart};
-  add_plate_servo_->Begin();
+  add_servo_ = new rm::device::HiwonderServo{*servo_uart};
+  add_servo_->Begin();
+
   // 电机初始化
   add_motor_ = new rm::device::M3508{*can1_, 1};
   load_motor_l_ = new rm::device::M3508{*can1_, 3};
