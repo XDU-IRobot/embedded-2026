@@ -22,8 +22,8 @@
 #include "ControllerSMC.hpp"
 #include "ControllerSTASMC.hpp"
 #include "ControllerFeedForward.hpp"
-//#include "algorithm_enroll_test/main.hpp"
-//#include "algorithm_enroll_test/main.hpp"
+#include "algorithm_enroll_test/main.hpp"
+#include "algorithm_enroll_test/main.hpp"
 
 // debuge
 extern void FreemasterDebug();
@@ -99,8 +99,8 @@ class Gimbal {
 
   bool DM_is_enable = false;              // 达秒使能标志位
   Gimbal2Dof gimbal_controller;           // 二轴云台PID控制器
-  // Gimbal2DofSMC gimbal_controller_SMC;    // 二轴云台SMC控制器
-  // GimbalSTASMC gimbal_controller_STASMC;  // 二轴云台STASMC控制器
+  Gimbal2DofSMC gimbal_controller_SMC;    // 二轴云台SMC控制器
+  GimbalSTASMC gimbal_controller_STASMC;  // 二轴云台STASMC控制器
   Shoot2Fric shoot_controller;            // 双摩擦轮发射机构控制器
   Feedforward yaw_ff;                     // 前馈控制器
 
@@ -136,8 +136,8 @@ class Gimbal {
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.9f;  // TODO 重力补偿参数
   //pitch滤波器（效果不好，未启用）
-  Biquad pitch_cmd_notch;
-  ChirpGenerator pitch_chirp;
+  // Biquad pitch_cmd_notch;
+  // ChirpGenerator pitch_chirp;
 
   rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer;  ///< 裁判系统数据缓冲区
 
@@ -161,22 +161,22 @@ class Gimbal {
 
   // 结构体初始化
   void GimbalInit() {
-    // buzzer = new Buzzer;
-    // led = new LED;
+    buzzer = new Buzzer;
+    led = new LED;
 
     can1 = new rm::hal::Can{hcan1};
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
-    // referee_uart = new rm::hal::Serial{huart6, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-    // rx_referee = new rm::device::RxReferee{*referee_uart};
+    referee_uart = new rm::hal::Serial{huart6, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    rx_referee = new rm::device::RxReferee{*referee_uart};
 
     rc = new rm::device::DR16{*dbus};
 
     yaw_motor = new rm::device::GM6020{*can1, 2};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x00, 0x05, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x05, 0x05, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
     friction_left = new rm::device::M3508{*can1, 4};
     friction_right = new rm::device::M3508{*can1, 3};
@@ -189,11 +189,11 @@ class Gimbal {
     can1->SetFilter(0, 0);
     can1->Begin();
     rc->Begin();
-    // led->Init();
-    // rx_referee->Begin();
-    // led_controller.SetPattern<rm::modules::led_pattern::GreenBreath>();
-    // buzzer->Init();
-    // buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
+    led->Init();
+    rx_referee->Begin();
+    led_controller.SetPattern<rm::modules::led_pattern::GreenBreath>();
+    buzzer->Init();
+    buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
 
     time_ = 0;
 
@@ -201,8 +201,8 @@ class Gimbal {
     AmmoPIDInit();
 
     gimbal_controller.Enable(false);
-    // gimbal_controller_SMC.Enable(false);
-    // gimbal_controller_STASMC.Enable(false);
+    gimbal_controller_SMC.Enable(false);
+    gimbal_controller_STASMC.Enable(false);
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
     shoot_controller.Enable(false);                   // 开启控制器
@@ -217,8 +217,8 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    yaw_ff.Init(0.002, 5);//手控前馈参数
-    yaw_ff.Init(0.002, 1);//注释
+    //yaw_ff.Init(0.002, 5);//手控前馈参数
+    yaw_ff.Init(0.002, 1);
 
 #if CONTROLLER_CHOICE == 0
     // PID
@@ -242,26 +242,26 @@ class Gimbal {
     gimbal_controller_SMC.params().yaw_spd.leak_rate = 0.2f;
 #elif CONTROLLER_CHOICE == 2
     // 手控超级无敌螺旋升天好参数
-    //  gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.001f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
-    //  gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
-    //  // STASMC
-    //  //  1. 位置外环
-    //  gimbal_controller_STASMC.params().yaw_pos.kp_real = 250.0f;         // 高响应外环
-    //  gimbal_controller_STASMC.params().yaw_pos.max_speed_real = 450.0f;  // 最大目标速度(RPM)
-    //  // 2. 动力学前馈模型
-    //  gimbal_controller_STASMC.params().yaw_model.J_real = 9.0f;            // 转动惯量
-    //  gimbal_controller_STASMC.params().yaw_model.B_real = 3.0f;            // 粘性摩擦
-    //  gimbal_controller_STASMC.params().yaw_model.accel_alpha_real = 0.2f;  // 滤波系数
-    //  gimbal_controller_STASMC.params().yaw_model.max_accel_real = 200.0f;  // 加速度限幅
-    //  // 3. 速度内环 (超螺旋 SMC)
-    //  gimbal_controller_STASMC.params().yaw_spd.kp_real = 400.0f;             // 线性跟随速度，类似K
-    //  gimbal_controller_STASMC.params().yaw_spd.k1_real = 640.0f;             // 超螺旋非线性补偿
-    //  gimbal_controller_STASMC.params().yaw_spd.k2_real = 1200.f;             // 积分增益，消除静差
-    //  gimbal_controller_STASMC.params().yaw_spd.phi_real = 12.0f;             // 边界层(越大越平缓，越小越抖)
-    //  gimbal_controller_STASMC.params().yaw_spd.i_limit_real = 8000.0f;       // 积分限幅
-    //  gimbal_controller_STASMC.params().yaw_spd.out_limit_real = 25000.0f;    // 输出限幅
-    //  gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.85f;  // 滑模面适度滤波
-    //  gimbal_controller_STASMC.params().yaw_spd.leak_rate_real = 0.2f;        // 积分泄放
+    gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.001f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(1.1f).SetKi(0.001f).SetKd(0.002f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    // STASMC
+    //  1. 位置外环
+    gimbal_controller_STASMC.params().yaw_pos.kp_real = 250.0f;         // 高响应外环
+    gimbal_controller_STASMC.params().yaw_pos.max_speed_real = 450.0f;  // 最大目标速度(RPM)
+    // 2. 动力学前馈模型
+    gimbal_controller_STASMC.params().yaw_model.J_real = 9.0f;            // 转动惯量
+    gimbal_controller_STASMC.params().yaw_model.B_real = 3.0f;            // 粘性摩擦
+    gimbal_controller_STASMC.params().yaw_model.accel_alpha_real = 0.2f;  // 滤波系数
+    gimbal_controller_STASMC.params().yaw_model.max_accel_real = 200.0f;  // 加速度限幅
+    // 3. 速度内环 (超螺旋 SMC)
+    gimbal_controller_STASMC.params().yaw_spd.kp_real = 400.0f;             // 线性跟随速度，类似K
+    gimbal_controller_STASMC.params().yaw_spd.k1_real = 640.0f;             // 超螺旋非线性补偿
+    gimbal_controller_STASMC.params().yaw_spd.k2_real = 1200.f;             // 积分增益，消除静差
+    gimbal_controller_STASMC.params().yaw_spd.phi_real = 12.0f;             // 边界层(越大越平缓，越小越抖)
+    gimbal_controller_STASMC.params().yaw_spd.i_limit_real = 8000.0f;       // 积分限幅
+    gimbal_controller_STASMC.params().yaw_spd.out_limit_real = 25000.0f;    // 输出限幅
+    gimbal_controller_STASMC.params().yaw_spd.s_filter_alpha_real = 0.85f;  // 滑模面适度滤波
+    gimbal_controller_STASMC.params().yaw_spd.leak_rate_real = 0.2f;        // 积分泄放
 
     // 自瞄参数
     gimbal_controller.pid().pitch_position.SetKp(30.0f).SetKi(0.001f).SetKd(0.0f).SetMaxOut(500.0f).SetMaxIout(10.0f);
@@ -348,11 +348,11 @@ class Gimbal {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
         gimbal_controller.Enable(true);
-        // gimbal_controller_SMC.Enable(true);
-        // gimbal_controller_STASMC.Enable(true);
+        gimbal_controller_SMC.Enable(true);
+        gimbal_controller_STASMC.Enable(true);
         rc_yaw_data = yaw;
-        // rc_pitch_data = rm::modules::Wrap(pitch + err_average - 0.02, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
-        rc_pitch_data = rm::modules::Wrap(pitch , 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_pitch_data = rm::modules::Wrap(pitch + err_average - 0.02, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        // rc_pitch_data = rm::modules::Wrap(pitch , 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
       rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
@@ -363,16 +363,14 @@ class Gimbal {
       rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
-      // auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
-      // Arcyawdata = comp_yaw;
+      auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
+      Arcyawdata = comp_yaw;
 
 #if CONTROLLER_CHOICE == 0  // PID控制器
-      // gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
-      // gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
-      //                          pitch_motor->vel(), 2.f);
-      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch , 0, 2 * M_PI),
+      gimbal_controller.SetTarget(comp_yaw, comp_pitch);
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
+
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));//设置输出电流并输出
 #elif CONTROLLER_CHOICE == 1  // SMC控制器
       gimbal_controller_SMC.SetTarget(comp_yaw, comp_pitch);
@@ -402,8 +400,8 @@ class Gimbal {
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_STASMC.output().yaw, -25000, 25000));
 #endif
 
-      // pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
-      // pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
+      pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
+      pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
     }
 
     // 自瞄控制 直接控制
@@ -412,8 +410,8 @@ class Gimbal {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
         gimbal_controller.Enable(true);
-        // gimbal_controller_SMC.Enable(true);
-        // gimbal_controller_STASMC.Enable(true);
+        gimbal_controller_SMC.Enable(true);
+        gimbal_controller_STASMC.Enable(true);
         rc_yaw_data = yaw;
         rc_pitch_data = rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
@@ -435,11 +433,10 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
 
-      // auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
+      auto [comp_yaw, comp_pitch] = ApplyRollComp(rc_yaw_data, rc_pitch_data);
 
 #if CONTROLLER_CHOICE == 0  // PID控制器
-      // gimbal_controller.SetTarget(comp_yaw, comp_pitch);
-      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
+      gimbal_controller.SetTarget(comp_yaw, comp_pitch);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
@@ -470,8 +467,8 @@ class Gimbal {
                                       0.002f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_STASMC.output().yaw, -25000, 25000));
 #endif
-      // pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
-      // pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
+      pitch_torque = pitch_torque_kp * sin(pitch - 3.7);
+      pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
     }
 
     // 无力或遥控器无信号
@@ -480,20 +477,20 @@ class Gimbal {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         DM_is_enable = false;
         gimbal_controller.Enable(false);
-        // gimbal_controller_SMC.Enable(false);
-        // gimbal_controller_STASMC.Enable(false);
+        gimbal_controller_SMC.Enable(false);
+        gimbal_controller_STASMC.Enable(false);
       }
       yaw_motor->SetCurrent(0);
       pitch_torque = 0;
 
       // 当遥控器云台处于无力状态，将遥控器的左拨杆向右下，右拨杆向左下推动，可以切换为单发模式(开大福用)
-      // if (mode_change_time > 0) mode_change_time--;
-      // if (rc->left_x() == 660 && rc->left_y() == -660 && rc->right_x() == -660 && rc->right_y() == -660 &&
-      //     mode_change_time == 0) {
-      //   SINGLE_SHOOT_MOOD *= -1;
-      //   // buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
-      //   mode_change_time = 20;
-      // }
+      if (mode_change_time > 0) mode_change_time--;
+      if (rc->left_x() == 660 && rc->left_y() == -660 && rc->right_x() == -660 && rc->right_y() == -660 &&
+          mode_change_time == 0) {
+        SINGLE_SHOOT_MOOD *= -1;
+        // buzzer_controller.Play<rm::modules::buzzer_melody::Beeps<1>>();
+        mode_change_time = 20;
+      }
     }
   }
 
@@ -633,7 +630,7 @@ class Gimbal {
 
     RCStateUpdate();                             // 遥控器更新
     GimbalControl();                             // 云台控制更新
-    // AmmoControl();                               // 发射机构数据更新
+    AmmoControl();                               // 发射机构数据更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
   }
 
@@ -643,8 +640,8 @@ class Gimbal {
       // 发送达秒控制信息
       double pitch_torque_cmd = gimbal_controller.output().pitch + pitch_torque;
       pitch_torque_cmd = rm::modules::Clamp(pitch_torque_cmd, -8.0, 8.0);
-      // pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
-      pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
+      pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
+
 
       // // 达秒电机与imu数据滤波处理
       // err_sum -= err_buffer[err_buffer_ptr];
@@ -671,21 +668,21 @@ class Gimbal {
   // 裁判系统+UI绘制
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
-      //Referee_control();
+      Referee_control();
     }
   }
 
   // 总循环
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
-      // // WS212航灯输出
-      // if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
-      // if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
-      // if (abcdefg >= 20 && abcdefg < 30) Set_LED(0, 0, 255, 0);
-      // if (abcdefg >= 30) abcdefg = 0;
-      // abcdefg++;
-      // Set_Brightness(10);
-      // WS2812_Send();
+      // WS212航灯输出
+      if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
+      if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
+      if (abcdefg >= 20 && abcdefg < 30) Set_LED(0, 0, 255, 0);
+      if (abcdefg >= 30) abcdefg = 0;
+      abcdefg++;
+      Set_Brightness(10);
+      WS2812_Send();
 
       time_ = 0;
     }

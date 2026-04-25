@@ -22,6 +22,6 @@ extern "C" [[noreturn]] void AppMain(void) {
   mainloop_1000hz.Start();
 
   for (;;) {
-    __WFI();
+    gimbal->can1->Process();
   }
 }
