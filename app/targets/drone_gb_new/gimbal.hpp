@@ -25,7 +25,7 @@ class Gimbal {
   bool DM_is_enable = false;  // 达秒使能标志位
 
   float pitch_min_pos = 2.935;  // pitch电机最小限位
-  float pitch_max_pos = 4.00;  // pitch电机最大限位
+  float pitch_max_pos = 4.00;   // pitch电机最大限位
 
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
@@ -35,10 +35,10 @@ class Gimbal {
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.1f;  // TODO 重力补偿参数
 
-  float pitch_cmd =0.0f;         //pitch合输出
+  float pitch_cmd = 0.0f;  // pitch合输出
 
-  rm::hal::ThrottledCan<128> *can1{nullptr};     // CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};  // 遥控器串口接口
+  rm::hal::ThrottledCan<128> *can1{nullptr};  // CAN 总线接口
+  rm::hal::Serial *dbus{nullptr};             // 遥控器串口接口
 
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
@@ -93,17 +93,17 @@ class Gimbal {
     device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
     device_shoot << friction_left << friction_right << dial_motor;  // 发射机构电机
 
-    can1->SetFilter(0, 0);  // 设置滤波器？
+    can1->SetFilter(0, 0);  // 设置滤波器
     can1->Begin();
     rc->Begin();
 
     GimbalPIDInit();
     AmmoPIDInit();
 
-    gimbal_controller.Enable(false);
+    gimbal_controller.Enable(false);//云台控制器
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
-    shoot_controller.Enable(false);                   // 开启控制器
+    shoot_controller.Enable(false);                   // 控制器初始化
     shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
@@ -111,9 +111,11 @@ class Gimbal {
   }
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(250.0f).SetKi(0.001f).SetKd(0.1f).SetMaxOut(100000.0f).SetMaxIout(1000.0f);//
+    gimbal_controller.pid().yaw_position.SetKp(250.0f).SetKi(0.001f).SetKd(0.1f).SetMaxOut(100000.0f).SetMaxIout(
+        1000.0f);  //yaw初版函数
     gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().pitch_position.SetKp(22.0f).SetKi(0.001f).SetKd(0.005f).SetMaxOut(500.0f).SetMaxIout(10.0f);//pitch初版参数
+    gimbal_controller.pid().pitch_position.SetKp(22.0f).SetKi(0.001f).SetKd(0.005f).SetMaxOut(500.0f).SetMaxIout(
+        10.0f);  // pitch初版参数
     gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
 
@@ -161,29 +163,28 @@ class Gimbal {
       }
 
       // yaw
-       rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
-       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+      rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       // pitch
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
-
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
 
-      pitch_torque = pitch_torque_kp * cos(pitch-3.14);//这里输出的力矩是反向
+      pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 
     }
-    else if (GimbalState_ == kAuto) {//自瞄模式控制
-      if (DM_is_enable == false) {  // 使达妙电机使能
+    else if (GimbalState_ == kAuto) {  // 自瞄模式控制
+      if (DM_is_enable == false) {       // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw;
-        rc_pitch_data = rm::modules::Wrap(pitch , 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
 
@@ -203,8 +204,7 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
-      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch , 0, 2 * M_PI),
-                               pitch_motor->vel(), 2.f);
+      gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
     }
     else {
@@ -284,7 +284,6 @@ class Gimbal {
     GimbalControl();                               // 云台控制更新
     AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
-
   }
 
   // DmMotor电机发信息
@@ -293,8 +292,6 @@ class Gimbal {
       pitch_cmd = -pitch_torque + gimbal_controller.output().pitch;
       // 发送达秒控制信息
       pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);
-
-
     }
   }
 
