@@ -9,6 +9,7 @@
 #include "lcd_init.h"
 #include "sd_card.h"
 #include "../../LVGL/lvgl.h"
+#include "librm/device/actuator/dm_motor.hpp"
 
 extern "C" void init_lvgl_demo(void);
 
@@ -35,12 +36,12 @@ extern "C" [[noreturn]] void AppMain(void) {
       &htim14,                                   // 2.0
       etl::delegate<void()>::create<MainLoop>()  //
   };
-  // mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1);  // 84MHz / 168 / 1000 = 500Hz
+  mainloop_1000hz.SetPrescalerAndPeriod(168 - 1, 1000 - 1);
   mainloop_1000hz.Start();
 
   for (;;) {
     if (is_lvgl_running) {
-      // 只有在无力状态下才会进入并执行屏幕刷新和计算
+      // 只有在两个拨杆都上拨状态下才会进入并执行屏幕刷新和计算
       lv_timer_handler();
       HAL_Delay(5);  // 休息5ms，防止占满CPU
     } else {

@@ -6,6 +6,7 @@
 #include "encoder_counter.hpp"
 #include "Referee.hpp"
 #include "motor.h"
+#include "librm/device/actuator/dm_motor.hpp"
 // 状态机变量定义
 enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
 
@@ -106,10 +107,10 @@ struct DartRack {
   rm::device::M2006 *trigger_motor_{nullptr};            ///< 扳机活动电机
   rm::device::M2006 *trigger_motor_force_{nullptr};      ///< 扳机释放电机
   rm::device::M2006 *yaw_motor_{nullptr};                ///< yaw轴调节电机
-  rm::device::M3508 *add_motor_{nullptr};                ///< 加弹电机
+  rm::device::M2006 *add_motor_{nullptr};                ///< 加弹电机
   rm::device::JyMe02Can *yaw_encoder_{nullptr};          ///< 编码器
   rm::device::HiwonderServo *add_servo_{nullptr};  ///< 加弹机械底部舵机
-
+  rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *dm_motor_{nullptr};  ///< 达妙电机
   // 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
   rm::device::RxReferee *rx_referee{nullptr};

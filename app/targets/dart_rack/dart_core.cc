@@ -28,23 +28,23 @@ void DartRack::Init() {
   rc_ = new rm::device::DR16{*dbus_};
   rc_->Begin();
 
-  // UART3 用于 RxReferee 裁判系统
-  referee_uart = new rm::hal::Serial{huart3, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
-  rx_referee = new rm::device::RxReferee{*referee_uart};
-  rx_referee->Begin();
-
   // UART2 用于 HiwonderServo 串口舵机控制
   servo_uart = new rm::hal::Serial{huart2, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   add_servo_ = new rm::device::HiwonderServo{*servo_uart};
   add_servo_->Begin();
 
+  // UART3 用于 RxReferee 裁判系统
+  referee_uart = new rm::hal::Serial{huart3, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
+  rx_referee = new rm::device::RxReferee{*referee_uart};
+  rx_referee->Begin();
+
   // 电机初始化
-  add_motor_ = new rm::device::M3508{*can1_, 1};
   load_motor_l_ = new rm::device::M3508{*can1_, 3};
   load_motor_r_ = new rm::device::M3508{*can1_, 4};
   trigger_motor_ = new rm::device::M2006{*can1_, 5};
-  trigger_motor_force_ = new rm::device::M2006{*can1_, 8};
+  add_motor_ = new rm::device::M2006{*can1_, 6};
   yaw_motor_ = new rm::device::M2006{*can1_, 7};
+  trigger_motor_force_ = new rm::device::M2006{*can1_, 8};
 
   // vision_data_ = new USBVisionReceive_SCM_t;
 
@@ -53,6 +53,22 @@ void DartRack::Init() {
 
   can1_->SetFilter(0, 0);
   can1_->Begin();
+
+  // 达妙电机配置
+  rm::device::DmMotorSettings<rm::device::DmMotorControlMode::kMit> dm_settings = {
+      .master_id = 0x11,                              // 取决于达妙上位机里设置的反馈ID
+      .slave_id = 0x01,                               // 取决于达妙上位机里设置的目标ID
+      .p_max = 3.0f,                                  // 最大位置范围
+      .v_max = 30.0f,                                 // 最大速度
+      .t_max = 10.0f,                                 // 最大扭矩
+      .kp_range = std::make_pair(0.0f, 500.0f),        // Kp取值范围
+      .kd_range = std::make_pair(0.0f, 5.0f)          // Kd取值范围
+  };
+
+  // 实例化达妙电机 (内部会将 dm_settings.master_id 取出并传给 CanDevice 基类)
+  dm_motor_ = new rm::device::DmMotor{*can1_, dm_settings, true};
+  // 上电必须使能
+  dm_motor_->SendInstruction(rm::device::DmMotorInstructions::kEnable);
 }
 
 // 数据更新
