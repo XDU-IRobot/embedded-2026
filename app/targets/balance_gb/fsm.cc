@@ -43,7 +43,7 @@ void Fsm::Transit(State new_mode) {
       global.motor->ShootDisable();
     } else if (new_mode == State::kShoot) {
       global.motor->DMEnable();
-      global.motor->ShootDisable();
+      global.motor->ShootEnable();
     } else if (new_mode == State::kAutoFu) {
       global.motor->DMEnable();
       global.motor->ShootEnable();
@@ -258,7 +258,7 @@ void Fsm::Update_Chassis_Request() {
       inited_ = false;
       break;
     case State::kTest:
-      if (init_count_ == 300) {
+      if (init_count_ >= 300) {
         Update_Test();
       }else {
         global.chassis_tx->gimbal_data_tx.ChassisMoveYRequest = 0;
@@ -269,6 +269,7 @@ void Fsm::Update_Chassis_Request() {
     case State::kShoot:
       Update_Test();
       global.chassis_tx->gimbal_data_tx.L0Change = 0x01;
+      global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;
       break;
     case State::kAutoFu:
       Update_Test();

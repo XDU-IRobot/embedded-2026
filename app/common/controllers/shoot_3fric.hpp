@@ -34,14 +34,14 @@ class Shoot3Fric {
       }
     }
 
-    if (!enabled_) {
-      // 无力，控制量设0直接返回
-      output_.fric_1 = 0.0f;
-      output_.fric_2 = 0.0f;
-      output_.fric_3 = 0.0f;
-      output_.loader = 0.0f;
-      return;
-    }
+    // if (!enabled_) {
+    //   // 无力，控制量设0直接返回
+    //   output_.fric_1 = 0.0f;
+    //   output_.fric_2 = 0.0f;
+    //   output_.fric_3 = 0.0f;
+    //   output_.loader = 0.0f;
+    //   return;
+    // }
 
     // 摩擦轮PID
     if (!armed_) {

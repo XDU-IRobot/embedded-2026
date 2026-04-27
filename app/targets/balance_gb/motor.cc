@@ -39,15 +39,15 @@ void Motor::MotorInit() {
   can2 = new rm::hal::Can{hcan2};
 
   pitch_motor = new DmMotor<DmMotorControlMode::kMit>  //
-      {*can1, {0x12, 0x11, 3.141593f, 30.f, 10.f, {0.f, 500.f}, {0.f, 5.f}}};
+      {*can2, {0x05, 0x04, 3.141593f, 30.f, 10.f, {0.f, 500.f}, {0.f, 5.f}}};
   yaw_motor = new DmMotor<DmMotorControlMode::kMit>  //
-      {*can2, {0x13, 0x03, 3.141593f, 30.f, 10.f, {0.f, 500.f}, {0.f, 5.f}}};
+      {*can1, {0x10, 0x09, 3.141593f, 30.f, 10.f, {0.f, 500.f}, {0.f, 5.f}}};
 
   aimbot_comm = new device::AimbotCanCommunicator(*can1);
   device_aimbot << aimbot_comm;
-  ammo_left = new M3508{*can1, 7};
-  ammo_right = new M3508{*can1, 8};
-  dial_motor = new M3508{*can2, 1};
+  ammo_left = new M3508{*can2, 2};
+  ammo_right = new M3508{*can2, 4};
+  dial_motor = new M3508{*can1, 3};
 
   yaw_feedforward = new YawSpeedFeedforward(0.002, 1);
 
@@ -121,8 +121,8 @@ void Motor::MotorPidInit() {
       .SetMaxIout(0.2f);
 
   // 摩擦轮电机
-  shoot_controller.pid().fric_1_speed.SetKp(19.f).SetKi(0.f).SetKd(1.f).SetMaxOut(16000.f).SetMaxIout(0.f);
-  shoot_controller.pid().fric_2_speed.SetKp(19.f).SetKi(0.f).SetKd(1.f).SetMaxOut(16000.f).SetMaxIout(0.f);
+  shoot_controller.pid().fric_1_speed.SetKp(19.f).SetKi(0.f).SetKd(1.f).SetMaxOut(13000.f).SetMaxIout(0.f);
+  shoot_controller.pid().fric_2_speed.SetKp(19.f).SetKi(0.f).SetKd(1.f).SetMaxOut(13000.f).SetMaxIout(0.f);
 
   // 拨盘电机
   shoot_controller.pid().loader_position.SetKp(0.f).SetKi(0.f).SetKd(0.f).SetMaxOut(1200.f).SetMaxIout(0.f);
@@ -479,10 +479,10 @@ void Motor::SendDMCommand() {
   yaw_pid_debug = gimbal_controller.output().yaw;
   global.motor->gravity_compensation_ = 1.6f * std::cos(global.bc->pitch / 57.3f + 0.29f);
   gravity_compensation = global.motor->gravity_compensation_;
-  pitch_motor->SetPosition(0.f, 0.f, gravity_compensation + gimbal_controller.output().pitch, 0.f, 0.f);
+  pitch_motor->SetMitCommand(0.f, 0.f, gravity_compensation + gimbal_controller.output().pitch, 0.f, 0.f);
   pitch_pid_debug = pitch_motor->tau();
   pitch_speed = pitch_motor->vel();
-  yaw_motor->SetPosition(0.f, 0.f, gimbal_controller.output().yaw + global.motor->yaw_compensation_, 0.f, 0.f);
+  yaw_motor->SetMitCommand(0.f, 0.f, gimbal_controller.output().yaw + global.motor->yaw_compensation_, 0.f, 0.f);
   pitch_tau = gravity_compensation + gimbal_controller.output().pitch;
 }
 
@@ -493,20 +493,31 @@ void Motor::SendDjiCommand() {
   o2 = static_cast<i16>(shoot_controller.output().fric_2);
   o3 = static_cast<i16>(shoot_controller.output().loader);
   if (shoot_enabled_ == 0) {
-    ammo_left->SetCurrent(0);
-    ammo_right->SetCurrent(0);
-    dial_motor->SetCurrent(0);
+    shoot_controller.SetLeftArmSpeed(0.);
+    shoot_controller.SetRightArmSpeed(0.);
+    shoot_controller.SetMode(Shoot3Fric::kStop);
+    global.motor->shoot_controller.Fire();
+    global.motor->shoot_controller.Update(global.motor->ammo_left->rpm(), global.motor->ammo_right->rpm(), 0,
+                                          static_cast<f32>(global.motor->dail_encoder_counter.revolutions()) * 8191.0f +
+                                              static_cast<f32>(global.motor->dail_encoder_counter.last_ecd()),
+                                          global.motor->dial_motor->rpm());
+    o1 = static_cast<i16>(shoot_controller.output().fric_1);
+    o2 = static_cast<i16>(shoot_controller.output().fric_2);
+    o3 = static_cast<i16>(shoot_controller.output().loader);
+    ammo_left->SetCurrent(o1);
+    ammo_right->SetCurrent(o2);
+    dial_motor->SetCurrent(-o3);
   } else {
     ammo_left->SetCurrent(o1);
     ammo_right->SetCurrent(o2);
     dial_motor->SetCurrent(-o3);
   }
-  dial_debug = dial_motor->current();
+  dial_debug = o1;
 
   state_debug = aimbot_comm->aimbot_state();
 
-  DjiMotor<>::SendCommand(*can1);
-  DjiMotor<>::SendCommand(*can2);
+  DjiMotorBase::SendCommand(*can1);
+  DjiMotorBase::SendCommand(*can2);
 }
 
 void Motor::Transit_initmode(bool keyboard_e) {
