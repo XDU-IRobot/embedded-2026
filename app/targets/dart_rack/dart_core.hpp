@@ -14,6 +14,14 @@ enum class PhaseState : uint8_t { kUncomplete = 0, kDone = 1 };
 
 enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kload = 2, kAdd = 3, kAim = 4, kFire = 5 };
 
+enum class AddState {
+  SUSPENDED,      // 0. 悬空安全
+  CAUGHT,         // 1. 抓弹姿态
+  MOVING_FORWARD, // 2. 正在前移
+  PLACED,         // 3. 放弹姿态
+  MOVING_BACK     // 4. 正在回退
+};
+
 struct AutoMode {
   AbleState enabled = AbleState::kOff;
 };
@@ -142,7 +150,7 @@ struct DartRack {
   static constexpr int32_t kTriggerEcdMax = 900000;
   static constexpr int32_t kTriggerEcdMin = 0;
   static constexpr int32_t kTriggerEcd[4] = {0, 0, 0, 0};             //< 扳机四发镖位置
-  static constexpr int32_t kAddEcd[3] = {-160206, -225226, -296482};  //< 加弹三发镖位置
+  static constexpr int32_t kAddEcd[2] = {0,0};  //< 加弹三发镖位置
   static constexpr uint16_t kAddPlateLockEcd[3] = {593, 593, 287};    //< 加弹机械臂锁定位置
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
 
