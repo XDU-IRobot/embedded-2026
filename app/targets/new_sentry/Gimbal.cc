@@ -254,7 +254,7 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
                                        gimbal->gimbal_pitch_target_);
-  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->gyro_z(),
+  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), -globals->hipnuc_imu->gyro_z(),
                                     globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->hipnuc_imu->pitch(), globals->hipnuc_imu->gyro_x(), 2.0f);
   const f32 gravity_compensation_ = -1.82f * std::cos(globals->hipnuc_imu->pitch() + 0.2115f);
