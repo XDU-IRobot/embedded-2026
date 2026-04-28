@@ -116,10 +116,10 @@ void GlobalWarehouse::GimbalPIDInit() {
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
-  chassis_controller.pid().lf_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rf_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().lb_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
-  chassis_controller.pid().rb_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(6000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lf_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rf_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().lb_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
+  chassis_controller.pid().rb_wheel.SetKp(8.0f).SetKi(0.0f).SetKd(1.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {
