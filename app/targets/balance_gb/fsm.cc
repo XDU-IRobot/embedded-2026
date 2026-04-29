@@ -43,10 +43,10 @@ void Fsm::Transit(State new_mode) {
       global.motor->ShootDisable();
     } else if (new_mode == State::kShoot) {
       global.motor->DMEnable();
-      global.motor->ShootEnable();
+      global.motor->ShootDisable();
     } else if (new_mode == State::kAutoFu) {
       global.motor->DMEnable();
-      global.motor->ShootEnable();
+      global.motor->ShootDisable();
     }else if (new_mode == State::kHigh) {
       global.motor->DMEnable();
       global.motor->ShootEnable();
@@ -269,11 +269,10 @@ void Fsm::Update_Chassis_Request() {
     case State::kShoot:
       Update_Test();
       global.chassis_tx->gimbal_data_tx.L0Change = 0x01;
-      global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;
       break;
     case State::kAutoFu:
       Update_Test();
-      global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
+      global.chassis_tx->gimbal_data_tx.L0Change = 0x02;
       break;
     case State::kHigh:
       Update_Test();
