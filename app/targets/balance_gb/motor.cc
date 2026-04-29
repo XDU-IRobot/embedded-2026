@@ -30,7 +30,7 @@ int s_number;
 u16 h_ultimate_ = 0;
 f32 pitch_pos_ki_;
 int shoot_cycle_counter;
-int a=0;
+int a = 0;
 
 extern VT03 tcremote;
 
@@ -59,7 +59,7 @@ void Motor::MotorInit() {
   can2->Begin();
 }
 
-void Motor::CalcYawPos(f32 pos) { yaw_motor_pos = yaw_motor->pos() ; };
+void Motor::CalcYawPos(f32 pos) { yaw_motor_pos = yaw_motor->pos(); };
 
 void Motor::MotorPidInit() {
   // 初始pid参数
@@ -91,7 +91,7 @@ void Motor::MotorPidInit() {
     pitch_vel_ki = 0.f;
     pitch_vel_kd = 0.f;
   }
-  pitch_pos_ki_ =pitch_pos_ki;
+  pitch_pos_ki_ = pitch_pos_ki;
   //  yaw电机pid
   gimbal_controller.pid()
       .yaw_position.SetKp(yaw_pos_kp)
@@ -194,7 +194,7 @@ void Motor::ShooterCounter() {
 
 void Motor::HeatUpdate() {
   heat_ultimate_ = Clamp(heat_ultimate - global.chassis_rx->chassis_data_rx.CoolingSpeed / 500.f, 0,
-                            global.chassis_rx->chassis_data_rx.HeatLimit);
+                         global.chassis_rx->chassis_data_rx.HeatLimit);
   h_ultimate_ = heat_ultimate_;
 }
 
@@ -206,12 +206,13 @@ void Motor::DMInitControl() {
   rc_request_pitch = pitch_init;
   rc_request_yaw = yaw_init;
   yaw_feedforward->Update(rc_request_yaw);
-  gimbal_controller.SetTarget(rc_request_yaw / 57.3f, rc_request_pitch / 57.3f, yaw_feedforward->GetYawSpeedFeedforward());
+  gimbal_controller.SetTarget(rc_request_yaw / 57.3f, rc_request_pitch / 57.3f,
+                              yaw_feedforward->GetYawSpeedFeedforward());
   gimbal_controller.Update(yaw_motor_pos, global.bc->hipnuc_imu->gyro_z(), global.bc->pitch / 57.3f,
                            -global.bc->hipnuc_imu->gyro_x());
-   if (yaw_motor_pos > rc_request_yaw + 0.1f || yaw_motor_pos < rc_request_yaw - 0.1f) {
-     global.fsm.init_count_ = 0;
-  global.fsm.inited_ = true;
+  if (yaw_motor_pos > rc_request_yaw + 0.1f || yaw_motor_pos < rc_request_yaw - 0.1f) {
+    global.fsm.init_count_ = 0;
+    global.fsm.inited_ = true;
   }
   yaw_target = rc_request_yaw;
   pitch_target = rc_request_pitch;
@@ -372,7 +373,7 @@ void Motor::ShootNormalControl() {
   global.motor->dail_encoder_counter.Update(global.motor->dial_motor->encoder());
   shoot_controller.SetLeftArmSpeed(left_set_speed);
   shoot_controller.SetRightArmSpeed(right_set_speed);
-  if ((aimbot_comm->aimbot_state() >> 1 & 0x01) || global.bc->rc->dial()<-600) {
+  if ((aimbot_comm->aimbot_state() >> 1 & 0x01) || global.bc->rc->dial() < -600) {
     shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     shoot_frequency = -24.0f;
     shoot_controller.SetShootFrequency(shoot_frequency);
@@ -397,11 +398,10 @@ void Motor::ShootAutoFuControl() {
 
   if (current_state == 1) {
     // 允许发射：检查间隔是否已满
-    if (shoot_cycle_counter_ >= 280 &&
-        (global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate_ > 20)) {
+    if (shoot_cycle_counter_ >= 280 && (global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate_ > 20)) {
       // 执行单发
       global.motor->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
-      shoot_cycle_counter_ = 0;   // 发射后重置计数器
+      shoot_cycle_counter_ = 0;  // 发射后重置计数器
       a++;
     } else {
       // 间隔未满：仅计数，不发射
@@ -449,8 +449,7 @@ void Motor::ShootAutoControl() {
          (global.bc->rc->mouse_button_right() == 1 || tcremote.data().mouse_button_right == 1) &&
          (aimbot_comm->aimbot_state() >> 1 & 0x01) &&
          (global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate_ > 20)) ||
-        (tcremote.data().mouse_button_left == 1 &&
-         (global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate_ > 20))
+        (tcremote.data().mouse_button_left == 1 && (global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate_ > 20))
         // (global.bc->rc->mouse_button_left() == 1 &&
         //  global.chassis_rx->chassis_data_rx.HeatLimit - heat_ultimate > 40)
     ) {

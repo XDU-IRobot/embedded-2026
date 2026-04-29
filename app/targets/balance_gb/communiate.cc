@@ -26,11 +26,12 @@ void ChassisCommunicator::RxCallback(const hal::CanFrame *msg) {
   bulletspeed = chassis_data_rx.Bulletspeed;
 }
 void ChassisCommunicator::SendChassisCommand() {
-  tx_buf_[0] = global.chassis_tx->gimbal_data_tx.ChassisStateRequest | (global.chassis_tx->gimbal_data_tx.L0Change << 4);
+  tx_buf_[0] =
+      global.chassis_tx->gimbal_data_tx.ChassisStateRequest | (global.chassis_tx->gimbal_data_tx.L0Change << 4);
   tx_buf_[1] = static_cast<int8_t>(global.chassis_tx->gimbal_data_tx.ChassisMoveYRequest);  // 遥控器y轴数值
   tx_buf_[2] = static_cast<int8_t>(global.chassis_tx->gimbal_data_tx.ChassisMoveXRequest);  // 遥控器y轴数值
 
-  tx_buf_[3] = global.chassis_tx->gimbal_data_tx.ui_flag;              // ui指令
+  tx_buf_[3] = global.chassis_tx->gimbal_data_tx.ui_flag;  // ui指令
 
   this->can_->Write(0x59, tx_buf_, 4);
 }

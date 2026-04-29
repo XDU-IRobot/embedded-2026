@@ -21,7 +21,7 @@ class Motor {
   M3508 *ammo_left{nullptr};  ///< 左侧摩擦轮电机
   M3508 *ammo_right{nullptr};
   AimbotCanCommunicator *aimbot_comm{nullptr};
-  Gimbal2Dof gimbal_controller;               ///< 二轴双 Yaw 云台控制器
+  Gimbal2Dof gimbal_controller;                  ///< 二轴双 Yaw 云台控制器
   Shoot3Fric shoot_controller{9, 42.75, false};  ///< 摩擦轮
   YawSpeedFeedforward *yaw_feedforward{nullptr};
   SineSweep *sweep_controller{nullptr};
@@ -99,7 +99,7 @@ class Motor {
   f32 pitch_pos_kp = 0.f, pitch_pos_ki = 0.f, pitch_pos_kd = 0.f;
   f32 pitch_vel_kp = 0.f, pitch_vel_ki = 0.f, pitch_vel_kd = 0.f;
 
-  u16 heat_ultimate;   // 计算得出的最终热量
+  u16 heat_ultimate;     // 计算得出的最终热量
   float heat_ultimate_;  // 计算得出的最终热量
 
   i16 o1 = 0;
@@ -114,6 +114,6 @@ class Motor {
   bool fric_on_flag_{false};      // 摩擦轮启动且达到目标转速
   bool fric_reduce_flag_{false};  // 摩擦轮降速标志
   bool shoot_one_flag_{false};    // 打弹标志
-  bool last_is_three = false;   // 上一周期是否处于“发三”状态
+  bool last_is_three = false;     // 上一周期是否处于“发三”状态
   int shoot_cycle_counter_ = 0;   // 距离上次发射的周期数（仅在持续3状态时累加）
 };

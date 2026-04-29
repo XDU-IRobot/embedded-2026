@@ -47,7 +47,7 @@ void Fsm::Transit(State new_mode) {
     } else if (new_mode == State::kAutoFu) {
       global.motor->DMEnable();
       global.motor->ShootDisable();
-    }else if (new_mode == State::kHigh) {
+    } else if (new_mode == State::kHigh) {
       global.motor->DMEnable();
       global.motor->ShootEnable();
     } else if (new_mode == State::kAutoShoot) {
@@ -123,7 +123,7 @@ void Fsm::Update_State() {
           Transit(State::kShoot);
         } else if (global.bc->rc->switch_l() == DR16::SwitchPosition::kUp) {
           Transit(State::kAutoFu);
-        }else {
+        } else {
           Transit(State::kTest);
           if (enable_count == 300) {
             global.motor->yaw_motor->SendInstruction(DmMotorInstructions::kClearError);
@@ -260,7 +260,7 @@ void Fsm::Update_Chassis_Request() {
     case State::kTest:
       if (init_count_ >= 300) {
         Update_Test();
-      }else {
+      } else {
         global.chassis_tx->gimbal_data_tx.ChassisMoveYRequest = 0;
         global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;
         global.chassis_tx->gimbal_data_tx.L0Change = 0x01;
@@ -276,7 +276,7 @@ void Fsm::Update_Chassis_Request() {
       break;
     case State::kHigh:
       Update_Test();
-      //global.chassis_tx->gimbal_data_tx.L0Change = 0x06;  // 伸腿
+      // global.chassis_tx->gimbal_data_tx.L0Change = 0x06;  // 伸腿
       break;
     case State::kAutoShoot:
       Update_Test();
@@ -284,12 +284,13 @@ void Fsm::Update_Chassis_Request() {
         TCRcKey_KE_flag = 1;
       }
       if (tcremote.data().keyboard_key >> 7 == 0 && TCRcKey_KE_flag == 1) {
-        TCRcKey_KE_value ++;
+        TCRcKey_KE_value++;
         TCRcKey_KE_flag = 0;
       }
-      if (TCRcKey_KE_value % 2 ==1) {
-        //global.chassis_tx->gimbal_data_tx.L0Change = 0x09;
-      }else{}
+      if (TCRcKey_KE_value % 2 == 1) {
+        // global.chassis_tx->gimbal_data_tx.L0Change = 0x09;
+      } else {
+      }
       // global.chassis_tx->gimbal_data_tx.ChassisStateRequest = 0x00;  // 底盘无力
       //  global.motor->yaw_compensation_ = 0.f;
       break;
@@ -343,12 +344,12 @@ void Fsm::Update_Control() {
       global.motor->ShootAutoFuControl();
       break;
     case State::kAutoShoot:
-      //更新自瞄模式
+      // 更新自瞄模式
       if (tcremote.data().keyboard_key >> 9 == 1) {  // F键小符更新
         TCRcKey_KF_flag = 1;
       }
       if (tcremote.data().keyboard_key >> 9 == 0 && TCRcKey_KF_flag == 1) {
-        TCRcKey_KF_value ++;
+        TCRcKey_KF_value++;
         TCRcKey_KF_flag = 0;
       }
       // if (tcremote.data().keyboard_key >> 10 == 1) {  // G键大符更新
@@ -360,9 +361,9 @@ void Fsm::Update_Control() {
       // }
       if (TCRcKey_KF_value % 3 == 1) {
         auto_mode_ = 2;
-      }else if (TCRcKey_KF_value % 3 == 2) {
+      } else if (TCRcKey_KF_value % 3 == 2) {
         auto_mode_ = 3;
-      }else {
+      } else {
         auto_mode_ = 1;
       }
 
@@ -371,8 +372,8 @@ void Fsm::Update_Control() {
       //   init_count_++;
       //   global.motor->DMInitControl();
       // } else {
-        global.motor->DMAutoControl();
-     // }
+      global.motor->DMAutoControl();
+      // }
       global.motor->ShootAutoControl();
       break;
     default:
