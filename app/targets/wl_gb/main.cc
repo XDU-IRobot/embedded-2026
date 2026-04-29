@@ -25,11 +25,7 @@ void MainLoop() {
     return;
   }
 
-  static rm::u8 send_divider = 0;
-  send_divider = static_cast<rm::u8>((send_divider + 1U) % 5U);  // 1kHz loop -> 200Hz enqueue
-  if (send_divider == 0U) {
-    can_feedback_tx->QueueSend();
-  }
+  can_feedback_tx->QueueSend();
 
   yaw = imu->yaw();
   pitch = imu->pitch();
@@ -41,7 +37,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   can_to_chassis->SetFilter(0, 0);
   can_to_chassis->Begin();
 
-  imu_uart = new rm::hal::stm32::Uart(huart6, 518, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma);
+  imu_uart = new rm::hal::stm32::Uart(huart1, 518, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma);
   imu = new rm::device::HipnucImu(*imu_uart);
   can_feedback_tx = new GimbalCanFeedbackTxBridge(*can_to_chassis, imu);
 
