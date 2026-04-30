@@ -15,11 +15,12 @@ enum class PhaseState : uint8_t { kUncomplete = 0, kDone = 1 };
 enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kload = 2, kAdd = 3, kAim = 4, kFire = 5 };
 
 enum class AddState {
-  SUSPENDED,      // 0. 悬空安全
-  CAUGHT,         // 1. 抓弹姿态
-  MOVING_FORWARD, // 2. 正在前移
-  PLACED,         // 3. 放弹姿态
-  MOVING_BACK     // 4. 正在回退
+  SUSPENDED_init,  // 0. 悬空安全
+  CAUGHT,          // 1. 抓弹姿态
+  MOVING_FORWARD,  // 2. 正在前移
+  SUSPENDED,      // 3. 悬空状态
+  PLACED,          // 4. 放弹姿态
+  MOVING_BACK      // 5. 回归初始
 };
 
 struct AutoMode {
@@ -30,6 +31,9 @@ struct AdjustMode {
   AbleState enabled = AbleState::kOff;
 };
 
+struct AddStateAdjust {
+  AbleState enabled = AbleState::kOff;
+};
 struct ManualMode {
   AbleState enabled = AbleState::kOff;
   ModeState mode = ModeState::kUnable;
@@ -79,6 +83,7 @@ struct DartState {
   AbleState unable = AbleState::kOn;
   AutoMode lvgl_mode;
   ManualMode manual_mode;
+  AddStateAdjust add_adjust_mode;
   AdjustMode adjust_mode;
 };
 
@@ -109,15 +114,15 @@ struct DartRack {
   rm::hal::Serial *referee_uart{nullptr};  ///< 裁判系统串口接口
   rm::hal::Serial *servo_uart{nullptr};    ///< 舵机串口接口
   // 设备
-  rm::device::DR16 *rc_{nullptr};                        ///< 遥控器
-  rm::device::M3508 *load_motor_r_{nullptr};             ///< 右上膛电机
-  rm::device::M3508 *load_motor_l_{nullptr};             ///< 左上膛电机
-  rm::device::M2006 *trigger_motor_{nullptr};            ///< 扳机活动电机
-  rm::device::M2006 *trigger_motor_force_{nullptr};      ///< 扳机释放电机
-  rm::device::M2006 *yaw_motor_{nullptr};                ///< yaw轴调节电机
-  rm::device::M2006 *add_motor_{nullptr};                ///< 加弹电机
-  rm::device::JyMe02Can *yaw_encoder_{nullptr};          ///< 编码器
-  rm::device::HiwonderServo *add_servo_{nullptr};  ///< 加弹机械底部舵机
+  rm::device::DR16 *rc_{nullptr};                                                 ///< 遥控器
+  rm::device::M3508 *load_motor_r_{nullptr};                                      ///< 右上膛电机
+  rm::device::M3508 *load_motor_l_{nullptr};                                      ///< 左上膛电机
+  rm::device::M2006 *trigger_motor_{nullptr};                                     ///< 扳机活动电机
+  rm::device::M2006 *trigger_motor_force_{nullptr};                               ///< 扳机释放电机
+  rm::device::M2006 *yaw_motor_{nullptr};                                         ///< yaw轴调节电机
+  rm::device::M2006 *add_motor_{nullptr};                                         ///< 加弹电机
+  rm::device::JyMe02Can *yaw_encoder_{nullptr};                                   ///< 编码器
+  rm::device::HiwonderServo *add_servo_{nullptr};                                 ///< 加弹机械底部舵机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *dm_motor_{nullptr};  ///< 达妙电机
   // 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
@@ -150,11 +155,11 @@ struct DartRack {
   static constexpr int32_t kTriggerEcdMax = 900000;
   static constexpr int32_t kTriggerEcdMin = 0;
   static constexpr int32_t kTriggerEcd[4] = {0, 0, 0, 0};             //< 扳机四发镖位置
-  static constexpr int32_t kAddEcd[2] = {0,0};  //< 加弹三发镖位置
+  static constexpr int32_t kAddEcd[2] = {0, 0};                       //< 加弹三发镖位置
   static constexpr uint16_t kAddPlateLockEcd[3] = {593, 593, 287};    //< 加弹机械臂锁定位置
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
 
-  static constexpr int32_t kLoadEcdPerDart = 650000;                  //< 上膛电机每发镖编码器最小增量
+  static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
   /*
   上膛距离与扳机位置存在一定关系，理论上
   kLoadEcd[i] = kLoadEcdPerDart + kTriggerEcd[i]/扳机丝杆步长/扳机电机减速比*上膛丝杆步长*上膛电机减速比

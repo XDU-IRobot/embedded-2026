@@ -9,6 +9,7 @@
 void DartStateMachineUpdate(DartState &state);
 void DartStateManualUpdate();
 void DartStateAdjustUpdate();
+void DartStateAddAdjustUpdate();
 void DartStateUnableUpdate();
 
 void DartStateInitUpdate();
