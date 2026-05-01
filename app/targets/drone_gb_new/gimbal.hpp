@@ -1,6 +1,6 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
-// 最简控制单元测试
+// 纯手瞄测试
 #include <librm.hpp>
 #include "can.h"
 #include "usart.h"
@@ -10,6 +10,7 @@
 #include "ControllerPidAmmo.hpp"
 #include "FreemasterDbug.hpp"
 #include "Usb.hpp"
+#include "Referee.hpp"
 
 extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
@@ -25,7 +26,7 @@ class Gimbal {
   bool DM_is_enable = false;  // 达秒使能标志位
 
   float pitch_min_pos = 3.00;  // pitch电机最小限位
-  float pitch_max_pos = 3.82;  // pitch电机最大限位
+  float pitch_max_pos = 4.00;  // pitch电机最大限位
 
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
@@ -38,6 +39,8 @@ class Gimbal {
   float pitch_cmd = 0.0f;       // pitch合输出
   float pitch_speed_tf = 0.0f;  // 速度正向输出
   float pitch_speed_kp = 0.1f;  // 速度输出比例系数
+
+  int robot_id = 0;  // 裁判系统测试
 
   rm::hal::ThrottledCan<128> *can1{nullptr};                                       // CAN 总线接口
   rm::hal::Serial *dbus{nullptr};                                                  // 遥控器串口接口
@@ -90,7 +93,7 @@ class Gimbal {
 
     yaw_motor = new rm::device::GM6020{*can1, 2};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
-        *can1, {0x06, 0x05, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
+        *can1, {0x05, 0x06, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
     friction_left = new rm::device::M3508{
         *can1,
@@ -292,29 +295,30 @@ class Gimbal {
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
 
-    RCStateUpdate();                                                                            // 遥控器更新
-    GimbalControl();                                                                            // 云台控制更新
-    AmmoControl();                                                                              // 发射机构更新
-    rm::device::DjiMotorBase::SendCommand(*can1);                                               // 向大疆所有电机发数据
-    pitch_cmd = rm::modules::Clamp(-pitch_torque + gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
-    pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                          // 合输出
-
-    // pitch_speed_tf = rm::modules::Clamp(pitch_speed_kp * tanh(pitch_motor->vel()),-10,10);
-
-    // pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
-    // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);
-
-    // if (pitch<=3.82&&pitch>=3.00) {
-    //   pitch_motor->SetMitCommand(0, 0,pitch_speed_tf-pitch_torque, 0, 0);
-    // }
-    // else {
-    //   pitch_motor->SetMitCommand(0,0,0,0,0);
-    // }
+    RCStateUpdate();                               // 遥控器更新
+    GimbalControl();                               // 云台控制更新
+    AmmoControl();                                 // 发射机构更新
+    rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
   }
 
   // DmMotor电机发信息
+  // 提升了控制频率
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
+      pitch_cmd = rm::modules::Clamp(-pitch_torque + gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
+      pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                          // 合输出
+
+      // pitch_speed_tf = rm::modules::Clamp(pitch_speed_kp * tanh(pitch_motor->vel()),-10,10);
+
+      // pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
+      // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);
+
+      // if (pitch<=3.82&&pitch>=3.00) {
+      //   pitch_motor->SetMitCommand(0, 0,pitch_speed_tf-pitch_torque, 0, 0);
+      // }
+      // else {
+      //   pitch_motor->SetMitCommand(0,0,0,0,0);
+      // }
     }
   }
 
@@ -326,6 +330,7 @@ class Gimbal {
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
       // Referee_control();
+      robot_id = referee_data_buffer.data().robot_status.robot_id;
     }
   }
   void SubLoop10Hz() {

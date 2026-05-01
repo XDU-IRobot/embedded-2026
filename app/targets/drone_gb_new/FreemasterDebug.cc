@@ -22,7 +22,9 @@ float Aoutput_yaw = 0.0f;
 float Aoutput_pitch = 0.0f;
 float Apitch_cmd = 0.0f;
 
-float Apitch_speed_tf =0.0f;
+float Apitch_speed_tf = 0.0f;
+float Arobot_id = 0.0f;
+
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -48,5 +50,7 @@ void FreemasterDebug() {
   Aoutput_pitch = gimbal->gimbal_controller.output().pitch;
   Apitch_cmd = gimbal->pitch_cmd;
 
-  Apitch_speed_tf = gimbal->pitch_speed_tf;
+  Apitch_speed_tf = gimbal->pitch_speed_tf;  // 摩擦阻力补偿
+
+  Arobot_id = gimbal->robot_id;  // 裁判系统测试
 }
