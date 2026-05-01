@@ -81,8 +81,16 @@ class Gimbal {
     kFire              // 发射机构开火
   } StateMachineType;  // 遥控器状态机
 
+  typedef struct {
+    int16_t mouse_x = 0;
+    int16_t mouse_y = 0;
+    bool mouse_button_left = false;
+    bool mouse_button_right = false;
+  } vt03_date;
+
   StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
   StateMachineType GimbalState_ = {kNoForce};  // 初始化云台运动状态
+  vt03_date vt03_date_;                        // vt03信号结构体
 
   Gimbal2Dof gimbal_controller;  // 二轴云台PID控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
@@ -179,6 +187,13 @@ class Gimbal {
     }
   }
 
+  void VT03DateUpdate() {
+    vt03_date_.mouse_x = vt03->data().mouse_x;
+    vt03_date_.mouse_y = vt03->data().mouse_y;
+    vt03_date_.mouse_button_left = vt03->data().mouse_button_left;
+    vt03_date_.mouse_button_right = vt03->data().mouse_button_right;
+  }
+
   void GimbalControl() {
     if (GimbalState_ == kManual) {
       if (DM_is_enable == false) {
@@ -186,8 +201,8 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
 
@@ -307,7 +322,8 @@ class Gimbal {
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
 
-    RCStateUpdate();                               // 遥控器更新
+    RCStateUpdate();                               // DT7遥控器更新
+    VT03DateUpdate();                              // vt03数据更新
     GimbalControl();                               // 云台控制更新
     AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
@@ -325,7 +341,7 @@ class Gimbal {
       // pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
       // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);
 
-      // if (pitch<=3.82&&pitch>=3.00) {
+      // if (pitch<=3.82&&pitch>=3.00) {//摩擦补偿测试
       //   pitch_motor->SetMitCommand(0, 0,pitch_speed_tf-pitch_torque, 0, 0);
       // }
       // else {

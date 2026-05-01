@@ -29,6 +29,10 @@ int Arc_vt03_cnt = 0;
 int Arc_vt03_cnt1 = 0;
 float Arc_vt03_left_x = 0.0f;
 float Arc_vt03_left_y = 0.0f;
+int16_t Arc_vt03_mou_x=0;
+int16_t Arc_vt03_mou_y = 0;
+bool Arc_vt03_left = 0;
+bool Arc_vt03_right = 0;
 
 // 调试接口函数
 void FreemasterDebug() {
@@ -62,4 +66,9 @@ void FreemasterDebug() {
   Arc_vt03_cnt1 = gimbal->rx_vt03->rx_byte_cnt;
   Arc_vt03_left_x = gimbal->vt03->data().left_x;
   Arc_vt03_left_y = gimbal->vt03->data().left_y;
+
+  Arc_vt03_mou_x = gimbal->vt03->data().mouse_x;
+  Arc_vt03_mou_y = gimbal->vt03->data().mouse_y;
+  Arc_vt03_left = gimbal->vt03->data().mouse_button_left;
+  Arc_vt03_right = gimbal->vt03->data().mouse_button_right;
 }
