@@ -25,6 +25,10 @@ float Apitch_cmd = 0.0f;
 float Apitch_speed_tf = 0.0f;
 float Arobot_id = 0.0f;
 
+int Arc_vt03_cnt = 0;
+int Arc_vt03_cnt1 =0;
+float Arc_vt03_left_x = 0.0f;
+
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -37,7 +41,6 @@ void FreemasterDebug() {
   Arc_lefty = gimbal->rc->left_y();
 
   Arc_dirl = gimbal->rc->dial();
-  ;
 
   Arpm_left = gimbal->friction_left->rpm();
   Arpm_right = gimbal->friction_right->rpm();
@@ -53,4 +56,8 @@ void FreemasterDebug() {
   Apitch_speed_tf = gimbal->pitch_speed_tf;  // 摩擦阻力补偿
 
   Arobot_id = gimbal->robot_id;  // 裁判系统测试
+
+  Arc_vt03_cnt = gimbal->rx_vt03->rx_callback_cnt;  // 图传系统测试
+  Arc_vt03_cnt1 = gimbal->rx_vt03->rx_byte_cnt;
+  Arc_vt03_left_x = gimbal->vt03->data().left_x;
 }

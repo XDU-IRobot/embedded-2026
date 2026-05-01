@@ -11,6 +11,7 @@
 #include "FreemasterDbug.hpp"
 #include "Usb.hpp"
 #include "Referee.hpp"
+#include "vt03.hpp"
 
 extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
@@ -41,12 +42,18 @@ class Gimbal {
   float pitch_speed_kp = 0.1f;  // 速度输出比例系数
 
   int robot_id = 0;  // 裁判系统测试
+  float rc_vt03_left_x = 0.0f;
 
-  rm::hal::ThrottledCan<128> *can1{nullptr};                                       // CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};                                                  // 遥控器串口接口
+  rm::hal::ThrottledCan<128> *can1{nullptr};  // CAN 总线接口
+  rm::hal::Serial *dbus{nullptr};             // 遥控器串口接口
+  rm::device::VT03 *vt03{nullptr};            // 图传对象
+
   rm::hal::SerialInterface *referee_uart;                                          // 裁判系统串口
   rm::device::RxReferee *rx_referee{nullptr};                                      // 裁判系统收发类
   rm::device::Referee<rm::device::RefereeRevision::kNewV120> referee_data_buffer;  // 裁判系统数据缓冲区
+
+  rm::hal::SerialInterface *vt03_uart;   // 图传串口
+  rm::device::Rxvt03 *rx_vt03{nullptr};  // 图传收发类
 
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
@@ -87,9 +94,13 @@ class Gimbal {
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     rc = new rm::device::DR16{*dbus};
+    vt03 = new rm::device::VT03;
 
     referee_uart = new rm::hal::Serial{huart6, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     rx_referee = new rm::device::RxReferee{*referee_uart};
+
+    vt03_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    rx_vt03 = new rm::device::Rxvt03{*vt03_uart};
 
     yaw_motor = new rm::device::GM6020{*can1, 2};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
@@ -113,6 +124,7 @@ class Gimbal {
     can1->Begin();
     rc->Begin();
     rx_referee->Begin();  // 启动裁判系统
+    rx_vt03->Begin();     // 启动图传串口
 
     GimbalPIDInit();
     AmmoPIDInit();
@@ -302,7 +314,6 @@ class Gimbal {
   }
 
   // DmMotor电机发信息
-  // 提升了控制频率
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
       pitch_cmd = rm::modules::Clamp(-pitch_torque + gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
@@ -331,6 +342,7 @@ class Gimbal {
     if (time_ % 10 == 0) {
       // Referee_control();
       robot_id = referee_data_buffer.data().robot_status.robot_id;
+      rc_vt03_left_x = vt03->data().left_x;
     }
   }
   void SubLoop10Hz() {
