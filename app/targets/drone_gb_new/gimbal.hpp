@@ -311,6 +311,7 @@ class Gimbal {
     GimbalControl();                               // 云台控制更新
     AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
+    FreemasterDebug();                             // 调试更新
   }
 
   // DmMotor电机发信息
@@ -335,14 +336,13 @@ class Gimbal {
 
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {
-      FreemasterDebug();
+      // FreemasterDebug();
     }
   }
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
       // Referee_control();
       robot_id = referee_data_buffer.data().robot_status.robot_id;
-      rc_vt03_left_x = vt03->data().left_x;
     }
   }
   void SubLoop10Hz() {
