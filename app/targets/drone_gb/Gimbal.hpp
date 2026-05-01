@@ -1,6 +1,6 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
-//测试开发分支
+// 测试开发分支
 #define CONTROLLER_CHOICE 0  // 控制器选择开关:0为PID，1为SMC，2为STASMC
 #define DYNAMIC_PARAMENT 0   // 动态参数开关:0关闭动态参数，1开启动态参数
 
@@ -46,9 +46,9 @@ class Gimbal {
   rm::modules::RgbLedController<rm::modules::led_pattern::Off, rm::modules::led_pattern::RedFlash,
                                 rm::modules::led_pattern::GreenBreath,
                                 rm::modules::led_pattern::RgbFlow>
-      led_controller;           // RGB LED控制器
-  rm::hal::Can *can1{nullptr};  // CAN 总线接口
-  rm::hal::SerialInterface *referee_uart;  //裁判系统串口
+      led_controller;                      // RGB LED控制器
+  rm::hal::Can *can1{nullptr};             // CAN 总线接口
+  rm::hal::SerialInterface *referee_uart;  // 裁判系统串口
   rm::device::RxReferee *rx_referee{nullptr};
   rm::hal::Serial *dbus{nullptr};              // 遥控器串口接口
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
@@ -104,7 +104,7 @@ class Gimbal {
   Shoot2Fric shoot_controller;            // 双摩擦轮发射机构控制器
   Feedforward yaw_ff;                     // 前馈控制器
 
-  float pitch_min_pos = 2.94;   // TODO pitch电机最小限位1.6原来的参数
+  float pitch_min_pos = 2.94;  // TODO pitch电机最小限位1.6原来的参数
   float pitch_max_pos = 4.15;  // TODO pitch电机最大限位2.75
 
   i16 encoder_dirl = 0;
@@ -131,17 +131,17 @@ class Gimbal {
   double err_imu_pitch = 0;    // 滤波器计算误差
   double err_sum = 0;          // 误差和
   double err_buffer[8] = {0};  // TODO 伪环形缓存
-  double err_average = 0.0;  // 误差平均值4.966
+  double err_average = 0.0;    // 误差平均值4.966
   // pitch补偿系数
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.9f;  // TODO 重力补偿参数
-  //pitch滤波器（效果不好，未启用）
-  // Biquad pitch_cmd_notch;
-  // ChirpGenerator pitch_chirp;
+  // pitch滤波器（效果不好，未启用）
+  //  Biquad pitch_cmd_notch;
+  //  ChirpGenerator pitch_chirp;
 
   rm::device::Referee<rm::device::RefereeRevision::kV170> referee_data_buffer;  ///< 裁判系统数据缓冲区
 
-  //小角度 roll 补偿：将 roll 误差分解到 yaw/pitch
+  // 小角度 roll 补偿：将 roll 误差分解到 yaw/pitch
   std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
     if (!roll_comp_enable) {
       return {yaw_target, pitch_target};
@@ -217,7 +217,7 @@ class Gimbal {
 
   // 云台pid初始化
   void GimbalPIDInit() {
-    //yaw_ff.Init(0.002, 5);//手控前馈参数
+    // yaw_ff.Init(0.002, 5);//手控前馈参数
     yaw_ff.Init(0.002, 1);
 
 #if CONTROLLER_CHOICE == 0
@@ -371,13 +371,13 @@ class Gimbal {
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                pitch_motor->vel(), 2.f);
 
-      yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));//设置输出电流并输出
-#elif CONTROLLER_CHOICE == 1  // SMC控制器
+      yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
+#elif CONTROLLER_CHOICE == 1                                                                      // SMC控制器
       gimbal_controller_SMC.SetTarget(comp_yaw, comp_pitch);
       gimbal_controller_SMC.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch + err_average, 0, 2 * M_PI),
                                    pitch_motor->vel(), 0.002f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller_SMC.output().yaw, -25000, 25000));
-#elif CONTROLLER_CHOICE == 2  // STASMC控制器
+#elif CONTROLLER_CHOICE == 2                                                                      // STASMC控制器
 #if DYNAMIC_PARAMENT == 1
       float pitch_deviation = std::fabs(pitch - M_PI);
       float scale_factor = sqrt(cos(pitch_deviation));
@@ -494,7 +494,7 @@ class Gimbal {
     }
   }
 
-  //发射机构控制
+  // 发射机构控制
   void AmmoControl() {
     // 发射状态
     if (AmmoState_ == kFire) {
@@ -628,9 +628,9 @@ class Gimbal {
     GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,
                   fire_speed_average);
 
-    RCStateUpdate();                             // 遥控器更新
-    GimbalControl();                             // 云台控制更新
-    AmmoControl();                               // 发射机构数据更新
+    RCStateUpdate();                               // 遥控器更新
+    GimbalControl();                               // 云台控制更新
+    AmmoControl();                                 // 发射机构数据更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
   }
 
@@ -641,7 +641,6 @@ class Gimbal {
       double pitch_torque_cmd = gimbal_controller.output().pitch + pitch_torque;
       pitch_torque_cmd = rm::modules::Clamp(pitch_torque_cmd, -8.0, 8.0);
       pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
-
 
       // // 达秒电机与imu数据滤波处理
       // err_sum -= err_buffer[err_buffer_ptr];

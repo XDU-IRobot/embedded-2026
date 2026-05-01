@@ -19,4 +19,4 @@ void Rxvt03::RxCallback(const std::vector<u8> &data, u16 rx_len) {
     *gimbal->vt03 << data.at(i);
   }
 }
-}
+}  // namespace rm::device

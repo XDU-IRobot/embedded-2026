@@ -26,7 +26,7 @@ float Apitch_speed_tf = 0.0f;
 float Arobot_id = 0.0f;
 
 int Arc_vt03_cnt = 0;
-int Arc_vt03_cnt1 =0;
+int Arc_vt03_cnt1 = 0;
 float Arc_vt03_left_x = 0.0f;
 float Arc_vt03_left_y = 0.0f;
 

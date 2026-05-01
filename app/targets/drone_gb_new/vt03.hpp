@@ -7,7 +7,7 @@ using namespace rm;
 
 namespace rm::device {
 class Rxvt03 : public Device {
-public:
+ public:
   Rxvt03() = delete;
   explicit Rxvt03(hal::SerialInterface &serial);
   void Begin();
@@ -17,7 +17,7 @@ public:
   uint32_t rx_byte_cnt = 0;
   uint8_t last_byte = 0;
 
-private:
+ private:
   hal::SerialInterface *serial_;
 };
 }  // namespace rm::device
