@@ -5,23 +5,21 @@
 
 #include <librm.hpp>
 
-class GimbalCanFeedbackTxBridge final : public rm::device::CanDevice {
+class GimbalToChassisTxBridge final : public rm::device::CanDevice {
  public:
-  static constexpr rm::u16 kTxStdId0 = 0x119;
-  static constexpr rm::usize kPayloadSize = 4U;
+  static constexpr rm::u16 kTxStdIdA = 0x110;
+  static constexpr rm::u16 kTxStdIdB = 0x111;
+  static constexpr rm::usize kPayloadSize = 8U;
 
-  GimbalCanFeedbackTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu)
-      : CanDevice(can, kTxStdId0), imu_(imu) {}
-
-  void BindImuSource(const rm::device::HipnucImu* imu) { imu_ = imu; }
+  GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu,
+                          const rm::device::VT03* vt03)
+      : CanDevice(can, kTxStdIdA, kTxStdIdB), imu_(imu), vt03_(vt03) {}
 
   bool QueueSend() {
-    if (imu_ == nullptr) {
-      return false;
-    }
-
-    EncodeFromImu(*imu_);
-    can_->Write(kTxStdId0, tx_payload_.data(), tx_payload_.size());
+    EncodeFrameA();
+    EncodeFrameB();
+    can_->Write(kTxStdIdA, tx_a_.data(), tx_a_.size());
+    can_->Write(kTxStdIdB, tx_b_.data(), tx_b_.size());
 
     ReportStatus(kOk);
     return true;
@@ -30,25 +28,47 @@ class GimbalCanFeedbackTxBridge final : public rm::device::CanDevice {
   void RxCallback(const rm::hal::CanFrame* msg) override { (void)msg; }
 
  private:
-  static void PackI16BigEndian(rm::i16 value, rm::u8* out) {
+  static void PackI16(rm::i16 value, rm::u8* out) {
     const auto raw = static_cast<rm::u16>(value);
     out[0] = static_cast<rm::u8>(raw >> 8);
     out[1] = static_cast<rm::u8>(raw);
   }
 
-  static rm::i16 UnitToMilliI16(rm::f32 value) {
-    const rm::f32 scaled = value * 1000.0f;
+  static void PackU16(rm::u16 value, rm::u8* out) {
+    out[0] = static_cast<rm::u8>(value >> 8);
+    out[1] = static_cast<rm::u8>(value);
+  }
+
+  static rm::i16 RadToMilliI16(rm::f32 rad) {
+    const rm::f32 scaled = rad * 1000.0f;
     const rm::f32 clamped = std::clamp(scaled, -32768.0f, 32767.0f);
     return static_cast<rm::i16>(clamped >= 0.0f ? (clamped + 0.5f) : (clamped - 0.5f));
   }
 
-  // Layout (big-endian int16, milli-unit), compatible with GimbalCanFeedbackRxBridge:
-  // [0..1] pitch, [2..3] yaw
-  void EncodeFromImu(const rm::device::HipnucImu& imu) {
-    PackI16BigEndian(UnitToMilliI16(imu.pitch()), &tx_payload_[0]);
-    PackI16BigEndian(UnitToMilliI16(imu.yaw()), &tx_payload_[2]);
+  // Frame A (8 bytes): [0..1] pitch, [2..3] yaw, [4..5] mouse_x, [6..7] mouse_y
+  void EncodeFrameA() {
+    PackI16(RadToMilliI16(imu_ ? imu_->pitch() : 0.f), &tx_a_[0]);
+    PackI16(RadToMilliI16(imu_ ? imu_->yaw() : 0.f), &tx_a_[2]);
+    if (vt03_) {
+      PackI16(vt03_->data().mouse_x, &tx_a_[4]);
+      PackI16(vt03_->data().mouse_y, &tx_a_[6]);
+    }
+  }
+
+  // Frame B (8 bytes): [0..1] mouse_z, [2] left, [3] right, [4..5] keyboard_key, [6..7] reserved
+  void EncodeFrameB() {
+    if (vt03_) {
+      PackI16(vt03_->data().mouse_z, &tx_b_[0]);
+      tx_b_[2] = static_cast<rm::u8>(vt03_->data().mouse_button_left ? 1 : 0);
+      tx_b_[3] = static_cast<rm::u8>(vt03_->data().mouse_button_right ? 1 : 0);
+      PackU16(vt03_->data().keyboard_key, &tx_b_[4]);
+    }
+    tx_b_[6] = 0;
+    tx_b_[7] = 0;
   }
 
   const rm::device::HipnucImu* imu_{nullptr};
-  std::array<rm::u8, kPayloadSize> tx_payload_{};
+  const rm::device::VT03* vt03_{nullptr};
+  std::array<rm::u8, kPayloadSize> tx_a_{};
+  std::array<rm::u8, kPayloadSize> tx_b_{};
 };

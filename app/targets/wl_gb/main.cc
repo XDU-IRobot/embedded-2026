@@ -13,19 +13,25 @@
 rm::hal::stm32::Uart* imu_uart{nullptr};
 rm::device::HipnucImu* imu{nullptr};
 rm::hal::ThrottledCan<>* can_to_chassis{nullptr};
-GimbalCanFeedbackTxBridge* can_feedback_tx{nullptr};
+rm::hal::Serial* vt03_uart{nullptr};
+rm::device::VT03* vt03{nullptr};
+GimbalToChassisTxBridge* gb_to_chassis{nullptr};
 
 // for debug
 float yaw = 0.f;
 float pitch = 0.f;
 float roll = 0.f;
 
-void MainLoop() {
-  if (can_to_chassis == nullptr || can_feedback_tx == nullptr) {
-    return;
+void Vt03RxCallback(const std::vector<rm::u8>& data, rm::u16 rx_len) {
+  for (rm::u16 i = 0; i < rx_len; i++) {
+    *vt03 << data.at(i);
   }
+}
 
-  can_feedback_tx->QueueSend();
+void MainLoop() {
+  if (gb_to_chassis != nullptr) {
+    gb_to_chassis->QueueSend();
+  }
 
   yaw = imu->yaw();
   pitch = imu->pitch();
@@ -39,9 +45,15 @@ extern "C" [[noreturn]] void AppMain(void) {
 
   imu_uart = new rm::hal::stm32::Uart(huart1, 518, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma);
   imu = new rm::device::HipnucImu(*imu_uart);
-  can_feedback_tx = new GimbalCanFeedbackTxBridge(*can_to_chassis, imu);
+
+  vt03_uart = new rm::hal::Serial(huart6, 128, rm::hal::stm32::UartMode::kDma, rm::hal::stm32::UartMode::kDma);
+  vt03 = new rm::device::VT03;
+  vt03_uart->AttachRxCallback(Vt03RxCallback);
+
+  gb_to_chassis = new GimbalToChassisTxBridge(*can_to_chassis, imu, vt03);
 
   imu->Begin();
+  vt03_uart->Begin();
 
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{
