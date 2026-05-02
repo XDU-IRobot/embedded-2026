@@ -207,11 +207,13 @@ class Gimbal {
       }
 
       // yaw
-      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
+      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);//dt7手控
+      rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);//vt03鼠标控制
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       // pitch
-      rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
+      rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);//dt7手控
+      rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);//vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
@@ -268,7 +270,7 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (rc->dial() >= 550) {
+      if (rc->dial() >= 550||vt03_date_.mouse_button_left) {
         shoot_controller.SetLoaderSpeed(dirl_speed);
       } else if (rc->dial() <= -600) {
         shoot_controller.SetLoaderSpeed(-redirl_speed);
@@ -287,16 +289,6 @@ class Gimbal {
 
     // 准备状态
     else if (AmmoState_ == kReady) {
-      shoot_controller.Enable(false);
-      shoot_controller.Arm(false);
-      friction_left->SetCurrent(0);
-      friction_right->SetCurrent(0);
-      dial_motor->SetCurrent(0);
-
-    }
-
-    // 停止状态
-    else {
       shoot_controller.Enable(true);
       shoot_controller.Arm(true);
 
@@ -307,6 +299,21 @@ class Gimbal {
 
       friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
       friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
+      dial_motor->SetCurrent(0);
+      shoot_controller.Enable(false);
+      shoot_controller.Arm(false);
+      friction_left->SetCurrent(0);
+      friction_right->SetCurrent(0);
+      dial_motor->SetCurrent(0);
+
+    }
+
+    // 停止状态
+    else {
+      shoot_controller.Enable(false);
+      shoot_controller.Arm(false);
+      friction_left->SetCurrent(0);
+      friction_right->SetCurrent(0);
       dial_motor->SetCurrent(0);
     }
   }
@@ -358,7 +365,7 @@ class Gimbal {
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
       // Referee_control();
-      robot_id = referee_data_buffer.data().robot_status.robot_id;
+      robot_id = referee_data_buffer.data().robot_status.robot_id;//裁判系统测试
     }
   }
   void SubLoop10Hz() {
