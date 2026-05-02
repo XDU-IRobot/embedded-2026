@@ -1,7 +1,9 @@
 #include "FreemasterDbug.hpp"
+double Apitch = 0;  // 实际位置
+double Ayaw = 0;
 
-double Apitch_ = 0;  // 实际位置
-double Ayaw_ = 0;
+float Apitch_ = 0;  // 实际位置(-pi到pi)
+float Ayaw_ = 0;
 
 double Arc_pitch = 0;  // 目标位置
 double Arc_yaw = 0;
@@ -44,8 +46,8 @@ float Ayaw_position = 0;
 float Ayaw_relative = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
-  Ayaw_ = gimbal->yaw;  // 实际
-  Apitch_ = gimbal->pitch;
+  Ayaw_ = gimbal->yaw_;  // 实际
+  Apitch_ = gimbal->pitch_;
 
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //

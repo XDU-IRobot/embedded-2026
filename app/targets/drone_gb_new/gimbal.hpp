@@ -21,6 +21,10 @@ class Gimbal {
   double roll = 0;   // imu roll数据
   double pitch = 0;  // imu pitch数据
 
+  double yaw_ = 0;    // imu yaw数据(-pi到pi)
+  double roll_ = 0;   // imu roll数据(-pi到pi)
+  double pitch_ = 0;  // imu pitch数据(-pi到pi)
+
   double rc_yaw_data = 0;    // 遥控器yaw数据
   double rc_pitch_data = 0;  // 遥控器pitch数据
 
@@ -359,6 +363,11 @@ class Gimbal {
     pitch = ahrs.euler_angle().pitch + M_PI;
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
+
+    pitch_ = ahrs.euler_angle().pitch + M_PI;
+    yaw_ = ahrs.euler_angle().yaw + M_PI;
+    roll_ = ahrs.euler_angle().roll + M_PI;
+
     GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,
                   referee_data_buffer.data().shoot_data.initial_speed,
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
