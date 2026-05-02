@@ -41,7 +41,8 @@ class Gimbal {
 
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
-  float friction_speed = 6000;  // TODO 摩擦轮转速
+  float friction_speed = 6500;  // TODO 摩擦轮转速
+  float shootstep = 100;        // TODO 手动调速步长
 
   // pitch补偿系数
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
@@ -215,8 +216,8 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
@@ -352,6 +353,11 @@ class Gimbal {
       dial_motor->SetCurrent(0);
     }
   }
+
+  void ShootSpeedControl() {
+    //弹速控制
+  }
+
   // void Referee_control();  // 裁判系统常规链路
 
   // 遥控器和imu数据解算+DjiMotor发信息
@@ -364,9 +370,9 @@ class Gimbal {
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
 
-    pitch_ = ahrs.euler_angle().pitch + M_PI;
-    yaw_ = ahrs.euler_angle().yaw + M_PI;
-    roll_ = ahrs.euler_angle().roll + M_PI;
+    pitch_ = ahrs.euler_angle().pitch;
+    yaw_ = ahrs.euler_angle().yaw;
+    roll_ = ahrs.euler_angle().roll;
 
     GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,
                   referee_data_buffer.data().shoot_data.initial_speed,

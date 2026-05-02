@@ -27,6 +27,7 @@ float Apitch_cmd = 0.0f;
 float Apitch_speed_tf = 0.0f;
 // 裁判系统测试
 float Arobot_id = 0.0f;
+float Ashootspeed = 0.0f;
 // vt03调试数据
 int Arc_vt03_cnt = 0;
 int Arc_vt03_cnt1 = 0;
@@ -46,8 +47,8 @@ float Ayaw_position = 0;
 float Ayaw_relative = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
-  Ayaw_ = gimbal->yaw_;  // 实际
-  Apitch_ = gimbal->pitch_;
+  Ayaw_ = gimbal->yaw;  // 实际
+  Apitch_ = gimbal->pitch;
 
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //
@@ -71,6 +72,7 @@ void FreemasterDebug() {
   Apitch_speed_tf = gimbal->pitch_speed_tf;  // 摩擦阻力补偿
 
   Arobot_id = gimbal->robot_id;  // 裁判系统测试
+  Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
 
   Arc_vt03_cnt = gimbal->rx_vt03->rx_callback_cnt;  // 图传系统测试
   Arc_vt03_cnt1 = gimbal->rx_vt03->rx_byte_cnt;
