@@ -201,19 +201,19 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
 
       // yaw
-      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);//dt7手控
-      rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);//vt03鼠标控制
+      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+      rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       // pitch
-      rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);//dt7手控
-      rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);//vt03鼠标控制
+      rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
+      rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
@@ -239,13 +239,15 @@ class Gimbal {
 
         rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + M_PI, 0, 2 * M_PI);
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
-      } else {
-        rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);
-
+      } else {  // 非自瞄状态自动切入手控
+        // yaw
+        rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+        rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);
-
+        // pitch
+        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
+        rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
@@ -270,7 +272,7 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (rc->dial() >= 550||vt03_date_.mouse_button_left) {
+      if (rc->dial() >= 550 || vt03_date_.mouse_button_left) {
         shoot_controller.SetLoaderSpeed(dirl_speed);
       } else if (rc->dial() <= -600) {
         shoot_controller.SetLoaderSpeed(-redirl_speed);
@@ -328,7 +330,7 @@ class Gimbal {
     pitch = ahrs.euler_angle().pitch + M_PI;
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
-
+    GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,referee_data_buffer.data().shoot_data.initial_speed,referee_data_buffer.data().robot_status.robot_id);//usb传输数据
     RCStateUpdate();                               // DT7遥控器更新
     VT03DateUpdate();                              // vt03数据更新
     GimbalControl();                               // 云台控制更新
@@ -365,7 +367,7 @@ class Gimbal {
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
       // Referee_control();
-      robot_id = referee_data_buffer.data().robot_status.robot_id;//裁判系统测试
+      robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
     }
   }
   void SubLoop10Hz() {

@@ -3,7 +3,6 @@
 
 AimbotFrame_SCM_t Aimbot;
 GimbalImuFrame_SCM_t GimbalImu;
-uint16_t robot_id = 3;
 uint8_t x[50];
 
 #ifdef __cplusplus
@@ -34,7 +33,7 @@ void UsbSendMessage(uint8_t* address, uint16_t len, uint8_t id) {
 }
 
 // IMU数据发送
-void GimbalImuSend(float w, float x, float y, float z, float fire_speed = 0.0f) {
+void GimbalImuSend(float w, float x, float y, float z, float fire_speed,uint16_t robot_id) {
   GimbalImu.TimeStamp = 0;
 
   GimbalImu.q0 = w;

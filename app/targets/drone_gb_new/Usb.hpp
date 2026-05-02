@@ -7,12 +7,20 @@
 #define AIMBOT_DATA_RECEIVE_ID 0x2  // 接收数据帧ID 0x2
 
 typedef struct __attribute__((packed)) {
-  uint8_t _SOF;            // 包头
-  uint8_t ID;              // 接收id
-  uint8_t AimbotState;     // 自瞄状态
-  uint8_t AutoFire;        // 是否开火
-  float TargetPitchAngle;  // pitch角度差值
-  float TargetYawAngle;    // yaw角度差值
+  uint8_t _SOF;         // 包头
+  uint8_t ID;           // 接收id
+  uint8_t AimbotState;  // 自瞄状态
+  uint8_t AutoFire;     // 是否开火
+
+  float TargetPitchAngle;  // pitch角度
+  float TargetYawAngle;    // yaw角度
+  float PitchSpeed;        // pitch速度
+  float YawSpeed;          // yaw速度
+  float PitchAcceSpeed;    // pitch加速度
+  float YawAcceSpeed;      // yaw加速度
+  float PitchAngSpeed;     // pitch角加速度
+  float YawAngSpeed;       // yaw角加速度
+
   float TargetPitchSpeed;  // 目标pitch速度
   float TargetYawSpeed;    // 目标yaw速度
   uint32_t SystemTimer;    // 系统时间
@@ -38,7 +46,7 @@ extern "C" {
 #endif
 void UsbReceive(uint8_t* rx_data, uint8_t len);
 void UsbSendMessage(uint8_t* address, uint16_t len, uint8_t id);
-void GimbalImuSend(float w, float x, float y, float z, float fire_speed);
+  void GimbalImuSend(float w, float x, float y, float z, float fire_speed ,uint16_t robot_id);
 #ifdef __cplusplus
 }
 #endif
