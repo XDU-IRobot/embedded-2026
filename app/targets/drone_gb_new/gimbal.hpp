@@ -211,8 +211,8 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差

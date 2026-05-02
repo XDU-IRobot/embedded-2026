@@ -46,7 +46,7 @@ extern "C" {
 #endif
 void UsbReceive(uint8_t* rx_data, uint8_t len);
 void UsbSendMessage(uint8_t* address, uint16_t len, uint8_t id);
-  void GimbalImuSend(float w, float x, float y, float z, float fire_speed ,uint16_t robot_id);
+void GimbalImuSend(float w, float x, float y, float z, float fire_speed, uint16_t robot_id);
 #ifdef __cplusplus
 }
 #endif

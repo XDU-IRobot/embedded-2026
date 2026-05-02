@@ -39,7 +39,7 @@ float Atargetpitch = 0.0f;
 float Atagetyaw = 0.0f;
 uint8_t Aaimbotflag = 0;
 uint8_t Aaimfireflag = 0;
-//yaw编码器rad
+// yaw编码器rad
 float Ayaw_position = 0;
 float Ayaw_relative = 0.0f;
 // 调试接口函数
