@@ -299,11 +299,15 @@ void Gimbal::GimbalEnableUpdate() {
     } else {
       globals->aim_mode = 0x02;
     }
+  } else if (globals->StateMachine_ == kMatch && globals->navigate_communicator->aimbot_mode()) {
+    globals->aim_mode = 0x04;
   } else if (globals->StateMachine_ == kTest) {
     if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kMid) {
       globals->aim_mode = 0x02;
     } else if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kUp) {
       globals->aim_mode = 0x03;
+    } else if (globals->wfly_et16s->switch_position(rc_ch::SC) == SwitchPosition::kMid) {
+      globals->aim_mode = 0x04;
     } else {
       globals->aim_mode = 0x01;
     }
