@@ -21,7 +21,7 @@ inline class Gimbal {
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，左正右负）
   f32 gimbal_pitch_target_ = 0.0f;     // 云台pitch轴目标数据（编码器控制，弧度制，下正上负）
 
-  f32 ammo_speed_ = 6200.0f;  // 摩擦轮速度初速度
+  f32 ammo_speed_ = 6800.0f;  // 摩擦轮速度初速度
 
   u16 aimbot_time_ = 0;        // 自瞄运动时间
   u16 perception_time_ = 0;    // 全向感知运动时间

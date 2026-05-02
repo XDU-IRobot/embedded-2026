@@ -257,10 +257,10 @@ void GlobalWarehouse::SubLoop500Hz() {
     globals->imu_count = 0;
   }
   f32 shoot_initial_speed = 0.0f;
-  if (referee_data->data().shoot_data.initial_speed >= 22.f && referee_data->data().shoot_data.initial_speed <= 26.f) {
+  if (referee_data->data().shoot_data.initial_speed >= 18.f && referee_data->data().shoot_data.initial_speed <= 26.f) {
     shoot_initial_speed = referee_data->data().shoot_data.initial_speed;
   } else {
-    shoot_initial_speed = 24.0f;
+    shoot_initial_speed = 22.5f;
   }
   globals->aimbot_communicator->UpdateControl(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(),
                                               -globals->hipnuc_imu->roll(), referee_data->data().robot_status.robot_id,
