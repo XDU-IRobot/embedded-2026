@@ -208,11 +208,13 @@ class Gimbal {
 
       // yaw
       rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+      rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
       rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       // pitch
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
+      rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
       rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
@@ -242,25 +244,28 @@ class Gimbal {
       } else {  // 非自瞄状态自动切入手控
         // yaw
         rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+        rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
         rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
         // pitch
         rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
+        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
         rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
+
+      pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
+      pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
     } else {
       if (DM_is_enable == true) {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         DM_is_enable = false;
         gimbal_controller.Enable(false);
         yaw_motor->SetCurrent(0);
-        pitch_torque = pitch_torque_kp * cos(pitch - 3.098);
-        pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
       }
     }
   }
@@ -330,13 +335,15 @@ class Gimbal {
     pitch = ahrs.euler_angle().pitch + M_PI;
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
-    GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,referee_data_buffer.data().shoot_data.initial_speed,referee_data_buffer.data().robot_status.robot_id);//usb传输数据
-    RCStateUpdate();                               // DT7遥控器更新
-    VT03DateUpdate();                              // vt03数据更新
-    GimbalControl();                               // 云台控制更新
-    AmmoControl();                                 // 发射机构更新
-    rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
-    FreemasterDebug();                             // 调试更新
+    GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,
+                  referee_data_buffer.data().shoot_data.initial_speed,
+                  referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
+    RCStateUpdate();                                                  // DT7遥控器更新
+    VT03DateUpdate();                                                 // vt03数据更新
+    GimbalControl();                                                  // 云台控制更新
+    AmmoControl();                                                    // 发射机构更新
+    rm::device::DjiMotorBase::SendCommand(*can1);                     // 向大疆所有电机发数据
+    FreemasterDebug();                                                // 调试更新
   }
 
   // DmMotor电机发信息

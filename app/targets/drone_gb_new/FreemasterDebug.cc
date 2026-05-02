@@ -15,16 +15,17 @@ int16_t Arc_leftx = 0;  // 开关状态
 int16_t Arc_lefty = 0;
 
 float Apitch_torque_ = 0.0f;  // 重力补偿力矩
-
+// z轴角速度
 float Aw_z = 0.0f;
-
+// pid输出
 float Aoutput_yaw = 0.0f;
 float Aoutput_pitch = 0.0f;
 float Apitch_cmd = 0.0f;
-
+// 摩擦补偿
 float Apitch_speed_tf = 0.0f;
+// 裁判系统测试
 float Arobot_id = 0.0f;
-
+// vt03调试数据
 int Arc_vt03_cnt = 0;
 int Arc_vt03_cnt1 = 0;
 float Arc_vt03_left_x = 0.0f;
@@ -33,7 +34,11 @@ int16_t Arc_vt03_mou_x = 0;
 int16_t Arc_vt03_mou_y = 0;
 bool Arc_vt03_left = 0;
 bool Arc_vt03_right = 0;
-
+// 自瞄数据输出
+float Atargetpitch = 0.0f;
+float Atagetyaw = 0.0f;
+uint8_t Aaimbotflag = 0;
+uint8_t Aaimfireflag = 0;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -71,4 +76,9 @@ void FreemasterDebug() {
   Arc_vt03_mou_y = gimbal->vt03->data().mouse_y;
   Arc_vt03_left = gimbal->vt03->data().mouse_button_left;
   Arc_vt03_right = gimbal->vt03->data().mouse_button_right;
+
+  Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
+  Aaimfireflag = Aimbot.AutoFire;
+  Atargetpitch = Aimbot.TargetPitchAngle;
+  Atagetyaw = Aimbot.TargetYawAngle;
 }
