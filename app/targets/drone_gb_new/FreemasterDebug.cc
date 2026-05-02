@@ -39,6 +39,9 @@ float Atargetpitch = 0.0f;
 float Atagetyaw = 0.0f;
 uint8_t Aaimbotflag = 0;
 uint8_t Aaimfireflag = 0;
+//yaw编码器rad
+float Ayaw_position = 0;
+float Ayaw_relative = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -81,4 +84,7 @@ void FreemasterDebug() {
   Aaimfireflag = Aimbot.AutoFire;
   Atargetpitch = Aimbot.TargetPitchAngle;
   Atagetyaw = Aimbot.TargetYawAngle;
+
+  Ayaw_position = gimbal->GetYawMotorAngleRad();
+  Ayaw_relative = gimbal->yaw_relative;
 }

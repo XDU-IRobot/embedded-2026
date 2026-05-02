@@ -26,8 +26,14 @@ class Gimbal {
 
   bool DM_is_enable = false;  // 达秒使能标志位
 
-  float pitch_min_pos = 3.00;  // pitch电机最小限位
-  float pitch_max_pos = 4.00;  // pitch电机最大限位
+  float pitch_min_pos = 3.00;        // pitch电机最小限位
+  float pitch_max_pos = 4.00;        // pitch电机最大限位
+                                     // 机械限位
+  float yaw_center_encoder = 5.200;  // TODO云台机械中位对应的编码器角度
+  float yaw_relative = 0.0f;         // TODO 当前云台相对机架夹角
+  float yaw_min_limit = -2.30;       // TODO 左限位
+  float yaw_max_limit = 2.30;        // TODO 右限位
+  float yaw_delta = 0.0f;            // rc增加总量
 
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
@@ -194,6 +200,10 @@ class Gimbal {
     vt03_date_.mouse_button_right = vt03->data().mouse_button_right;
   }
 
+  float GetYawMotorAngleRad() {  // 编码器返回角度
+    return yaw_motor->encoder() * 2.0f * M_PI / 8192.0f;
+  }
+
   void GimbalControl() {
     if (GimbalState_ == kManual) {
       if (DM_is_enable == false) {
@@ -205,12 +215,22 @@ class Gimbal {
         rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
+      yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
+      yaw_delta = 0.0f;
 
       // yaw
-      rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
-      rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-      rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
-      rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+      yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+      yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
+      yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
+
+      if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
+        yaw_delta = 0.0f;
+      }
+      if (yaw_relative <= yaw_min_limit && yaw_delta > 0.0f) {
+        yaw_delta = 0.0f;
+      }
+
+      rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, 0, 2 * M_PI);
 
       // pitch
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
@@ -243,10 +263,20 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {  // 非自瞄状态自动切入手控
         // yaw
-        rc_yaw_data -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
-        rc_yaw_data -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-        rc_yaw_data -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
-        rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+        yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
+        yaw_delta = 0.0f;                                                                           // 合输出
+
+        yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+        yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
+        yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
+
+        if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
+          yaw_delta = 0.0f;
+        }
+        if (yaw_relative <= yaw_min_limit && yaw_delta > 0.0f) {
+          yaw_delta = 0.0f;
+        }
+        rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, 0, 2 * M_PI);
 
         // pitch
         rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
@@ -306,12 +336,6 @@ class Gimbal {
 
       friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
       friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
-      dial_motor->SetCurrent(0);
-      shoot_controller.Enable(false);
-      shoot_controller.Arm(false);
-      friction_left->SetCurrent(0);
-      friction_right->SetCurrent(0);
-      dial_motor->SetCurrent(0);
 
     }
 
