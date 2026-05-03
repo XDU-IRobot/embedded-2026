@@ -96,7 +96,7 @@ void Gimbal::GimbalRCTargetUpdate() {
 
 void Gimbal::GimbalScanTargetUpdate() {
   // 上部yaw轴扫描
-  if (globals->navigate_communicator->aimbot_mode()) {
+  if (globals->navigate_communicator->aimbot_mode() || globals->navigate_communicator->outpost_mode()) {
     gimbal->gimbal_up_yaw_target_ =
         globals->hipnuc_imu->yaw() -
         rm::modules::Map(static_cast<f32>(globals->up_yaw_motor->encoder() - gimbal->mid_up_yaw_pos_),  //
@@ -116,6 +116,8 @@ void Gimbal::GimbalScanTargetUpdate() {
   // pitch轴扫描
   if (globals->navigate_communicator->aimbot_mode()) {
     gimbal->gimbal_pitch_target_ = -0.5f;
+  } else if (globals->navigate_communicator->outpost_mode()) {
+    gimbal->gimbal_pitch_target_ = -0.3f;
   } else {
     if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_aimbot_pitch_angle_) {
       gimbal->scan_pitch_flag_ = false;
@@ -299,15 +301,11 @@ void Gimbal::GimbalEnableUpdate() {
     } else {
       globals->aim_mode = 0x02;
     }
-  } else if (globals->StateMachine_ == kMatch && globals->navigate_communicator->aimbot_mode()) {
-    globals->aim_mode = 0x04;
   } else if (globals->StateMachine_ == kTest) {
     if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kMid) {
       globals->aim_mode = 0x02;
     } else if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kUp) {
       globals->aim_mode = 0x03;
-    } else if (globals->wfly_et16s->switch_position(rc_ch::SC) == SwitchPosition::kMid) {
-      globals->aim_mode = 0x04;
     } else {
       globals->aim_mode = 0x01;
     }
@@ -368,10 +366,10 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Arm(true);
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  if (globals->referee_data->data().shoot_data.initial_speed >= 23.0f ||
+  if (globals->referee_data->data().shoot_data.initial_speed >= 22.0f ||
       (globals->referee_data->data().shoot_data.initial_speed >= 15.0f &&
-       globals->referee_data->data().shoot_data.initial_speed <= 22.0f)) {
-    gimbal->ammo_speed_ = 6800.0f * std::sqrt(23.0f / globals->referee_data->data().shoot_data.initial_speed);
+       globals->referee_data->data().shoot_data.initial_speed <= 21.0f)) {
+    gimbal->ammo_speed_ = 6200.0f * std::sqrt(22.0f / globals->referee_data->data().shoot_data.initial_speed);
   }
   if (((globals->wfly_et16s->wheel_position(rc_ch::LS) <= -650 &&
         globals->wfly_et16s->switch_position(rc_ch::SH) == SwitchPosition::kDown) ||  // 手动强制单发

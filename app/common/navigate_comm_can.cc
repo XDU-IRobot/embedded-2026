@@ -18,6 +18,8 @@ u8 NavigateCanCommunicator::perception_flag() const { return perception_flag_; }
 
 u8 NavigateCanCommunicator::aimbot_mode() const { return aimbot_mode_; }
 
+u8 NavigateCanCommunicator::outpost_mode() const { return outpost_mode_; }
+
 void NavigateCanCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x180) {
     ReportStatus(kOk);
@@ -31,6 +33,7 @@ void NavigateCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     scan_mode_ = msg->data[0];
     perception_flag_ = msg->data[1];
     aimbot_mode_ = msg->data[2];
+    outpost_mode_ = msg->data[3];
   }
 }
 
