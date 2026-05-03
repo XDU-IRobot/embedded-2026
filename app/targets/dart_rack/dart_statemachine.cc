@@ -324,9 +324,20 @@ void DartStateLoadUpdate() {
         dart_rack->state_.manual_mode.is_load_reset_done == false) {
       if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 &&
           dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
-        dart_rack->load_motor_l_speed_pid_.Update(4000.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
+        float l_abs = std::abs(dart_rack->load_motor_l_odometer_.linear_ticks());
+        float r_abs = std::abs(dart_rack->load_motor_r_odometer_.linear_ticks());
+        float l_speed = 4000.0f;
+        float r_speed = -4000.0f;
+        if (l_abs < 10000 || r_abs < 10000) {
+          l_speed = 0.0f;
+          r_speed = 0.0f;
+        } else if (l_abs < 100000 || r_abs < 100000) {
+          l_speed = 1500.0f;
+          r_speed = -1500.0f;
+        }
+        dart_rack->load_motor_l_speed_pid_.Update(l_speed, dart_rack->load_motor_l_->rpm(), 1.0f);
         dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
-        dart_rack->load_motor_r_speed_pid_.Update(-4000.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+        dart_rack->load_motor_r_speed_pid_.Update(r_speed, dart_rack->load_motor_r_->rpm(), 1.0f);
         dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
       } else {
         dart_rack->load_motor_l_speed_pid_.Update(.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
