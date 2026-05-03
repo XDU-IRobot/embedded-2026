@@ -59,9 +59,17 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define MOSI_Pin GPIO_PIN_6
 #define MOSI_GPIO_Port GPIOE
+#define load_motor_right_EXTI_Pin GPIO_PIN_7
+#define load_motor_right_EXTI_GPIO_Port GPIOI
+#define load_motor_right_EXTI_EXTI_IRQn EXTI9_5_IRQn
+#define load_motor_left_EXTI_Pin GPIO_PIN_6
+#define load_motor_left_EXTI_GPIO_Port GPIOI
+#define load_motor_left_EXTI_EXTI_IRQn EXTI9_5_IRQn
 #define ensure_Pin GPIO_PIN_9
 #define ensure_GPIO_Port GPIOI
 #define ensure_EXTI_IRQn EXTI9_5_IRQn
+#define relay_Pin GPIO_PIN_1
+#define relay_GPIO_Port GPIOF
 #define right_Pin GPIO_PIN_10
 #define right_GPIO_Port GPIOF
 #define right_EXTI_IRQn EXTI15_10_IRQn
@@ -75,9 +83,15 @@ void Error_Handler(void);
 #define left_Pin GPIO_PIN_4
 #define left_GPIO_Port GPIOA
 #define left_EXTI_IRQn EXTI4_IRQn
+#define add_motor_EXTI_Pin GPIO_PIN_2
+#define add_motor_EXTI_GPIO_Port GPIOA
+#define add_motor_EXTI_EXTI_IRQn EXTI2_IRQn
 #define plus_Pin GPIO_PIN_5
 #define plus_GPIO_Port GPIOC
 #define plus_EXTI_IRQn EXTI9_5_IRQn
+#define trigger_motor_EXTI_Pin GPIO_PIN_3
+#define trigger_motor_EXTI_GPIO_Port GPIOA
+#define trigger_motor_EXTI_EXTI_IRQn EXTI3_IRQn
 #define RES_Pin GPIO_PIN_1
 #define RES_GPIO_Port GPIOB
 #define CS_Pin GPIO_PIN_0

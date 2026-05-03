@@ -5,7 +5,6 @@
 #include "usb.hpp"
 #include "encoder_counter.hpp"
 #include "Referee.hpp"
-#include "motor.h"
 #include "librm/device/actuator/dm_motor.hpp"
 // 状态机变量定义
 enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
@@ -46,6 +45,8 @@ struct ManualMode {
   // 初始化部分标志位
   bool is_yaw_init_done = false;  // yaw轴初始化完成标志位
   bool is_load_reset_done = false;
+  bool is_load_l_reset_done = false;
+  bool is_load_r_reset_done = false;
   bool is_trigger_reset_done = false;
   bool is_trigger_force_init_done = false;
   bool is_trigger_init_done = false;
@@ -58,6 +59,11 @@ struct ManualMode {
   bool is_add_plate_done = false;
   void ManualModeClear()  // 清空所有标志位
   {
+    extern volatile uint8_t g_trigger_limit_ever_hit;
+    extern volatile uint8_t g_add_limit_ever_hit;
+    extern volatile uint8_t g_load_l_limit_ever_hit;
+    extern volatile uint8_t g_load_r_limit_ever_hit;
+
     mode = ModeState::kUnable;
     init = PhaseState::kUncomplete;
     add = PhaseState::kUncomplete;
@@ -66,6 +72,8 @@ struct ManualMode {
     fire = PhaseState::kUncomplete;
     is_yaw_init_done = false;  // yaw轴初始化完成标志位
     is_load_reset_done = false;
+    is_load_l_reset_done = false;
+    is_load_r_reset_done = false;
     is_trigger_reset_done = false;
     is_trigger_force_init_done = false;
     is_trigger_init_done = false;
@@ -76,6 +84,11 @@ struct ManualMode {
     is_add_down_done = false;
     is_add_up_done = false;
     is_add_plate_done = false;
+
+    g_trigger_limit_ever_hit = 0;
+    g_add_limit_ever_hit = 0;
+    g_load_l_limit_ever_hit = 0;
+    g_load_r_limit_ever_hit = 0;
   }
 };
 
@@ -158,6 +171,9 @@ struct DartRack {
   static constexpr int32_t kAddEcd[2] = {0, 0};                       //< 加弹三发镖位置
   static constexpr uint16_t kAddPlateLockEcd[3] = {593, 593, 287};    //< 加弹机械臂锁定位置
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
+
+  static constexpr float kServo1Init = 110.0f;
+  static constexpr float kServo2Init = 82.0f;
 
   static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
   /*

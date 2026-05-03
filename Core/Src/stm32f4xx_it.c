@@ -223,6 +223,34 @@ void EXTI1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles EXTI line2 interrupt.
+  */
+void EXTI2_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI2_IRQn 0 */
+
+  /* USER CODE END EXTI2_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(add_motor_EXTI_Pin);
+  /* USER CODE BEGIN EXTI2_IRQn 1 */
+
+  /* USER CODE END EXTI2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line3 interrupt.
+  */
+void EXTI3_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI3_IRQn 0 */
+
+  /* USER CODE END EXTI3_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(trigger_motor_EXTI_Pin);
+  /* USER CODE BEGIN EXTI3_IRQn 1 */
+
+  /* USER CODE END EXTI3_IRQn 1 */
+}
+
+/**
   * @brief This function handles EXTI line4 interrupt.
   */
 void EXTI4_IRQHandler(void)
@@ -301,6 +329,8 @@ void EXTI9_5_IRQHandler(void)
 
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(plus_Pin);
+  HAL_GPIO_EXTI_IRQHandler(load_motor_right_EXTI_Pin);
+  HAL_GPIO_EXTI_IRQHandler(load_motor_left_EXTI_Pin);
   HAL_GPIO_EXTI_IRQHandler(ensure_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
@@ -394,12 +424,26 @@ void CAN2_RX0_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 
-// 提供外部引脚中断捕获给 LVGL
+volatile uint8_t g_trigger_motor_limit_triggered = 0;
+volatile uint8_t g_add_motor_limit_triggered = 0;
+volatile uint8_t g_load_motor_l_limit_triggered = 0;
+volatile uint8_t g_load_motor_r_limit_triggered = 0;
+
 extern void lvgl_button_exti_trigger(uint16_t GPIO_Pin);
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  lvgl_button_exti_trigger(GPIO_Pin);
+  if (GPIO_Pin == trigger_motor_EXTI_Pin) {
+    g_trigger_motor_limit_triggered = 1;
+  } else if (GPIO_Pin == add_motor_EXTI_Pin) {
+    g_add_motor_limit_triggered = 1;
+  } else if (GPIO_Pin == load_motor_left_EXTI_Pin) {
+    g_load_motor_l_limit_triggered = 1;
+  } else if (GPIO_Pin == load_motor_right_EXTI_Pin) {
+    g_load_motor_r_limit_triggered = 1;
+  } else {
+    lvgl_button_exti_trigger(GPIO_Pin);
+  }
 }
 
 /* USER CODE END 1 */

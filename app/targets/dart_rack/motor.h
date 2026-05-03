@@ -1,8 +1,7 @@
-//
-// Created by 12628 on 26-3-29.
-//
 
 #ifndef MOTOR_H
 #define MOTOR_H
+#include <librm.hpp>
+#include "librm/device/actuator/dm_motor.hpp"
 
 #endif //MOTOR_H
