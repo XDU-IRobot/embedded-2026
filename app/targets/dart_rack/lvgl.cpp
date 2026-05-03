@@ -5,6 +5,7 @@
 #include "lcd_init.h"
 #include "sd_card.h"  // 引入自定义的 SD 卡存储及读取封装函数
 #include "ff.h"
+#include "dart_core.hpp"
 // 实体定义，确保链接器能找到
 float Pitch[4] = {11.11f, 22.22f, 33.33f, 44.44f};
 float Yaw[4] = {45.55f, 45.66f, 45.77f, 45.88f};
@@ -36,6 +37,109 @@ static lv_obj_t *btn_list_first;
 static lv_obj_t *btn_edit_first;  // 编辑界面第一个步长按钮
 
 static void hal_init(void);
+extern DartRack *dart_rack;
+
+extern volatile uint8_t g_trigger_limit_ever_hit;
+extern volatile uint8_t g_add_limit_ever_hit;
+extern volatile uint8_t g_load_l_limit_ever_hit;
+extern volatile uint8_t g_load_r_limit_ever_hit;
+
+static bool lvgl_trigger_homing_done = false;
+static bool lvgl_add_homing_done = false;
+static bool lvgl_load_l_homing_done = false;
+static bool lvgl_load_r_homing_done = false;
+static bool lvgl_homing_all_done = false;
+
+extern "C" void LvglHomingStart() {
+  lvgl_homing_all_done = false;
+
+  if (HAL_GPIO_ReadPin(load_motor_left_EXTI_GPIO_Port, load_motor_left_EXTI_Pin) == GPIO_PIN_RESET) {
+    lvgl_load_l_homing_done = true;
+    dart_rack->load_motor_l_speed_pid_.Clear();
+    dart_rack->load_motor_l_->SetCurrent(0);
+    dart_rack->load_motor_l_odometer_.Reset();
+  } else {
+    lvgl_load_l_homing_done = false;
+  }
+
+  if (HAL_GPIO_ReadPin(load_motor_right_EXTI_GPIO_Port, load_motor_right_EXTI_Pin) == GPIO_PIN_RESET) {
+    lvgl_load_r_homing_done = true;
+    dart_rack->load_motor_r_speed_pid_.Clear();
+    dart_rack->load_motor_r_->SetCurrent(0);
+    dart_rack->load_motor_r_odometer_.Reset();
+  } else {
+    lvgl_load_r_homing_done = false;
+  }
+
+  if (HAL_GPIO_ReadPin(trigger_motor_EXTI_GPIO_Port, trigger_motor_EXTI_Pin) == GPIO_PIN_RESET) {
+    lvgl_trigger_homing_done = true;
+    dart_rack->trigger_motor_speed_pid_.Clear();
+    dart_rack->trigger_motor_->SetCurrent(0);
+    dart_rack->trigger_motor_odometer_.Reset();
+  } else {
+    lvgl_trigger_homing_done = false;
+  }
+
+  if (HAL_GPIO_ReadPin(add_motor_EXTI_GPIO_Port, add_motor_EXTI_Pin) == GPIO_PIN_RESET) {
+    lvgl_add_homing_done = true;
+    dart_rack->add_motor_speed_pid_.Clear();
+    dart_rack->add_motor_->SetCurrent(0);
+    dart_rack->add_motor_odometer_.Reset();
+  } else {
+    lvgl_add_homing_done = false;
+  }
+}
+
+extern "C" bool LvglHomingUpdate() {
+  if (lvgl_homing_all_done) return true;
+
+  if (!lvgl_load_l_homing_done) {
+    if (g_load_l_limit_ever_hit) {
+      lvgl_load_l_homing_done = true;
+    } else {
+      dart_rack->load_motor_l_speed_pid_.Update(500.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
+      dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
+    }
+  }
+  if (!lvgl_load_r_homing_done) {
+    if (g_load_r_limit_ever_hit) {
+      lvgl_load_r_homing_done = true;
+    } else {
+      dart_rack->load_motor_r_speed_pid_.Update(-500.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+      dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
+    }
+  }
+  if (!lvgl_trigger_homing_done) {
+    if (g_trigger_limit_ever_hit) {
+      lvgl_trigger_homing_done = true;
+    } else {
+      dart_rack->trigger_motor_speed_pid_.Update(2000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
+      dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
+    }
+  }
+  if (!lvgl_add_homing_done) {
+    if (g_add_limit_ever_hit) {
+      lvgl_add_homing_done = true;
+    } else {
+      dart_rack->add_motor_speed_pid_.Update(-2000.0f, dart_rack->add_motor_->rpm(), 1.0f);
+      dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
+    }
+  }
+
+  if (lvgl_load_l_homing_done && lvgl_load_r_homing_done &&
+      lvgl_trigger_homing_done && lvgl_add_homing_done) {
+    lvgl_homing_all_done = true;
+    dart_rack->load_motor_l_speed_pid_.Clear();
+    dart_rack->load_motor_l_->SetCurrent(0);
+    dart_rack->load_motor_r_speed_pid_.Clear();
+    dart_rack->load_motor_r_->SetCurrent(0);
+    dart_rack->trigger_motor_speed_pid_.Clear();
+    dart_rack->trigger_motor_->SetCurrent(0);
+    dart_rack->add_motor_speed_pid_.Clear();
+    dart_rack->add_motor_->SetCurrent(0);
+  }
+  return lvgl_homing_all_done;
+}
 
 // === 事件回调函数 ===
 static void update_list_labels(void) {
@@ -510,16 +614,16 @@ static void hal_init(void) {
 
   /*Create a display buffer*/
   static lv_disp_draw_buf_t disp_buf;
-  static lv_color_t buf[W * 20];
-  lv_disp_draw_buf_init(&disp_buf, buf, NULL, W * 20);
+  static lv_color_t buf[lcd_W * 20];
+  lv_disp_draw_buf_init(&disp_buf, buf, NULL, lcd_W * 20);
 
   /*Create a display*/
   static lv_disp_drv_t disp_drv;
   lv_disp_drv_init(&disp_drv); /*Basic initialization*/
   disp_drv.draw_buf = &disp_buf;
   disp_drv.flush_cb = my_disp_flush; /*Set your driver function*/
-  disp_drv.hor_res = W;
-  disp_drv.ver_res = H;
+  disp_drv.hor_res = lcd_W;
+  disp_drv.ver_res = lcd_H;
   lv_disp_drv_register(&disp_drv);
 
   /* 注册物理按键输入设备 */

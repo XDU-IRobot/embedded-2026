@@ -15,7 +15,7 @@ void LCD_DISPLAY() {
   static bool has_displayed = false;
   if (!has_displayed) {
     // display.DrawLine(0, 0, W - 1, H - 1, BLUE);
-    display.Fill(0, 0, W - 1, H - 1, WHITE);
+    display.Fill(0, 0, lcd_W - 1, lcd_H - 1, WHITE);
     has_displayed = true;
   }
 }

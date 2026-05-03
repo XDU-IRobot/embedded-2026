@@ -13,8 +13,8 @@
 #define H 480
 
 #else
-#define W 480
-#define H 320
+#define lcd_W 480
+#define lcd_H 320
 #endif
 
 #define SCLK_Clr() HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_RESET)

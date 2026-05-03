@@ -8,6 +8,16 @@
 #define GPIOF_PIN_10 RIGHT
 #define GPIOI_PIN_9 ENSURE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void init_lvgl_demo(void);
+void LvglHomingStart();
+bool LvglHomingUpdate();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //LVGL_H
