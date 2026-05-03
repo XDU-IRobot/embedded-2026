@@ -45,7 +45,7 @@ uint8_t Aaimfireflag = 0;
 // yaw编码器rad
 float Ayaw_position = 0;
 float Ayaw_relative = 0.0f;
-//pid输出
+// pid输出
 float Apid_yaw_position = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {

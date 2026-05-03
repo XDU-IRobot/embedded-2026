@@ -243,7 +243,7 @@ class Gimbal {
       rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
-      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data,0,0);
+      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data, 0, 0);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
 
@@ -355,7 +355,8 @@ class Gimbal {
   }
 
   void ShootSpeedControl() {
-    if (vt03->data().keyboard_key);
+    if (vt03->data().keyboard_key)
+      ;
     // 弹速控制
   }
 
