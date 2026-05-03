@@ -45,6 +45,8 @@ uint8_t Aaimfireflag = 0;
 // yaw编码器rad
 float Ayaw_position = 0;
 float Ayaw_relative = 0.0f;
+//pid输出
+float Apid_yaw_position = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -91,4 +93,6 @@ void FreemasterDebug() {
 
   Ayaw_position = gimbal->GetYawMotorAngleRad();
   Ayaw_relative = gimbal->yaw_relative;
+
+  Apid_yaw_position = gimbal->gimbal_controller.pid().yaw_position.out();
 }

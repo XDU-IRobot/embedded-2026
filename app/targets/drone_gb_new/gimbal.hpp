@@ -159,9 +159,9 @@ class Gimbal {
   }
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(350.0f).SetKi(0.001f).SetKd(0.1f).SetMaxOut(100000.0f).SetMaxIout(
-        1000.0f);  // TODO yaw初版函数
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.1f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_position.SetKp(200.0f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10000.0f).SetMaxIout(
+        1000.0f);  // TODO yaw初版函数 350 0.001 0.2 160 100000
+    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     gimbal_controller.pid().pitch_position.SetKp(35.0f).SetKi(0.002f).SetKd(0.008f).SetMaxOut(500.0f).SetMaxIout(
         10.0f);  // TODO pitch初版参数
     gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
@@ -243,7 +243,7 @@ class Gimbal {
       rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
 
-      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
+      gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data,0,0);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
 
@@ -355,6 +355,7 @@ class Gimbal {
   }
 
   void ShootSpeedControl() {
+    if (vt03->data().keyboard_key);
     // 弹速控制
   }
 
@@ -369,10 +370,6 @@ class Gimbal {
     pitch = ahrs.euler_angle().pitch + M_PI;
     yaw = ahrs.euler_angle().yaw + M_PI;
     roll = ahrs.euler_angle().roll + M_PI;
-
-    pitch_ = ahrs.euler_angle().pitch;
-    yaw_ = ahrs.euler_angle().yaw;
-    roll_ = ahrs.euler_angle().roll;
 
     GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,
                   referee_data_buffer.data().shoot_data.initial_speed,
