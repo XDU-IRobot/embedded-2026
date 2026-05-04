@@ -43,6 +43,15 @@ class Gimbal {
   float redirl_speed = 1000;    // TODO 拨盘反转速
   float friction_speed = 6500;  // TODO 摩擦轮转速
   float shootstep = 100;        // TODO 手动调速步长
+  int shootcnt = 0;             // 步长计数
+  int shoottime = 150;          // TODO 弹速控制间隔
+  int shoottime_ = shoottime;
+
+  // 拨盘自动反转
+  float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
+  int auto_reverse_time_max = 150;                           // TODO 反转持续时间
+  int auto_reverse_time = 0;                                 // 持续时间变量
+  bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
   float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
@@ -190,11 +199,14 @@ class Gimbal {
         break;
     }
     switch (rc->switch_l()) {
-      case rm::device::DR16::SwitchPosition::kUp:  // 上打自瞄
+      case rm::device::DR16::SwitchPosition::kUp:  // 上打完全自瞄
         GimbalState_ = kAuto;
         break;
-      case rm::device::DR16::SwitchPosition::kMid:  // 手动
-        GimbalState_ = kManual;
+      case rm::device::DR16::SwitchPosition::kMid:  // 中位按下鼠标右键跟随
+        if (rc->mouse_button_right() || vt03_date_.mouse_button_right)
+          GimbalState_ = kAuto;
+        else
+          GimbalState_ = kManual;
         break;
       default:
         GimbalState_ = kNoForce;
@@ -202,7 +214,12 @@ class Gimbal {
     }
   }
 
-  void VT03DateUpdate() {
+  bool RcIsOnline() {  // 判断遥控器是否在线
+    device_rc.Update();
+    return rc->online_status() == rm::device::Device::kOk;
+  }
+
+  void VT03DateUpdate() {  // vt03数据获取
     vt03_date_.mouse_x = vt03->data().mouse_x;
     vt03_date_.mouse_y = vt03->data().mouse_y;
     vt03_date_.mouse_button_left = vt03->data().mouse_button_left;
@@ -222,8 +239,8 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
@@ -250,11 +267,11 @@ class Gimbal {
       rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
       rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
-
+      // 设定目标，并计算
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data, 0, 0);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
-
+      // 重力补偿
       pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 
@@ -299,13 +316,14 @@ class Gimbal {
         rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
+      // 设定目标，并计算
       gimbal_controller.SetTarget(rc_yaw_data, rc_pitch_data);
       gimbal_controller.Update(yaw, -yaw_motor->rpm(), rm::modules::Wrap(pitch, 0, 2 * M_PI), pitch_motor->vel(), 2.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
-
+      // 重力补偿
       pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
       pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
-    } else {
+    } else {  // 失能
       if (DM_is_enable == true) {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         DM_is_enable = false;
@@ -322,12 +340,41 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (rc->dial() >= 550 || vt03_date_.mouse_button_left) {
-        shoot_controller.SetLoaderSpeed(dirl_speed);
+      if (rc->dial() >= 550 || rc->mouse_button_left() || vt03_date_.mouse_button_left) {
+        if (auto_reverse_flag) {
+          shoot_controller.SetLoaderSpeed(-redirl_speed);
+          auto_reverse_time--;
+          auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
+        } else {
+          if (GimbalState_ == kAuto) {
+            if (Aimbot.AimbotState && Aimbot.AutoFire) {
+              shoot_controller.SetLoaderSpeed(dirl_speed);
+            } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
+              shoot_controller.SetLoaderSpeed(0.0f);
+            } else {
+              shoot_controller.SetLoaderSpeed(dirl_speed);
+            }
+          } else {
+            shoot_controller.SetLoaderSpeed(dirl_speed);
+          }
+        }
       } else if (rc->dial() <= -600) {
         shoot_controller.SetLoaderSpeed(-redirl_speed);
       } else {
-        shoot_controller.SetLoaderSpeed(0);
+        shoot_controller.SetLoaderSpeed(0.0f);
+      }
+
+      // 自动反转逻辑
+      if (shoot_controller.GetLoaderSpeed() == dirl_speed) {
+        auto_reverse_buffer[4] = auto_reverse_buffer[3];
+        auto_reverse_buffer[3] = auto_reverse_buffer[2];
+        auto_reverse_buffer[2] = auto_reverse_buffer[1];
+        auto_reverse_buffer[1] = auto_reverse_buffer[0];
+        auto_reverse_buffer[0] = dial_motor->encoder();
+        if (auto_reverse_buffer[0] == auto_reverse_buffer[4]) {
+          auto_reverse_flag = true;
+          auto_reverse_time = auto_reverse_time_max;
+        }
       }
 
       shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
@@ -351,7 +398,7 @@ class Gimbal {
 
       friction_left->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_1, -10000, 10000));
       friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
-
+      dial_motor->SetCurrent(0);
     }
 
     // 停止状态
@@ -364,10 +411,22 @@ class Gimbal {
     }
   }
 
-  void ShootSpeedControl() {
-    if (vt03->data().keyboard_key)
-      ;
-    // 弹速控制
+  void ShootSpeedControl() {  // 弹速控制
+    shoottime_--;
+    if (shoottime_<0) {
+      if (vt03->data().keyboard_key & (1u << 6)) {
+          friction_speed -= shootstep;
+          shootcnt += 1;
+      } else if (vt03->data().keyboard_key & (1u << 7)) {
+          friction_speed += shootstep;
+          shootcnt -= 1;
+      } else if (vt03->data().keyboard_key & (1u << 8)) {
+        friction_speed = 6500;
+        shootcnt = 0;
+      }
+      shoottime_ = shoottime;
+    }
+
   }
 
   // void Referee_control();  // 裁判系统常规链路
@@ -389,6 +448,7 @@ class Gimbal {
     VT03DateUpdate();                                                 // vt03数据更新
     GimbalControl();                                                  // 云台控制更新
     AmmoControl();                                                    // 发射机构更新
+    ShootSpeedControl();                                              // 弹速手动控制
     rm::device::DjiMotorBase::SendCommand(*can1);                     // 向大疆所有电机发数据
     FreemasterDebug();                                                // 调试更新
   }
