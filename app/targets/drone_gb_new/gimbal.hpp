@@ -97,6 +97,8 @@ class Gimbal {
     int16_t mouse_y = 0;
     bool mouse_button_left = false;
     bool mouse_button_right = false;
+    float rc_left_x = 0.0f;
+    float rc_left_y = 0.0f;
   } vt03_date;
 
   StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
@@ -159,11 +161,13 @@ class Gimbal {
   }
 
   void GimbalPIDInit() {
-    gimbal_controller.pid().yaw_position.SetKp(200.0f).SetKi(0.0f).SetKd(0.2f).SetMaxOut(10000.0f).SetMaxIout(
+    gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.01f).SetMaxOut(10000.0f).SetMaxIout(
         1000.0f);  // TODO yaw初版函数 350 0.001 0.2 160 100000
     gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
-    gimbal_controller.pid().pitch_position.SetKp(35.0f).SetKi(0.002f).SetKd(0.008f).SetMaxOut(500.0f).SetMaxIout(
-        10.0f);  // TODO pitch初版参数
+//yaw原始参数 200 0 0.2  350 0 0
+
+    gimbal_controller.pid().pitch_position.SetKp(35.0f).SetKi(0.002f).SetKd(0.01f).SetMaxOut(500.0f).SetMaxIout(
+        10.0f);  // TODO pitch初版参数 35
     gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
 
@@ -203,6 +207,8 @@ class Gimbal {
     vt03_date_.mouse_y = vt03->data().mouse_y;
     vt03_date_.mouse_button_left = vt03->data().mouse_button_left;
     vt03_date_.mouse_button_right = vt03->data().mouse_button_right;
+    vt03_date_.rc_left_x = vt03->data().left_x;
+    vt03_date_.rc_left_y = vt03->data().left_y;
   }
 
   float GetYawMotorAngleRad() {  // 编码器返回角度
@@ -225,6 +231,7 @@ class Gimbal {
 
       // yaw
       yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+      yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);      // vt03手控备份
       yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
       yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
 
@@ -239,6 +246,7 @@ class Gimbal {
 
       // pitch
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
+      rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);      // vt03手控备份
       rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
       rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
@@ -260,11 +268,11 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
 
-      if (Aimbot.AimbotState) {
+      if (Aimbot.AimbotState==2) {
         rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
-        rc_pitch_data = rm::modules::Wrap(Aimbot.TargetPitchAngle + M_PI, 0, 2 * M_PI);
+        rc_pitch_data = rm::modules::Wrap(-Aimbot.TargetPitchAngle + M_PI, 0, 2 * M_PI);
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {  // 非自瞄状态自动切入手控
         // yaw
@@ -272,6 +280,7 @@ class Gimbal {
         yaw_delta = 0.0f;                                                                           // 合输出
 
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+        yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);      // vt03手控备份
         yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
         yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
 
@@ -285,6 +294,7 @@ class Gimbal {
 
         // pitch
         rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
+        rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);      // vt03手控备份
         rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
         rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
