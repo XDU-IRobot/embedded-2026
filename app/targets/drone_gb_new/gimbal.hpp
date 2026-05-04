@@ -164,7 +164,7 @@ class Gimbal {
     gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.01f).SetMaxOut(10000.0f).SetMaxIout(
         1000.0f);  // TODO yaw初版函数 350 0.001 0.2 160 100000
     gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
-//yaw原始参数 200 0 0.2  350 0 0
+    // yaw原始参数 200 0 0.2  350 0 0
 
     gimbal_controller.pid().pitch_position.SetKp(35.0f).SetKi(0.002f).SetKd(0.01f).SetMaxOut(500.0f).SetMaxIout(
         10.0f);  // TODO pitch初版参数 35
@@ -231,7 +231,7 @@ class Gimbal {
 
       // yaw
       yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
-      yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);      // vt03手控备份
+      yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);  // vt03手控备份
       yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
       yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
 
@@ -246,7 +246,7 @@ class Gimbal {
 
       // pitch
       rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
-      rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);      // vt03手控备份
+      rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);  // vt03手控备份
       rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
       rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
@@ -268,7 +268,7 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
 
-      if (Aimbot.AimbotState==2) {
+      if (Aimbot.AimbotState == 2) {
         rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
@@ -280,7 +280,7 @@ class Gimbal {
         yaw_delta = 0.0f;                                                                           // 合输出
 
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
-        yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);      // vt03手控备份
+        yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);  // vt03手控备份
         yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
         yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
 
@@ -294,7 +294,7 @@ class Gimbal {
 
         // pitch
         rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
-        rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);      // vt03手控备份
+        rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);  // vt03手控备份
         rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
         rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
