@@ -36,7 +36,6 @@ void MainLoop() {
   yaw = imu->yaw();
   pitch = imu->pitch();
   roll = imu->roll();
-
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
