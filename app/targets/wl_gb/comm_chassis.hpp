@@ -4,7 +4,7 @@
 #include <array>
 
 #include <librm.hpp>
-
+bool button_left;
 class GimbalToChassisTxBridge final : public rm::device::CanDevice {
  public:
   static constexpr rm::u16 kTxStdIdA = 0x110;
@@ -25,8 +25,6 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     return true;
   }
 
-  void RxCallback(const rm::hal::CanFrame* msg) override { (void)msg; }
-
  private:
   static void PackI16(rm::i16 value, rm::u8* out) {
     const auto raw = static_cast<rm::u16>(value);
@@ -45,26 +43,24 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     return static_cast<rm::i16>(clamped >= 0.0f ? (clamped + 0.5f) : (clamped - 0.5f));
   }
 
-  // Frame A (8 bytes): [0..1] pitch, [2..3] yaw, [4..5] mouse_x, [6..7] mouse_y
+  // Frame A (8 bytes): [0..1] pitch, [2..3] yaw, [4..5] gyro_z, [6..7] gyro_x
   void EncodeFrameA() {
     PackI16(RadToMilliI16(imu_ ? imu_->pitch() : 0.f), &tx_a_[0]);
     PackI16(RadToMilliI16(imu_ ? imu_->yaw() : 0.f), &tx_a_[2]);
-    if (vt03_) {
-      PackI16(vt03_->data().mouse_x, &tx_a_[4]);
-      PackI16(vt03_->data().mouse_y, &tx_a_[6]);
-    }
+    PackI16(RadToMilliI16(imu_ ? imu_->gyro_z() : 0.f), &tx_a_[4]);
+    PackI16(RadToMilliI16(imu_ ? imu_->gyro_x() : 0.f), &tx_a_[6]);
   }
 
-  // Frame B (8 bytes): [0..1] mouse_z, [2] left, [3] right, [4..5] keyboard_key, [6..7] reserved
+  // Frame B (8 bytes): [0..1] mouse_x, [2..3] mouse_y, [4] left, [5] right, [6..7] keyboard_key
   void EncodeFrameB() {
     if (vt03_) {
-      PackI16(vt03_->data().mouse_z, &tx_b_[0]);
-      tx_b_[2] = static_cast<rm::u8>(vt03_->data().mouse_button_left ? 1 : 0);
-      tx_b_[3] = static_cast<rm::u8>(vt03_->data().mouse_button_right ? 1 : 0);
-      PackU16(vt03_->data().keyboard_key, &tx_b_[4]);
+      button_left = vt03_->data().mouse_button_left;
+      PackI16(vt03_->data().mouse_x, &tx_b_[0]);
+      PackI16(vt03_->data().mouse_y, &tx_b_[2]);
+      tx_b_[4] = static_cast<rm::u8>(vt03_->data().mouse_button_left ? 1 : 0);
+      tx_b_[5] = static_cast<rm::u8>(vt03_->data().mouse_button_right ? 1 : 0);
+      PackU16(vt03_->data().keyboard_key, &tx_b_[6]);
     }
-    tx_b_[6] = 0;
-    tx_b_[7] = 0;
   }
 
   const rm::device::HipnucImu* imu_{nullptr};
