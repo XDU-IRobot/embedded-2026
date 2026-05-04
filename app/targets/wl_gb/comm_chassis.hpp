@@ -14,6 +14,8 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu, const rm::device::VT03* vt03)
       : CanDevice(can, kTxStdIdA, kTxStdIdB), imu_(imu), vt03_(vt03) {}
 
+  void RxCallback(const rm::hal::CanFrame* msg) override {}
+
   bool QueueSend() {
     EncodeFrameA();
     EncodeFrameB();

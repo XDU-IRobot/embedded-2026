@@ -36,6 +36,7 @@ void MainLoop() {
   yaw = imu->yaw();
   pitch = imu->pitch();
   roll = imu->roll();
+
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
@@ -49,6 +50,8 @@ extern "C" [[noreturn]] void AppMain(void) {
   vt03_uart = new rm::hal::Serial(huart6, 128, rm::hal::stm32::UartMode::kDma, rm::hal::stm32::UartMode::kDma);
   vt03 = new rm::device::VT03;
   vt03_uart->AttachRxCallback(Vt03RxCallback);
+
+  gb_to_chassis = new GimbalToChassisTxBridge(*can_to_chassis, imu, vt03);
 
   imu->Begin();
   vt03_uart->Begin();
