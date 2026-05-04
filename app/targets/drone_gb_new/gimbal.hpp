@@ -251,8 +251,8 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
@@ -352,7 +352,7 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (rc->dial() >= 550 || rc->mouse_button_left() || vt03_date_.mouse_button_left||vt03_date_.fric_fire) {
+      if (rc->dial() >= 550 || rc->mouse_button_left() || vt03_date_.mouse_button_left || vt03_date_.fric_fire) {
         if (auto_reverse_flag) {
           shoot_controller.SetLoaderSpeed(-redirl_speed);
           auto_reverse_time--;
@@ -487,15 +487,15 @@ class Gimbal {
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
     VT03DateUpdate();                                                 // vt03数据更新
     if (RcIsOnline()) {
-      RCStateUpdate();//dt7控制更新
+      RCStateUpdate();  // dt7控制更新
     } else {
-      Vt03Control();//vt03控制更新
+      Vt03Control();  // vt03控制更新
     }
-    GimbalControl();                                                  // 云台控制更新
-    AmmoControl();                                                    // 发射机构更新
-    ShootSpeedControl();                                              // 弹速手动控制
-    rm::device::DjiMotorBase::SendCommand(*can1);                     // 向大疆所有电机发数据
-    FreemasterDebug();                                                // 调试更新
+    GimbalControl();                               // 云台控制更新
+    AmmoControl();                                 // 发射机构更新
+    ShootSpeedControl();                           // 弹速手动控制
+    rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
+    FreemasterDebug();                             // 调试更新
   }
 
   // DmMotor电机发信息
