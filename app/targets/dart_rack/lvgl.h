@@ -20,4 +20,4 @@ bool LvglHomingUpdate();
 }
 #endif
 
-#endif //LVGL_H
+#endif  // LVGL_H

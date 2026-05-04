@@ -7,7 +7,7 @@
 #include "ff.h"
 #include "dart_core.hpp"
 // 实体定义，确保链接器能找到
-float Pitch[4] = {11.11f, 22.22f, 33.33f, 44.44f};
+float Pitch[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 float Yaw[4] = {45.55f, 45.66f, 45.77f, 45.88f};
 
 // 定义三个界面的容器
@@ -126,8 +126,7 @@ extern "C" bool LvglHomingUpdate() {
     }
   }
 
-  if (lvgl_load_l_homing_done && lvgl_load_r_homing_done &&
-      lvgl_trigger_homing_done && lvgl_add_homing_done) {
+  if (lvgl_load_l_homing_done && lvgl_load_r_homing_done && lvgl_trigger_homing_done && lvgl_add_homing_done) {
     lvgl_homing_all_done = true;
     dart_rack->load_motor_l_speed_pid_.Clear();
     dart_rack->load_motor_l_->SetCurrent(0);
@@ -137,6 +136,8 @@ extern "C" bool LvglHomingUpdate() {
     dart_rack->trigger_motor_->SetCurrent(0);
     dart_rack->add_motor_speed_pid_.Clear();
     dart_rack->add_motor_->SetCurrent(0);
+    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 506.689f), 1, 0);
+    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 139.831f), 2, 0);
   }
   return lvgl_homing_all_done;
 }

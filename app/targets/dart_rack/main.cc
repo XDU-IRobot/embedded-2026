@@ -24,9 +24,19 @@ volatile uint8_t g_add_limit_ever_hit = 0;
 volatile uint8_t g_load_l_limit_ever_hit = 0;
 volatile uint8_t g_load_r_limit_ever_hit = 0;
 
+volatile uint8_t g_add_limit_suppressed = 0;
+
 bool is_lvgl_running = false;
 
 static void LimitSwitchUpdate() {
+
+    if (HAL_GPIO_ReadPin(add_motor_EXTI_GPIO_Port, add_motor_EXTI_Pin) == GPIO_PIN_SET) {
+      g_add_limit_suppressed = 0;
+    }else if (HAL_GPIO_ReadPin(add_motor_EXTI_GPIO_Port, add_motor_EXTI_Pin) == GPIO_PIN_RESET) {
+      g_add_limit_suppressed = 1;
+    }
+
+
   if (g_trigger_motor_limit_triggered) {
     g_trigger_motor_limit_triggered = 0;
     dart_rack->trigger_motor_->SetCurrent(0);
@@ -34,7 +44,7 @@ static void LimitSwitchUpdate() {
     dart_rack->trigger_motor_odometer_.Reset();
     g_trigger_limit_ever_hit = 1;
   }
-  if (g_add_motor_limit_triggered) {
+  if (g_add_motor_limit_triggered && g_add_limit_suppressed) {
     g_add_motor_limit_triggered = 0;
     dart_rack->add_motor_->SetCurrent(0);
     dart_rack->add_motor_speed_pid_.Clear();
@@ -62,12 +72,13 @@ static void LimitSwitchUpdate() {
     dart_rack->trigger_motor_odometer_.Reset();
     g_trigger_limit_ever_hit = 1;
   }
-  if (!g_add_limit_ever_hit &&
+  if (!g_add_limit_ever_hit && !g_add_limit_suppressed &&
       HAL_GPIO_ReadPin(add_motor_EXTI_GPIO_Port, add_motor_EXTI_Pin) == GPIO_PIN_RESET) {
     dart_rack->add_motor_->SetCurrent(0);
     dart_rack->add_motor_speed_pid_.Clear();
     dart_rack->add_motor_odometer_.Reset();
     g_add_limit_ever_hit = 1;
+    g_add_limit_suppressed = 1;
   }
   if (!g_load_l_limit_ever_hit &&
       HAL_GPIO_ReadPin(load_motor_left_EXTI_GPIO_Port, load_motor_left_EXTI_Pin) == GPIO_PIN_RESET) {

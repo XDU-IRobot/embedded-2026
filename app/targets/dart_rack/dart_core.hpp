@@ -57,7 +57,7 @@ struct ManualMode {
   bool is_add_down_done = false;
   bool is_add_up_done = false;
   bool is_add_plate_done = false;
-  void ManualModeClear()  // 清空所有标志位
+  void ManualModeClear()
   {
     extern volatile uint8_t g_trigger_limit_ever_hit;
     extern volatile uint8_t g_add_limit_ever_hit;
@@ -172,8 +172,8 @@ struct DartRack {
   static constexpr uint16_t kAddPlateLockEcd[3] = {593, 593, 287};    //< 加弹机械臂锁定位置
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
 
-  static constexpr float kServo1Init = 110.0f;
-  static constexpr float kServo2Init = 82.0f;
+  static constexpr float kServo1Init = 142.0f;
+  static constexpr float kServo2Init = 31.0f;
 
   static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
   /*
