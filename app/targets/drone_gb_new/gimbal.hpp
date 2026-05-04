@@ -28,6 +28,12 @@ class Gimbal {
   double rc_yaw_data = 0;    // 遥控器yaw数据
   double rc_pitch_data = 0;  // 遥控器pitch数据
 
+  bool vt03_flag_lf = 0;  // 左标志位
+  bool vt03_flag_rh = 0;  // 右标志位
+
+  bool vt03_last_fn_left = false;   // 左Fn上一帧状态
+  bool vt03_last_fn_right = false;  // 右Fn上一帧状态
+
   bool DM_is_enable = false;  // 达秒使能标志位
 
   float pitch_min_pos = 3.00;        // pitch电机最小限位
@@ -108,6 +114,9 @@ class Gimbal {
     bool mouse_button_right = false;
     float rc_left_x = 0.0f;
     float rc_left_y = 0.0f;
+    bool Fn_left = 0;
+    bool Fn_right = 0;
+    bool fric_fire = 0;
   } vt03_date;
 
   StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
@@ -226,6 +235,9 @@ class Gimbal {
     vt03_date_.mouse_button_right = vt03->data().mouse_button_right;
     vt03_date_.rc_left_x = vt03->data().left_x;
     vt03_date_.rc_left_y = vt03->data().left_y;
+    vt03_date_.Fn_left = vt03->data().left_button;
+    vt03_date_.Fn_right = vt03->data().right_button;
+    vt03_date_.fric_fire = vt03->data().trigger;
   }
 
   float GetYawMotorAngleRad() {  // 编码器返回角度
@@ -340,16 +352,16 @@ class Gimbal {
       shoot_controller.Arm(true);
       shoot_controller.SetMode(Shoot2Fric::kFullAuto);
 
-      if (rc->dial() >= 550 || rc->mouse_button_left() || vt03_date_.mouse_button_left) {
+      if (rc->dial() >= 550 || rc->mouse_button_left() || vt03_date_.mouse_button_left||vt03_date_.fric_fire) {
         if (auto_reverse_flag) {
           shoot_controller.SetLoaderSpeed(-redirl_speed);
           auto_reverse_time--;
           auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
         } else {
           if (GimbalState_ == kAuto) {
-            if (Aimbot.AimbotState && Aimbot.AutoFire) {
+            if (Aimbot.AimbotState == 4) {
               shoot_controller.SetLoaderSpeed(dirl_speed);
-            } else if (Aimbot.AimbotState && !Aimbot.AutoFire) {
+            } else if (Aimbot.AimbotState == 2) {
               shoot_controller.SetLoaderSpeed(0.0f);
             } else {
               shoot_controller.SetLoaderSpeed(dirl_speed);
@@ -413,23 +425,52 @@ class Gimbal {
 
   void ShootSpeedControl() {  // 弹速控制
     shoottime_--;
-    if (shoottime_<0) {
+    if (shoottime_ < 0) {
       if (vt03->data().keyboard_key & (1u << 6)) {
-          friction_speed -= shootstep;
-          shootcnt += 1;
+        friction_speed -= shootstep;
+        shootcnt += 1;
       } else if (vt03->data().keyboard_key & (1u << 7)) {
-          friction_speed += shootstep;
-          shootcnt -= 1;
+        friction_speed += shootstep;
+        shootcnt -= 1;
       } else if (vt03->data().keyboard_key & (1u << 8)) {
         friction_speed = 6500;
         shootcnt = 0;
       }
       shoottime_ = shoottime;
     }
-
   }
 
-  // void Referee_control();  // 裁判系统常规链路
+  void Vt03Control() {
+    // 左 Fn：云台状态切换
+    // kNoForce -> kManual -> kAuto -> kNoForce
+    if (vt03_date_.Fn_left && !vt03_last_fn_left) {
+      if (GimbalState_ == kNoForce) {
+        GimbalState_ = kManual;
+        vt03_flag_lf = 1;
+      } else if (GimbalState_ == kManual) {
+        GimbalState_ = kAuto;
+        vt03_flag_lf = 1;
+      } else {
+        GimbalState_ = kNoForce;
+        vt03_flag_lf = 0;
+      }
+    }
+
+    // 右 Fn：发射状态切换
+    // kReady -> kFire -> kReady
+    if (vt03_date_.Fn_right && !vt03_last_fn_right) {
+      if (AmmoState_ == kFire) {
+        AmmoState_ = kReady;
+        vt03_flag_rh = 0;
+      } else {
+        AmmoState_ = kFire;
+        vt03_flag_rh = 1;
+      }
+    }
+
+    vt03_last_fn_left = vt03_date_.Fn_left;
+    vt03_last_fn_right = vt03_date_.Fn_right;
+  }
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz() {
@@ -444,8 +485,12 @@ class Gimbal {
     GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,
                   referee_data_buffer.data().shoot_data.initial_speed,
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
-    RCStateUpdate();                                                  // DT7遥控器更新
     VT03DateUpdate();                                                 // vt03数据更新
+    if (RcIsOnline()) {
+      RCStateUpdate();//dt7控制更新
+    } else {
+      Vt03Control();//vt03控制更新
+    }
     GimbalControl();                                                  // 云台控制更新
     AmmoControl();                                                    // 发射机构更新
     ShootSpeedControl();                                              // 弹速手动控制

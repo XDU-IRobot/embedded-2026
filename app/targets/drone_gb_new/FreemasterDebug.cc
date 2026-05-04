@@ -37,6 +37,7 @@ int16_t Arc_vt03_mou_x = 0;
 int16_t Arc_vt03_mou_y = 0;
 bool Arc_vt03_left = 0;
 bool Arc_vt03_right = 0;
+bool AFn_left = 0;
 // 自瞄数据输出
 float Atargetpitch = 0.0f;
 float Atagetyaw = 0.0f;
@@ -93,6 +94,8 @@ void FreemasterDebug() {
   Arc_vt03_mou_y = gimbal->vt03->data().mouse_y;
   Arc_vt03_left = gimbal->vt03->data().mouse_button_left;
   Arc_vt03_right = gimbal->vt03->data().mouse_button_right;
+
+  AFn_left = gimbal->vt03_date_.Fn_left;
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;
