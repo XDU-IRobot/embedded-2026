@@ -11,8 +11,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   static constexpr rm::u16 kTxStdIdB = 0x111;
   static constexpr rm::usize kPayloadSize = 8U;
 
-  GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu,
-                          const rm::device::VT03* vt03)
+  GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu, const rm::device::VT03* vt03)
       : CanDevice(can, kTxStdIdA, kTxStdIdB), imu_(imu), vt03_(vt03) {}
 
   bool QueueSend() {
