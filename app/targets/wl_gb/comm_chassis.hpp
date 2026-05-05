@@ -9,18 +9,21 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
  public:
   static constexpr rm::u16 kTxStdIdA = 0x110;
   static constexpr rm::u16 kTxStdIdB = 0x111;
+  static constexpr rm::u16 kTxStdIdC = 0x112;
   static constexpr rm::usize kPayloadSize = 8U;
 
   GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu, const rm::device::VT03* vt03)
-      : CanDevice(can, kTxStdIdA, kTxStdIdB), imu_(imu), vt03_(vt03) {}
+      : CanDevice(can, kTxStdIdA, kTxStdIdB, kTxStdIdC), imu_(imu), vt03_(vt03) {}
 
   void RxCallback(const rm::hal::CanFrame* msg) override {}
 
   bool QueueSend() {
     EncodeFrameA();
     EncodeFrameB();
+    EncodeFrameC();
     can_->Write(kTxStdIdA, tx_a_.data(), tx_a_.size());
     can_->Write(kTxStdIdB, tx_b_.data(), tx_b_.size());
+    can_->Write(kTxStdIdC, tx_c_.data(), tx_c_.size());
 
     ReportStatus(kOk);
     return true;
@@ -36,6 +39,12 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   static void PackU16(rm::u16 value, rm::u8* out) {
     out[0] = static_cast<rm::u8>(value >> 8);
     out[1] = static_cast<rm::u8>(value);
+  }
+
+  static rm::i16 QuatToI16(rm::f32 q) {
+    const rm::f32 scaled = q * 32767.0f;
+    const rm::f32 clamped = std::clamp(scaled, -32768.0f, 32767.0f);
+    return static_cast<rm::i16>(clamped >= 0.0f ? (clamped + 0.5f) : (clamped - 0.5f));
   }
 
   static rm::i16 RadToMilliI16(rm::f32 rad) {
@@ -64,8 +73,19 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     }
   }
 
+  // Frame C (8 bytes): [0..1] quat_w, [2..3] quat_x, [4..5] quat_y, [6..7] quat_z
+  void EncodeFrameC() {
+    if (imu_) {
+      PackI16(QuatToI16(imu_->quat_w()), &tx_c_[0]);
+      PackI16(QuatToI16(imu_->quat_x()), &tx_c_[2]);
+      PackI16(QuatToI16(imu_->quat_y()), &tx_c_[4]);
+      PackI16(QuatToI16(imu_->quat_z()), &tx_c_[6]);
+    }
+  }
+
   const rm::device::HipnucImu* imu_{nullptr};
   const rm::device::VT03* vt03_{nullptr};
   std::array<rm::u8, kPayloadSize> tx_a_{};
   std::array<rm::u8, kPayloadSize> tx_b_{};
+  std::array<rm::u8, kPayloadSize> tx_c_{};
 };
