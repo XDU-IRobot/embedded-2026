@@ -790,33 +790,33 @@ class Gimbal {
       // if (abcdefg >= 30) abcdefg = 0;
       // abcdefg++;
 
-      //三原色测试
-      // Set_LED(0, 255, 0, 0);
-      // Set_LED(1, 0, 255, 0);
-      // Set_LED(2, 0, 0, 255);
-      // Set_LED(3, 255, 255, 255);
+      // 三原色测试
+      //  Set_LED(0, 255, 0, 0);
+      //  Set_LED(1, 0, 255, 0);
+      //  Set_LED(2, 0, 0, 255);
+      //  Set_LED(3, 255, 255, 255);
 
-      //等待、前进、后退
-      // if (abcdefg >= 0 && abcdefg < 10) {
-      //   Set_LED(0, 0, 0, 0);
-      //   Set_LED(1, 255, 255, 0);
-      //   Set_LED(2, 0, 0, 0);
-      //   Set_LED(3, 0, 0, 0);
-      // }
-      // if (abcdefg >= 10 && abcdefg < 20) {
-      //   Set_LED(0, 0, 0, 0);
-      //   Set_LED(1, 0, 255, 0);
-      //   Set_LED(2, 0, 0, 0);
-      //   Set_LED(3, 0, 0, 0);
-      // }
-      // if (abcdefg >= 20 && abcdefg < 30) {
-      //   Set_LED(0, 0, 0, 0);
-      //   Set_LED(1, 255, 0, 0);
-      //   Set_LED(2, 0, 0, 0);
-      //   Set_LED(3, 0, 0, 0);
-      // }
-      // if (abcdefg >= 30) abcdefg = 0;
-      // abcdefg++;
+      // 等待、前进、后退
+      //  if (abcdefg >= 0 && abcdefg < 10) {
+      //    Set_LED(0, 0, 0, 0);
+      //    Set_LED(1, 255, 255, 0);
+      //    Set_LED(2, 0, 0, 0);
+      //    Set_LED(3, 0, 0, 0);
+      //  }
+      //  if (abcdefg >= 10 && abcdefg < 20) {
+      //    Set_LED(0, 0, 0, 0);
+      //    Set_LED(1, 0, 255, 0);
+      //    Set_LED(2, 0, 0, 0);
+      //    Set_LED(3, 0, 0, 0);
+      //  }
+      //  if (abcdefg >= 20 && abcdefg < 30) {
+      //    Set_LED(0, 0, 0, 0);
+      //    Set_LED(1, 255, 0, 0);
+      //    Set_LED(2, 0, 0, 0);
+      //    Set_LED(3, 0, 0, 0);
+      //  }
+      //  if (abcdefg >= 30) abcdefg = 0;
+      //  abcdefg++;
 
       if (abcdefg >= 0 && abcdefg < 5) {
         Set_LED(0, 255, 255, 255);
@@ -832,7 +832,6 @@ class Gimbal {
       }
       if (abcdefg >= 10) abcdefg = 0;
       abcdefg++;
-
 
       Set_Brightness(10);
       WS2812_Send();
