@@ -60,7 +60,7 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
+  float pitch_torque = 0.0f;      // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.35f;  // TODO 重力补偿参数
 
   float pitch_cmd = 0.0f;       // pitch合输出
@@ -184,10 +184,10 @@ class Gimbal {
     gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // yaw原始参数 200 0 0.2  350 0 0
 
-    gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.001f).SetKd(0.001f).SetMaxOut(500.0f).SetMaxIout(
-        10.0f);  // TODO pitch初版参数 35 0 0.01
-    gimbal_controller.pid().pitch_speed.SetKp(1.2f).SetKi(0.0f).SetKd(0.003f).SetMaxOut(10.0f).SetMaxIout(5.0f);
-  }//0.8 0.0 0.001
+    gimbal_controller.pid().pitch_position.SetKp(35.0f).SetKi(0.00f).SetKd(0.01f).SetMaxOut(500.0f).SetMaxIout(
+        10.0f);  // TODO pitch初版参数 35 0 0.01  20 0.001 0.001
+    gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+  }  // 0.8 0.0 0.001  1.2 0.0 0.003
 
   void AmmoPIDInit() {
     shoot_controller.pid().fric_1_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
@@ -251,8 +251,8 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
@@ -297,7 +297,7 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       }
 
-      if (Aimbot.AimbotState == 2) {
+      if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
         rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
         rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
