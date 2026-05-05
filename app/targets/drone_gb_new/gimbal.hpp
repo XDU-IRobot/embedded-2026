@@ -488,66 +488,71 @@ class Gimbal {
     bool x_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kX);
     bool c_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kC);
 
-    if (z_pressed&&x_pressed&&c_pressed) {
+    if (z_pressed && x_pressed && c_pressed) {
       if (led_blink_time < 5) {
         Set_LED(0, 255, 0, 0);
         Set_LED(1, 255, 0, 0);
         Set_LED(2, 255, 0, 0);
         Set_LED(3, 255, 0, 0);
-      }
-      else if (led_blink_time < 10) {
+      } else if (led_blink_time < 10) {
         Set_LED(0, 0, 0, 0);
         Set_LED(1, 0, 0, 0);
         Set_LED(2, 0, 0, 0);
         Set_LED(3, 0, 0, 0);
-      }
-      else led_blink_time=0;
-      led_blink_time ++;
+      } else
+        led_blink_time = 0;
+      led_blink_time++;
     }
-    //前进后退
-    if (!ctrl_pressed&&w_pressed&&!s_pressed) Set_LED(1, 0, 255, 0);
-    else if (!ctrl_pressed&&!w_pressed&&s_pressed) Set_LED(1, 255, 0, 0);
-    else Set_LED(1, 255, 255, 0);
+    // 前进后退
+    if (!ctrl_pressed && w_pressed && !s_pressed)
+      Set_LED(1, 0, 255, 0);
+    else if (!ctrl_pressed && !w_pressed && s_pressed)
+      Set_LED(1, 255, 0, 0);
+    else
+      Set_LED(1, 255, 255, 0);
 
-    //左右or偏航
-    if (!ctrl_pressed&&a_pressed^d_pressed) {
+    // 左右or偏航
+    if (!ctrl_pressed && a_pressed ^ d_pressed) {
       if (a_pressed) {
         Set_LED(0, 0, 0, 0);
         Set_LED(3, 255, 255, 255);
-      }
-      else if (d_pressed) {
+      } else if (d_pressed) {
         Set_LED(0, 255, 255, 255);
         Set_LED(3, 0, 0, 0);
-      }
-      else {
+      } else {
         Set_LED(0, 0, 0, 0);
         Set_LED(3, 0, 0, 0);
       }
-    }
-    else if (q_pressed^e_pressed) {
+    } else if (q_pressed ^ e_pressed) {
       if (q_pressed) {
-        if (led_blink_time < 5) Set_LED(3, 255, 255, 255);
-        else if (led_blink_time < 10) Set_LED(3, 0, 0, 0);
-        else led_blink_time=0;
-        led_blink_time ++;
+        if (led_blink_time < 5)
+          Set_LED(3, 255, 255, 255);
+        else if (led_blink_time < 10)
+          Set_LED(3, 0, 0, 0);
+        else
+          led_blink_time = 0;
+        led_blink_time++;
         Set_LED(0, 0, 0, 0);
-      }
-      else if (e_pressed) {
-        if (led_blink_time < 5) Set_LED(0, 255, 255, 255);
-        else if (led_blink_time < 10) Set_LED(0, 0, 0, 0);
-        else led_blink_time=0;
-        led_blink_time ++;
+      } else if (e_pressed) {
+        if (led_blink_time < 5)
+          Set_LED(0, 255, 255, 255);
+        else if (led_blink_time < 10)
+          Set_LED(0, 0, 0, 0);
+        else
+          led_blink_time = 0;
+        led_blink_time++;
         Set_LED(3, 0, 0, 0);
       }
-    }
-    else {
+    } else {
       Set_LED(0, 0, 0, 0);
       Set_LED(3, 0, 0, 0);
     }
 
-    //上升
-    if (shift_pressed) Set_LED(2, 255, 255, 255);
-    else Set_LED(2, 0, 0, 0);
+    // 上升
+    if (shift_pressed)
+      Set_LED(2, 255, 255, 255);
+    else
+      Set_LED(2, 0, 0, 0);
 
     Set_Brightness(10);
     WS2812_Send();
