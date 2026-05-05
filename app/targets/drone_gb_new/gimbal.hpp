@@ -12,6 +12,7 @@
 #include "Usb.hpp"
 #include "Referee.hpp"
 #include "vt03.hpp"
+#include "WS2812b.hpp"
 
 extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
@@ -251,8 +252,8 @@ class Gimbal {
         DM_is_enable = true;
         gimbal_controller.Enable(true);
 
-        rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
-        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);                            // 使用 IMU pitch 作为初始姿态
+        rc_yaw_data = yaw;                                      // 第一次进入更新当前位置
+        rc_pitch_data = rm::modules::Wrap(pitch, 0, 2 * M_PI);  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       }
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
@@ -470,6 +471,91 @@ class Gimbal {
 
     vt03_last_fn_left = vt03_date_.Fn_left;
     vt03_last_fn_right = vt03_date_.Fn_right;
+  }
+
+  int led_blink_time = 0;  // LED闪烁计时器
+  void WS2812Control() {
+    auto key = vt03->data().keyboard_key;
+    bool w_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kW);
+    bool a_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kA);
+    bool s_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kS);
+    bool d_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kD);
+    bool q_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kQ);
+    bool e_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kE);
+    bool shift_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kShift);
+    bool ctrl_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kCtrl);
+    bool z_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kZ);
+    bool x_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kX);
+    bool c_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kC);
+
+    if (z_pressed && x_pressed && c_pressed) {
+      if (led_blink_time < 5) {
+        Set_LED(0, 255, 0, 0);
+        Set_LED(1, 255, 0, 0);
+        Set_LED(2, 255, 0, 0);
+        Set_LED(3, 255, 0, 0);
+      } else if (led_blink_time < 10) {
+        Set_LED(0, 0, 0, 0);
+        Set_LED(1, 0, 0, 0);
+        Set_LED(2, 0, 0, 0);
+        Set_LED(3, 0, 0, 0);
+      } else
+        led_blink_time = 0;
+      led_blink_time++;
+    }
+    // 前进后退
+    if (!ctrl_pressed && w_pressed && !s_pressed)
+      Set_LED(1, 0, 255, 0);
+    else if (!ctrl_pressed && !w_pressed && s_pressed)
+      Set_LED(1, 255, 0, 0);
+    else
+      Set_LED(1, 255, 255, 0);
+
+    // 左右or偏航
+    if (!ctrl_pressed && a_pressed ^ d_pressed) {
+      if (a_pressed) {
+        Set_LED(0, 0, 0, 0);
+        Set_LED(3, 255, 255, 255);
+      } else if (d_pressed) {
+        Set_LED(0, 255, 255, 255);
+        Set_LED(3, 0, 0, 0);
+      } else {
+        Set_LED(0, 0, 0, 0);
+        Set_LED(3, 0, 0, 0);
+      }
+    } else if (q_pressed ^ e_pressed) {
+      if (q_pressed) {
+        if (led_blink_time < 5)
+          Set_LED(3, 255, 255, 255);
+        else if (led_blink_time < 10)
+          Set_LED(3, 0, 0, 0);
+        else
+          led_blink_time = 0;
+        led_blink_time++;
+        Set_LED(0, 0, 0, 0);
+      } else if (e_pressed) {
+        if (led_blink_time < 5)
+          Set_LED(0, 255, 255, 255);
+        else if (led_blink_time < 10)
+          Set_LED(0, 0, 0, 0);
+        else
+          led_blink_time = 0;
+        led_blink_time++;
+        Set_LED(3, 0, 0, 0);
+      }
+    } else {
+      Set_LED(0, 0, 0, 0);
+      Set_LED(3, 0, 0, 0);
+    }
+
+    // 上升
+    if (shift_pressed)
+      Set_LED(2, 255, 255, 255);
+    else
+      Set_LED(2, 0, 0, 0);
+
+    Set_Brightness(10);
+    WS2812_Send();
   }
 
   // 遥控器和imu数据解算+DjiMotor发信息
