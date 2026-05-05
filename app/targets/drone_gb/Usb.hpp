@@ -7,16 +7,24 @@
 #define AIMBOT_DATA_RECEIVE_ID 0x2  // 接收数据帧ID 0x2
 
 typedef struct __attribute__((packed)) {
-  uint8_t _SOF;              // 包头
-  uint8_t ID;                // 接收id
-  uint8_t AimbotState;       // 自瞄状态
-  uint8_t AimbotTarget;      // 自瞄目标
-  float PitchRelativeAngle;  // pitch角度值
-  float YawRelativeAngle;    // yaw角度值
-  float TargetPitchSpeed;    // 目标pitch速度
-  float TargetYawSpeed;      // 目标yaw速度
-  uint32_t SystemTimer;      // 系统时间
-  uint8_t _EOF;              // 包尾
+  uint8_t _SOF;         // 包头
+  uint8_t ID;           // 接收id
+  uint8_t AimbotState;  // 自瞄状态
+  uint8_t AutoFire;     // 是否开火
+
+  float TargetPitchAngle;  // pitch角度
+  float TargetYawAngle;    // yaw角度
+  float PitchSpeed;        // pitch速度
+  float YawSpeed;          // yaw速度
+  float PitchAcceSpeed;    // pitch加速度
+  float YawAcceSpeed;      // yaw加速度
+  float PitchAngSpeed;     // pitch角速度
+  float YawAngSpeed;       // yaw角速度
+
+  float TargetPitchSpeed;  // 目标pitch速度
+  float TargetYawSpeed;    // 目标yaw速度
+  uint32_t SystemTimer;    // 系统时间
+  uint8_t _EOF;            // 包尾
 } AimbotFrame_SCM_t;
 
 typedef struct __attribute__((packed)) {
@@ -27,6 +35,7 @@ typedef struct __attribute__((packed)) {
   float q1;            //
   float q2;            //
   float q3;            //
+  float fire_speed;    // 弹速
   uint8_t robot_id;    // 机器人id
   uint8_t mode;        // 自瞄模式
   uint8_t _EOF;        // 包尾
@@ -37,7 +46,7 @@ extern "C" {
 #endif
 void UsbReceive(uint8_t* rx_data, uint8_t len);
 void UsbSendMessage(uint8_t* address, uint16_t len, uint8_t id);
-void GimbalImuSend(float w, float x, float y, float z);
+void GimbalImuSend(float w, float x, float y, float z, float fire_speed);
 #ifdef __cplusplus
 }
 #endif
