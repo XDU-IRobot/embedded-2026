@@ -4,7 +4,7 @@
 #include "main.h"
 #include <math.h>
 
-#define MAX_LED 1
+#define MAX_LED 4
 #define USE_BRIGHTNESS 1
 
 // 设置LED颜色数据

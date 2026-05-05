@@ -730,8 +730,8 @@ class Gimbal {
                   fire_speed_average);
 
     RCStateUpdate();  // 遥控器更新
-    GimbalControl();  // 云台控制更新
-    AmmoControl();    // 发射机构数据更新
+    // GimbalControl();  // 云台控制更新
+    // AmmoControl();    // 发射机构数据更新
 
     // // 达秒电机与imu数据滤波处理
     // err_sum -= err_buffer[err_buffer_ptr];
@@ -751,22 +751,22 @@ class Gimbal {
     //   // pitch_motor->SetMitCommand(0, 0, 0, 0, 0);
     //   pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
     // ++send_isolation %= 3;
-    rm::device::DjiMotorBase::SendCommand(*can1);
-    rm::device::DjiMotorBase::SendCommand(*can2);
+    // rm::device::DjiMotorBase::SendCommand(*can1);
+    // rm::device::DjiMotorBase::SendCommand(*can2);
   }
 
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
       double pitch_torque_cmd = gimbal_controller.output().pitch;  //+ pitch_torque;
       pitch_torque_cmd = rm::modules::Clamp(pitch_torque_cmd, -8.0, 8.0);
-      pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
+      // pitch_motor->SetMitCommand(0, 0, pitch_torque_cmd, 0, 0);
     }
   }
 
   // 调试
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {
-      FreemasterDebug();
+      // FreemasterDebug();
       // vofa_pitch = Apitchpose;
       // uint32_t t_ms = HAL_GetTick();
       // VOFA_SendPitch_Blocking(t_ms, vofa_pitch, vofa_current);
@@ -776,7 +776,7 @@ class Gimbal {
   // 裁判系统+UI绘制
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
-      Referee_control();
+      // Referee_control();
     }
   }
 
@@ -784,11 +784,56 @@ class Gimbal {
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
       // WS212航灯输出
-      if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
-      if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
-      if (abcdefg >= 20 && abcdefg < 30) Set_LED(0, 0, 255, 0);
-      if (abcdefg >= 30) abcdefg = 0;
+      // if (abcdefg >= 0 && abcdefg < 10) Set_LED(0, 255, 0, 0);
+      // if (abcdefg >= 10 && abcdefg < 20) Set_LED(0, 0, 0, 255);
+      // if (abcdefg >= 20 && abcdefg < 30) Set_LED(0, 0, 255, 0);
+      // if (abcdefg >= 30) abcdefg = 0;
+      // abcdefg++;
+
+      //三原色测试
+      // Set_LED(0, 255, 0, 0);
+      // Set_LED(1, 0, 255, 0);
+      // Set_LED(2, 0, 0, 255);
+      // Set_LED(3, 255, 255, 255);
+
+      //等待、前进、后退
+      // if (abcdefg >= 0 && abcdefg < 10) {
+      //   Set_LED(0, 0, 0, 0);
+      //   Set_LED(1, 255, 255, 0);
+      //   Set_LED(2, 0, 0, 0);
+      //   Set_LED(3, 0, 0, 0);
+      // }
+      // if (abcdefg >= 10 && abcdefg < 20) {
+      //   Set_LED(0, 0, 0, 0);
+      //   Set_LED(1, 0, 255, 0);
+      //   Set_LED(2, 0, 0, 0);
+      //   Set_LED(3, 0, 0, 0);
+      // }
+      // if (abcdefg >= 20 && abcdefg < 30) {
+      //   Set_LED(0, 0, 0, 0);
+      //   Set_LED(1, 255, 0, 0);
+      //   Set_LED(2, 0, 0, 0);
+      //   Set_LED(3, 0, 0, 0);
+      // }
+      // if (abcdefg >= 30) abcdefg = 0;
+      // abcdefg++;
+
+      if (abcdefg >= 0 && abcdefg < 5) {
+        Set_LED(0, 255, 255, 255);
+        Set_LED(1, 255, 255, 0);
+        Set_LED(2, 255, 255, 255);
+        Set_LED(3, 0, 0, 0);
+      }
+      if (abcdefg >= 5 && abcdefg < 10) {
+        Set_LED(0, 0, 0, 0);
+        Set_LED(1, 255, 255, 0);
+        Set_LED(2, 255, 255, 255);
+        Set_LED(3, 0, 0, 0);
+      }
+      if (abcdefg >= 10) abcdefg = 0;
       abcdefg++;
+
+
       Set_Brightness(10);
       WS2812_Send();
 
