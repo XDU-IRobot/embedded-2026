@@ -60,7 +60,7 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;     // pitch电机力矩重力补偿量
+  float pitch_torque = 0.0f;      // pitch电机力矩重力补偿量
   float pitch_torque_kp = 0.35f;  // TODO 重力补偿参数
 
   float pitch_cmd = 0.0f;       // pitch合输出
@@ -187,7 +187,7 @@ class Gimbal {
     gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.001f).SetKd(0.001f).SetMaxOut(500.0f).SetMaxIout(
         10.0f);  // TODO pitch初版参数 35 0 0.01
     gimbal_controller.pid().pitch_speed.SetKp(1.2f).SetKi(0.0f).SetKd(0.003f).SetMaxOut(10.0f).SetMaxIout(5.0f);
-  }//0.8 0.0 0.001
+  }  // 0.8 0.0 0.001
 
   void AmmoPIDInit() {
     shoot_controller.pid().fric_1_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
