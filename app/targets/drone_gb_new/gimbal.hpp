@@ -617,6 +617,7 @@ class Gimbal {
   }
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
+      WS2812Control();
       time_ = 0;
     }
   }
