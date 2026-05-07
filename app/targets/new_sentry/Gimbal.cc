@@ -207,7 +207,9 @@ void Gimbal::GimbalPerceptTargetUpdate() {
 }
 
 void Gimbal::GimbalAimbotTargetUpdate() {
-  if (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
+  if ((globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 && globals->StateMachine_ == kTest &&
+       globals->wfly_et16s->switch_position(rc_ch::SC) != SwitchPosition::kDown) ||
+      (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 && globals->StateMachine_ == kMatch)) {
     if (globals->up_yaw_motor->encoder() >= gimbal->down_yaw_move_high_) {
       gimbal->gimbal_down_yaw_target_ += 0.001;
     } else if (globals->up_yaw_motor->encoder() <= gimbal->down_yaw_move_low_) {
@@ -294,7 +296,9 @@ void Gimbal::GimbalEnableUpdate() {
     gimbal->GimbalDisableUpdate();
     return;
   }
-  if (globals->StateMachine_ == kMatch && globals->navigate_communicator->aimbot_mode()) {
+  if (globals->StateMachine_ == kMatch && globals->navigate_communicator->outpost_mode()) {
+    globals->aim_mode = 0x05;
+  } else if (globals->StateMachine_ == kMatch && globals->navigate_communicator->aimbot_mode()) {
     if (globals->referee_data->data().game_status.game_progress == 4 &&
         globals->referee_data->data().game_status.stage_remain_time <= 240) {
       globals->aim_mode = 0x03;
@@ -306,6 +310,8 @@ void Gimbal::GimbalEnableUpdate() {
       globals->aim_mode = 0x02;
     } else if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kUp) {
       globals->aim_mode = 0x03;
+    } else if (globals->wfly_et16s->switch_position(rc_ch::SC) == SwitchPosition::kUp) {
+      globals->aim_mode = 0x05;
     } else {
       globals->aim_mode = 0x01;
     }
