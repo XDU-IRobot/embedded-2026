@@ -14,12 +14,12 @@ enum class PhaseState : uint8_t { kUncomplete = 0, kDone = 1 };
 enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kload = 2, kAdd = 3, kAim = 4, kFire = 5 };
 
 enum class AddState {
-  SUSPENDED_init,  // 0. 悬空安全
-  CAUGHT,          // 1. 抓弹姿态
-  MOVING_FORWARD,  // 2. 正在前移
-  SUSPENDED,      // 3. 悬空状态
-  PLACED,          // 4. 放弹姿态
-  MOVING_BACK      // 5. 回归初始
+  MOVING_BACK,     // 0. 回归初始
+  SUSPENDED_init,  // 1. 悬空安全
+  CAUGHT,          // 2. 抓弹姿态
+  MOVING_FORWARD,  // 3. 正在前移
+  SUSPENDED,       // 4. 悬空状态
+  PLACED           // 5. 放弹姿态
 };
 
 struct AutoMode {
@@ -57,8 +57,7 @@ struct ManualMode {
   bool is_add_down_done = false;
   bool is_add_up_done = false;
   bool is_add_plate_done = false;
-  void ManualModeClear()
-  {
+  void ManualModeClear() {
     extern volatile uint8_t g_trigger_limit_ever_hit;
     extern volatile uint8_t g_add_limit_ever_hit;
     extern volatile uint8_t g_load_l_limit_ever_hit;
@@ -161,8 +160,8 @@ struct DartRack {
   // 视觉结构体
 
   // yaw轴相关常量
-  static constexpr float kYawEcdMax = 52.6000f;                          //< ME02 编码器最大值
-  static constexpr float kYawEcdMin = 35.5000f;                          //< ME02 编码器最小值
+  static constexpr float kYawEcdMax = 52.6000f;  //< ME02 编码器最大值
+  static constexpr float kYawEcdMin = 35.5000f;  //< ME02 编码器最小值
   // static constexpr float kYawEcd[4] = {46.45f, 46.45f, 46.45f, 46.45f};  //< ME02 编码器四发镖位置
   // 扳机相关常量
   static constexpr int32_t kTriggerEcdMax = 900000;

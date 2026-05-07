@@ -28,7 +28,7 @@ volatile int32_t dm_smoothed_angle_int = 0;  // 放大1000倍的整型角度，�
 volatile float glb_servo_1_target = DartRack::kServo1Init + 474.886f;  // 用于在 FreeMaster 监测舵机1目标角度
 volatile float glb_servo_2_target = DartRack::kServo2Init + 190.831f;  // 用于在 FreeMaster 监测舵机2目标角度
 volatile float glb_add_motor_linear = 0;
-volatile uint32_t g_fire_running_time = 0; // 全局变量，记录撒放器运行时间
+volatile uint32_t g_fire_running_time = 0;  // 全局变量，记录撒放器运行时间
 static bool g_all_darts_completed = false;
 
 void DartStateMachineUpdate(DartState &state) {
@@ -382,8 +382,8 @@ void DartStateAddUpdate() {
   }
   glb_add_motor_linear = dart_rack->add_motor_odometer_.linear_ticks();
 
-  static AddState current_state = AddState::SUSPENDED_init;
-  float target_dm_angle = 0.020f;
+  static AddState current_state = AddState::MOVING_BACK;
+  float target_dm_angle = -0.020f;
   static rm::modules::TrajectoryLimiter dm_limiter(8.0f, 15.0f);
   static bool dm_limiter_initialized = false;
   if (!dm_limiter_initialized && dm_status == 1) {
@@ -397,6 +397,27 @@ void DartStateAddUpdate() {
   static uint32_t state_timer = 0;
 
   switch (current_state) {
+    case AddState::MOVING_BACK:
+      target_dm_angle = -0.020f;
+      target_servo1 = S1 + 474.886f;
+      target_servo2 = S2 + 190.831f;
+      HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
+      if (dart_rack->dart_count_ == DartCount::kThird || dart_rack->dart_count_ == DartCount::kFourth) {
+        if (!g_add_limit_suppressed) {
+          if (dart_rack->add_motor_odometer_.linear_ticks() > 300000) {
+            float back_speed = (dart_rack->add_motor_odometer_.linear_ticks() < 500000) ? -1500.0f : -5000.0f;
+            dart_rack->add_motor_speed_pid_.Update(back_speed, dart_rack->add_motor_->rpm(), 1.0f);
+            dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
+          } else {
+            dart_rack->add_motor_->SetCurrent(0);
+            dart_rack->add_motor_speed_pid_.Clear();
+            state_timer = 0;
+            current_state = AddState::SUSPENDED_init;
+          }
+          break;
+        }
+      }
+
     case AddState::SUSPENDED_init:
       HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
       target_dm_angle = (dart_rack->dart_count_ == DartCount::kThird) ? -0.568f : 0.464f;
@@ -456,37 +477,19 @@ void DartStateAddUpdate() {
       target_servo2 = S2 + 453.321f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 1000 && state_timer <= 1001) {
+      if (state_timer > 1000 && state_timer <= 1005) {
         HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
       }
       if (state_timer > 1000) {
-        target_servo1 = S1 + 548.217f;
-        target_servo2 = S2 + 282.36f;
+        target_servo1 = S1 + 474.886f;
+        target_servo2 = S2 + 190.831f;
       }
-      if (state_timer > 2000) {
+      if (state_timer > 1500) {
+        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
         state_timer = 0;
-        current_state = AddState::MOVING_BACK;
-      }
-      break;
-
-    case AddState::MOVING_BACK:
-      target_dm_angle = -0.020f;
-      target_servo1 = S1 + 548.217f;
-      target_servo2 = S2 + 282.36f;
-      HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
-      if (dart_rack->add_motor_odometer_.linear_ticks() > 300000) {
-        float back_speed = (dart_rack->add_motor_odometer_.linear_ticks() < 500000) ? -1500.0f : -5000.0f;
-        dart_rack->add_motor_speed_pid_.Update(back_speed, dart_rack->add_motor_->rpm(), 1.0f);
-        dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-      } else {
-        dart_rack->add_motor_->SetCurrent(0);
-        dart_rack->add_motor_speed_pid_.Clear();
-        dart_rack->add_motor_odometer_.Reset();
-        state_timer = 0;
-        dm_limiter_initialized = false;
         tick = 0;
-        current_state = AddState::SUSPENDED_init;
         dart_rack->state_.manual_mode.add = PhaseState::kDone;
+        current_state = AddState::MOVING_BACK;
         return;
       }
       break;
@@ -531,8 +534,8 @@ void DartStateAddPlaceOnly() {
   }
   constexpr float S1 = DartRack::kServo1Init;
   constexpr float S2 = DartRack::kServo2Init;
-  float target_servo1 = 0.0f;
-  float target_servo2 = 0.0f;
+  float target_servo1 = 500.0f;
+  float target_servo2 = 500.0f;
   static uint32_t state_timer = 0;
 
   switch (current_state) {
@@ -569,36 +572,19 @@ void DartStateAddPlaceOnly() {
       target_servo2 = S2 + 453.321f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 1000 && state_timer <= 1001) {
+      if (state_timer > 1000 && state_timer <= 1005) {
         HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
       }
       if (state_timer > 1000) {
-        target_servo1 = S1 + 548.217f;
-        target_servo2 = S2 + 282.36f;
+        target_servo1 = S1 + 474.886f;
+        target_servo2 = S2 + 190.831f;
       }
-      if (state_timer > 2000) {
+      if (state_timer > 1500) {
         HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
         state_timer = 0;
-        current_state = AddState::MOVING_BACK;
-      }
-      break;
-
-    case AddState::MOVING_BACK:
-      target_dm_angle = -0.020f;
-      target_servo1 = S1 + 548.217f;
-      target_servo2 = S2 + 282.36f;
-
-      if (dart_rack->add_motor_odometer_.linear_ticks() > 300000) {
-        float back_speed = (dart_rack->add_motor_odometer_.linear_ticks() < 500000) ? -1500.0f : -5000.0f;
-        dart_rack->add_motor_speed_pid_.Update(back_speed, dart_rack->add_motor_->rpm(), 1.0f);
-        dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-      } else {
-        dart_rack->add_motor_->SetCurrent(0);
-        dart_rack->add_motor_speed_pid_.Clear();
-        state_timer = 0;
-        dm_limiter_initialized = false;
         tick = 0;
         dart_rack->state_.manual_mode.add = PhaseState::kDone;
+        current_state = AddState::MOVING_FORWARD;
         return;
       }
       break;
@@ -760,7 +746,7 @@ void DartStateAddAdjustUpdate() {
       if (dart_rack->add_motor_odometer_.linear_ticks() < 2200000) {
         dart_rack->add_motor_speed_pid_.Update(add_target_speed, dart_rack->add_motor_->rpm(), 1.0f);
         dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-      }else {
+      } else {
         dart_rack->add_motor_speed_pid_.Clear();
         dart_rack->add_motor_->SetCurrent(0);
       }
