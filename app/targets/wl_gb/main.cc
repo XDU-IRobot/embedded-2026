@@ -39,7 +39,7 @@ void MainLoop() {
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
-  can_to_chassis = new rm::hal::ThrottledCan<>{hcan1, 5000.0};
+  can_to_chassis = new rm::hal::ThrottledCan<>{hcan2, 5000.0};
   can_to_chassis->SetFilter(0, 0);
   can_to_chassis->Begin();
 
