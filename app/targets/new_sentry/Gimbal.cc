@@ -297,7 +297,7 @@ void Gimbal::GimbalEnableUpdate() {
     return;
   }
   if (globals->StateMachine_ == kMatch && globals->navigate_communicator->outpost_mode()) {
-    globals->aim_mode = 0x05;
+    globals->aim_mode = 0x04;
   } else if (globals->StateMachine_ == kMatch && globals->navigate_communicator->aimbot_mode()) {
     if (globals->referee_data->data().game_status.game_progress == 4 &&
         globals->referee_data->data().game_status.stage_remain_time <= 240) {
@@ -311,7 +311,7 @@ void Gimbal::GimbalEnableUpdate() {
     } else if (globals->wfly_et16s->switch_position(rc_ch::SB) == SwitchPosition::kUp) {
       globals->aim_mode = 0x03;
     } else if (globals->wfly_et16s->switch_position(rc_ch::SC) == SwitchPosition::kUp) {
-      globals->aim_mode = 0x05;
+      globals->aim_mode = 0x04;
     } else {
       globals->aim_mode = 0x01;
     }

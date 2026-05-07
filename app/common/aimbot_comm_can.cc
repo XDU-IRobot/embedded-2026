@@ -34,10 +34,10 @@ void AimbotCanCommunicator::UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot
   tx_buf_[4] = modules::F32ToF16(roll) >> 8;
   tx_buf_[5] = modules::F32ToF16(roll);
   const u8 id_bit = robot_id > 100 ? 1 : 0;
-  const u8 mode_bits = mode & 0x3;                       // 最低 2 位
+  const u8 mode_bits = mode & 0x7;                       // 最低 2 位
   const u8 imu_bits = static_cast<u8>(imu_count) & 0xF;  // 最低 4 位
 
-  tx_buf_[6] = static_cast<u8>(id_bit << 6 | mode_bits << 4 | imu_bits);
+  tx_buf_[6] = static_cast<u8>(id_bit << 7 | mode_bits << 4 | imu_bits);
   tx_buf_[7] = modules::FloatToInt(bullet_speed, 0.f, 32.f, 8);
 
   this->can_->Write(0x150, tx_buf_, 8);
