@@ -181,7 +181,7 @@ class Gimbal {
 
   void GimbalPIDInit() {
     gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.01f).SetMaxOut(10000.0f).SetMaxIout(
-        1000.0f);  // TODO yaw初版函数 350 0.001 0.2 160 100000
+        1000.0f);  // TODO yaw初版函数 160 0.0 0.01
     gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // yaw原始参数 200 0 0.2  350 0 0
 
