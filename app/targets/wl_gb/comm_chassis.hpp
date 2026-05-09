@@ -12,7 +12,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   static constexpr rm::u16 kTxStdIdC = 0x112;
   static constexpr rm::usize kPayloadSize = 8U;
 
-  GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu, const rm::device::VT03* vt03)
+  GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu, rm::device::VT03* vt03)
       : CanDevice(can, kTxStdIdA, kTxStdIdB, kTxStdIdC), imu_(imu), vt03_(vt03) {}
 
   void RxCallback(const rm::hal::CanFrame* msg) override {}
@@ -53,12 +53,14 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     return static_cast<rm::i16>(clamped >= 0.0f ? (clamped + 0.5f) : (clamped - 0.5f));
   }
 
-  // Frame A (8 bytes): [0..1] pitch, [2..3] yaw, [4..5] gyro_z, [6..7] gyro_x
+  // Frame A (8 bytes): [0..1] vt03_online, [2..3] gyro_z, [4..5] gyro_x, [6..7] reserved
   void EncodeFrameA() {
-    PackI16(RadToMilliI16(imu_ ? imu_->pitch() : 0.f), &tx_a_[0]);
-    PackI16(RadToMilliI16(imu_ ? imu_->yaw() : 0.f), &tx_a_[2]);
-    PackI16(RadToMilliI16(imu_ ? imu_->gyro_z() : 0.f), &tx_a_[4]);
-    PackI16(RadToMilliI16(imu_ ? imu_->gyro_x() : 0.f), &tx_a_[6]);
+    tx_a_[0] = (vt03_ && vt03_->online_status() == rm::device::Device::kOk) ? 1 : 0;
+    tx_a_[1] = 0;
+    PackI16(RadToMilliI16(imu_ ? imu_->gyro_z() : 0.f), &tx_a_[2]);
+    PackI16(RadToMilliI16(imu_ ? imu_->gyro_x() : 0.f), &tx_a_[4]);
+    tx_a_[6] = 0;
+    tx_a_[7] = 0;
   }
 
   // Frame B (8 bytes): [0..1] mouse_x, [2..3] mouse_y, [4] left, [5] right, [6..7] keyboard_key
@@ -84,7 +86,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   }
 
   const rm::device::HipnucImu* imu_{nullptr};
-  const rm::device::VT03* vt03_{nullptr};
+  rm::device::VT03* vt03_{nullptr};
   std::array<rm::u8, kPayloadSize> tx_a_{};
   std::array<rm::u8, kPayloadSize> tx_b_{};
   std::array<rm::u8, kPayloadSize> tx_c_{};
