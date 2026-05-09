@@ -59,12 +59,12 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define MOSI_Pin GPIO_PIN_6
 #define MOSI_GPIO_Port GPIOE
-#define load_motor_right_EXTI_Pin GPIO_PIN_7
-#define load_motor_right_EXTI_GPIO_Port GPIOI
-#define load_motor_right_EXTI_EXTI_IRQn EXTI9_5_IRQn
-#define load_motor_left_EXTI_Pin GPIO_PIN_6
+#define load_motor_left_EXTI_Pin GPIO_PIN_7
 #define load_motor_left_EXTI_GPIO_Port GPIOI
 #define load_motor_left_EXTI_EXTI_IRQn EXTI9_5_IRQn
+#define load_motor_right_EXTI_Pin GPIO_PIN_6
+#define load_motor_right_EXTI_GPIO_Port GPIOI
+#define load_motor_right_EXTI_EXTI_IRQn EXTI9_5_IRQn
 #define ensure_Pin GPIO_PIN_9
 #define ensure_GPIO_Port GPIOI
 #define ensure_EXTI_IRQn EXTI9_5_IRQn

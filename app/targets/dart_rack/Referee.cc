@@ -2,6 +2,8 @@
 
 #include "dart_core.hpp"
 
+volatile uint8_t g_robot_id = 0;
+
 namespace rm::device {
 RxReferee::RxReferee(rm::hal::SerialInterface &serial) : serial_(&serial) {
   static rm::hal::SerialRxCallbackFunction rx_callback =
@@ -16,5 +18,6 @@ void RxReferee::RxCallback(const std::vector<u8> &data, u16 rx_len) {
   for (u16 i = 0; i < rx_len; i++) {
     *dart_rack->referee_data_buffer << data.at(i);
   }
+  g_robot_id = dart_rack->referee_data_buffer->data().robot_status.robot_id;
 }
 }  // namespace rm::device

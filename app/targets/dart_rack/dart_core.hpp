@@ -186,3 +186,6 @@ struct DartRack {
 };
 
 extern DartRack *dart_rack;
+
+// 裁判系统解析状态全局标志位（用于 FreeMASTER 监控）
+extern volatile uint8_t g_robot_id;  // 新增：读取机器人的ID
