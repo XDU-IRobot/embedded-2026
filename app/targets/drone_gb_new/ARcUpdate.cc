@@ -1,5 +1,5 @@
 #include "gimbal.hpp"
-//遥控器数据更新以及编码器解算
+// 遥控器数据更新以及编码器解算
 void Gimbal::RCStateUpdate() {
   switch (rc->switch_r()) {
     case rm::device::DR16::SwitchPosition::kUp:  // 发射控制逻辑

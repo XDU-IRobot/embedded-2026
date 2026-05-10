@@ -1,5 +1,5 @@
 #include "gimbal.hpp"
-//修改pid参数
+// 修改pid参数
 void Gimbal::GimbalPIDInit() {
   gimbal_controller.pid().yaw_position.SetKp(160.0f).SetKi(0.0f).SetKd(0.01f).SetMaxOut(10000.0f).SetMaxIout(
       1000.0f);  // TODO yaw初版函数 160 0.0 0.01
