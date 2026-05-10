@@ -30,6 +30,7 @@ volatile float glb_servo_2_target = DartRack::kServo2Init + 190.831f;  // 用于
 volatile float glb_add_motor_linear = 0;
 volatile uint32_t g_fire_running_time = 0;  // 全局变量，记录撒放器运行时间
 static bool g_all_darts_completed = false;
+volatile float trigger_motor_linear = 0.0f;
 
 void DartStateMachineUpdate(DartState &state) {
   if (g_all_darts_completed) {
@@ -604,8 +605,68 @@ void DartStateAddPlaceOnly() {
 
 void DartStateAimUpdate() {
   dart_rack->state_.manual_mode.aim = PhaseState::kDone;  // 瞄准待实现
-  // 速度小于0 trigger_motor_正转
-  // pitch 和 yaw轴都采用sd卡里的数据
+                                                          // 速度小于0 trigger_motor_正转
+                                                          // pitch 和 yaw轴都采用sd卡里的数据
+  // static bool first_enter = true;
+  // static int32_t trigger_target_ticks = 0;
+  // static bool trigger_reached = false;
+  //
+  // if (!dart_rack->vision_data_) {
+  //   dart_rack->state_.manual_mode.aim = PhaseState::kDone;
+  //   return;
+  // }
+  //
+  // if (first_enter) {
+  //   trigger_target_ticks =
+  //       dart_rack->trigger_motor_odometer_.linear_ticks() + static_cast<int32_t>(dart_rack->vision_data_->Pitch);
+  //   trigger_reached = false;
+  //   first_enter = false;
+  // }
+  //
+  // float yaw_error = dart_rack->vision_data_->Yaw;
+  //
+  // // Yaw: 闭环修正视觉角度误差
+  // if (std::abs(yaw_error) > 0.3f) {
+  //   float target_speed = yaw_error * 1000.0f;
+  //   if (target_speed > 2000.0f)
+  //     target_speed = 2000.0f;
+  //   else if (target_speed < -2000.0f)
+  //     target_speed = -2000.0f;
+  //   dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
+  //   dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+  // } else {
+  //   dart_rack->yaw_motor_speed_pid_.Clear();
+  //   dart_rack->yaw_motor_->SetCurrent(0);
+  // }
+  //
+  // // Trigger: 一次性移动到 pitch 偏移目标位置
+  // if (!trigger_reached) {
+  //   int32_t trigger_error = trigger_target_ticks - dart_rack->trigger_motor_odometer_.linear_ticks();
+  //   if (std::abs(trigger_error) > 1000 && dart_rack->trigger_motor_odometer_.stall_time() <= 100) {
+  //     float trigger_speed = static_cast<float>(trigger_error) * 0.01f;
+  //     if (trigger_speed > 3000.0f)
+  //       trigger_speed = 3000.0f;
+  //     else if (trigger_speed < -3000.0f)
+  //       trigger_speed = -3000.0f;
+  //     dart_rack->trigger_motor_speed_pid_.Update(trigger_speed, dart_rack->trigger_motor_->rpm(), 1.0f);
+  //     dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
+  //   } else {
+  //     dart_rack->trigger_motor_speed_pid_.Clear();
+  //     dart_rack->trigger_motor_->SetCurrent(0);
+  //     trigger_reached = true;
+  //   }
+  // }
+  //
+  // // 瞄准完成条件：yaw 误差足够小 且 trigger 已到位
+  // bool yaw_done = std::abs(yaw_error) <= 1.0f;
+  // if (yaw_done && trigger_reached) {
+  //   first_enter = true;
+  //   dart_rack->yaw_motor_speed_pid_.Clear();
+  //   dart_rack->yaw_motor_->SetCurrent(0);
+  //   dart_rack->trigger_motor_speed_pid_.Clear();
+  //   dart_rack->trigger_motor_->SetCurrent(0);
+  //   dart_rack->state_.manual_mode.aim = PhaseState::kDone;
+  // }
 }
 
 void DartStateFireUpdate() {
@@ -632,6 +693,12 @@ void DartStateFireUpdate() {
 void DartStateAdjustUpdate() {
   // 计算包含圈数的全段实际角度
   yaw_current_deg = dart_rack->yaw_encoder_->angle_deg();
+  bool is_first_loop = true;
+  if (is_first_loop) {
+     dart_rack->trigger_motor_odometer_.Reset();
+    is_first_loop = false;
+  }
+  trigger_motor_linear = dart_rack->trigger_motor_odometer_.linear_ticks();
   test_if_adjust_mode_is_running = 1.0f;
   // Yaw轴调节
   if (dart_rack->rc_->right_x() > 330) {

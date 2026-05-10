@@ -26,6 +26,8 @@ volatile uint8_t g_load_r_limit_ever_hit = 0;
 
 volatile uint8_t g_add_limit_suppressed = 0;
 
+volatile uint8_t g_vision_is_valid = 0;
+
 bool is_lvgl_running = false;
 
 static void LimitSwitchUpdate() {

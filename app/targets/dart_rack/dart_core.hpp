@@ -140,7 +140,7 @@ struct DartRack {
   rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
   rm::device::RxReferee *rx_referee{nullptr};
   // usb设备
-  // USBVisionReceive_SCM_t *vision_data_{nullptr};  ///< 视觉数据
+  USBVisionReceive_SCM_t *vision_data_{nullptr};  ///< 视觉数据
   // PID 控制器
   rm::modules::PID load_motor_r_speed_pid_{};
   rm::modules::PID load_motor_l_speed_pid_{};
