@@ -4,10 +4,13 @@
 #include <cmath>
 #include <cstdio>  // Added for printf
 #include "sd_card.h"
+#include "gpio.h"
 #include "librm/device/actuator/dm_motor.hpp"
 extern bool is_lvgl_running;
 extern volatile uint8_t g_add_limit_ever_hit;
 extern volatile uint8_t g_trigger_limit_ever_hit;
+extern volatile uint8_t g_load_l_limit_ever_hit;
+extern volatile uint8_t g_load_r_limit_ever_hit;
 extern volatile uint8_t g_add_limit_suppressed;
 extern volatile uint8_t g_add_motor_limit_triggered;
 // 引入 LVGL 中使用的参数存储数组
@@ -68,7 +71,6 @@ void DartStateMachineUpdate(DartState &state) {
     state.manual_mode.enabled = AbleState::kOff;
     if (state.lvgl_mode.enabled != AbleState::kOn) {
       DartManualModeClear(state.manual_mode);
-      LvglHomingStart();
     }
     state.lvgl_mode.enabled = AbleState::kOn;
     state.add_adjust_mode.enabled = AbleState::kOff;
@@ -100,19 +102,15 @@ void DartStateMachineUpdate(DartState &state) {
   } else if (state.manual_mode.enabled == AbleState::kOn) {
     DartStateManualUpdate();
   } else if (state.lvgl_mode.enabled == AbleState::kOn) {
-    if (!LvglHomingUpdate()) {
-      is_lvgl_running = false;
-    } else {
-      is_lvgl_running = true;
-      dart_rack->load_motor_l_->SetCurrent(0);
-      dart_rack->load_motor_r_->SetCurrent(0);
-      dart_rack->trigger_motor_->SetCurrent(0);
-      dart_rack->trigger_motor_force_->SetCurrent(0);
-      dart_rack->add_motor_->SetCurrent(0);
-      dart_rack->yaw_motor_->SetCurrent(0);
-      dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 1, 0);
-      dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 2, 0);
-    }
+    is_lvgl_running = true;
+    dart_rack->load_motor_l_->SetCurrent(0);
+    dart_rack->load_motor_r_->SetCurrent(0);
+    dart_rack->trigger_motor_->SetCurrent(0);
+    dart_rack->trigger_motor_force_->SetCurrent(0);
+    dart_rack->add_motor_->SetCurrent(0);
+    dart_rack->yaw_motor_->SetCurrent(0);
+    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 1, 0);
+    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 2, 0);
   } else if (state.adjust_mode.enabled == AbleState::kOn) {
     DartStateAdjustUpdate();
   } else if (state.add_adjust_mode.enabled == AbleState::kOn) {
@@ -214,57 +212,67 @@ void DartStateUnableUpdate() {
 }
 
 void DartStateInitUpdate() {
-  dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 1, 0);
-  dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 2, 0);
-
-  // Yaw轴根据是第几发镖初始化
-  if (!dart_rack->state_.manual_mode.is_yaw_init_done) {
-    static float last_yaw_error = 0.0f;
-    static float last_yaw_angle = 0.0f;
-    static uint32_t stall_count = 0;
-    static bool is_first_run = true;
-
-    float yaw_target = Yaw[static_cast<uint8_t>(dart_rack->dart_count_)];
-    float yaw_current = dart_rack->yaw_encoder_->angle_deg();
-    float yaw_error = yaw_target - yaw_current;
-
-    if (is_first_run) {
-      last_yaw_error = yaw_error;
-      last_yaw_angle = yaw_current;
-      stall_count = 0;
-      is_first_run = false;
-    }
-
-    if (std::abs(yaw_error) < 1.0f && std::abs(yaw_current - last_yaw_angle) < 0.01f) {
-      stall_count++;
+  // 阶段一：归位 load_l, load_r, trigger, add 电机
+  if (!dart_rack->state_.manual_mode.is_load_l_reset_done) {
+    if (g_load_l_limit_ever_hit) {
+      dart_rack->load_motor_l_speed_pid_.Clear();
+      dart_rack->load_motor_l_->SetCurrent(0);
+      dart_rack->load_motor_l_odometer_.Reset();
+      dart_rack->state_.manual_mode.is_load_l_reset_done = true;
     } else {
-      stall_count = 0;
+      dart_rack->load_motor_l_speed_pid_.Update(500.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
+      dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
     }
-
-    if (std::abs(yaw_error) <= 0.05f || (last_yaw_error * yaw_error < 0.0f) || stall_count > 100) {
-      dart_rack->yaw_motor_speed_pid_.Clear();
-      dart_rack->yaw_motor_->SetCurrent(0);
-      dart_rack->state_.manual_mode.is_yaw_init_done = true;
-      is_first_run = true;
-    } else {
-      float target_speed = yaw_error * 1000.0f;
-      if (target_speed > 1000.0f)
-        target_speed = 1000.0f;
-      else if (target_speed < -1000.0f)
-        target_speed = -1000.0f;
-
-      dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
-      dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
-    }
-    last_yaw_error = yaw_error;
-    last_yaw_angle = yaw_current;
   }
 
-  // load/trigger/add 已在 LVGL 阶段完成归位，直接标记完成
-  dart_rack->state_.manual_mode.is_load_reset_done = true;
-  dart_rack->state_.manual_mode.is_trigger_reset_done = true;
-  dart_rack->state_.manual_mode.is_add_init_done = true;
+  if (!dart_rack->state_.manual_mode.is_load_r_reset_done) {
+    if (g_load_r_limit_ever_hit) {
+      dart_rack->load_motor_r_speed_pid_.Clear();
+      dart_rack->load_motor_r_->SetCurrent(0);
+      dart_rack->load_motor_r_odometer_.Reset();
+      dart_rack->state_.manual_mode.is_load_r_reset_done = true;
+    } else {
+      dart_rack->load_motor_r_speed_pid_.Update(-500.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
+      dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
+    }
+  }
+
+  if (!dart_rack->state_.manual_mode.is_trigger_reset_done) {
+    if (g_trigger_limit_ever_hit) {
+      dart_rack->trigger_motor_speed_pid_.Clear();
+      dart_rack->trigger_motor_->SetCurrent(0);
+      dart_rack->trigger_motor_odometer_.Reset();
+      dart_rack->state_.manual_mode.is_trigger_reset_done = true;
+    } else {
+      dart_rack->trigger_motor_speed_pid_.Update(2000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
+      dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
+    }
+  }
+
+  if (!dart_rack->state_.manual_mode.is_add_init_done) {
+    if (g_add_limit_ever_hit) {
+      dart_rack->add_motor_speed_pid_.Clear();
+      dart_rack->add_motor_->SetCurrent(0);
+      dart_rack->add_motor_odometer_.Reset();
+      dart_rack->state_.manual_mode.is_add_init_done = true;
+    } else {
+      dart_rack->add_motor_speed_pid_.Update(-2000.0f, dart_rack->add_motor_->rpm(), 1.0f);
+      dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
+    }
+  }
+
+  if (dart_rack->state_.manual_mode.is_load_reset_done == false &&
+      dart_rack->state_.manual_mode.is_load_l_reset_done &&
+      dart_rack->state_.manual_mode.is_load_r_reset_done) {
+    dart_rack->state_.manual_mode.is_load_reset_done = true;
+  }
+
   dart_rack->state_.manual_mode.is_trigger_force_init_done = true;
+
+  // Yaw轴不做转动，直接标记完成并无力
+  dart_rack->yaw_motor_speed_pid_.Clear();
+  dart_rack->yaw_motor_->SetCurrent(0);
+  dart_rack->state_.manual_mode.is_yaw_init_done = true;
 
   // 全部检查完成后，初始化完成
   if (dart_rack->state_.manual_mode.is_yaw_init_done && dart_rack->state_.manual_mode.is_load_reset_done &&
@@ -273,6 +281,8 @@ void DartStateInitUpdate() {
     dart_rack->state_.manual_mode.init = PhaseState::kDone;
     dart_rack->yaw_motor_speed_pid_.Clear();
     dart_rack->yaw_motor_->SetCurrent(0);
+    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 1, 0);
+    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 2, 0);
   }
 }
 
@@ -604,69 +614,108 @@ void DartStateAddPlaceOnly() {
 }
 
 void DartStateAimUpdate() {
-  dart_rack->state_.manual_mode.aim = PhaseState::kDone;  // 瞄准待实现
-                                                          // 速度小于0 trigger_motor_正转
-                                                          // pitch 和 yaw轴都采用sd卡里的数据
-  // static bool first_enter = true;
-  // static int32_t trigger_target_ticks = 0;
-  // static bool trigger_reached = false;
-  //
-  // if (!dart_rack->vision_data_) {
-  //   dart_rack->state_.manual_mode.aim = PhaseState::kDone;
-  //   return;
-  // }
-  //
-  // if (first_enter) {
-  //   trigger_target_ticks =
-  //       dart_rack->trigger_motor_odometer_.linear_ticks() + static_cast<int32_t>(dart_rack->vision_data_->Pitch);
-  //   trigger_reached = false;
-  //   first_enter = false;
-  // }
-  //
-  // float yaw_error = dart_rack->vision_data_->Yaw;
-  //
-  // // Yaw: 闭环修正视觉角度误差
-  // if (std::abs(yaw_error) > 0.3f) {
-  //   float target_speed = yaw_error * 1000.0f;
-  //   if (target_speed > 2000.0f)
-  //     target_speed = 2000.0f;
-  //   else if (target_speed < -2000.0f)
-  //     target_speed = -2000.0f;
-  //   dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
-  //   dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
-  // } else {
-  //   dart_rack->yaw_motor_speed_pid_.Clear();
-  //   dart_rack->yaw_motor_->SetCurrent(0);
-  // }
-  //
-  // // Trigger: 一次性移动到 pitch 偏移目标位置
-  // if (!trigger_reached) {
-  //   int32_t trigger_error = trigger_target_ticks - dart_rack->trigger_motor_odometer_.linear_ticks();
-  //   if (std::abs(trigger_error) > 1000 && dart_rack->trigger_motor_odometer_.stall_time() <= 100) {
-  //     float trigger_speed = static_cast<float>(trigger_error) * 0.01f;
-  //     if (trigger_speed > 3000.0f)
-  //       trigger_speed = 3000.0f;
-  //     else if (trigger_speed < -3000.0f)
-  //       trigger_speed = -3000.0f;
-  //     dart_rack->trigger_motor_speed_pid_.Update(trigger_speed, dart_rack->trigger_motor_->rpm(), 1.0f);
-  //     dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
-  //   } else {
-  //     dart_rack->trigger_motor_speed_pid_.Clear();
-  //     dart_rack->trigger_motor_->SetCurrent(0);
-  //     trigger_reached = true;
-  //   }
-  // }
-  //
-  // // 瞄准完成条件：yaw 误差足够小 且 trigger 已到位
-  // bool yaw_done = std::abs(yaw_error) <= 1.0f;
-  // if (yaw_done && trigger_reached) {
-  //   first_enter = true;
-  //   dart_rack->yaw_motor_speed_pid_.Clear();
-  //   dart_rack->yaw_motor_->SetCurrent(0);
-  //   dart_rack->trigger_motor_speed_pid_.Clear();
-  //   dart_rack->trigger_motor_->SetCurrent(0);
-  //   dart_rack->state_.manual_mode.aim = PhaseState::kDone;
-  // }
+  // ============ 可调参数接口 ============
+  constexpr float kPixelsPerDegree = 44.0f;       // 像素/度, 实际值在 35.5~52.6 之间, 根据标定结果修改
+  constexpr float kPixelsToTriggerTicks = 100.0f;  // 像素→trigger linear_ticks 的线性系数, 根据实测修改
+  constexpr float kYawPixelTolerance = 1.0f;       // yaw 像素允许误差
+  constexpr float kPitchPixelTolerance = 1.0f;     // pitch 像素允许误差
+  constexpr float kYawSpeedGain = 1000.0f;          // yaw 速度增益 (degree/s per degree error)
+  constexpr float kYawSpeedLimit = 1000.0f;         // yaw 最大速度
+  constexpr float kTriggerSpeedGain = 0.01f;        // trigger 速度增益
+  constexpr float kTriggerSpeedLimit = 3000.0f;     // trigger 最大速度
+  constexpr int32_t kTriggerTicksDeadZone = 1000;   // trigger 误差死区(ticks)
+  // =====================================
+
+  static float last_yaw_error = 0.0f;
+  static float last_yaw_angle = 0.0f;
+  static uint32_t stall_count = 0;
+  static bool is_first_run = true;
+  static bool trigger_reached = false;
+
+  if (!dart_rack->vision_data_) {
+    dart_rack->state_.manual_mode.aim = PhaseState::kDone;
+    is_first_run = true;
+    trigger_reached = false;
+    return;
+  }
+
+  float yaw_pixel = dart_rack->vision_data_->Yaw;
+  float pitch_pixel = dart_rack->vision_data_->Pitch;
+
+  // Yaw: 像素偏移 → 角度(度)
+  float yaw_offset_deg = yaw_pixel / kPixelsPerDegree;
+  float yaw_target = dart_rack->yaw_encoder_->angle_deg() + yaw_offset_deg;
+  float yaw_current = dart_rack->yaw_encoder_->angle_deg();
+  float yaw_error = yaw_target - yaw_current;
+
+  // Pitch: 像素偏移 → trigger linear_ticks
+  int32_t trigger_target_ticks = static_cast<int32_t>(pitch_pixel * kPixelsToTriggerTicks);
+  int32_t trigger_error = trigger_target_ticks - dart_rack->trigger_motor_odometer_.linear_ticks();
+
+  if (is_first_run) {
+    last_yaw_error = yaw_error;
+    last_yaw_angle = yaw_current;
+    stall_count = 0;
+    is_first_run = false;
+    trigger_reached = false;
+  }
+
+  // ---- Yaw 轴控制 ----
+  bool yaw_done = std::abs(yaw_pixel) <= kYawPixelTolerance;
+
+  if (!yaw_done) {
+    if (std::abs(yaw_error) < 1.0f && std::abs(yaw_current - last_yaw_angle) < 0.01f) {
+      stall_count++;
+    } else {
+      stall_count = 0;
+    }
+
+    if (stall_count > 100 || (last_yaw_error * yaw_error < 0.0f)) {
+      dart_rack->yaw_motor_speed_pid_.Clear();
+      dart_rack->yaw_motor_->SetCurrent(0);
+      yaw_done = true;
+    } else {
+      float target_speed = yaw_error * kYawSpeedGain;
+      if (target_speed > kYawSpeedLimit) target_speed = kYawSpeedLimit;
+      else if (target_speed < -kYawSpeedLimit) target_speed = -kYawSpeedLimit;
+
+      dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
+      dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+    }
+    last_yaw_error = yaw_error;
+    last_yaw_angle = yaw_current;
+  } else {
+    dart_rack->yaw_motor_speed_pid_.Clear();
+    dart_rack->yaw_motor_->SetCurrent(0);
+  }
+
+  // ---- Trigger 轴控制 ----
+  if (!trigger_reached) {
+    if (std::abs(trigger_error) > kTriggerTicksDeadZone &&
+        dart_rack->trigger_motor_odometer_.stall_time() <= 100) {
+      float trigger_speed = static_cast<float>(trigger_error) * kTriggerSpeedGain;
+      if (trigger_speed > kTriggerSpeedLimit) trigger_speed = kTriggerSpeedLimit;
+      else if (trigger_speed < -kTriggerSpeedLimit) trigger_speed = -kTriggerSpeedLimit;
+      dart_rack->trigger_motor_speed_pid_.Update(trigger_speed, dart_rack->trigger_motor_->rpm(), 1.0f);
+      dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
+    } else {
+      dart_rack->trigger_motor_speed_pid_.Clear();
+      dart_rack->trigger_motor_->SetCurrent(0);
+      trigger_reached = true;
+    }
+  }
+
+  // ---- 瞄准完成条件 ----
+  bool pitch_done = std::abs(pitch_pixel) <= kPitchPixelTolerance;
+  if (yaw_done && pitch_done && trigger_reached) {
+    dart_rack->yaw_motor_speed_pid_.Clear();
+    dart_rack->yaw_motor_->SetCurrent(0);
+    dart_rack->trigger_motor_speed_pid_.Clear();
+    dart_rack->trigger_motor_->SetCurrent(0);
+    dart_rack->state_.manual_mode.aim = PhaseState::kDone;
+    is_first_run = true;
+    trigger_reached = false;
+  }
 }
 
 void DartStateFireUpdate() {
@@ -695,7 +744,7 @@ void DartStateAdjustUpdate() {
   yaw_current_deg = dart_rack->yaw_encoder_->angle_deg();
   bool is_first_loop = true;
   if (is_first_loop) {
-     dart_rack->trigger_motor_odometer_.Reset();
+    dart_rack->trigger_motor_odometer_.Reset();
     is_first_loop = false;
   }
   trigger_motor_linear = dart_rack->trigger_motor_odometer_.linear_ticks();
