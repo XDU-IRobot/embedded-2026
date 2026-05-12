@@ -19,11 +19,15 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
 
   bool QueueSend() {
     EncodeFrameA();
-    EncodeFrameB();
     EncodeFrameC();
     can_->Write(kTxStdIdA, tx_a_.data(), tx_a_.size());
-    can_->Write(kTxStdIdB, tx_b_.data(), tx_b_.size());
     can_->Write(kTxStdIdC, tx_c_.data(), tx_c_.size());
+
+    if (send_count_ % 50 == 0) {
+      EncodeFrameB();
+      can_->Write(kTxStdIdB, tx_b_.data(), tx_b_.size());
+    }
+    send_count_++;
 
     ReportStatus(kOk);
     return true;
@@ -90,4 +94,5 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   std::array<rm::u8, kPayloadSize> tx_a_{};
   std::array<rm::u8, kPayloadSize> tx_b_{};
   std::array<rm::u8, kPayloadSize> tx_c_{};
+  uint32_t send_count_{0};
 };
