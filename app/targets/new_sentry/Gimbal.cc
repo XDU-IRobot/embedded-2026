@@ -102,9 +102,10 @@ void Gimbal::GimbalScanTargetUpdate() {
         rm::modules::Map(static_cast<f32>(globals->up_yaw_motor->encoder() - gimbal->mid_up_yaw_pos_),  //
                          0, 8191, 0, 2 * static_cast<f32>(M_PI));
   } else {
-    if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_) {
+    if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() <= 5000) {
       gimbal->scan_yaw_flag_ = true;
-    } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_) {
+    } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ ||
+               globals->up_yaw_motor->encoder() >= 6000) {
       gimbal->scan_yaw_flag_ = false;
     }
     if (gimbal->scan_yaw_flag_) {
@@ -115,7 +116,7 @@ void Gimbal::GimbalScanTargetUpdate() {
   }
   // pitch轴扫描
   if (globals->navigate_communicator->aimbot_mode()) {
-    gimbal->gimbal_pitch_target_ = -0.5f;
+    gimbal->gimbal_pitch_target_ = -0.0f;
   } else if (globals->navigate_communicator->outpost_mode()) {
     gimbal->gimbal_pitch_target_ = -0.3f;
   } else {
@@ -217,9 +218,9 @@ void Gimbal::GimbalAimbotTargetUpdate() {
     }
     auto aimbot_target_yaw = rm::modules::Map(rm::modules::Wrap(globals->aimbot_communicator->yaw(), -180.0f, 180.0f),
                                               0.0f, 360.0f, 0.0f, 2.0f * static_cast<f32>(M_PI));
-    if ((globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ &&
+    if ((globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() <= 5000 &&
          aimbot_target_yaw >= globals->hipnuc_imu->yaw()) ||
-        (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ &&
+        ((globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ || globals->up_yaw_motor->encoder() >= 6000) &&
          aimbot_target_yaw <= globals->hipnuc_imu->yaw())) {
       gimbal->gimbal_up_yaw_target_ = aimbot_target_yaw;
       gimbal->up_yaw_move_limiter_.SetTarget(aimbot_target_yaw);
