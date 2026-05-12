@@ -25,8 +25,9 @@ volatile uint8_t g_load_l_limit_ever_hit = 0;
 volatile uint8_t g_load_r_limit_ever_hit = 0;
 
 volatile uint8_t g_add_limit_suppressed = 0;
-
+volatile uint8_t g_trigger_motor_limit_suppressed = 0;
 volatile uint8_t g_vision_is_valid = 0;
+volatile int32_t g_trigger_error = 0;  // 全局变量用于监视 trigger_error
 
 bool is_lvgl_running = false;
 
@@ -38,8 +39,14 @@ static void LimitSwitchUpdate() {
       g_add_limit_suppressed = 1;
     }
 
+    if (HAL_GPIO_ReadPin(trigger_motor_EXTI_GPIO_Port, trigger_motor_EXTI_Pin) == GPIO_PIN_SET) {
+      g_trigger_motor_limit_suppressed = 0;
+    }else if (HAL_GPIO_ReadPin(trigger_motor_EXTI_GPIO_Port, trigger_motor_EXTI_Pin) == GPIO_PIN_RESET) {
+      g_trigger_motor_limit_suppressed = 1;
+    }
 
-  if (g_trigger_motor_limit_triggered) {
+
+  if (g_trigger_motor_limit_triggered && g_trigger_motor_limit_suppressed) {
     g_trigger_motor_limit_triggered = 0;
     dart_rack->trigger_motor_->SetCurrent(0);
     dart_rack->trigger_motor_speed_pid_.Clear();
@@ -74,7 +81,7 @@ static void LimitSwitchUpdate() {
     dart_rack->trigger_motor_odometer_.Reset();
     g_trigger_limit_ever_hit = 1;
   }
-  if (!g_add_limit_ever_hit && !g_add_limit_suppressed &&
+  if (!g_add_limit_ever_hit &&
       HAL_GPIO_ReadPin(add_motor_EXTI_GPIO_Port, add_motor_EXTI_Pin) == GPIO_PIN_RESET) {
     dart_rack->add_motor_->SetCurrent(0);
     dart_rack->add_motor_speed_pid_.Clear();

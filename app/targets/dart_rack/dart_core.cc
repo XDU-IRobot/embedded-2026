@@ -15,9 +15,9 @@ void DartRack::Init() {
   trigger_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
   trigger_motor_force_pid_.SetKp(-20).SetKi(0).SetKd(0).SetMaxOut(15000).SetMaxIout(0);
   add_motor_speed_pid_.SetKp(5).SetKi(0).SetMaxOut(10000).SetMaxIout(0);
-  yaw_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(5).SetMaxOut(8000).SetMaxIout(0);
+  yaw_motor_speed_pid_.SetKp(0.5).SetKi(0).SetKd(0).SetMaxOut(8000).SetMaxIout(0);
 
-  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kV170>;
+  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
 
   // 硬件接口初始化
   can1_ = new rm::hal::Can{hcan1};

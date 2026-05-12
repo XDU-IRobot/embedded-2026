@@ -1,10 +1,6 @@
 #include "usb.hpp"
 #include "dart_core.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 uint8_t x[50];
 
 volatile uint32_t g_usb_rx_count = 0;
@@ -13,7 +9,9 @@ uint8_t g_vision_id = 0;
 volatile float g_vision_pitch = 0.0f;
 volatile float g_vision_yaw = 0.0f;
 
-extern volatile uint8_t g_vision_is_valid;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void UsbReceive(uint8_t* rx_data, uint8_t len) {
   g_usb_rx_count++;

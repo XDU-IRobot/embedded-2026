@@ -137,7 +137,7 @@ struct DartRack {
   rm::device::HiwonderServo *add_servo_{nullptr};                                 ///< 加弹机械底部舵机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *dm_motor_{nullptr};  ///< 达妙电机
   // 裁判系统
-  rm::device::Referee<rm::device::RefereeRevision::kV170> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
+  rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
   rm::device::RxReferee *rx_referee{nullptr};
   // usb设备
   USBVisionReceive_SCM_t *vision_data_{nullptr};  ///< 视觉数据
@@ -189,3 +189,5 @@ extern DartRack *dart_rack;
 
 // 裁判系统解析状态全局标志位（用于 FreeMASTER 监控）
 extern volatile uint8_t g_robot_id;  // 新增：读取机器人的ID
+extern volatile uint8_t g_vision_is_valid;
+extern volatile int32_t g_trigger_error; // 声明全局变量
