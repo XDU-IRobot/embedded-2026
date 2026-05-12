@@ -107,6 +107,7 @@ static void LimitSwitchUpdate() {
 
 void MainLoop() {
   LimitSwitchUpdate();
+  dart_rack->rx_referee->Process();
   DartStateMachineUpdate(dart_rack->state_);
   dart_rack->Update();
   rm::device::DjiMotorBase::SendCommand();
