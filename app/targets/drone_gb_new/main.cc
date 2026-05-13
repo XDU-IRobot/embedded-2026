@@ -23,5 +23,6 @@ extern "C" [[noreturn]] void AppMain(void) {
 
   for (;;) {
     gimbal->can1->Process();
+    gimbal->can2->Process();
   }
 }

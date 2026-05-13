@@ -50,12 +50,15 @@ float Ayaw_relative = 0.0f;
 float Apid_yaw_position = 0.0f;
 // rc是否在线
 bool Arc_online = 0;
+bool Avt03_online = 0;
 // 手调弹速计数
 int Aspeedcnt = 0;
 // 键盘输出测试
 bool AkQ = 0;
 bool AkE = 0;
 bool AkR = 0;
+//进自瞄次数
+int Acnt_ =0;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -108,9 +111,12 @@ void FreemasterDebug() {
   Apid_yaw_position = gimbal->gimbal_controller.pid().yaw_position.out();
 
   Arc_online = gimbal->RcIsOnline();
+  Avt03_online = gimbal->Vt03IsOnline();
 
   Aspeedcnt = gimbal->shootcnt;
   AkR = gimbal->vt03->data().keyboard_key << 8;
   AkE = gimbal->vt03->data().keyboard_key << 7;
   AkQ = gimbal->vt03->data().keyboard_key << 6;
+
+  Acnt_ = gimbal->cnt;
 }

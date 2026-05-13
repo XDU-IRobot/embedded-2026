@@ -54,6 +54,8 @@ class Gimbal {
   int shoottime = 150;          // TODO 弹速控制间隔
   int shoottime_ = shoottime;
 
+  float spaver[10] = {0.0f};  // 弹速平均数组
+
   // 拨盘自动反转
   float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
   int auto_reverse_time_max = 150;                           // TODO 反转持续时间
@@ -75,10 +77,12 @@ class Gimbal {
 
   int robot_id = 0;  // 裁判系统测试
   float rc_vt03_left_x = 0.0f;
+  int cnt = 0;//进自瞄次数测试
 
   int led_blink_time = 0;  // LED闪烁计时器
 
   rm::hal::ThrottledCan<128> *can1{nullptr};  // CAN 总线接口
+  rm::hal::ThrottledCan<128> *can2{nullptr};  // CAN 总线接口
   rm::hal::Serial *dbus{nullptr};             // 遥控器串口接口
   rm::device::VT03 *vt03{nullptr};            // 图传对象
 
@@ -90,6 +94,7 @@ class Gimbal {
   rm::device::Rxvt03 *rx_vt03{nullptr};  // 图传收发类
 
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
+  rm::device::DeviceManager<1> device_vt03;//新遥控器管理器
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
   rm::device::DeviceManager<3> device_shoot;   // 发射管理器
 
@@ -155,6 +160,7 @@ class Gimbal {
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
     can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
+    can2 = new rm::hal::ThrottledCan<128>{3000, hcan2};
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
@@ -167,7 +173,7 @@ class Gimbal {
     vt03_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     rx_vt03 = new rm::device::Rxvt03{*vt03_uart};
 
-    yaw_motor = new rm::device::GM6020{*can1, 2};
+    yaw_motor = new rm::device::GM6020{*can2, 2};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x05, 0x06, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 
@@ -181,12 +187,15 @@ class Gimbal {
     };
     dial_motor = new rm::device::M2006{*can1, 5};
 
-    device_rc << rc;                                                // 遥控器
+    device_rc << rc;                                                //副遥控器
+    device_vt03 << vt03 ;                                           //主遙控器
     device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
     device_shoot << friction_left << friction_right << dial_motor;  // 发射机构电机
 
     can1->SetFilter(0, 0);  // 设置滤波器
     can1->Begin();
+    can2->SetFilter(0, 0);  // 设置滤波器
+    can2->Begin();
     rc->Begin();
     rx_referee->Begin();  // 启动裁判系统
     rx_vt03->Begin();     // 启动图传串口
@@ -212,6 +221,10 @@ class Gimbal {
 
   bool RcIsOnline();
 
+  bool Vt03IsOnline();
+
+  bool Rcchoose();
+
   void VT03DateUpdate();
 
   float GetYawMotorAngleRad();
@@ -225,6 +238,8 @@ class Gimbal {
   void Vt03Control();
 
   void WS2812Control();
+
+  float SpeedAver();
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz();

@@ -4,7 +4,7 @@
 void Gimbal::SubLoop500Hz() {
   // imu数据处理
   imu->Update();
-  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z() + 0.00225f, imu->accel_y(),
+  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z() + 0.00025f, imu->accel_y(),
                                        imu->accel_x(), -imu->accel_z()});
   pitch = ahrs.euler_angle().pitch + M_PI;
   yaw = ahrs.euler_angle().yaw + M_PI;
@@ -14,7 +14,7 @@ void Gimbal::SubLoop500Hz() {
                 referee_data_buffer.data().shoot_data.initial_speed,
                 referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
   VT03DateUpdate();                                                 // vt03数据更新
-  if (RcIsOnline()) {
+  if (!Rcchoose()) {
     RCStateUpdate();  // dt7控制更新
   } else {
     Vt03Control();  // vt03控制更新
@@ -23,6 +23,7 @@ void Gimbal::SubLoop500Hz() {
   AmmoControl();                                 // 发射机构更新
   ShootSpeedControl();                           // 弹速手动控制
   rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
+  rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
   FreemasterDebug();                             // 调试更新
 }
 // DmMotor电机发信息
