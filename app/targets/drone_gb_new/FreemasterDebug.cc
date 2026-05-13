@@ -57,8 +57,8 @@ int Aspeedcnt = 0;
 bool AkQ = 0;
 bool AkE = 0;
 bool AkR = 0;
-//进自瞄次数
-int Acnt_ =0;
+// 进自瞄次数
+int Acnt_ = 0;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际

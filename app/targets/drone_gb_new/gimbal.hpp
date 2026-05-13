@@ -77,7 +77,7 @@ class Gimbal {
 
   int robot_id = 0;  // 裁判系统测试
   float rc_vt03_left_x = 0.0f;
-  int cnt = 0;//进自瞄次数测试
+  int cnt = 0;  // 进自瞄次数测试
 
   int led_blink_time = 0;  // LED闪烁计时器
 
@@ -94,7 +94,7 @@ class Gimbal {
   rm::device::Rxvt03 *rx_vt03{nullptr};  // 图传收发类
 
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
-  rm::device::DeviceManager<1> device_vt03;//新遥控器管理器
+  rm::device::DeviceManager<1> device_vt03;    // 新遥控器管理器
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
   rm::device::DeviceManager<3> device_shoot;   // 发射管理器
 
@@ -187,8 +187,8 @@ class Gimbal {
     };
     dial_motor = new rm::device::M2006{*can1, 5};
 
-    device_rc << rc;                                                //副遥控器
-    device_vt03 << vt03 ;                                           //主遙控器
+    device_rc << rc;                                                // 副遥控器
+    device_vt03 << vt03;                                            // 主遙控器
     device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
     device_shoot << friction_left << friction_right << dial_motor;  // 发射机构电机
 

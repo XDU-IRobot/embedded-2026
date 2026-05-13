@@ -7,8 +7,8 @@ void Gimbal::GimbalControl() {
       DM_is_enable = true;
       gimbal_controller.Enable(true);
 
-      rc_yaw_data = yaw;                                                                // 第一次进入更新当前位置
-      rc_pitch_data = pitch;                                                            // 使用 IMU pitch 作为初始姿态
+      rc_yaw_data = yaw;      // 第一次进入更新当前位置
+      rc_pitch_data = pitch;  // 使用 IMU pitch 作为初始姿态
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
     }
     yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
@@ -21,20 +21,18 @@ void Gimbal::GimbalControl() {
       if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
       if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
     } else {
-
       if (Rcchoose()) {
         // yaw
-        yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);  // vt03手控备份
-        yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
+        yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);      // vt03手控备份
+        yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
         rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);  // vt03手控备份
         rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
-      }
-      else {
+      } else {
         // pitch
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
         yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
-        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
+        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
       }
     }
 
@@ -54,7 +52,7 @@ void Gimbal::GimbalControl() {
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
-    pitch_torque = pitch_torque_kp * cos(pitch-3.14);  // 这里输出的力矩是反向
+    pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 
   } else if (GimbalState_ == kAuto) {  // 自瞄模式控制
@@ -68,7 +66,7 @@ void Gimbal::GimbalControl() {
     }
 
     if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
-      rc_yaw_data = Aimbot.TargetYawAngle +M_PI;
+      rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
 
       rc_pitch_data = Aimbot.TargetPitchAngle + M_PI;
@@ -80,10 +78,9 @@ void Gimbal::GimbalControl() {
       if (Rcchoose()) {
         yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);  // vt03手控备份
         yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
-      }
-      else {
-        yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
-        yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
+      } else {
+        yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);  // dt7手控
+        yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
       }
 
       if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
@@ -108,7 +105,7 @@ void Gimbal::GimbalControl() {
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));
     // 重力补偿
-    pitch_torque = pitch_torque_kp * cos(pitch-3.14);  // 这里输出的力矩是反向
+    pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
   } else {  // 失能
     if (DM_is_enable == true) {
@@ -235,7 +232,6 @@ float Gimbal::SpeedAver() {
   }
   return (count > 0) ? (sum / count) : 0.0f;
 }
-
 
 void Gimbal::WS2812Control() {
   auto key = vt03->data().keyboard_key;

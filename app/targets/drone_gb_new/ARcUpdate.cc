@@ -78,15 +78,15 @@ bool Gimbal::Vt03IsOnline() {  // 判断遥控器是否在线
 }
 
 bool Gimbal::Rcchoose() {
-  //1标志vt03导出
-  //0标志rc导出
-  if (Vt03IsOnline()) {//优先vt03导出键鼠数据
-    return  1;
+  // 1标志vt03导出
+  // 0标志rc导出
+  if (Vt03IsOnline()) {  // 优先vt03导出键鼠数据
+    return 1;
   }
   if (RcIsOnline()) {
-    return 0;//在vt03断开数据且rc在线
+    return 0;  // 在vt03断开数据且rc在线
   }
-  return 1;//两者同时离线默认1
+  return 1;  // 两者同时离线默认1
 }
 
 void Gimbal::VT03DateUpdate() {  // vt03数据获取
