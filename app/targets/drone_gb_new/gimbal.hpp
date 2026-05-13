@@ -38,7 +38,7 @@ class Gimbal {
   bool DM_is_enable = false;  // 达秒使能标志位
 
   float pitch_min_pos = 3.00;        // pitch电机最小限位
-  float pitch_max_pos = 4.00;        // pitch电机最大限位
+  float pitch_max_pos = 3.75;        // pitch电机最大限位
                                      // 机械限位
   float yaw_center_encoder = 5.200;  // TODO云台机械中位对应的编码器角度
   float yaw_relative = 0.0f;         // TODO 当前云台相对机架夹角

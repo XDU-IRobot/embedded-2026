@@ -4,14 +4,14 @@
 void Gimbal::SubLoop500Hz() {
   // imu数据处理
   imu->Update();
-  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z() + 0.00025f, imu->accel_y(),
+  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z() - 0.00175f, imu->accel_y(),
                                        imu->accel_x(), -imu->accel_z()});
   pitch = ahrs.euler_angle().pitch + M_PI;
   yaw = ahrs.euler_angle().yaw + M_PI;
   roll = ahrs.euler_angle().roll + M_PI;
 
   GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z,
-                referee_data_buffer.data().shoot_data.initial_speed,
+                SpeedAver(),
                 referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
   VT03DateUpdate();                                                 // vt03数据更新
   if (!Rcchoose()) {
