@@ -62,6 +62,11 @@ int Acnt_ = 0;
 // 速度和位置返回值
 float Apitchspeed = 0.0f;
 float Apitchposition = 0.0f;
+// pitch输出
+float Apitchposout =0.0f;
+float Apitchoutp = 0.0f;
+float Apitchouti = 0.0f;
+float Apitchoutd = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -105,8 +110,8 @@ void FreemasterDebug() {
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;
-  Atargetpitch = -Aimbot.TargetPitchAngle + M_PI;
-  Atagetyaw = -Aimbot.TargetYawAngle + M_PI;
+  Atargetpitch = Aimbot.TargetPitchAngle + M_PI;
+  Atagetyaw = Aimbot.TargetYawAngle + M_PI;
 
   Ayaw_position = gimbal->GetYawMotorAngleRad();
   Ayaw_relative = gimbal->yaw_relative;
@@ -124,4 +129,8 @@ void FreemasterDebug() {
   Acnt_ = gimbal->cnt;
   Apitchspeed = gimbal->pitch_motor->vel();
   Apitchposition = gimbal->pitch_motor->pos();
+  Apitchposition = gimbal->gimbal_controller.pid().pitch_position.out();
+  Apitchoutp = gimbal->gimbal_controller.pid().pitch_position.p_out();
+  Apitchouti = gimbal->gimbal_controller.pid().pitch_position.i_out();
+  Apitchoutd = *(gimbal->gimbal_controller.pid().pitch_position.d_out());
 }

@@ -20,10 +20,8 @@ void Gimbal::SubLoop500Hz() {
   }
   GimbalControl();                               // 云台控制更新
   AmmoControl();                                 // 发射机构更新
-  ShootSpeedControl();                           // 弹速手动控制
   rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
   rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
-  FreemasterDebug();                             // 调试更新
 }
 // DmMotor电机发信息
 void Gimbal::SubLoop250Hz() {
@@ -46,13 +44,13 @@ void Gimbal::SubLoop250Hz() {
 }
 void Gimbal::SubLoop100Hz() {
   if (time_ % 5 == 0) {
-    // FreemasterDebug();
+    ShootSpeedControl();                           // 弹速手动控制
+    FreemasterDebug();                             // 调试更新
   }
 }
 void Gimbal::SubLoop50Hz() {
   if (time_ % 10 == 0) {
-    // Referee_control();
-    robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
+    // robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
   }
 }
 void Gimbal::SubLoop10Hz() {

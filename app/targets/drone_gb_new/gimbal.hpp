@@ -71,7 +71,7 @@ class Gimbal {
   float pitch_speed_kp = 0.1f;  // 速度输出比例系数
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
-  bool roll_comp_enable = false;  // TODO 滚转补偿开关
+  bool roll_comp_enable = true;  // TODO 滚转补偿开关
   float roll_comp_kp = 0.1f;      // TODO 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;   // TODO 最大补偿幅度（rad）
 
