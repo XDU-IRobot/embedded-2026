@@ -67,7 +67,7 @@ float Apitchposout = 0.0f;
 float Apitchoutp = 0.0f;
 float Apitchouti = 0.0f;
 float Apitchoutd = 0.0f;
-//检测can总线发送数据
+// 检测can总线发送数据
 float Acan1tx = 0.0f;
 float Acan2tx = 0.0f;
 float Acan1drop = 0.0f;
@@ -145,5 +145,4 @@ void FreemasterDebug() {
   Acan2tx = gimbal->can2->stats().tx_fps;
   Acan2drop = gimbal->can2->stats().drop_total_fps;
   Acan2queue = gimbal->can2->stats().enqueue_fps;
-
 }
