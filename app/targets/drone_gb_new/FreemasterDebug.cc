@@ -59,7 +59,7 @@ bool AkE = 0;
 bool AkR = 0;
 // 进自瞄次数
 int Acnt_ = 0;
-//速度和位置返回值
+// 速度和位置返回值
 float Apitchspeed = 0.0f;
 float Apitchposition = 0.0f;
 // 调试接口函数
