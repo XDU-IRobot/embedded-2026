@@ -59,6 +59,9 @@ bool AkE = 0;
 bool AkR = 0;
 // 进自瞄次数
 int Acnt_ = 0;
+//速度和位置返回值
+float Apitchspeed = 0.0f;
+float Apitchposition = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -119,4 +122,6 @@ void FreemasterDebug() {
   AkQ = gimbal->vt03->data().keyboard_key << 6;
 
   Acnt_ = gimbal->cnt;
+  Apitchspeed = gimbal->pitch_motor->vel();
+  Apitchposition = gimbal->pitch_motor->pos();
 }

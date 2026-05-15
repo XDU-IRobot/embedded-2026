@@ -45,7 +45,6 @@ void Gimbal::Vt03Control() {
   if (vt03_flag_lf) {
     if (vt03->data().mouse_button_right) {
       GimbalState_ = kAuto;
-      cnt++;
     } else {
       GimbalState_ = kManual;
     }

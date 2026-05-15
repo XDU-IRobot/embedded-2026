@@ -40,7 +40,7 @@ class Gimbal {
   float pitch_min_pos = 3.00;        // pitch电机最小限位
   float pitch_max_pos = 3.75;        // pitch电机最大限位
                                      // 机械限位
-  float yaw_center_encoder = 5.200;  // TODO云台机械中位对应的编码器角度
+  float yaw_center_encoder = 5.174;  // TODO云台机械中位对应的编码器角度
   float yaw_relative = 0.0f;         // TODO 当前云台相对机架夹角
   float yaw_min_limit = -2.30;       // TODO 左限位
   float yaw_max_limit = 2.30;        // TODO 右限位
@@ -173,7 +173,7 @@ class Gimbal {
     vt03_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
     rx_vt03 = new rm::device::Rxvt03{*vt03_uart};
 
-    yaw_motor = new rm::device::GM6020{*can2, 2};
+    yaw_motor = new rm::device::GM6020{*can2, 7};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
         *can1, {0x05, 0x06, 10.0f, 20.0f, 10.0f, {0.0f, 10.0f}, {0.0f, 5.0f}}};
 

@@ -64,7 +64,7 @@ void Gimbal::GimbalControl() {
       rc_pitch_data = pitch;  // 使用 IMU pitch 作为初始姿态
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     }
-
+    cnt++;
     if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
       rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
@@ -72,16 +72,21 @@ void Gimbal::GimbalControl() {
       rc_pitch_data = Aimbot.TargetPitchAngle + M_PI;
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     } else {  // 非自瞄状态自动切入手控
-      // yaw
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
-      yaw_delta = 0.0f;                                                                           // 合输出
-      if (Rcchoose()) {
-        yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);  // vt03手控备份
-        yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
-      } else {
-        yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);  // dt7手控
-        yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
-      }
+      yaw_delta = 0.0f;
+        if (Rcchoose()) {
+          // yaw
+          yaw_delta -= rm::modules::Map(vt03_date_.rc_left_y, -1, 1, -0.005f, 0.005f);      // vt03手控备份
+          yaw_delta -= rm::modules::Map(vt03_date_.mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
+          rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);  // vt03手控备份
+          rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
+        } else {
+          // pitch
+          yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+          yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
+          rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+          rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
+        }
 
       if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
         yaw_delta = 0.0f;
@@ -89,13 +94,8 @@ void Gimbal::GimbalControl() {
       if (yaw_relative <= yaw_min_limit && yaw_delta > 0.0f) {
         yaw_delta = 0.0f;
       }
-      rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, 0, 2 * M_PI);
 
-      // pitch
-      rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);      // dt7手控
-      rc_pitch_data -= rm::modules::Map(vt03_date_.rc_left_x, -1, 1, -0.005f, 0.005f);  // vt03手控备份
-      rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-      rc_pitch_data -= rm::modules::Map(vt03_date_.mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
+      rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, 0, 2 * M_PI);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     }
     // 滚转补偿
