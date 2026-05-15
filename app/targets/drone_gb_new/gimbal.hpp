@@ -120,21 +120,9 @@ class Gimbal {
     kFire              // 发射机构开火
   } StateMachineType;  // 遥控器状态机
 
-  typedef struct {
-    int16_t mouse_x = 0;
-    int16_t mouse_y = 0;
-    bool mouse_button_left = false;
-    bool mouse_button_right = false;
-    float rc_left_x = 0.0f;
-    float rc_left_y = 0.0f;
-    bool Fn_left = 0;
-    bool Fn_right = 0;
-    bool fric_fire = 0;
-  } vt03_date;
 
   StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
   StateMachineType GimbalState_ = {kNoForce};  // 初始化云台运动状态
-  vt03_date vt03_date_;                        // vt03信号结构体
 
   Gimbal2Dof gimbal_controller;  // 二轴云台PID控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
@@ -224,8 +212,6 @@ class Gimbal {
   bool Vt03IsOnline();
 
   bool Rcchoose();
-
-  void VT03DateUpdate();
 
   float GetYawMotorAngleRad();
 

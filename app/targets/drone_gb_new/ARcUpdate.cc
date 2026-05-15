@@ -17,7 +17,7 @@ void Gimbal::RCStateUpdate() {
       GimbalState_ = kAuto;
       break;
     case rm::device::DR16::SwitchPosition::kMid:  // 中位按下鼠标右键跟随
-      if (rc->mouse_button_right() || vt03_date_.mouse_button_right)
+      if (rc->mouse_button_right() || vt03->data().mouse_button_right)
         GimbalState_ = kAuto;
       else
         GimbalState_ = kManual;
@@ -31,7 +31,7 @@ void Gimbal::RCStateUpdate() {
 void Gimbal::Vt03Control() {
   // 左 Fn：云台状态切换
   // kNoForce -> kManual -> kNoForce
-  if (vt03_date_.Fn_left && !vt03_last_fn_left) {
+  if (vt03->data().left_button && !vt03_last_fn_left) {
     if (GimbalState_ == kNoForce) {
       GimbalState_ = kManual;
       vt03_flag_lf = 1;
@@ -52,7 +52,7 @@ void Gimbal::Vt03Control() {
 
   // 右 Fn：发射状态切换
   // kReady -> kFire -> kReady
-  if (vt03_date_.Fn_right && !vt03_last_fn_right) {
+  if (vt03->data().right_button && !vt03_last_fn_right) {
     if (AmmoState_ == kFire) {
       AmmoState_ = kReady;
       vt03_flag_rh = 0;
@@ -62,8 +62,8 @@ void Gimbal::Vt03Control() {
     }
   }
 
-  vt03_last_fn_left = vt03_date_.Fn_left;
-  vt03_last_fn_right = vt03_date_.Fn_right;
+  vt03_last_fn_left = vt03->data().left_button;
+  vt03_last_fn_right = vt03->data().right_button;
 }
 
 bool Gimbal::RcIsOnline() {  // 判断遥控器是否在线
@@ -86,18 +86,6 @@ bool Gimbal::Rcchoose() {
     return 0;  // 在vt03断开数据且rc在线
   }
   return 1;  // 两者同时离线默认1
-}
-
-void Gimbal::VT03DateUpdate() {  // vt03数据获取
-  vt03_date_.mouse_x = vt03->data().mouse_x;
-  vt03_date_.mouse_y = vt03->data().mouse_y;
-  vt03_date_.mouse_button_left = vt03->data().mouse_button_left;
-  vt03_date_.mouse_button_right = vt03->data().mouse_button_right;
-  vt03_date_.rc_left_x = vt03->data().left_x;
-  vt03_date_.rc_left_y = vt03->data().left_y;
-  vt03_date_.Fn_left = vt03->data().left_button;
-  vt03_date_.Fn_right = vt03->data().right_button;
-  vt03_date_.fric_fire = vt03->data().trigger;
 }
 
 float Gimbal::GetYawMotorAngleRad() {  // 编码器返回角度

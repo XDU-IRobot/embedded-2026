@@ -106,7 +106,6 @@ void FreemasterDebug() {
   Arc_vt03_left = gimbal->vt03->data().mouse_button_left;
   Arc_vt03_right = gimbal->vt03->data().mouse_button_right;
 
-  AFn_left = gimbal->vt03_date_.Fn_left;
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;

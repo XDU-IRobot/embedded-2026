@@ -11,8 +11,7 @@ void Gimbal::SubLoop500Hz() {
   roll = ahrs.euler_angle().roll + M_PI;
 
   GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z, SpeedAver(),
-                referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
-  VT03DateUpdate();                                                 // vt03数据更新
+  referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
   if (!Rcchoose()) {
     RCStateUpdate();  // dt7控制更新
   } else {
