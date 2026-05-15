@@ -67,6 +67,13 @@ float Apitchposout = 0.0f;
 float Apitchoutp = 0.0f;
 float Apitchouti = 0.0f;
 float Apitchoutd = 0.0f;
+//检测can总线发送数据
+float Acan1tx = 0.0f;
+float Acan2tx = 0.0f;
+float Acan1drop = 0.0f;
+float Acan2drop = 0.0f;
+float Acan1queue = 0.0f;
+float Acan2queue = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -127,8 +134,16 @@ void FreemasterDebug() {
   Acnt_ = gimbal->cnt;
   Apitchspeed = gimbal->pitch_motor->vel();
   Apitchposition = gimbal->pitch_motor->pos();
-  Apitchposition = gimbal->gimbal_controller.pid().pitch_position.out();
   Apitchoutp = gimbal->gimbal_controller.pid().pitch_position.p_out();
   Apitchouti = gimbal->gimbal_controller.pid().pitch_position.i_out();
   Apitchoutd = *(gimbal->gimbal_controller.pid().pitch_position.d_out());
+
+  Acan1tx = gimbal->can1->stats().tx_fps;
+  Acan1drop = gimbal->can1->stats().drop_total_fps;
+  Acan1queue = gimbal->can1->stats().enqueue_fps;
+
+  Acan2tx = gimbal->can2->stats().tx_fps;
+  Acan2drop = gimbal->can2->stats().drop_total_fps;
+  Acan2queue = gimbal->can2->stats().enqueue_fps;
+
 }

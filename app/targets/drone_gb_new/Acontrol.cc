@@ -22,9 +22,9 @@ void Gimbal::GimbalControl() {
       if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
     } else {
       if (Rcchoose()) {
-        yaw_delta -= rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);         // vt03手控备份
+        yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
         yaw_delta -= rm::modules::Map(vt03->data().mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
-        rc_pitch_data -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);     // vt03手控备份
+        rc_pitch_data -= rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);     // vt03手控备份
         rc_pitch_data -= rm::modules::Map(vt03->data().mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       } else {
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
@@ -72,9 +72,9 @@ void Gimbal::GimbalControl() {
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
       yaw_delta = 0.0f;
       if (Rcchoose()) {
-        yaw_delta -= rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);         // vt03手控备份
+        yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
         yaw_delta -= rm::modules::Map(vt03->data().mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
-        rc_pitch_data -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);     // vt03手控备份
+        rc_pitch_data -= rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);     // vt03手控备份
         rc_pitch_data -= rm::modules::Map(vt03->data().mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
       } else {
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控

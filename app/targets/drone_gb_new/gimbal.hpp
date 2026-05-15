@@ -172,7 +172,7 @@ class Gimbal {
         *can1,
         3,
     };
-    dial_motor = new rm::device::M2006{*can1, 5};
+    dial_motor = new rm::device::M2006{*can2, 5};
 
     device_rc << rc;                                                // 副遥控器
     device_vt03 << vt03;                                            // 主遙控器
