@@ -63,7 +63,7 @@ int Acnt_ = 0;
 float Apitchspeed = 0.0f;
 float Apitchposition = 0.0f;
 // pitch输出
-float Apitchposout =0.0f;
+float Apitchposout = 0.0f;
 float Apitchoutp = 0.0f;
 float Apitchouti = 0.0f;
 float Apitchoutd = 0.0f;
@@ -105,7 +105,6 @@ void FreemasterDebug() {
   Arc_vt03_mou_y = gimbal->vt03->data().mouse_y;
   Arc_vt03_left = gimbal->vt03->data().mouse_button_left;
   Arc_vt03_right = gimbal->vt03->data().mouse_button_right;
-
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;

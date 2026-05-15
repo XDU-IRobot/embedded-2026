@@ -72,8 +72,8 @@ class Gimbal {
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
   bool roll_comp_enable = true;  // TODO 滚转补偿开关
-  float roll_comp_kp = 0.1f;      // TODO 补偿系数，rad_pitch_per_rad_roll
-  float roll_comp_limit = 0.3f;   // TODO 最大补偿幅度（rad）
+  float roll_comp_kp = 0.1f;     // TODO 补偿系数，rad_pitch_per_rad_roll
+  float roll_comp_limit = 0.3f;  // TODO 最大补偿幅度（rad）
 
   int robot_id = 0;  // 裁判系统测试
   float rc_vt03_left_x = 0.0f;
@@ -119,7 +119,6 @@ class Gimbal {
     kReady,            // 发射机构准备开火
     kFire              // 发射机构开火
   } StateMachineType;  // 遥控器状态机
-
 
   StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
   StateMachineType GimbalState_ = {kNoForce};  // 初始化云台运动状态

@@ -11,7 +11,7 @@ void Gimbal::SubLoop500Hz() {
   roll = ahrs.euler_angle().roll + M_PI;
 
   GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z, SpeedAver(),
-  referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
+                referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
   if (!Rcchoose()) {
     RCStateUpdate();  // dt7控制更新
   } else {
@@ -43,8 +43,8 @@ void Gimbal::SubLoop250Hz() {
 }
 void Gimbal::SubLoop100Hz() {
   if (time_ % 5 == 0) {
-    ShootSpeedControl();                           // 弹速手动控制
-    FreemasterDebug();                             // 调试更新
+    ShootSpeedControl();  // 弹速手动控制
+    FreemasterDebug();    // 调试更新
   }
 }
 void Gimbal::SubLoop50Hz() {
