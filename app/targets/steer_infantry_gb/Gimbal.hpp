@@ -52,6 +52,8 @@ inline class Gimbal {
 
   void GimbalTask();
 
+  void GimbalIdentifyDataSend();
+
  private:
   void GimbalStateUpdate();
 
@@ -65,6 +67,18 @@ inline class Gimbal {
 
   void GimbalMovePIDUpdate();
 
+  void ApplyNormalGimbalPID();
+
+  void ApplyIdentifyGimbalPID();
+
+  void GimbalIdentifyUpdate();
+
+  void GimbalIdentifyTargetUpdate();
+
+  void GimbalIdentifyPIDUpdate();
+
+  void GimbalFfVerifyUpdate();
+
   void GimbalMatchUpdate();
 
   void GimbalEnableUpdate();
@@ -77,11 +91,30 @@ inline class Gimbal {
 
   void ShootEnableUpdate();
 
+  void ShootIdentifyUpdate();
+
   void ShootDisableUpdate();
 
   void SetMotorCurrent();
 
   void EulerToQuaternion(f32 yaw, f32 pitch, f32 roll);
+
+  EncoderCounter identify_yaw_encoder_counter_;
+  bool identify_active_ = false;
+  f32 identify_time_s_ = 0.0f;
+  f32 identify_yaw_center_ = 0.0f;
+  f32 identify_pitch_center_ = 0.0f;
+  f32 identify_yaw_position_ = 0.0f;
+  f32 identify_yaw_speed_ = 0.0f;
+  f32 identify_pitch_position_ = 0.0f;
+  f32 identify_pitch_speed_ = 0.0f;
+  bool ff_verify_active_ = false;
+  f32 ff_verify_time_s_ = 0.0f;
+  f32 yaw_torque_ = 0.0f;
+  bool move_ff_initialized_ = false;
+  f32 last_pitch_target_ = 0.0f;
+  f32 last_yaw_speed_ref_ = 0.0f;
+  f32 last_pitch_speed_ref_ = 0.0f;
 } *gimbal;
 
 #endif  // GIMBAL_HPP

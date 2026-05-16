@@ -23,6 +23,8 @@ typedef enum {
   kGbRemote,    // 云台遥控模式
   kGbAimbot,    // 云台自瞄模式
   kGbAimbotFu,  // 云台打符模式
+  kGbIdentify,
+  kGbFfVerify,
 } StateMachineType;
 
 inline struct GlobalWarehouse {
@@ -44,6 +46,7 @@ inline struct GlobalWarehouse {
   rm::device::ChassisCommunicator *chassis_communicator{nullptr};   ///< CAN 通信器
   rm::device::GkSupercap *super_cap{nullptr};                       ///< 超级电容接口
   rm::hal::Serial *referee_uart{nullptr};                           ///< 裁判系统串口接口
+  rm::hal::Serial *ident_uart{nullptr};
   rm::device::RxReferee *rx_referee{nullptr};                       ///< 裁判系统接口
   rm::device::VT03 *image_data{nullptr};                            ///< 裁判系统数据缓冲区
 

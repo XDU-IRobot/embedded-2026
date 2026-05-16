@@ -45,11 +45,12 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can2};
+  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   super_cap = new rm::device::GkSupercap{*can1};
   dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
+  ident_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   rx_referee = new rm::device::RxReferee{*referee_uart};
   image_data = new rm::device::VT03;
 
@@ -74,6 +75,7 @@ void GlobalWarehouse::Init() {
   can2->Begin();
   rc->Begin();
   rx_referee->Begin();
+  ident_uart->Begin();
   buzzer->Init();
   led->Init();
 
@@ -90,11 +92,15 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(900.0f).SetKi(0.0f).SetKd(26000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(100.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().yaw_position.SetKp(100.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKi(0.0f).SetKd(1300.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(10.0f).SetKi(0.0f).SetKd(200.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().pitch_position.SetKp(10.0f).SetKi(0.0f).SetKd(200.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {
@@ -152,10 +158,13 @@ void GlobalWarehouse::RCStateUpdate() {
       case rm::device::DR16::SwitchPosition::kDown:
         switch (globals->rc->switch_l()) {
           case rm::device::DR16::SwitchPosition::kUp:
-            globals->Music();
-            globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbIdentify;
             break;
           case rm::device::DR16::SwitchPosition::kMid:
+            globals->StateMachine_ = kTest;
+            gimbal->GimbalMove_ = kGbFfVerify;
+            break;
           case rm::device::DR16::SwitchPosition::kDown:
           default:
             globals->StateMachine_ = kNoForce;  // 左拨杆拨到下侧，进入比赛模式，此时全部系统都上电工作
@@ -207,22 +216,22 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
   }
   // 高速模式
-  if (globals->super_cap->CapEnergy() <= 80 || globals->super_cap->ErrorCode()) {
-    globals->chassis_state &= ~static_cast<u8>(1 << 3);
-  } else if (globals->StateMachine_ == kMatch) {
-    if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01
-                                   : globals->rc->key(rm::device::DR16::Key::kC)) {
-      globals->speed_change_flag = true;
-    } else if (globals->speed_change_flag == 1) {
-      globals->speed_change_flag = false;
-      globals->chassis_state ^= static_cast<u8>(1 << 3);
-    }
-  } else if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid &&
-             globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
-    globals->chassis_state |= static_cast<u8>(1 << 3);
-  } else {
-    globals->chassis_state &= ~static_cast<u8>(1 << 3);
-  }
+  // if (globals->super_cap->CapEnergy() <= 80 || globals->super_cap->ErrorCode()) {
+  //   globals->chassis_state &= ~static_cast<u8>(1 << 3);
+  // } else if (globals->StateMachine_ == kMatch) {
+  //   if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01
+  //                                  : globals->rc->key(rm::device::DR16::Key::kC)) {
+  //     globals->speed_change_flag = true;
+  //   } else if (globals->speed_change_flag == 1) {
+  //     globals->speed_change_flag = false;
+  //     globals->chassis_state ^= static_cast<u8>(1 << 3);
+  //   }
+  // } else if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid &&
+  //            globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
+  //   globals->chassis_state |= static_cast<u8>(1 << 3);
+  // } else {
+  //   globals->chassis_state &= ~static_cast<u8>(1 << 3);
+  // }
   // 打符模式切换
   if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 9 & 0x01
                                   : globals->rc->key(rm::device::DR16::Key::kF)) &&
@@ -337,18 +346,20 @@ void GlobalWarehouse::SubLoop500Hz() {
   }
   globals->aimbot_communicator->UpdateControl(
       globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch, globals->ahrs.euler_angle().roll,
-      globals->chassis_communicator->robot_id() ? 103 : 3, globals->aim_mode, globals->imu_count, ammo_speed);
+      globals->chassis_communicator->robot_id() ? 103 : 3, 1, globals->imu_count, ammo_speed);
   globals->chassis_communicator->SendChassisCommand(
       globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,
       globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change);
   globals->RCStateUpdate();
   globals->ChassisStateUpdate();
   gimbal->GimbalTask();
+  globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
+  // globals->pitch_motor->SetMitCommand(0, 0, 0, 0, 0);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
 
-void GlobalWarehouse::SubLoop250Hz() { globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0); }
+void GlobalWarehouse::SubLoop250Hz() {}
 
 void GlobalWarehouse::SubLoop100Hz() {
   globals->device_rc.Update();
@@ -356,6 +367,7 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_referee.Update();
+  gimbal->GimbalIdentifyDataSend();
   if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
       globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
     if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
