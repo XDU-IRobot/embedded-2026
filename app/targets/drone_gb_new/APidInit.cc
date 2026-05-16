@@ -2,7 +2,7 @@
 // 修改pid参数
 void Gimbal::GimbalPIDInit() {
   gimbal_controller.pid()
-      .yaw_position.SetKp(350.0f)
+      .yaw_position.SetKp(390.0f)
       .SetKi(0.0f)
       .SetKd(3000.0f)
       .SetMaxOut(10000.0f)

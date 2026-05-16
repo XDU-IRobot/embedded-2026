@@ -123,8 +123,8 @@ void Gimbal::AmmoControl() {
         shoot_controller.SetLoaderSpeed(-redirl_speed);
         auto_reverse_time--;
         auto_reverse_time < 1 ? auto_reverse_flag = false : auto_reverse_flag = true;
-      } else {
-        if (GimbalState_ == kAuto) {
+      } else { //不反转
+        if (GimbalState_ == kAuto) {//是自瞄下的状态
           if (Aimbot.AimbotState == 4) {
             shoot_controller.SetLoaderSpeed(dirl_speed);
           } else if (Aimbot.AimbotState == 2) {
@@ -132,7 +132,7 @@ void Gimbal::AmmoControl() {
           } else {
             shoot_controller.SetLoaderSpeed(dirl_speed);
           }
-        } else {
+        } else { //手动状态
           shoot_controller.SetLoaderSpeed(dirl_speed);
         }
       }

@@ -9,7 +9,7 @@ uint16_t robot_id = 106;
 
 void UI_SendByte(unsigned char ch) {
   // USART_SendData(USART6,ch);
-  HAL_UART_Transmit_DMA(&huart1, &ch, 1);
+  HAL_UART_Transmit_DMA(&huart6, &ch, 1);
   // while((USART6->SR & 0x4) == RESET);
   // while (USART_GetFlagStatus(USART6, USART_FLAG_TXE) == RESET);
 }
@@ -615,7 +615,7 @@ void Test_Draw_String(rm::device::Referee<rm::device::RefereeRevision::kNewV120>
 
   // 静态弹速前缀 "SPD: "
   Char_Draw(&speed_text_fixed, "SPD", UI_Graph_ADD, 0, UI_Color_Yellow,
-    20, 5, 2, 300, 800, "SPD: \n");
+    20, 5, 2, 300, 800, "SPD:\n");
 
   // 动态弹速数值
   Float_Draw(&speed_float_dynamic, "SPF", UI_Graph_ADD, 0, UI_Color_Yellow,
@@ -623,7 +623,7 @@ void Test_Draw_String(rm::device::Referee<rm::device::RefereeRevision::kNewV120>
 
   // 静态自瞄状态前缀 "STARGET: "
   Char_Draw(&target_text_fixed, "TAR", UI_Graph_ADD, 0, UI_Color_Yellow,
-    20, 5, 2, 300, 650, "TARGET: \n");
+    20, 9, 2, 300, 650, "TARGET: \n");
 
   // 动态自瞄状态
   Float_Draw(&target_state_ui, "TARS", UI_Graph_ADD, 0, UI_Color_Yellow,

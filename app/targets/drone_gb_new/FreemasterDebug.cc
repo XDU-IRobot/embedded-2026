@@ -4,6 +4,7 @@ double Ayaw = 0;
 
 float Apitch_ = 0;  // 实际位置(-pi到pi)
 float Ayaw_ = 0;
+float Aroll_ = 0;
 
 double Arc_pitch = 0;  // 目标位置
 double Arc_yaw = 0;
@@ -81,6 +82,7 @@ float Aimu_yaw = 0.0f;
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
   Apitch_ = gimbal->pitch;
+  Aroll_ = gimbal->roll;
 
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //
