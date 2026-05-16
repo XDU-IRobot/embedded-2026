@@ -30,7 +30,6 @@ void Gimbal::SubLoop250Hz() {
     pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                          // 合输出
 
     // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试
-
   }
 }
 void Gimbal::SubLoop100Hz() {

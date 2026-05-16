@@ -201,8 +201,6 @@ class Gimbal {
     GimbalPIDInit();
     AmmoPIDInit();
 
-
-
     gimbal_controller.Enable(false);  // 云台控制器
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
 
