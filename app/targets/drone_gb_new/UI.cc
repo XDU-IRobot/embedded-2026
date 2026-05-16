@@ -1,11 +1,18 @@
-
 #include "UI.hpp"
+#include "usart.h"
 
 bool push_flag = 0;
 uint8_t Info_Arr[128];
 uint8_t len = 0;
 unsigned char UI_Seq;  // 包序号
-extern uint16_t robot_id;
+uint16_t robot_id = 106;
+
+void UI_SendByte(unsigned char ch) {
+  // USART_SendData(USART6,ch);
+  HAL_UART_Transmit_DMA(&huart1, &ch, 1);
+  // while((USART6->SR & 0x4) == RESET);
+  // while (USART_GetFlagStatus(USART6, USART_FLAG_TXE) == RESET);
+}
 
 /********************************************删除操作*************************************
 **参数：Del_Operate  对应头文件删除操作
@@ -61,6 +68,12 @@ void UI_Delete(uint8_t Del_Operate, uint8_t Del_Layer) {
   } else if (robot_id == 105) {
     datahead.Sender_ID = UI_Data_RobotID_BStandard3;
     datahead.Receiver_ID = UI_Data_CilentID_BStandard3;  // 填充操作数据
+  } else if (robot_id == 6) {
+    datahead.Sender_ID = UI_Data_RobotID_RAerial;
+    datahead.Receiver_ID = UI_Data_CilentID_RAerial;
+  } else if (robot_id == 106) {
+    datahead.Sender_ID = UI_Data_RobotID_BAerial;
+    datahead.Receiver_ID = UI_Data_CilentID_BAerial;
   }
 
   del.Delete_Operate = Del_Operate;
@@ -235,7 +248,8 @@ void Float_Draw(Float_Data *image, char imagename[3], uint32_t Graph_Operate, ui
   image->start_y = Start_y;
   image->start_angle = Graph_Size;
   image->end_angle = Graph_Digit;
-  image->graph_Float = Graph_Float;
+  // image->graph_Float = Graph_Float;
+  image->graph_Float = (uint32_t)(Graph_Float * 1000.0f);
 }
 
 /************************************************绘制字符型数据*************************************************
@@ -337,11 +351,17 @@ int UI_ReFresh(int cnt, ...) {
     datahead.Sender_ID = UI_Data_RobotID_BStandard2;
     datahead.Receiver_ID = UI_Data_CilentID_BStandard2;  // 填充操作数据
   } else if (robot_id == 5) {
-    datahead.Sender_ID = UI_Data_RobotID_RStandard2;
-    datahead.Receiver_ID = UI_Data_CilentID_RStandard2;
+    datahead.Sender_ID = UI_Data_RobotID_RStandard3;
+    datahead.Receiver_ID = UI_Data_CilentID_RStandard3;
   } else if (robot_id == 105) {
     datahead.Sender_ID = UI_Data_RobotID_BStandard3;
     datahead.Receiver_ID = UI_Data_CilentID_BStandard3;  // 填充操作数据
+  } else if (robot_id == 6) {
+    datahead.Sender_ID = UI_Data_RobotID_RAerial;
+    datahead.Receiver_ID = UI_Data_CilentID_RAerial;
+  } else if (robot_id == 106) {
+    datahead.Sender_ID = UI_Data_RobotID_BAerial;
+    datahead.Receiver_ID = UI_Data_CilentID_BAerial;
   }
 
   uint8_t *p = Info_Arr;
@@ -394,6 +414,7 @@ int UI_ReFresh(int cnt, ...) {
 Tips：：该函数只能推送1，2，5，7个图形，其他数目协议未涉及
 **********************************************************************************************************/
 int Char_ReFresh(String_Data string_Data) {
+  int i;
   String_Data imageData;
   unsigned char *framepoint;    // 读写指针
   uint16_t frametail = 0xFFFF;  // CRC16校验值
@@ -441,6 +462,14 @@ int Char_ReFresh(String_Data string_Data) {
     datahead.Receiver_ID = UI_Data_CilentID_BStandard3;  // 填充操作数据
   }
 
+  else if (robot_id == 6) {
+    datahead.Sender_ID = UI_Data_RobotID_RAerial;
+    datahead.Receiver_ID = UI_Data_CilentID_RAerial;
+  } else if (robot_id == 106) {
+    datahead.Sender_ID = UI_Data_RobotID_BAerial;
+    datahead.Receiver_ID = UI_Data_CilentID_BAerial;
+  }
+
   uint8_t *p = Info_Arr;
   len = 0;
 
@@ -455,21 +484,38 @@ int Char_ReFresh(String_Data string_Data) {
 
   framepoint = (unsigned char *)&framehead;
   memcpy(p, framepoint, sizeof(framehead));
+  // for (i = 0; i < sizeof(framehead); i++){
+  //   UI_SendByte(*framepoint);
+  //   framepoint++;
+  // }
   p += sizeof(framehead);
   len += sizeof(framehead);
 
   framepoint = (unsigned char *)&datahead;
   memcpy(p, framepoint, sizeof(datahead));
+  // for (i = 0; i<sizeof(datahead); i++) {
+  //   UI_SendByte(*framepoint);
+  //   framepoint++;
+  // }
   p += sizeof(datahead);
   len += sizeof(datahead);
 
   framepoint = (unsigned char *)&imageData;
   memcpy(p, framepoint, sizeof(imageData));
+  // for (i = 0; i < sizeof(imageData); i++) {
+  //   UI_SendByte(*framepoint);
+  //   framepoint++;
+  // }
   p += sizeof(imageData);
   len += sizeof(imageData);
 
   framepoint = (unsigned char *)&frametail;
   memcpy(p, framepoint, sizeof(frametail));
+  // for (i = 0; i < sizeof(frametail); i++)
+  // {
+  //   UI_SendByte(*framepoint);
+  //   framepoint++; // 发送CRC16校验值
+  // }
   p += sizeof(frametail);
   len += sizeof(frametail);
 
@@ -542,4 +588,71 @@ uint16_t Get_CRC16_Check_Sum_UI(uint8_t *pchMessage, uint32_t dwLength, uint16_t
     (wCRC) = ((uint16_t)(wCRC) >> 8) ^ wCRC_Table_UI[((uint16_t)(wCRC) ^ (uint16_t)(chData)) & 0x00ff];
   }
   return wCRC;
+}
+
+String_Data man_text_fixed;
+//Graph_Data heat_arc;
+Graph_Data vision_rec;
+String_Data speed_text_fixed;      // 新增：用于显示静态字符 "SPD: "
+Float_Data speed_float_dynamic;    // 新增：用于显示动态弹速浮点数
+String_Data target_text_fixed;      // 新增：用于显示静态字符 "TARGET: "
+Float_Data target_state_ui;           // 新增：用于显示自瞄识别状态
+uint32_t heat_arc_end_angle;
+uint8_t ui_init_flag = 0;
+void Test_Draw_String(rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee, float ammo_speed, uint8_t target_state) {
+  // heat_arc_end_angle = (uint32_t)(referee->data().power_heat_data.shooter_17mm_1_barrel_heat * 360.0f /
+  //                               referee->data().robot_status.shooter_barrel_heat_limit);
+  // if (heat_arc_end_angle == 0) {
+  //   heat_arc_end_angle = 1;
+  // }
+  //MAN字符
+  Char_Draw(&man_text_fixed, "DOG", UI_Graph_ADD, 0, UI_Color_Pink,
+    100, 4, 5, 830, 880, "MAN\n");
+
+  //视觉视野方框
+  Rectangle_Draw(&vision_rec, "REC", UI_Graph_ADD, 2, UI_Color_Green,
+    3, 200, 200, 1720, 980);
+
+  // 静态弹速前缀 "SPD: "
+  Char_Draw(&speed_text_fixed, "SPD", UI_Graph_ADD, 0, UI_Color_Yellow,
+    20, 5, 2, 300, 800, "SPD: \n");
+
+  // 动态弹速数值
+  Float_Draw(&speed_float_dynamic, "SPF", UI_Graph_ADD, 0, UI_Color_Yellow,
+    20, 1, 2, 350, 800, ammo_speed);
+
+  // 静态自瞄状态前缀 "STARGET: "
+  Char_Draw(&target_text_fixed, "TAR", UI_Graph_ADD, 0, UI_Color_Yellow,
+    20, 5, 2, 300, 650, "TARGET: \n");
+
+  // 动态自瞄状态
+  Float_Draw(&target_state_ui, "TARS", UI_Graph_ADD, 0, UI_Color_Yellow,
+    20, 1, 2, 350, 650, (float)target_state);
+
+  // //热量环
+  // Arc_Draw(&heat_arc, "ARC", UI_Graph_ADD, 1, UI_Color_Cyan,
+  //   0, heat_arc_end_angle, 10, 960, 540, 100, 100);
+
+  if (ui_init_flag == 0) {
+    Char_ReFresh(man_text_fixed);
+    ui_init_flag++;
+  } else if (ui_init_flag == 1) {
+    //UI_ReFresh(1, heat_arc);
+    UI_ReFresh(1, vision_rec);
+    ui_init_flag++;
+  }
+  else if (ui_init_flag == 2) {
+    Char_ReFresh(speed_text_fixed);
+    ui_init_flag++;
+  }
+  else if (ui_init_flag == 3) {
+    Char_ReFresh(target_text_fixed);
+    ui_init_flag++;
+  }
+  else if (ui_init_flag == 4) {
+    //UI_ReFresh(2, heat_arc, *(Graph_Data*)&speed_float_dynamic);
+    UI_ReFresh(2, *(Graph_Data*)&speed_float_dynamic, target_state_ui);
+  }
+  //Char_ReFresh(man_text_fixed);
+  HAL_UART_Transmit_DMA(&huart6, Info_Arr, len);
 }

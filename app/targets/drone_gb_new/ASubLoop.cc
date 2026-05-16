@@ -1,4 +1,5 @@
 #include "gimbal.hpp"
+#include "UI.hpp"
 // 子线程
 //  遥控器和imu数据解算+DjiMotor发信息
 void Gimbal::SubLoop500Hz() {
@@ -55,6 +56,7 @@ void Gimbal::SubLoop50Hz() {
 void Gimbal::SubLoop10Hz() {
   if (time_ % 50 == 0) {
     WS2812Control();
+    Test_Draw_String(&referee_data_buffer, friction_speed, Aimbot.AimbotState);
     time_ = 0;
   }
 }
