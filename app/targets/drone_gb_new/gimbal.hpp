@@ -104,6 +104,8 @@ class Gimbal {
   rm::modules::MahonyAhrs ahrs{500.0f};  // TODO Mahony滤波控制频率
   rm::device::DR16 *rc{nullptr};         // 遥控器
 
+  rm::device::HipnucImuCan *imu_new{nullptr};//ch040
+
   rm::device::GM6020 *yaw_motor{nullptr};                                           // 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  // 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                        // 左侧摩擦轮电机
@@ -151,6 +153,7 @@ class Gimbal {
     dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
+    imu_new = new rm::device::HipnucImuCan{*can2,8};
     rc = new rm::device::DR16{*dbus};
     vt03 = new rm::device::VT03;
 
@@ -184,6 +187,7 @@ class Gimbal {
     can2->SetFilter(0, 0);  // 设置滤波器
     can2->Begin();
     rc->Begin();
+    imu_new;
     rx_referee->Begin();  // 启动裁判系统
     rx_vt03->Begin();     // 启动图传串口
 

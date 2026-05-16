@@ -4,7 +4,7 @@
 void Gimbal::SubLoop500Hz() {
   // imu数据处理
   imu->Update();
-  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z() - 0.00175f, imu->accel_y(),
+  ahrs.Update(rm::modules::ImuData6Dof{imu->gyro_y(), imu->gyro_x(), -imu->gyro_z() + 0.0036f, imu->accel_y(),
                                        imu->accel_x(), -imu->accel_z()});
   pitch = ahrs.euler_angle().pitch + M_PI;
   yaw = ahrs.euler_angle().yaw + M_PI;
