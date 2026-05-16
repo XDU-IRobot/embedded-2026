@@ -29,17 +29,8 @@ void Gimbal::SubLoop250Hz() {
     pitch_cmd = rm::modules::Clamp(-pitch_torque + gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
     pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                          // 合输出
 
-    // pitch_speed_tf = rm::modules::Clamp(pitch_speed_kp * tanh(pitch_motor->vel()),-10,10);
+    // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试
 
-    // pitch_motor->SetMitCommand(0, 0, gimbal_controller.output().pitch, 0, 0);
-    // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);
-
-    // if (pitch<=3.82&&pitch>=3.00) {//摩擦补偿测试
-    //   pitch_motor->SetMitCommand(0, 0,pitch_speed_tf-pitch_torque, 0, 0);
-    // }
-    // else {
-    //   pitch_motor->SetMitCommand(0,0,0,0,0);
-    // }
   }
 }
 void Gimbal::SubLoop100Hz() {

@@ -152,8 +152,8 @@ class Gimbal {
     rc = new rm::device::DR16{*dbus};
     vt03 = new rm::device::VT03;
 
-    referee_uart = new rm::hal::Serial<256>{huart6, false, false};
-    vt03_uart = new rm::hal::Serial<256>{huart1, true, true};
+    referee_uart = new rm::hal::Serial<128>{huart6, false, false};
+    vt03_uart = new rm::hal::Serial<128>{huart1, true, true};
 
     yaw_motor = new rm::device::GM6020{*can2, 7};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
@@ -168,20 +168,6 @@ class Gimbal {
         3,
     };
     dial_motor = new rm::device::M2006{*can2, 5};
-
-    device_rc << rc;                                                // 副遥控器
-    device_vt03 << vt03;                                            // 主遙控器
-    device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
-    device_shoot << friction_left << friction_right << dial_motor;  // 发射机构电机
-
-    can1->SetFilter(0, 0);  // 设置滤波器
-    can1->Begin();
-    can2->SetFilter(0, 0);  // 设置滤波器
-    can2->Begin();
-    rc->Begin();
-
-    GimbalPIDInit();
-    AmmoPIDInit();
 
     // 裁判系统串口接收
     const rm::hal::SerialRxCallbackFunction ref_rx_callback = [&](const etl::span<const uint8_t> &data) {
@@ -198,6 +184,24 @@ class Gimbal {
       }
     };
     vt03_uart->AttachRxCallback(tc_rx_callback);
+
+    device_rc << rc;                                                // 副遥控器
+    device_vt03 << vt03;                                            // 主遙控器
+    device_gimbal << yaw_motor << pitch_motor;                      // 云台电机
+    device_shoot << friction_left << friction_right << dial_motor;  // 发射机构电机
+
+    can1->SetFilter(0, 0);  // 设置滤波器
+    can1->Begin();
+    can2->SetFilter(0, 0);  // 设置滤波器
+    can2->Begin();
+    rc->Begin();
+    vt03_uart->Start();
+    referee_uart->Start();
+
+    GimbalPIDInit();
+    AmmoPIDInit();
+
+
 
     gimbal_controller.Enable(false);  // 云台控制器
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
