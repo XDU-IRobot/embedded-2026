@@ -153,5 +153,4 @@ void FreemasterDebug() {
 
   Aimu_pitch = gimbal->imu_new->pitch();
   Aimu_yaw = gimbal->imu_new->yaw();
-
 }

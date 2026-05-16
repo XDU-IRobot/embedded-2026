@@ -161,5 +161,6 @@ int Char_ReFresh(String_Data string_Data);
 void Arc_Draw(Graph_Data *image, char imagename[3], uint32_t Graph_Operate, uint32_t Graph_Layer, uint32_t Graph_Color,
               uint32_t Graph_StartAngle, uint32_t Graph_EndAngle, uint32_t Graph_Width, uint32_t Start_x,
               uint32_t Start_y, uint32_t x_Length, uint32_t y_Length);
-void Test_Draw_String(rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee, float ammo_speed, uint8_t target_state);
+void Test_Draw_String(rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee, float ammo_speed,
+                      uint8_t target_state);
 #endif

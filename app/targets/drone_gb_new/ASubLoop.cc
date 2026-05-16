@@ -58,8 +58,8 @@ void Gimbal::SubLoop10Hz() {
   if (time_ % 50 == 0) {
     test_ui_num++;
     WS2812Control();
-    //Test_Draw_String(&referee_data_buffer, friction_speed, Aimbot.AimbotState);
-    Test_Draw_String(&referee_data_buffer, friction_speed+test_ui_num, test_ui_num);
+    // Test_Draw_String(&referee_data_buffer, friction_speed, Aimbot.AimbotState);
+    Test_Draw_String(&referee_data_buffer, friction_speed + test_ui_num, test_ui_num);
     time_ = 0;
   }
 }
