@@ -53,10 +53,13 @@ void Gimbal::SubLoop50Hz() {
     // robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
   }
 }
+uint8_t test_ui_num = 0;
 void Gimbal::SubLoop10Hz() {
-  if (time_ % 500 == 0) {
+  if (time_ % 50 == 0) {
+    test_ui_num++;
     WS2812Control();
     //Test_Draw_String(&referee_data_buffer, friction_speed, Aimbot.AimbotState);
+    Test_Draw_String(&referee_data_buffer, friction_speed+test_ui_num, test_ui_num);
     time_ = 0;
   }
 }

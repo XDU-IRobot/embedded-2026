@@ -78,6 +78,8 @@ float Acan2queue = 0.0f;
 // imunew
 float Aimu_pitch = 0.0f;
 float Aimu_yaw = 0.0f;
+uint16_t Aui_game_time = 0;
+uint8_t Aui_game_progress = 0;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_ = gimbal->yaw;  // 实际
@@ -151,4 +153,5 @@ void FreemasterDebug() {
 
   Aimu_pitch = gimbal->imu_new->pitch();
   Aimu_yaw = gimbal->imu_new->yaw();
+
 }

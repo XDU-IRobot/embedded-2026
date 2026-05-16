@@ -154,7 +154,6 @@ void Gimbal::AmmoControl() {
         auto_reverse_time = auto_reverse_time_max;
       }
     }
-
     shoot_controller.SetArmSpeed(friction_speed);  // 摩擦轮目标线速度（rad/s 或你的系统单位）
     shoot_controller.Update(friction_left->rpm(), friction_right->rpm(), dial_motor->rpm());
 

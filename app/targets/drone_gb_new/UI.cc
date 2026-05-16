@@ -592,67 +592,79 @@ uint16_t Get_CRC16_Check_Sum_UI(uint8_t *pchMessage, uint32_t dwLength, uint16_t
 
 String_Data man_text_fixed;
 //Graph_Data heat_arc;
-Graph_Data vision_rec;
 String_Data speed_text_fixed;      // 新增：用于显示静态字符 "SPD: "
 Float_Data speed_float_dynamic;    // 新增：用于显示动态弹速浮点数
 String_Data target_text_fixed;      // 新增：用于显示静态字符 "TARGET: "
 Float_Data target_state_ui;           // 新增：用于显示自瞄识别状态
-uint32_t heat_arc_end_angle;
+String_Data fire_text_fixed;
 uint8_t ui_init_flag = 0;
+bool is_fire_ui = false;
+uint16_t game_time = 0;
+uint8_t game_progress = 0;
 void Test_Draw_String(rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee, float ammo_speed, uint8_t target_state) {
-  // heat_arc_end_angle = (uint32_t)(referee->data().power_heat_data.shooter_17mm_1_barrel_heat * 360.0f /
-  //                               referee->data().robot_status.shooter_barrel_heat_limit);
-  // if (heat_arc_end_angle == 0) {
-  //   heat_arc_end_angle = 1;
-  // }
-  //MAN字符
-  Char_Draw(&man_text_fixed, "DOG", UI_Graph_ADD, 0, UI_Color_Pink,
-    100, 4, 5, 830, 880, "MAN\n");
 
-  //视觉视野方框
-  Rectangle_Draw(&vision_rec, "REC", UI_Graph_ADD, 2, UI_Color_Green,
-    3, 200, 200, 1720, 980);
+  // 1. 判断当前是初始化阶段（ADD）还是运行更新阶段（Change）
+  // 状态 0~3 是初始化，状态 4 是持续刷新
+  uint32_t dynamic_operate = (ui_init_flag <= 3) ? UI_Graph_ADD : UI_Graph_Change;
+  game_progress = referee->data().game_status.game_progress;
+  game_time = referee->data().game_status.stage_remain_time;
+  if (referee->data().game_status.stage_remain_time <= 390 && referee->data().game_status.game_progress == 4 && is_fire_ui == false) {
+    ui_init_flag = 5;
+    //开飞镖Fire
+    Char_Draw(&fire_text_fixed, "FIR", UI_Graph_ADD, 0, UI_Color_Pink,
+    100, 5, 5, 1500, 850, "FIRE\n");
+  }
+  // 2. 静态字符只发一次，始终保持 ADD 即可
 
-  // 静态弹速前缀 "SPD: "
-  Char_Draw(&speed_text_fixed, "SPD", UI_Graph_ADD, 0, UI_Color_Yellow,
-    20, 5, 2, 300, 800, "SPD:\n");
 
-  // 动态弹速数值
-  Float_Draw(&speed_float_dynamic, "SPF", UI_Graph_ADD, 0, UI_Color_Yellow,
-    20, 1, 2, 350, 800, ammo_speed);
-
-  // 静态自瞄状态前缀 "STARGET: "
-  Char_Draw(&target_text_fixed, "TAR", UI_Graph_ADD, 0, UI_Color_Yellow,
-    20, 9, 2, 300, 650, "TARGET: \n");
-
-  // 动态自瞄状态
-  Float_Draw(&target_state_ui, "TARS", UI_Graph_ADD, 0, UI_Color_Yellow,
-    20, 1, 2, 350, 650, (float)target_state);
-
-  // //热量环
-  // Arc_Draw(&heat_arc, "ARC", UI_Graph_ADD, 1, UI_Color_Cyan,
-  //   0, heat_arc_end_angle, 10, 960, 540, 100, 100);
-
+  if (ui_init_flag <= 2) {
+    //字符MAN
+    Char_Draw(&man_text_fixed, "DOG", UI_Graph_ADD, 0, UI_Color_Pink,
+      100, 4, 5, 830, 880, "MAN\n");
+    //字符SPD
+    Char_Draw(&speed_text_fixed, "SPD", UI_Graph_ADD, 0, UI_Color_Yellow,
+      20, 5, 2, 300, 800, "SPD:\n");
+    //字符TARGET
+    Char_Draw(&target_text_fixed, "AMO", UI_Graph_ADD, 0, UI_Color_Yellow,
+      20, 8, 2, 300, 720, "TARGET:\n");
+  }
+  // 3. 动态浮点数使用动态操作类型（dynamic_operate）
+  if (ui_init_flag >= 3) {
+    //设定摩擦轮转速
+    Float_Draw(&speed_float_dynamic, "SPF", dynamic_operate, 0, UI_Color_Cyan,
+      20, 1, 2, 390, 800, ammo_speed);
+    //自瞄状态
+    Float_Draw(&target_state_ui, "TAR", dynamic_operate, 0, UI_Color_Cyan,
+      20, 1, 2, 435, 720, (float)target_state);
+  }
+  // 4. 分步状态机发送机制
   if (ui_init_flag == 0) {
     Char_ReFresh(man_text_fixed);
     ui_init_flag++;
-  } else if (ui_init_flag == 1) {
-    //UI_ReFresh(1, heat_arc);
-    UI_ReFresh(1, vision_rec);
-    ui_init_flag++;
   }
-  else if (ui_init_flag == 2) {
+  else if (ui_init_flag == 1) {
     Char_ReFresh(speed_text_fixed);
     ui_init_flag++;
   }
-  else if (ui_init_flag == 3) {
+  else if (ui_init_flag == 2) {
     Char_ReFresh(target_text_fixed);
     ui_init_flag++;
   }
-  else if (ui_init_flag == 4) {
-    //UI_ReFresh(2, heat_arc, *(Graph_Data*)&speed_float_dynamic);
-    UI_ReFresh(2, *(Graph_Data*)&speed_float_dynamic, target_state_ui);
+  else if (ui_init_flag == 3) {
+    // 第一次发送动态图形，由于前面赋予的是 UI_Graph_ADD，这里会在屏幕上创建它们！
+    UI_ReFresh(2, *(Graph_Data*)&speed_float_dynamic, *(Graph_Data*)&target_state_ui);
+    ui_init_flag++; // 进入状态 4
   }
-  //Char_ReFresh(man_text_fixed);
+  else if (ui_init_flag == 4) {
+    // 持续刷新动态图形，此时 dynamic_operate 已经是 UI_Graph_Change
+    UI_ReFresh(2, *(Graph_Data*)&speed_float_dynamic, *(Graph_Data*)&target_state_ui);
+  }
+  if (ui_init_flag == 5) {
+    Char_ReFresh(fire_text_fixed);
+    ui_init_flag--;
+    is_fire_ui = true;
+  }
+
+  // 触发 DMA 发送
   HAL_UART_Transmit_DMA(&huart6, Info_Arr, len);
 }
