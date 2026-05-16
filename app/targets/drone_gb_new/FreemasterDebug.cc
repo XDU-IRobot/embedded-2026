@@ -74,7 +74,7 @@ float Acan1drop = 0.0f;
 float Acan2drop = 0.0f;
 float Acan1queue = 0.0f;
 float Acan2queue = 0.0f;
-//imunew
+// imunew
 float Aimu_pitch = 0.0f;
 float Aimu_yaw = 0.0f;
 // 调试接口函数
@@ -150,5 +150,5 @@ void FreemasterDebug() {
   Acan2queue = gimbal->can2->stats().enqueue_fps;
 
   Aimu_pitch = gimbal->imu_new->pitch();
-  Aimu_yaw =gimbal->imu_new->yaw();
+  Aimu_yaw = gimbal->imu_new->yaw();
 }
