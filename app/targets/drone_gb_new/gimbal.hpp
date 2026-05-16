@@ -1,6 +1,6 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
-// 纯手瞄测试
+// 新librm库适配
 #include <librm.hpp>
 #include "can.h"
 #include "usart.h"
@@ -10,8 +10,6 @@
 #include "ControllerPidAmmo.hpp"
 #include "FreemasterDbug.hpp"
 #include "Usb.hpp"
-#include "Referee.hpp"
-#include "vt03.hpp"
 #include "WS2812b.hpp"
 
 extern void FreemasterDebug();
@@ -83,15 +81,12 @@ class Gimbal {
 
   rm::hal::ThrottledCan<128> *can1{nullptr};  // CAN 总线接口
   rm::hal::ThrottledCan<128> *can2{nullptr};  // CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};             // 遥控器串口接口
+  rm::hal::Serial<128> *dbus{nullptr};             // 遥控器串口接口
   rm::device::VT03 *vt03{nullptr};            // 图传对象
 
   rm::hal::SerialInterface *referee_uart;                                          // 裁判系统串口
-  rm::device::RxReferee *rx_referee{nullptr};                                      // 裁判系统收发类
   rm::device::Referee<rm::device::RefereeRevision::kNewV120> referee_data_buffer;  // 裁判系统数据缓冲区
-
   rm::hal::SerialInterface *vt03_uart;   // 图传串口
-  rm::device::Rxvt03 *rx_vt03{nullptr};  // 图传收发类
 
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<1> device_vt03;    // 新遥控器管理器
@@ -150,18 +145,15 @@ class Gimbal {
     time_ = 0;  // 系统心跳置0
     can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
     can2 = new rm::hal::ThrottledCan<128>{3000, hcan2};
-    dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    dbus = new rm::hal::Serial<128>{huart3, false,true};
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     imu_new = new rm::device::HipnucImuCan{*can2, 8};
     rc = new rm::device::DR16{*dbus};
     vt03 = new rm::device::VT03;
 
-    referee_uart = new rm::hal::Serial{huart6, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-    rx_referee = new rm::device::RxReferee{*referee_uart};
-
-    vt03_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-    rx_vt03 = new rm::device::Rxvt03{*vt03_uart};
+    referee_uart = new rm::hal::Serial<256>{huart6, false,false};
+    vt03_uart = new rm::hal::Serial<256>{huart1, true,true};
 
     yaw_motor = new rm::device::GM6020{*can2, 7};
     pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>{
@@ -187,12 +179,25 @@ class Gimbal {
     can2->SetFilter(0, 0);  // 设置滤波器
     can2->Begin();
     rc->Begin();
-    imu_new;
-    rx_referee->Begin();  // 启动裁判系统
-    rx_vt03->Begin();     // 启动图传串口
 
     GimbalPIDInit();
     AmmoPIDInit();
+
+    // 裁判系统串口接收
+    const rm::hal::SerialRxCallbackFunction ref_rx_callback = [&](const etl::span<const uint8_t> &data) {
+      for (const auto byte : data) {
+        referee_data_buffer << byte;
+      }
+    };
+    referee_uart->AttachRxCallback(ref_rx_callback);
+
+    // 图传串口接收
+    rm::hal::SerialRxCallbackFunction tc_rx_callback = [&](const etl::span<const uint8_t> &data) {
+      for (const auto byte : data) {
+        *vt03 << byte;
+      }
+    };
+    vt03_uart->AttachRxCallback(tc_rx_callback);
 
     gimbal_controller.Enable(false);  // 云台控制器
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);

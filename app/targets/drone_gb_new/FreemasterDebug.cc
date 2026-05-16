@@ -106,8 +106,6 @@ void FreemasterDebug() {
   Arobot_id = gimbal->robot_id;  // 裁判系统测试
   Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
 
-  Arc_vt03_cnt = gimbal->rx_vt03->rx_callback_cnt;  // 图传系统测试
-  Arc_vt03_cnt1 = gimbal->rx_vt03->rx_byte_cnt;
   Arc_vt03_left_x = gimbal->vt03->data().left_x;
   Arc_vt03_left_y = gimbal->vt03->data().left_y;
 

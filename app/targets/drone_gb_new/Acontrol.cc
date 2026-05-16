@@ -14,12 +14,12 @@ void Gimbal::GimbalControl() {
     yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
     yaw_delta = 0.0f;
 
-    if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kCtrl)) {
+    if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl)) {
       // CTRL held: 键盘控制(W/S/A/D), 遥控器和鼠标输入失效
-      if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kW)) rc_pitch_data -= 0.0001f;
-      if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kS)) rc_pitch_data += 0.0001f;
-      if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
-      if (vt03->data().keyboard_key & static_cast<u16>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
+      if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW)) rc_pitch_data -= 0.0001f;
+      if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS)) rc_pitch_data += 0.0001f;
+      if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
+      if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
     } else {
       if (Rcchoose()) {
         yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
@@ -230,17 +230,17 @@ float Gimbal::SpeedAver() {
 
 void Gimbal::WS2812Control() {
   auto key = vt03->data().keyboard_key;
-  bool w_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kW);
-  bool a_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kA);
-  bool s_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kS);
-  bool d_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kD);
-  bool q_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kQ);
-  bool e_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kE);
-  bool shift_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kShift);
-  bool ctrl_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kCtrl);
-  bool z_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kZ);
-  bool x_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kX);
-  bool c_pressed = key & static_cast<u16>(rm::device::VT03::KeyboardKey::kC);
+  bool w_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW);
+  bool a_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA);
+  bool s_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS);
+  bool d_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD);
+  bool q_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kQ);
+  bool e_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kE);
+  bool shift_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kShift);
+  bool ctrl_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl);
+  bool z_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kZ);
+  bool x_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kX);
+  bool c_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kC);
 
   if (z_pressed && x_pressed && c_pressed) {
     if (led_blink_time < 5) {
