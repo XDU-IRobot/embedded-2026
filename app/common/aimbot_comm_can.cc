@@ -29,15 +29,23 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     ReportStatus(kOk);
     aimbot_state_ = static_cast<u8>(msg->data[0]);
     aimbot_target_ = static_cast<u8>(msg->data[1]);
-    yaw_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[2]) << 8) | msg->data[3])) * kDegToRad;
-    pitch_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5])) * kDegToRad;
+    yaw_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[2]) << 8) | msg->data[3])) *
+           kDegToRad;
+    pitch_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5])) *
+             kDegToRad;
     nuc_start_flag_ = static_cast<u8>(msg->data[6]);
   } else if (msg->rx_std_id == 0x160) {
     ReportStatus(kOk);
-    yaw_vel_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[0]) << 8) | msg->data[1])) * kDegToRad;
-    pitch_vel_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[2]) << 8) | msg->data[3])) * kDegToRad;
-    yaw_acc_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5])) * kDegToRad;
-    pitch_acc_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[6]) << 8) | msg->data[7])) * kDegToRad;
+    yaw_vel_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[0]) << 8) | msg->data[1])) *
+               kDegToRad;
+    pitch_vel_ =
+        modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[2]) << 8) | msg->data[3])) *
+        kDegToRad;
+    yaw_acc_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5])) *
+               kDegToRad;
+    pitch_acc_ =
+        modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[6]) << 8) | msg->data[7])) *
+        kDegToRad;
   }
 }
 

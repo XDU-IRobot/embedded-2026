@@ -98,21 +98,21 @@ class Gimbal2DofDynamics {
     Y.setZero();
 
     // Yaw 轴动力学
-    Y(0, 0) = sin2_q2 * ddq1 + sin_2q2 * dq1_dq2;   // theta_0: I1zz_com
-    Y(0, 1) = cos2_q2 * ddq1 - sin_2q2 * dq1_dq2;   // theta_1: I2xx_com
-    Y(0, 3) = gx_sin_gy_cos_q1 * cos_q2;             // theta_3: m2*l2x 水平偏心
-    Y(0, 4) = gx_sin_gy_cos_q1 * sin_q2;             // theta_4: m2*l2z 垂直偏心
-    Y(0, 5) = dq1;                                   // theta_5: fv1 粘滞摩擦
-    Y(0, 6) = std::tanh(dq1);                        // theta_6: fc1 库仑摩擦
+    Y(0, 0) = sin2_q2 * ddq1 + sin_2q2 * dq1_dq2;  // theta_0: I1zz_com
+    Y(0, 1) = cos2_q2 * ddq1 - sin_2q2 * dq1_dq2;  // theta_1: I2xx_com
+    Y(0, 3) = gx_sin_gy_cos_q1 * cos_q2;           // theta_3: m2*l2x 水平偏心
+    Y(0, 4) = gx_sin_gy_cos_q1 * sin_q2;           // theta_4: m2*l2z 垂直偏心
+    Y(0, 5) = dq1;                                 // theta_5: fv1 粘滞摩擦
+    Y(0, 6) = std::tanh(dq1);                      // theta_6: fc1 库仑摩擦
 
     // Pitch 轴动力学
-    Y(1, 0) = -0.5f * sin_2q2 * dq1_sq;                                      // theta_0
-    Y(1, 1) = 0.5f * sin_2q2 * dq1_sq;                                       // theta_1
-    Y(1, 2) = ddq2;                                                            // theta_2: I2yy_com
-    Y(1, 3) = gx_cos_gy_sin_q1 * sin_q2 + gz * cos_q2;                       // theta_3
-    Y(1, 4) = -gx_cos_gy_sin_q1 * cos_q2 + gz * sin_q2;                      // theta_4
-    Y(1, 7) = dq2;                                                             // theta_7: fv2
-    Y(1, 8) = std::tanh(dq2);                                                  // theta_8: fc2
+    Y(1, 0) = -0.5f * sin_2q2 * dq1_sq;                  // theta_0
+    Y(1, 1) = 0.5f * sin_2q2 * dq1_sq;                   // theta_1
+    Y(1, 2) = ddq2;                                      // theta_2: I2yy_com
+    Y(1, 3) = gx_cos_gy_sin_q1 * sin_q2 + gz * cos_q2;   // theta_3
+    Y(1, 4) = -gx_cos_gy_sin_q1 * cos_q2 + gz * sin_q2;  // theta_4
+    Y(1, 7) = dq2;                                       // theta_7: fv2
+    Y(1, 8) = std::tanh(dq2);                            // theta_8: fc2
 
     return Y;
   }

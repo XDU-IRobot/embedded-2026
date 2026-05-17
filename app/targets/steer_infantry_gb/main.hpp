@@ -47,8 +47,8 @@ inline struct GlobalWarehouse {
   rm::device::GkSupercap *super_cap{nullptr};                       ///< 超级电容接口
   rm::hal::Serial *referee_uart{nullptr};                           ///< 裁判系统串口接口
   rm::hal::Serial *ident_uart{nullptr};
-  rm::device::RxReferee *rx_referee{nullptr};                       ///< 裁判系统接口
-  rm::device::VT03 *image_data{nullptr};                            ///< 裁判系统数据缓冲区
+  rm::device::RxReferee *rx_referee{nullptr};  ///< 裁判系统接口
+  rm::device::VT03 *image_data{nullptr};       ///< 裁判系统数据缓冲区
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
