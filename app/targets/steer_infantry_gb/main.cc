@@ -92,12 +92,12 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(100.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(400.0f).SetKi(0.0f).SetKd(10000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // gimbal_controller.pid().yaw_position.SetKp(100.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(10.0f).SetKi(0.0f).SetKd(200.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(45.0f).SetKi(0.0f).SetKd(800.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // gimbal_controller.pid().pitch_position.SetKp(10.0f).SetKi(0.0f).SetKd(200.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   // gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);

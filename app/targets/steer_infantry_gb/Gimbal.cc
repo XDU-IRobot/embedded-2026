@@ -297,8 +297,8 @@ void Gimbal::GimbalMovePIDUpdate() {
 }
 
 void Gimbal::ApplyNormalGimbalPID() {
-  globals->gimbal_controller.pid().yaw_position.SetKp(400.0f).SetKi(0.0f).SetKd(12000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
-  globals->gimbal_controller.pid().pitch_position.SetKp(40.0f).SetKi(0.0f).SetKd(800.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  globals->gimbal_controller.pid().yaw_position.SetKp(400.0f).SetKi(0.0f).SetKd(10000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  globals->gimbal_controller.pid().pitch_position.SetKp(45.0f).SetKi(0.0f).SetKd(800.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   // globals->gimbal_controller.pid().yaw_position.SetKp(400.0f).SetKi(0.0f).SetKd(10000.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   // globals->gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.0f).SetKd(500.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
 }
@@ -606,12 +606,12 @@ void Gimbal::GimbalIdentifyDataSend() {
 
 void Gimbal::SetMotorCurrent() {
   globals->yaw_motor->SetCurrent(static_cast<i16>(gimbal->yaw_current_));
-  // globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
-  // globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
-  // globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
+  globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
+  globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
+  globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
 
   // globals->yaw_motor->SetCurrent(0);
-  globals->friction_left->SetCurrent(0);
-  globals->friction_right->SetCurrent(0);
-  globals->dial_motor->SetCurrent(0);
+  // globals->friction_left->SetCurrent(0);
+  // globals->friction_right->SetCurrent(0);
+  // globals->dial_motor->SetCurrent(0);
 }
