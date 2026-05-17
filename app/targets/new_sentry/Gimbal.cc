@@ -262,7 +262,7 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), -globals->hipnuc_imu->gyro_z(),
                                     globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->hipnuc_imu->pitch(), globals->hipnuc_imu->gyro_x(), 2.0f);
-  const f32 gravity_compensation_ = -2.3f * std::cos(globals->hipnuc_imu->pitch() - 0.38f);
+  const f32 gravity_compensation_ = -2.65f * std::cos(globals->hipnuc_imu->pitch() - 0.38f);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.0f, 10.0f);
 }
