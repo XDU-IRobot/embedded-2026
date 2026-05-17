@@ -106,17 +106,17 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // 上部 Yaw PID 参数
-  gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(20000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
-  // gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(20000.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_position.SetKp(0.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
   gimbal_controller.pid().down_yaw_position.SetKp(38.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(2.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(80.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
-  // gimbal_controller.pid().pitch_position.SetKp(80.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().pitch_position.SetKp(80.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
 }
 
@@ -295,6 +295,7 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_chassis.Update();
+  gimbal->GimbalIdentifyDataSend();
   for (i8 i = 0; i < 7; i++) {
     if (globals->wfly_et16s->switch_position(i + 4) != SwitchPosition::kUnknown) {
       if (globals->last_switch[i] != globals->wfly_et16s->switch_position(i + 4)) {

@@ -34,9 +34,12 @@ constexpr size_t kIdentifyHarmonicCount = 5;
 constexpr f32 kIdentifyBaseFreqHz = 0.1f;
 constexpr f32 kEncoderTicksPerRev = 8192.0f;
 constexpr f32 kRpmToRadPerSec = static_cast<f32>(M_PI) * 2.0f / 60.0f;
-constexpr f32 kIdentifyPitchTopLimit = -1.4521f;
-constexpr f32 kIdentifyPitchBottomLimit = -0.3057f;
+constexpr f32 kIdentifyPitchTopLimit = -0.7f;
+constexpr f32 kIdentifyPitchBottomLimit = 0.6f;
 constexpr f32 kIdentifyPitchCenter = (kIdentifyPitchTopLimit + kIdentifyPitchBottomLimit) * 0.5f;
+constexpr f32 kIdentifyYawTopLimit = 2310.0f;
+constexpr f32 kIdentifyYawBottomLimit = 410.0f;
+constexpr f32 kIdentifyYawCenter = (kIdentifyYawTopLimit + kIdentifyYawBottomLimit) * 0.5f;
 constexpr f32 kIdentifyYawAmp[kIdentifyHarmonicCount] = {3.5f, -2.0f, 1.2f, -0.8f, 0.5f};
 constexpr f32 kIdentifyPitchAmp[kIdentifyHarmonicCount] = {0.34f, -0.18f, 0.11f, -0.07f, 0.04f};
 constexpr f32 kGm6020VoltageCmdLimit = 25000.0f;
@@ -485,7 +488,7 @@ void Gimbal::GimbalIdentifyUpdate() {
     gimbal->identify_yaw_encoder_counter_.Update(globals->up_yaw_motor->encoder());
     gimbal->identify_active_ = true;
     gimbal->identify_time_s_ = 0.0f;
-    gimbal->identify_yaw_center_ = 0.0f;
+    gimbal->identify_yaw_center_ = kIdentifyYawCenter;
     gimbal->identify_pitch_center_ = kIdentifyPitchCenter;
     gimbal->identify_yaw_position_ = 0.0f;
     gimbal->identify_yaw_speed_ = 0.0f;
@@ -494,8 +497,7 @@ void Gimbal::GimbalIdentifyUpdate() {
   }
 
   gimbal->identify_yaw_encoder_counter_.Update(globals->up_yaw_motor->encoder());
-  gimbal->identify_yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
-                                   kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
+  gimbal->identify_yaw_position_ = globals->up_yaw_motor->encoder();
   gimbal->identify_yaw_speed_ = static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec;
   gimbal->identify_pitch_position_ = globals->pitch_motor->pos();
   gimbal->identify_pitch_speed_ = globals->pitch_motor->vel();
@@ -509,7 +511,7 @@ void Gimbal::GimbalIdentifyTargetUpdate() {
   const auto pitch =
       EvaluateIdentifyTrajectory(gimbal->identify_pitch_center_, kIdentifyPitchAmp, gimbal->identify_time_s_);
 
-  gimbal->gimbal_up_yaw_target_ = yaw.q;
+  gimbal->gimbal_up_yaw_target_ = rm::modules::Clamp(yaw.q, kIdentifyYawBottomLimit, kIdentifyYawTopLimit);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(pitch.q, kIdentifyPitchTopLimit, kIdentifyPitchBottomLimit);
   gimbal->identify_time_s_ += gimbal->Ts;
 }

@@ -110,7 +110,7 @@ inline class Gimbal {
   void EulerToQuaternion(f32 yaw, f32 pitch, f32 roll);
 
   EncoderCounter identify_yaw_encoder_counter_;
-  f32 Kf = 2.0f;
+  f32 Kf = 1.0f;
   f32 Ts = 0.002f;
   bool identify_active_ = false;
   f32 identify_time_s_ = 0.0f;
