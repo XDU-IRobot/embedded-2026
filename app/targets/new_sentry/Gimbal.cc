@@ -138,9 +138,9 @@ void Gimbal::GimbalTask() {
   gimbal->heat_limit_ = globals->referee_data->data().robot_status.shooter_barrel_heat_limit;
   gimbal->heat_current_ = globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat;
   a = gimbal->gimbal_up_yaw_target_;
-  b = globals->up_yaw_motor->encoder();
+  b = globals->hipnuc_imu->yaw();
   c = gimbal->gimbal_pitch_target_;
-  d = globals->pitch_motor->pos();
+  d = globals->hipnuc_imu->pitch();
   e = gimbal->up_yaw_current_;
 }
 
@@ -380,80 +380,80 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 }
 
 void Gimbal::GimbalMovePIDUpdate() {
-  fm_aimbot_state = static_cast<f32>(globals->aimbot_communicator->aimbot_state());
-  fm_aimbot_target = static_cast<f32>(globals->aimbot_communicator->aimbot_target());
-  fm_aimbot_yaw = globals->aimbot_communicator->yaw();
-  fm_aimbot_pitch = globals->aimbot_communicator->pitch();
-  fm_aimbot_nuc_start_flag = static_cast<f32>(globals->aimbot_communicator->nuc_start_flag());
-
-  fm_gimbal_yaw = globals->ahrs.euler_angle().yaw;
-  fm_gimbal_pitch = globals->ahrs.euler_angle().pitch;
-
-  f32 yaw_speed_ref;
-  f32 pitch_speed_ref;
-  f32 yaw_accel_ref;
-  f32 pitch_accel_ref;
-
-  if (gimbal->GimbalMove_ == kGbAimbot && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
-    // 自瞄模式：直接使用 NUC 下发的目标速度/加速度
-    yaw_speed_ref = globals->aimbot_communicator->yaw_vel();
-    pitch_speed_ref = globals->aimbot_communicator->pitch_vel();
-    yaw_accel_ref = globals->aimbot_communicator->yaw_acc();
-    pitch_accel_ref = globals->aimbot_communicator->pitch_acc();
-    fm_aimbot_yaw_vel = yaw_speed_ref;
-    fm_aimbot_pitch_vel = pitch_speed_ref;
-    fm_aimbot_yaw_acc = yaw_accel_ref;
-    fm_aimbot_pitch_acc = pitch_accel_ref;
-  } else {
-    // 遥控模式：从位置目标差分得到速度/加速度
-    const f32 yaw_delta = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_ - gimbal->last_yaw_target_,
-                                            -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
-    yaw_speed_ref = rm::modules::Clamp(yaw_delta / gimbal->Ts, -kNormalFfMaxYawSpeed, kNormalFfMaxYawSpeed);
-    pitch_speed_ref = rm::modules::Clamp((gimbal->gimbal_pitch_target_ - gimbal->last_pitch_target_) / gimbal->Ts,
-                                         -kNormalFfMaxPitchSpeed, kNormalFfMaxPitchSpeed);
-    yaw_accel_ref = rm::modules::Clamp((yaw_speed_ref - gimbal->last_yaw_speed_ref_) / gimbal->Ts,
-                                       -kNormalFfMaxYawAccel, kNormalFfMaxYawAccel);
-    pitch_accel_ref = rm::modules::Clamp((pitch_speed_ref - gimbal->last_pitch_speed_ref_) / gimbal->Ts,
-                                         -kNormalFfMaxPitchAccel, kNormalFfMaxPitchAccel);
-  }
-
-  gimbal->yaw_speed_ff_ = gimbal->Kf * yaw_speed_ref;
-  gimbal->last_yaw_target_ = gimbal->gimbal_up_yaw_target_;
-  gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
-  gimbal->last_yaw_speed_ref_ = yaw_speed_ref;
-  gimbal->last_pitch_speed_ref_ = pitch_speed_ref;
-
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_pitch_target_,
-                                       gimbal->yaw_speed_ff_);
-  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), -globals->hipnuc_imu->gyro_z(),
-                                    globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
-                                    globals->hipnuc_imu->pitch(), globals->hipnuc_imu->gyro_x(), 2.0f);
-  const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
-  const auto ff =
-      g_gimbal_dynamics.ComputeFf(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ref,
-                                  pitch_speed_ref, yaw_accel_ref, pitch_accel_ref, g_stationary);
-  gimbal->yaw_torque_ = ff.x();
-  fm_ff_yaw_torque = ff.x();
-  fm_ff_pitch_torque = ff.y();
-  fm_pid_yaw = globals->gimbal_controller.output().up_yaw;
-  fm_pid_pitch = globals->gimbal_controller.output().pitch;
-  const f32 yaw_ff_voltage =
-      YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec);
-  fm_ff_yaw_voltage = yaw_ff_voltage;
-  gimbal->up_yaw_current_ = globals->gimbal_controller.output().up_yaw +
-                            static_cast<f32>(globals->up_yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
-  gimbal->up_yaw_current_ =
-      rm::modules::Clamp(gimbal->up_yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
-  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y();
-  gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
-  // globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
+  // fm_aimbot_state = static_cast<f32>(globals->aimbot_communicator->aimbot_state());
+  // fm_aimbot_target = static_cast<f32>(globals->aimbot_communicator->aimbot_target());
+  // fm_aimbot_yaw = globals->aimbot_communicator->yaw();
+  // fm_aimbot_pitch = globals->aimbot_communicator->pitch();
+  // fm_aimbot_nuc_start_flag = static_cast<f32>(globals->aimbot_communicator->nuc_start_flag());
+  //
+  // fm_gimbal_yaw = globals->ahrs.euler_angle().yaw;
+  // fm_gimbal_pitch = globals->ahrs.euler_angle().pitch;
+  //
+  // f32 yaw_speed_ref;
+  // f32 pitch_speed_ref;
+  // f32 yaw_accel_ref;
+  // f32 pitch_accel_ref;
+  //
+  // if (gimbal->GimbalMove_ == kGbAimbot && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
+  //   // 自瞄模式：直接使用 NUC 下发的目标速度/加速度
+  //   yaw_speed_ref = globals->aimbot_communicator->yaw_vel();
+  //   pitch_speed_ref = globals->aimbot_communicator->pitch_vel();
+  //   yaw_accel_ref = globals->aimbot_communicator->yaw_acc();
+  //   pitch_accel_ref = globals->aimbot_communicator->pitch_acc();
+  //   fm_aimbot_yaw_vel = yaw_speed_ref;
+  //   fm_aimbot_pitch_vel = pitch_speed_ref;
+  //   fm_aimbot_yaw_acc = yaw_accel_ref;
+  //   fm_aimbot_pitch_acc = pitch_accel_ref;
+  // } else {
+  //   // 遥控模式：从位置目标差分得到速度/加速度
+  //   const f32 yaw_delta = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_ - gimbal->last_yaw_target_,
+  //                                           -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
+  //   yaw_speed_ref = rm::modules::Clamp(yaw_delta / gimbal->Ts, -kNormalFfMaxYawSpeed, kNormalFfMaxYawSpeed);
+  //   pitch_speed_ref = rm::modules::Clamp((gimbal->gimbal_pitch_target_ - gimbal->last_pitch_target_) / gimbal->Ts,
+  //                                        -kNormalFfMaxPitchSpeed, kNormalFfMaxPitchSpeed);
+  //   yaw_accel_ref = rm::modules::Clamp((yaw_speed_ref - gimbal->last_yaw_speed_ref_) / gimbal->Ts,
+  //                                      -kNormalFfMaxYawAccel, kNormalFfMaxYawAccel);
+  //   pitch_accel_ref = rm::modules::Clamp((pitch_speed_ref - gimbal->last_pitch_speed_ref_) / gimbal->Ts,
+  //                                        -kNormalFfMaxPitchAccel, kNormalFfMaxPitchAccel);
+  // }
+  //
+  // gimbal->yaw_speed_ff_ = gimbal->Kf * yaw_speed_ref;
+  // gimbal->last_yaw_target_ = gimbal->gimbal_up_yaw_target_;
+  // gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
+  // gimbal->last_yaw_speed_ref_ = yaw_speed_ref;
+  // gimbal->last_pitch_speed_ref_ = pitch_speed_ref;
+  //
+  // globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,
   //                                      gimbal->gimbal_pitch_target_);
   // globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), -globals->hipnuc_imu->gyro_z(),
   //                                   globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
   //                                   globals->hipnuc_imu->pitch(), globals->hipnuc_imu->gyro_x(), 2.0f);
-  // const f32 gravity_compensation_ = -2.65f * std::cos(globals->hipnuc_imu->pitch() - 0.38f);
-  // gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
-  // gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.0f, 10.0f);
+  // const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
+  // const auto ff =
+  //     g_gimbal_dynamics.ComputeFf(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ref,
+  //                                 pitch_speed_ref, yaw_accel_ref, pitch_accel_ref, g_stationary);
+  // gimbal->yaw_torque_ = ff.x();
+  // fm_ff_yaw_torque = ff.x();
+  // fm_ff_pitch_torque = ff.y();
+  // fm_pid_yaw = globals->gimbal_controller.output().up_yaw;
+  // fm_pid_pitch = globals->gimbal_controller.output().pitch;
+  // const f32 yaw_ff_voltage =
+  //     YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec);
+  // fm_ff_yaw_voltage = yaw_ff_voltage;
+  // gimbal->up_yaw_current_ = globals->gimbal_controller.output().up_yaw +
+  //                           static_cast<f32>(globals->up_yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
+  // gimbal->up_yaw_current_ =
+  //     rm::modules::Clamp(gimbal->up_yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
+  // gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y();
+  // gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
+  globals->gimbal_controller.SetTarget(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_down_yaw_target_,  //
+                                       gimbal->gimbal_pitch_target_);
+  globals->gimbal_controller.Update(globals->hipnuc_imu->yaw(), -globals->hipnuc_imu->gyro_z(),
+                                    globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
+                                    globals->hipnuc_imu->pitch(), globals->hipnuc_imu->gyro_x(), 2.0f);
+  const f32 gravity_compensation_ = -2.65f * std::cos(globals->hipnuc_imu->pitch() - 0.38f);
+  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + gravity_compensation_;
+  gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.0f, 10.0f);
 }
 
 void Gimbal::ApplyIdentifyGimbalPID() {
