@@ -27,7 +27,7 @@ inline class Gimbal {
   u16 perception_time_ = 0;    // 全向感知运动时间
   u16 single_shoot_time_ = 0;  // 单发时间
 
-  f32 up_yaw_percept_target_ = 0.0f;   // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
+  f32 up_yaw_percept_target_ = 0.0f;  // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
   f32 down_yaw_percept_target_ = 0.f;  // 云台下部yaw轴感知目标数据（陀螺仪控制，弧度制，左正右负）
 
   f32 shoot_frequency_ = 0.0f;
