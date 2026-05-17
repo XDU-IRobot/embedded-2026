@@ -80,7 +80,7 @@ float Aimu_pitch = 0.0f;
 float Aimu_yaw = 0.0f;
 uint16_t Aui_game_time = 0;
 uint8_t Aui_game_progress = 0;
-//红蓝方
+// 红蓝方
 uint8_t Aid = 0;
 // 调试接口函数
 void FreemasterDebug() {
@@ -109,7 +109,7 @@ void FreemasterDebug() {
 
   Apitch_speed_tf = gimbal->pitch_speed_tf;  // 摩擦阻力补偿
 
-  Arobot_id = gimbal->referee_data_buffer.data().robot_status.robot_id; // 裁判系统测试
+  Arobot_id = gimbal->referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
   Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
 
   Arc_vt03_left_x = gimbal->vt03->data().left_x;

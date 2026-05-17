@@ -73,8 +73,8 @@ class Gimbal {
   float roll_comp_kp = 0.1f;     // TODO 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;  // TODO 最大补偿幅度（rad）
 
-  int robot_id = 0;    // 裁判系统测试
-  int ID_last = 0;  // 红蓝方离线标识位
+  int robot_id = 0;  // 裁判系统测试
+  int ID_last = 0;   // 红蓝方离线标识位
   float rc_vt03_left_x = 0.0f;
   int cnt = 0;  // 进自瞄次数测试
 
