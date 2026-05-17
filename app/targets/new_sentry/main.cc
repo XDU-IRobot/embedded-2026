@@ -53,6 +53,7 @@ void GlobalWarehouse::Init() {
   can2 = new rm::hal::Can{hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
+  ident_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   dbus = new rm::hal::Serial{huart3, 25, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
   referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
 
@@ -107,12 +108,16 @@ void GlobalWarehouse::GimbalPIDInit() {
   // 上部 Yaw PID 参数
   gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(20000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
   gimbal_controller.pid().down_yaw_position.SetKp(38.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(2.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(80.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().pitch_position.SetKp(80.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
+  // gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
@@ -160,9 +165,19 @@ void GlobalWarehouse::RCStateUpdate() {
         // 右拨杆打到中间挡位
         switch (globals->wfly_et16s->switch_position(rc_ch::SA)) {
           case SwitchPosition::kDown:
-            globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
-            gimbal->GimbalMove_ = kGbRemote;
-            chassis->ChassisMove_ = kCsRemote;
+            if (globals->wfly_et16s->switch_position(rc_ch::SE) == SwitchPosition::kMid) {
+              globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+              gimbal->GimbalMove_ = kGbIdentify;
+              chassis->ChassisMove_ = kNoForce;
+            } else if (globals->wfly_et16s->switch_position(rc_ch::SE) == SwitchPosition::kUp) {
+              globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+              gimbal->GimbalMove_ = kGbFfVerify;
+              chassis->ChassisMove_ = kNoForce;
+            } else {
+              globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
+              gimbal->GimbalMove_ = kGbRemote;
+              chassis->ChassisMove_ = kCsRemote;
+            }
             break;
           case SwitchPosition::kMid:
             globals->StateMachine_ = kTest;

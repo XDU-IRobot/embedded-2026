@@ -30,6 +30,8 @@ typedef enum {
 
   kCsRemote,    // 底盘遥控模式
   kCsNavigate,  // 底盘导航模式
+  kGbIdentify,
+  kGbFfVerify,
 } StateMachineType;
 
 inline struct GlobalWarehouse {
@@ -52,6 +54,7 @@ inline struct GlobalWarehouse {
   rm::device::HipnucImuCan *hipnuc_imu{nullptr};                        ///< IMU
   rm::device::BMI088 *imu{nullptr};                                     ///< IMU
 
+  rm::hal::Serial *ident_uart{nullptr};
   rm::hal::Serial *dbus{nullptr};  ///< 遥控器串口接口
   WflyET16s *wfly_et16s{nullptr};  ///< 天地飞遥控器
 

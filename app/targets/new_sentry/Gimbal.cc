@@ -1,6 +1,86 @@
 #include "Gimbal.hpp"
+#include "gimbal-tool-suite/dynamics/dynamics.hpp"
+#include <cstdio>
 
 f32 a, b, c, d;
+
+
+extern "C" {
+volatile f32 fm_ident_yaw_target = 0.0f;
+volatile f32 fm_ident_pitch_target = 0.0f;
+volatile f32 fm_ident_yaw_position = 0.0f;
+volatile f32 fm_ident_pitch_position = 0.0f;
+volatile f32 fm_ident_yaw_current = 0.0f;
+volatile f32 fm_ident_pitch_torque = 0.0f;
+volatile f32 fm_aimbot_state = 0.0f;
+volatile f32 fm_aimbot_target = 0.0f;
+volatile f32 fm_aimbot_yaw = 0.0f;
+volatile f32 fm_aimbot_pitch = 0.0f;
+volatile f32 fm_aimbot_nuc_start_flag = 0.0f;
+volatile f32 fm_aimbot_yaw_vel = 0.0f;
+volatile f32 fm_aimbot_pitch_vel = 0.0f;
+volatile f32 fm_aimbot_yaw_acc = 0.0f;
+volatile f32 fm_aimbot_pitch_acc = 0.0f;
+volatile f32 fm_gimbal_yaw = 0.0f;
+volatile f32 fm_gimbal_pitch = 0.0f;
+volatile f32 fm_ff_yaw_torque = 0.0f;
+volatile f32 fm_ff_pitch_torque = 0.0f;
+volatile f32 fm_pid_yaw = 0.0f;
+volatile f32 fm_pid_pitch = 0.0f;
+volatile f32 fm_ff_yaw_voltage = 0.0f;
+}
+
+namespace {
+constexpr size_t kIdentifyHarmonicCount = 5;
+constexpr f32 kIdentifyBaseFreqHz = 0.1f;
+constexpr f32 kEncoderTicksPerRev = 8192.0f;
+constexpr f32 kRpmToRadPerSec = static_cast<f32>(M_PI) * 2.0f / 60.0f;
+constexpr f32 kIdentifyPitchTopLimit = -1.4521f;
+constexpr f32 kIdentifyPitchBottomLimit = -0.3057f;
+constexpr f32 kIdentifyPitchCenter = (kIdentifyPitchTopLimit + kIdentifyPitchBottomLimit) * 0.5f;
+constexpr f32 kIdentifyYawAmp[kIdentifyHarmonicCount] = {3.5f, -2.0f, 1.2f, -0.8f, 0.5f};
+constexpr f32 kIdentifyPitchAmp[kIdentifyHarmonicCount] = {0.34f, -0.18f, 0.11f, -0.07f, 0.04f};
+constexpr f32 kGm6020VoltageCmdLimit = 25000.0f;
+constexpr f32 kGm6020BusVoltage = 24.0f;
+constexpr f32 kGm6020TorqueConstant = 0.741f;
+constexpr f32 kGm6020PhaseResistance = 1.8f;
+constexpr f32 kGm6020SpeedConstantRpmPerVolt = 13.33f;
+constexpr f32 kGm6020BackEmfConstant = 60.0f / (2.0f * static_cast<f32>(M_PI) * kGm6020SpeedConstantRpmPerVolt);
+constexpr f32 kNormalFfMaxYawSpeed = 8.0f;
+constexpr f32 kNormalFfMaxPitchSpeed = 4.0f;
+constexpr f32 kNormalFfMaxYawAccel = 80.0f;
+constexpr f32 kNormalFfMaxPitchAccel = 40.0f;
+}
+// 使用 gimbal-tool-suite 完整动力学模型（3D 重力补偿），参数来自 ident.ipynb 辨识结果
+Gimbal2DofDynamics g_gimbal_dynamics;
+bool InitDynamicsTheta() {
+  Eigen::Matrix<float, 9, 1> theta;
+  theta << 0.11313911f, 0.12711330f, 0.02701958f, 0.07856400f, 0.03824676f, 0.00151766f, 0.70682046f, 0.35594090f,
+      0.03705741f;
+  g_gimbal_dynamics.SetTheta(theta);
+  return true;
+}
+const bool g_dynamics_initialized = InitDynamicsTheta();
+
+struct IdentifyTrajectoryPoint {
+  f32 q;
+  f32 dq;
+  f32 ddq;
+};
+
+IdentifyTrajectoryPoint EvaluateIdentifyTrajectory(f32 center, const f32 (&amplitudes)[kIdentifyHarmonicCount], f32 t) {
+  IdentifyTrajectoryPoint point{center, 0.0f, 0.0f};
+  const f32 wf = 2.0f * static_cast<f32>(M_PI) * kIdentifyBaseFreqHz;
+  for (size_t i = 0; i < kIdentifyHarmonicCount; ++i) {
+    const f32 k = static_cast<f32>(i + 1);
+    const f32 kwf = k * wf;
+    const f32 phase = kwf * t;
+    point.q += amplitudes[i] * std::sin(phase);
+    point.dq += amplitudes[i] * kwf * std::cos(phase);
+    point.ddq -= amplitudes[i] * kwf * kwf * std::sin(phase);
+  }
+  return point;
+}
 
 void Gimbal::GimbalInit() {
   gimbal->gimbal_up_yaw_target_ = globals->hipnuc_imu->yaw();

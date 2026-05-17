@@ -6,7 +6,7 @@
 namespace rm::device {
 class AimbotCanCommunicator final : public CanDevice {
  public:
-  explicit AimbotCanCommunicator(rm::hal::CanInterface &can);
+  explicit AimbotCanCommunicator(hal::CanInterface &can);
   AimbotCanCommunicator(AimbotCanCommunicator &&other) noexcept = default;
   AimbotCanCommunicator() = delete;
   ~AimbotCanCommunicator() override = default;
@@ -16,10 +16,12 @@ class AimbotCanCommunicator final : public CanDevice {
   [[nodiscard]] f32 yaw() const;
   [[nodiscard]] f32 pitch() const;
   [[nodiscard]] u8 nuc_start_flag() const;
+  [[nodiscard]] f32 yaw_vel() const;
+  [[nodiscard]] f32 pitch_vel() const;
+  [[nodiscard]] f32 yaw_acc() const;
+  [[nodiscard]] f32 pitch_acc() const;
 
   void UpdateControl(f32 yaw, f32 pitch, f32 roll, u8 robot_id, u8 mode, u16 imu_count, f32 bullet_speed);
-  void UpdateQuaternion(f32 w, f32 x, f32 y, f32 z);
-  void UpdateControlFlag(u8 robot_id, u8 mode, u16 imu_count, u32 imu_time);
   void RxCallback(const hal::CanFrame *msg) override;
 
  private:
@@ -29,9 +31,14 @@ class AimbotCanCommunicator final : public CanDevice {
   f32 yaw_{};
   f32 pitch_{};
   u8 nuc_start_flag_{};
+  // 前馈目标值 (0x160)
+  f32 yaw_vel_{};
+  f32 pitch_vel_{};
+  f32 yaw_acc_{};
+  f32 pitch_acc_{};
   // 缓冲区
   u8 tx_buf_[8]{};
 };
 }  // namespace rm::device
 
-#endif  // AIMBOT_CAN_HPP
+#endif  // CAN_HPP
