@@ -27,7 +27,7 @@ inline class Gimbal {
   u16 perception_time_ = 0;    // 全向感知运动时间
   u16 single_shoot_time_ = 0;  // 单发时间
 
-  f32 up_yaw_percept_target_ = 0.0f;  // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
+  f32 up_yaw_percept_target_ = 0.0f;   // 云台上部yaw轴感知目标数据（编码器控制，弧度制，左正右负）
   f32 down_yaw_percept_target_ = 0.f;  // 云台下部yaw轴感知目标数据（陀螺仪控制，弧度制，左正右负）
 
   f32 shoot_frequency_ = 0.0f;
@@ -55,14 +55,16 @@ inline class Gimbal {
   const f32 lowest_pitch_angle_ = -0.7f;         // 云台pitch轴最低（弧度制）
   const u16 mid_up_yaw_pos_ = 1360;              // 云台上部yaw轴最大（编码器值）
   const u16 max_up_yaw_pos_ = 2310;              // 云台上部yaw轴最大（编码器值）
-  const u16 min_up_yaw_pos_ = 410;              // 云台上部yaw轴最小（编码器值）
+  const u16 min_up_yaw_pos_ = 410;               // 云台上部yaw轴最小（编码器值）
   const u16 down_yaw_move_high_ = 1910;          // 云台下部yaw轴运动高阈值（编码器值）
-  const u16 down_yaw_move_low_ = 810;           // 云台下部yaw轴运动低阈值（编码器值）
+  const u16 down_yaw_move_low_ = 810;            // 云台下部yaw轴运动低阈值（编码器值）
 
  public:
   void GimbalInit();
 
   void GimbalTask();
+
+  void GimbalIdentifyDataSend();
 
  private:
   void GimbalStateUpdate();
@@ -108,6 +110,8 @@ inline class Gimbal {
   void EulerToQuaternion(f32 yaw, f32 pitch, f32 roll);
 
   EncoderCounter identify_yaw_encoder_counter_;
+  f32 Kf = 2.0f;
+  f32 Ts = 0.002f;
   bool identify_active_ = false;
   f32 identify_time_s_ = 0.0f;
   f32 identify_yaw_center_ = 0.0f;
@@ -120,6 +124,9 @@ inline class Gimbal {
   f32 ff_verify_time_s_ = 0.0f;
   f32 yaw_torque_ = 0.0f;
   bool move_ff_initialized_ = false;
+  f32 yaw_speed_ff_ = 0.0f;
+  f32 up_yaw_current_ = 0.0f;
+  f32 last_yaw_target_ = 0.0f;
   f32 last_pitch_target_ = 0.0f;
   f32 last_yaw_speed_ref_ = 0.0f;
   f32 last_pitch_speed_ref_ = 0.0f;
