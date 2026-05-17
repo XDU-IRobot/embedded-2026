@@ -43,7 +43,6 @@ void GimbalImuSend(float w, float x, float y, float z, float fire_speed, uint16_
   GimbalImu.q3 = z;
   GimbalImu.fire_speed = fire_speed;
   GimbalImu.robot_id = robot_id;
-  GimbalImu.ID_ = gimbal->ID();
 
   UsbSendMessage(reinterpret_cast<uint8_t*>(&GimbalImu), (uint16_t)sizeof(GimbalImu), IMU_DATA_SEND_ID);
 }

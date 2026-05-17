@@ -38,7 +38,6 @@ typedef struct __attribute__((packed)) {
   float fire_speed;    // 弹速
   uint8_t robot_id;    // 机器人id
   uint8_t mode;        // 自瞄模式
-  uint8_t ID_;         // 红蓝方，蓝1红0
   uint8_t _EOF;        // 包尾
 } GimbalImuFrame_SCM_t;
 
