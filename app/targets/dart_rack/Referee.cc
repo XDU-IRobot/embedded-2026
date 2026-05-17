@@ -16,13 +16,11 @@ volatile u16 dart_latest_launch_cmd_time = 0; // 最后一次操作手确定发�
 
 namespace rm::device {
 RxReferee::RxReferee(rm::hal::SerialInterface &serial) : serial_(&serial) {
-  static rm::hal::SerialRxCallbackFunction rx_callback =
-      std::bind(&RxReferee::RxCallback, this, std::placeholders::_1, std::placeholders::_2);
-  this->serial_->AttachRxCallback(rx_callback);
+  this->serial_->AttachRxCallback([this](etl::span<const u8> data) { RxCallback(data); });
 }
 
 void RxReferee::Begin() {
-  this->serial_->Begin();
+  this->serial_->Start();
 
   // 注册裁判系统解析回调（主循环 Process() 解析完一帧后触发）
   dart_rack->referee_data_buffer->AttachCallback([](u16 cmd_id, u8 seq) {
@@ -71,11 +69,11 @@ void RxReferee::Begin() {
   });
 }
 
-void RxReferee::RxCallback(const std::vector<u8> &data, u16 rx_len) {
+void RxReferee::RxCallback(etl::span<const u8> data) {
   // DMA 中断回调：只做快速拷贝到环形缓冲区，不进行耗时操作
   u16 head = head_;
-  for (u16 i = 0; i < rx_len; i++) {
-    rx_ring_buf_[head] = data.at(i);
+  for (u16 i = 0; i < data.size(); i++) {
+    rx_ring_buf_[head] = data[i];
     head = (head + 1) & (kRingBufSize - 1);  // 2的幂次取模，比 % 快
   }
   head_ = head;  // 原子更新写指针

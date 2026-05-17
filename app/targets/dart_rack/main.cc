@@ -10,7 +10,6 @@
 #include "lcd_init.h"
 #include "sd_card.h"
 #include "../../LVGL/lvgl.h"
-#include "librm/device/actuator/dm_motor.hpp"
 
 extern "C" void init_lvgl_demo(void);
 

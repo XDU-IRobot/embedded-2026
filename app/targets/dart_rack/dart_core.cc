@@ -8,6 +8,10 @@
 DartRack *dart_rack;
 float yaw;
 
+// 硬件未使用 74HC126 收发器，提供空操作 GPIO 引脚
+static NopPin nop_tx_en;
+static NopPin nop_rx_en;
+
 void DartRack::Init() {
   // PID初始化
   load_motor_l_speed_pid_.SetKp(20).SetKi(1).SetKd(0).SetMaxOut(10000).SetMaxIout(20);
@@ -24,17 +28,18 @@ void DartRack::Init() {
   can2_ = new rm::hal::Can{hcan2};
 
   // UART1 用于 DR16 遥控器接收
-  dbus_ = new rm::hal::Serial{huart1, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  dbus_ = new rm::hal::Serial<128>{huart1, true,true};
   rc_ = new rm::device::DR16{*dbus_};
   rc_->Begin();
 
-  // UART2 用于 HiwonderServo 串口舵机控制
-  servo_uart = new rm::hal::Serial{huart2, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  add_servo_ = new rm::device::HiwonderServo{*servo_uart};
-  add_servo_->Begin();
+  // UART2 用于 HiwonderServo 串口舵机控制（总线舵机，ID 1 和 2 共享同一条 UART）
+  servo_uart = new rm::hal::Serial<128>{huart2, true, true};
+  add_servo_1_ = new rm::device::HiWonderServo{*servo_uart, nop_tx_en, nop_rx_en, 1};
+  add_servo_2_ = new rm::device::HiWonderServo{*servo_uart, nop_tx_en, nop_rx_en, 2};
+  servo_uart->Start();
 
   // UART3 用于 RxReferee 裁判系统
-  referee_uart = new rm::hal::Serial{huart3, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
+  referee_uart = new rm::hal::Serial<128>{huart3, true,true};
   rx_referee = new rm::device::RxReferee{*referee_uart};
   rx_referee->Begin();
 

@@ -5,7 +5,6 @@
 #include <cstdio>  // Added for printf
 #include "sd_card.h"
 #include "gpio.h"
-#include "librm/device/actuator/dm_motor.hpp"
 extern bool is_lvgl_running;
 extern volatile uint8_t g_add_limit_ever_hit;
 extern volatile uint8_t g_trigger_limit_ever_hit;
@@ -112,8 +111,8 @@ void DartStateMachineUpdate(DartState &state) {
     dart_rack->trigger_motor_force_->SetCurrent(0);
     dart_rack->add_motor_->SetCurrent(0);
     dart_rack->yaw_motor_->SetCurrent(0);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 1, 0);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 2, 0);
+    dart_rack->add_servo_1_->MoveTime(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 0);
+    dart_rack->add_servo_2_->MoveTime(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 0);
   } else if (state.adjust_mode.enabled == AbleState::kOn) {
     DartStateAdjustUpdate();
   } else if (state.add_adjust_mode.enabled == AbleState::kOn) {
@@ -285,8 +284,8 @@ void DartStateInitUpdate() {
     dart_rack->state_.manual_mode.init = PhaseState::kDone;
     dart_rack->yaw_motor_speed_pid_.Clear();
     dart_rack->yaw_motor_->SetCurrent(0);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 1, 0);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 2, 0);
+    dart_rack->add_servo_1_->MoveTime(static_cast<uint16_t>(DartRack::kServo1Init + 474.886f), 0);
+    dart_rack->add_servo_2_->MoveTime(static_cast<uint16_t>(DartRack::kServo2Init + 190.831f), 0);
   }
 }
 
@@ -553,8 +552,8 @@ void DartStateAddUpdate() {
     // 更新了 Kp=15.0, Kd=0.2 减小电机抵抗外部扭矩和抖动
     dart_rack->dm_motor_->SetMitCommand(dm_smooth, dm_limiter.current_velocity(), 0.0f, 25.0f, 1.0f);
 
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(target_servo1), 1, 10);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(target_servo2), 2, 10);
+    dart_rack->add_servo_1_->MoveTime(static_cast<uint16_t>(target_servo1), 10);
+    dart_rack->add_servo_2_->MoveTime(static_cast<uint16_t>(target_servo2), 10);
   }
 
   glb_add_motor_linear = dart_rack->add_motor_odometer_.linear_ticks();
@@ -672,8 +671,8 @@ void DartStateAddPlaceOnly() {
     float dm_smooth = dm_limiter.Update(0.001f);
     dart_rack->dm_motor_->SetMitCommand(dm_smooth, dm_limiter.current_velocity(), 0.0f, 25.0f, 1.0f);
 
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(target_servo1), 1, 10);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(target_servo2), 2, 10);
+    dart_rack->add_servo_1_->MoveTime(static_cast<uint16_t>(target_servo1), 10);
+    dart_rack->add_servo_2_->MoveTime(static_cast<uint16_t>(target_servo2), 10);
   }
 
   glb_add_motor_linear = dart_rack->add_motor_odometer_.linear_ticks();
@@ -787,10 +786,6 @@ void DartStateFireUpdate() {
       dart_rack->state_.manual_mode.fire = PhaseState::kDone;
       fire_running_time = 0;
     }
-  } else {
-    dart_rack->trigger_motor_force_->SetCurrent(0);
-    dart_rack->state_.manual_mode.fire = PhaseState::kDone;
-    fire_running_time = 0;
   }
 }
 
@@ -982,7 +977,7 @@ void DartStateAddAdjustUpdate() {
     if (glb_servo_1_target > 1000.0f) glb_servo_1_target = 1000.0f;
     if (glb_servo_1_target < 0.0f) glb_servo_1_target = 0.0f;
 
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(glb_servo_1_target), 1, 0);
+    dart_rack->add_servo_1_->MoveTime(static_cast<uint16_t>(glb_servo_1_target), 0);
   }
 
   int16_t left_y_val = dart_rack->rc_->left_y();
@@ -993,7 +988,7 @@ void DartStateAddAdjustUpdate() {
     if (glb_servo_2_target > 1000.0f) glb_servo_2_target = 1000.0f;
     if (glb_servo_2_target < 0.0f) glb_servo_2_target = 0.0f;
 
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(glb_servo_2_target), 2, 0);
+    dart_rack->add_servo_2_->MoveTime(static_cast<uint16_t>(glb_servo_2_target), 0);
   }
 
   // 更新拨弹电机的全局位置监视，方便FreeMaster查看

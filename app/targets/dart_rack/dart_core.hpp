@@ -1,11 +1,16 @@
 #pragma once
 
 #include <librm.hpp>
-#include "librm/device/actuator/hiwonder_servo.hpp"
 #include "usb.hpp"
 #include "encoder_counter.hpp"
 #include "Referee.hpp"
-#include "librm/device/actuator/dm_motor.hpp"
+
+/// 无操作 GPIO 引脚（硬件未使用 74HC126 收发器时，为 HiWonderServo 提供空实现）
+class NopPin : public rm::hal::PinInterface {
+ public:
+  void Write(bool) override {}
+  [[nodiscard]] bool Read() const override { return false; }
+};
 // 状态机变量定义
 enum class AbleState : uint8_t { kOff = 0, kOn = 1 };
 
@@ -122,9 +127,9 @@ struct DartRack {
   // 硬件接口
   rm::hal::Can *can1_{nullptr};  ///< CAN 总线接口
   rm::hal::Can *can2_{nullptr};
-  rm::hal::Serial *dbus_{nullptr};         ///< 遥控器串口接口
-  rm::hal::Serial *referee_uart{nullptr};  ///< 裁判系统串口接口
-  rm::hal::Serial *servo_uart{nullptr};    ///< 舵机串口接口
+  rm::hal::Serial<128> *dbus_{nullptr};         ///< 遥控器串口接口
+  rm::hal::Serial<128> *referee_uart{nullptr};  ///< 裁判系统串口接口
+  rm::hal::Serial<128> *servo_uart{nullptr};    ///< 舵机串口接口
   // 设备
   rm::device::DR16 *rc_{nullptr};                                                 ///< 遥控器
   rm::device::M3508 *load_motor_r_{nullptr};                                      ///< 右上膛电机
@@ -134,7 +139,8 @@ struct DartRack {
   rm::device::M2006 *yaw_motor_{nullptr};                                         ///< yaw轴调节电机
   rm::device::M2006 *add_motor_{nullptr};                                         ///< 加弹电机
   rm::device::JyMe02Can *yaw_encoder_{nullptr};                                   ///< 编码器
-  rm::device::HiwonderServo *add_servo_{nullptr};                                 ///< 加弹机械底部舵机
+  rm::device::HiWonderServo *add_servo_1_{nullptr};                               ///< 加弹机械底部舵机1 (ID=1)
+  rm::device::HiWonderServo *add_servo_2_{nullptr};                               ///< 加弹机械底部舵机2 (ID=2)
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *dm_motor_{nullptr};  ///< 达妙电机
   // 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
