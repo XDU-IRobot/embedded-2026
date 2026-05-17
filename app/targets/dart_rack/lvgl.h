@@ -13,8 +13,6 @@ extern "C" {
 #endif
 
 void init_lvgl_demo(void);
-void LvglHomingStart();
-bool LvglHomingUpdate();
 
 #ifdef __cplusplus
 }

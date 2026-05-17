@@ -27,8 +27,10 @@ void RxReferee::Begin() {
   // 注册裁判系统解析回调（主循环 Process() 解析完一帧后触发）
   dart_rack->referee_data_buffer->AttachCallback([](u16 cmd_id, u8 seq) {
     if (cmd_id == 0x0201) {
+      // 飞镖id (0x0201)
       g_robot_id = dart_rack->referee_data_buffer->data().robot_status.robot_id;  // 解析机器人的ID
     } else if (cmd_id == 0x0001) {
+      // 比赛进行阶段 (0x0001)
       auto progress = dart_rack->referee_data_buffer->data().game_status.game_progress;
       if (progress == 0)      game_status = 0;  // 未开始比赛
       else if (progress == 1) game_status = 1;  // 准备阶段

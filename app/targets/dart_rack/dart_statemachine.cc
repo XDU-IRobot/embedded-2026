@@ -139,7 +139,7 @@ void DartStateManualUpdate() {
         if (dart_rack->dart_count_ == DartCount::kFirst) {
           DartStateInitUpdate();
         } else {
-          dart_rack->state_.manual_mode.mode = ModeState::kload;
+          dart_rack->state_.manual_mode.init = PhaseState::kDone;
         }
       } else if (dart_rack->state_.manual_mode.init == PhaseState::kDone) {
         // 初始化完成，进入下一个阶段
@@ -178,6 +178,7 @@ void DartStateManualUpdate() {
     case ModeState::kAim:
       if (dart_rack->state_.manual_mode.aim == PhaseState::kUncomplete) {
         DartStateAimUpdate();
+       // dart_rack->state_.manual_mode.mode = ModeState::kFire;
       } else if (dart_rack->state_.manual_mode.aim == PhaseState::kDone) {
         // 瞄准完成，进入下一个阶段
         dart_rack->state_.manual_mode.mode = ModeState::kFire;
@@ -189,14 +190,8 @@ void DartStateManualUpdate() {
           dart_rack->rc_->right_x() == -660) {
         DartStateFireUpdate();
       } else if (dart_rack->state_.manual_mode.fire == PhaseState::kDone) {
-        // 发射完成，返回待机状态
-        uint8_t next_dart = static_cast<uint8_t>(dart_rack->dart_count_) + 1;
-        if (next_dart > 3) {
-          dart_rack->dart_count_ = DartCount::kFirst;
-          g_all_darts_completed = true;
-        } else {
-          dart_rack->dart_count_ = static_cast<DartCount>(next_dart);
-        }
+        // 发射完成，始终回到第三发
+        dart_rack->dart_count_ = DartCount::kFirst;
         DartManualModeClear(dart_rack->state_.manual_mode);
       }
       break;
@@ -382,6 +377,8 @@ void DartStateLoadUpdate() {
     dart_rack->state_.manual_mode.load = PhaseState::kDone;
     dart_rack->load_motor_l_->SetCurrent(0);
     dart_rack->load_motor_r_->SetCurrent(0);
+    dart_rack->load_motor_l_speed_pid_.Clear();
+    dart_rack->load_motor_r_speed_pid_.Clear();
   }
 }
 
@@ -426,8 +423,8 @@ void DartStateAddUpdate() {
       HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
       if (dart_rack->dart_count_ == DartCount::kThird || dart_rack->dart_count_ == DartCount::kFourth) {
         if (!g_add_limit_suppressed) {
-          if (dart_rack->add_motor_odometer_.linear_ticks() > 300000) {
-            float back_speed = (dart_rack->add_motor_odometer_.linear_ticks() < 500000) ? -1500.0f : -5000.0f;
+          if (dart_rack->add_motor_odometer_.linear_ticks() > 0) {
+            float back_speed = (dart_rack->add_motor_odometer_.linear_ticks() < 50000) ? -3000.0f : -6000.0f;
             dart_rack->add_motor_speed_pid_.Update(back_speed, dart_rack->add_motor_->rpm(), 1.0f);
             dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
           } else {
@@ -447,7 +444,7 @@ void DartStateAddUpdate() {
       target_servo2 = S2 + 190.831f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 500) {
+      if (state_timer > 300) {
         state_timer = 0;
         current_state = AddState::CAUGHT;
       }
@@ -455,11 +452,11 @@ void DartStateAddUpdate() {
 
     case AddState::CAUGHT:
       target_dm_angle = (dart_rack->dart_count_ == DartCount::kThird) ? -0.568f : 0.464f;
-      target_servo1 = S1 + 522.407f;
-      target_servo2 = S2 + 154.871f;
+      target_servo1 = S1 + 525.356f;
+      target_servo2 = S2 + 172.001f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 500) {
+      if (state_timer > 300) {
         state_timer = 0;
         current_state = AddState::MOVING_FORWARD;
       }
@@ -470,7 +467,7 @@ void DartStateAddUpdate() {
       target_servo2 = S2 + 65.63f;
       if (!add_forward_done) {
         if (dart_rack->add_motor_odometer_.linear_ticks() < 2200000) {
-          dart_rack->add_motor_speed_pid_.Update(5000.0f, dart_rack->add_motor_->rpm(), 1.0f);
+          dart_rack->add_motor_speed_pid_.Update(6000.0f, dart_rack->add_motor_->rpm(), 1.0f);
           target_dm_angle = -0.020f;
           dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
         } else {
@@ -509,7 +506,7 @@ void DartStateAddUpdate() {
       target_servo2 = S2 + 373.522f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 500) {
+      if (state_timer > 300) {
         state_timer = 0;
         current_state = AddState::PLACED;
       }
@@ -521,10 +518,18 @@ void DartStateAddUpdate() {
       target_servo2 = S2 + 453.321f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 1000 && state_timer <= 1005) {
+      if (state_timer > 1000 && state_timer <= 1500) {
         HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
+        if (dart_rack->trigger_motor_odometer_.linear_ticks() < 50000) {
+          dart_rack->trigger_motor_speed_pid_.Update(5000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
+          dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
+        }
+        else {
+          dart_rack->trigger_motor_->SetCurrent(0);
+          dart_rack->trigger_motor_speed_pid_.Clear();
+        }
       }
-      if (state_timer > 1000) {
+      if (state_timer > 1005) {
         target_servo1 = S1 + 474.886f;
         target_servo2 = S2 + 190.831f;
       }
@@ -593,7 +598,7 @@ void DartStateAddPlaceOnly() {
       target_servo2 = S2 + 65.63f;
       if (!add_forward_done) {
         if (dart_rack->add_motor_odometer_.linear_ticks() < 2200000) {
-          dart_rack->add_motor_speed_pid_.Update(5000.0f, dart_rack->add_motor_->rpm(), 1.0f);
+          dart_rack->add_motor_speed_pid_.Update(6000.0f, dart_rack->add_motor_->rpm(), 1.0f);
           dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
         } else {
           dart_rack->add_motor_->SetCurrent(0);
@@ -630,7 +635,7 @@ void DartStateAddPlaceOnly() {
       target_servo2 = S2 + 373.522f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 500) {
+      if (state_timer > 300) {
         state_timer = 0;
         current_state = AddState::PLACED;
       }
@@ -642,14 +647,14 @@ void DartStateAddPlaceOnly() {
       target_servo2 = S2 + 453.321f;
       dart_rack->add_motor_->SetCurrent(0);
       state_timer++;
-      if (state_timer > 1000 && state_timer <= 1005) {
+      if (state_timer > 1000 && state_timer <= 1200) {
         HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
       }
-      if (state_timer > 1000) {
+      if (state_timer > 1005) {
         target_servo1 = S1 + 474.886f;
         target_servo2 = S2 + 190.831f;
       }
-      if (state_timer > 1500) {
+      if (state_timer > 1200) {
         HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
         state_timer = 0;
         tick = 0;
@@ -694,9 +699,6 @@ void DartStateAimUpdate() {
 
   trigger_motor_linear = dart_rack->trigger_motor_odometer_.linear_ticks();
 
-  if (!dart_rack->vision_data_) {
-    return;
-  }
 
   uint8_t idx = static_cast<uint8_t>(dart_rack->dart_count_);
   float yaw_pixel = dart_rack->vision_data_->Yaw - Yaw[idx];
@@ -713,15 +715,30 @@ void DartStateAimUpdate() {
   bool overshoot = (prev_yaw_pixel * yaw_pixel < 0.0f) && (std::abs(prev_yaw_pixel) > 1.0f);
   prev_yaw_pixel = yaw_pixel;
 
-  if (!yaw_done && !overshoot) {
+  // 读取编码器当前角度，用于限位保护
+  yaw_current_deg = dart_rack->yaw_encoder_->angle_deg();
+
+  if (!yaw_done && !overshoot && yaw_pixel != 0.0f) {
     if (yaw_pixel < -kYawPixelTolerance) {
-      float target_speed = (std::abs(yaw_pixel) < 10.0f) ? kYawSlowSpeed : kYawSpeedLimit;
-      dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
-      dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+      // 向负方向转动前检查限位
+      if (yaw_current_deg <= DartRack::kYawEcdMin + 0.5f) {
+        dart_rack->yaw_motor_speed_pid_.Clear();
+        dart_rack->yaw_motor_->SetCurrent(0);
+      } else {
+        float target_speed = (std::abs(yaw_pixel) < 10.0f) ? kYawSlowSpeed : kYawSpeedLimit;
+        dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
+        dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+      }
     } else if (yaw_pixel > kYawPixelTolerance) {
-      float target_speed = (std::abs(yaw_pixel) < 10.0f) ? -kYawSlowSpeed : -kYawSpeedLimit;
-      dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
-      dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+      // 向正方向转动前检查限位
+      if (yaw_current_deg >= DartRack::kYawEcdMax - 0.5f) {
+        dart_rack->yaw_motor_speed_pid_.Clear();
+        dart_rack->yaw_motor_->SetCurrent(0);
+      } else {
+        float target_speed = (std::abs(yaw_pixel) < 10.0f) ? -kYawSlowSpeed : -kYawSpeedLimit;
+        dart_rack->yaw_motor_speed_pid_.Update(target_speed, dart_rack->yaw_motor_->rpm(), 1.0f);
+        dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
+      }
     }
   } else {
     dart_rack->yaw_motor_speed_pid_.Clear();

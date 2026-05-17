@@ -47,6 +47,7 @@ void DartRack::Init() {
   trigger_motor_force_ = new rm::device::M2006{*can1_, 8};
 
   vision_data_ = new USBVisionReceive_SCM_t;
+  vision_data_->Yaw = 0.0f;
 
   // 编码器初始化
   yaw_encoder_ = new rm::device::JyMe02Can{*can1_, 0x50, 1.0f};

@@ -10,6 +10,7 @@
 
 #define IMU_DATA_SEND_ID 0x1        // 发送数据帧ID 0x1
 #define AIMBOT_DATA_RECEIVE_ID 0x02  // 接收数据帧ID 0x02
+#define AIMBOT_DATA_NOT_FOUND_ID 0x01  // 接收数据帧ID 0x01，表示未识别或错误)
 
 #define VISION_LOCK_ERROR    0x00
 #define VISION_LOCK_NONE     0x01

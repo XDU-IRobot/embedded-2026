@@ -8,7 +8,7 @@
 #include "dart_core.hpp"
 // 实体定义，确保链接器能找到
 float Pitch[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-float Yaw[4] = {45.55f, 45.66f, 45.77f, 45.88f};
+float Yaw[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 // 定义三个界面的容器
 static lv_obj_t *view_main;
@@ -22,7 +22,10 @@ static lv_obj_t *label_edit_val;      // 在编辑界面显示的 Label
 int current_category = 0;  // 0代表PITCH, 1代表YAW
 int current_index = 0;     // 记录列表选中的序号
 float temp_val = 0;
-static const float steps[4] = {10.0f, 1.0f, 0.1f, 0.01f};
+// Pitch 数量级是万，Yaw 数量级是 0.1
+static const float pitch_steps[4] = {100000.0f, 50000.0f, 10000.0f, 5000.0f};
+static const float yaw_steps[4] = {10.0f, 5.0f, 1.0f, 0.1f};
+static lv_obj_t *step_labels_obj[4];  // 存储步长标签对象引用
 
 static lv_indev_t *keypad_indev;  // 全局记录输入设备，以便切换不同的焦点组
 static lv_group_t *g_main;
@@ -39,108 +42,6 @@ static lv_obj_t *btn_edit_first;  // 编辑界面第一个步长按钮
 static void hal_init(void);
 extern DartRack *dart_rack;
 
-extern volatile uint8_t g_trigger_limit_ever_hit;
-extern volatile uint8_t g_add_limit_ever_hit;
-extern volatile uint8_t g_load_l_limit_ever_hit;
-extern volatile uint8_t g_load_r_limit_ever_hit;
-
-static bool lvgl_trigger_homing_done = false;
-static bool lvgl_add_homing_done = false;
-static bool lvgl_load_l_homing_done = false;
-static bool lvgl_load_r_homing_done = false;
-static bool lvgl_homing_all_done = false;
-
-extern "C" void LvglHomingStart() {
-  lvgl_homing_all_done = false;
-
-  if (HAL_GPIO_ReadPin(load_motor_left_EXTI_GPIO_Port, load_motor_left_EXTI_Pin) == GPIO_PIN_RESET) {
-    lvgl_load_l_homing_done = true;
-    dart_rack->load_motor_l_speed_pid_.Clear();
-    dart_rack->load_motor_l_->SetCurrent(0);
-    dart_rack->load_motor_l_odometer_.Reset();
-  } else {
-    lvgl_load_l_homing_done = false;
-  }
-
-  if (HAL_GPIO_ReadPin(load_motor_right_EXTI_GPIO_Port, load_motor_right_EXTI_Pin) == GPIO_PIN_RESET) {
-    lvgl_load_r_homing_done = true;
-    dart_rack->load_motor_r_speed_pid_.Clear();
-    dart_rack->load_motor_r_->SetCurrent(0);
-    dart_rack->load_motor_r_odometer_.Reset();
-  } else {
-    lvgl_load_r_homing_done = false;
-  }
-
-  if (HAL_GPIO_ReadPin(trigger_motor_EXTI_GPIO_Port, trigger_motor_EXTI_Pin) == GPIO_PIN_RESET) {
-    lvgl_trigger_homing_done = true;
-    dart_rack->trigger_motor_speed_pid_.Clear();
-    dart_rack->trigger_motor_->SetCurrent(0);
-    dart_rack->trigger_motor_odometer_.Reset();
-  } else {
-    lvgl_trigger_homing_done = false;
-  }
-
-  if (HAL_GPIO_ReadPin(add_motor_EXTI_GPIO_Port, add_motor_EXTI_Pin) == GPIO_PIN_RESET) {
-    lvgl_add_homing_done = true;
-    dart_rack->add_motor_speed_pid_.Clear();
-    dart_rack->add_motor_->SetCurrent(0);
-    dart_rack->add_motor_odometer_.Reset();
-  } else {
-    lvgl_add_homing_done = false;
-  }
-}
-
-extern "C" bool LvglHomingUpdate() {
-  if (lvgl_homing_all_done) return true;
-
-  if (!lvgl_load_l_homing_done) {
-    if (g_load_l_limit_ever_hit) {
-      lvgl_load_l_homing_done = true;
-    } else {
-      dart_rack->load_motor_l_speed_pid_.Update(500.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
-      dart_rack->load_motor_l_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_l_speed_pid_.out()));
-    }
-  }
-  if (!lvgl_load_r_homing_done) {
-    if (g_load_r_limit_ever_hit) {
-      lvgl_load_r_homing_done = true;
-    } else {
-      dart_rack->load_motor_r_speed_pid_.Update(-500.0f, dart_rack->load_motor_r_->rpm(), 1.0f);
-      dart_rack->load_motor_r_->SetCurrent(static_cast<rm::i16>(dart_rack->load_motor_r_speed_pid_.out()));
-    }
-  }
-  if (!lvgl_trigger_homing_done) {
-    if (g_trigger_limit_ever_hit) {
-      lvgl_trigger_homing_done = true;
-    } else {
-      dart_rack->trigger_motor_speed_pid_.Update(2000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
-      dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
-    }
-  }
-  if (!lvgl_add_homing_done) {
-    if (g_add_limit_ever_hit) {
-      lvgl_add_homing_done = true;
-    } else {
-      dart_rack->add_motor_speed_pid_.Update(-2000.0f, dart_rack->add_motor_->rpm(), 1.0f);
-      dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-    }
-  }
-
-  if (lvgl_load_l_homing_done && lvgl_load_r_homing_done && lvgl_trigger_homing_done && lvgl_add_homing_done) {
-    lvgl_homing_all_done = true;
-    dart_rack->load_motor_l_speed_pid_.Clear();
-    dart_rack->load_motor_l_->SetCurrent(0);
-    dart_rack->load_motor_r_speed_pid_.Clear();
-    dart_rack->load_motor_r_->SetCurrent(0);
-    dart_rack->trigger_motor_speed_pid_.Clear();
-    dart_rack->trigger_motor_->SetCurrent(0);
-    dart_rack->add_motor_speed_pid_.Clear();
-    dart_rack->add_motor_->SetCurrent(0);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo1Init + 506.689f), 1, 0);
-    dart_rack->add_servo_->SetServoAngle(static_cast<uint16_t>(DartRack::kServo2Init + 139.831f), 2, 0);
-  }
-  return lvgl_homing_all_done;
-}
 
 // === 事件回调函数 ===
 static void update_list_labels(void) {
@@ -195,6 +96,15 @@ static void btn_list_to_edit_cb(lv_event_t *e) {
 
   temp_val = (current_category == 0) ? Pitch[current_index] : Yaw[current_index];
   update_edit_label_value(temp_val);
+
+  // 根据当前类别更新步长标签显示
+  if (current_category == 0) {  // Pitch
+    const char *labels[4] = {"100000", "50000", "10000", "5000"};
+    for (int i = 0; i < 4; i++) lv_label_set_text(step_labels_obj[i], labels[i]);
+  } else {  // Yaw
+    const char *labels[4] = {"10", "5", "1", "0.1"};
+    for (int i = 0; i < 4; i++) lv_label_set_text(step_labels_obj[i], labels[i]);
+  }
 
   is_editing_val = true;  // Enter edit mode
 
@@ -358,7 +268,7 @@ static void btn_step_cb(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_KEY) {
     int idx = (int)(intptr_t)lv_event_get_user_data(e);
-    float step = steps[idx];
+    float step = (current_category == 0) ? pitch_steps[idx] : yaw_steps[idx];
     uint32_t key = lv_event_get_key(e);
 
     float next_val = temp_val;
@@ -369,13 +279,13 @@ static void btn_step_cb(lv_event_t *e) {
       next_val -= step;
     }
 
-    // 限制 Yaw 的数值范围
+    // 限制 Yaw 的数值范围 (像素偏置)
     if (current_category == 1) {  // 1 代表 YAW
-      if (next_val > 52.60f) {
-        next_val = 52.60f;
+      if (next_val > 200.0f) {
+        next_val = 200.0f;
         show_limit_warning();
-      } else if (next_val < 35.50f) {
-        next_val = 35.50f;
+      } else if (next_val < -200.0f) {
+        next_val = -200.0f;
         show_limit_warning();
       }
     }
@@ -487,15 +397,16 @@ static void create_view_edit(lv_obj_t *parent) {
   lv_obj_set_flex_flow(step_container, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(step_container, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-  const char *step_labels[4] = {"10", "1", "0.1", "0.01"};
+  // 默认显示 Pitch 的步长标签，进入编辑模式时会根据 category 更新
+  const char *pitch_step_labels[4] = {"100000", "50000", "10000", "5000"};
   for (int i = 0; i < 4; i++) {
     lv_obj_t *btn = lv_btn_create(step_container);
     if (i == 0) btn_edit_first = btn;
     lv_obj_add_style(btn, &style_btn_focused, LV_STATE_FOCUSED);  // 添加焦点高亮
     lv_obj_set_size(btn, 65, 50);
-    lv_obj_t *lbl = lv_label_create(btn);
-    lv_label_set_text(lbl, step_labels[i]);
-    lv_obj_center(lbl);
+    step_labels_obj[i] = lv_label_create(btn);
+    lv_label_set_text(step_labels_obj[i], pitch_step_labels[i]);
+    lv_obj_center(step_labels_obj[i]);
     // 这里拦截 UP 和 DOWN key 等事件，使得在焦点停留在此按钮时可以更改数值
     lv_obj_add_event_cb(btn, btn_step_cb, LV_EVENT_KEY, (void *)(intptr_t)i);
     lv_group_add_obj(g_edit, btn);
