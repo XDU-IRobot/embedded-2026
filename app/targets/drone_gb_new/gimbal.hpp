@@ -73,7 +73,8 @@ class Gimbal {
   float roll_comp_kp = 0.1f;     // TODO 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;  // TODO 最大补偿幅度（rad）
 
-  int robot_id = 0;  // 裁判系统测试
+  int robot_id = 0;    // 裁判系统测试
+  int ID_last = 0;  // 红蓝方离线标识位
   float rc_vt03_left_x = 0.0f;
   int cnt = 0;  // 进自瞄次数测试
 
@@ -152,7 +153,7 @@ class Gimbal {
     rc = new rm::device::DR16{*dbus};
     vt03 = new rm::device::VT03;
 
-    referee_uart = new rm::hal::Serial<128>{huart6, false, false};
+    referee_uart = new rm::hal::Serial<128>{huart6, true, true};
     vt03_uart = new rm::hal::Serial<128>{huart1, true, true};
 
     yaw_motor = new rm::device::GM6020{*can2, 7};
@@ -236,6 +237,8 @@ class Gimbal {
   void WS2812Control();
 
   float SpeedAver();
+
+  bool ID();
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz();

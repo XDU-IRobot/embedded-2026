@@ -310,3 +310,16 @@ void Gimbal::WS2812Control() {
   Set_Brightness(10);
   WS2812_Send();
 }
+
+bool Gimbal::ID() {
+  if (referee_data_buffer.data().robot_status.robot_id!=0) {
+    if (referee_data_buffer.data().robot_status.robot_id==106) {
+      ID_last = 1;
+      return 1;//蓝方
+    }
+    ID_last = 0;
+    return  0;//红方
+  }
+  return ID_last;
+
+}
