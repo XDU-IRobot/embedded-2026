@@ -1,9 +1,0 @@
-namespace msg;
-
-table FbMsg {
-  id: int;
-  age: uint8;
-  name: string;
-}
-
-root_type FbMsg;
