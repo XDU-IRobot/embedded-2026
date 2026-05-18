@@ -309,6 +309,4 @@ void GlobalWarehouse::SubLoop50Hz() {
   buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
 }
 
-void GlobalWarehouse::SubLoop10Hz() {
-  globals->time = 0;
-}
+void GlobalWarehouse::SubLoop10Hz() { globals->time = 0; }
