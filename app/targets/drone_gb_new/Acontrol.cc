@@ -16,6 +16,7 @@ void Gimbal::GimbalControl() {
 
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
     }
+    GimbalPIDInitMAU();
     yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
     yaw_delta = 0.0f;
 
@@ -52,7 +53,7 @@ void Gimbal::GimbalControl() {
     auto roll_comp = ApplyRollComp(rc_yaw_data, rc_pitch_data);
 #if CONTROLLER_CHOICE==0
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
@@ -60,7 +61,7 @@ void Gimbal::GimbalControl() {
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 #elif CONTROLLER_CHOICE==1
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
@@ -81,6 +82,7 @@ void Gimbal::GimbalControl() {
 #endif
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     }
+    GimbalPIDInitAIM();
     if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
       rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
       rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
@@ -116,7 +118,7 @@ void Gimbal::GimbalControl() {
     auto roll_comp = ApplyRollComp(rc_yaw_data, rc_pitch_data);
 #if CONTROLLER_CHOICE==0
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
@@ -124,7 +126,7 @@ void Gimbal::GimbalControl() {
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 #elif CONTROLLER_CHOICE==1
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿

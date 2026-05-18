@@ -64,7 +64,12 @@ class Gimbal {
 
   // pitch补偿系数
   float pitch_torque = 0.0f;      // pitch电机力矩重力补偿量
+#if CONTROLLER_CHOICE==0
   float pitch_torque_kp = 0.35f;  // TODO 重力补偿参数
+#elif CONTROLLER_CHOICE==1
+  float pitch_torque_kp = 0.5f;  // TODO 重力补偿参数
+#endif
+
 
   float pitch_cmd = 0.0f;       // pitch合输出
   float pitch_speed_tf = 0.0f;  // 速度正向输出
@@ -201,7 +206,6 @@ class Gimbal {
     vt03_uart->Start();
     referee_uart->Start();
 
-    GimbalPIDInit();
     AmmoPIDInit();
 
     gimbal_controller.Enable(false);  // 云台控制器
@@ -214,7 +218,9 @@ class Gimbal {
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
   }
 
-  void GimbalPIDInit();
+  void GimbalPIDInitAIM();
+
+  void GimbalPIDInitMAU();
 
   void AmmoPIDInit();
 

@@ -82,11 +82,20 @@ uint16_t Aui_game_time = 0;
 uint8_t Aui_game_progress = 0;
 // 红蓝方
 uint8_t Aid = 0;
+//error
+float Aerror = 0;
 // 调试接口函数
 void FreemasterDebug() {
+#if CONTROLLER_CHOICE==0
   Ayaw_ = gimbal->yaw;  // 实际
   Apitch_ = gimbal->pitch;
   Aroll_ = gimbal->roll;
+#elif     CONTROLLER_CHOICE==1
+  Ayaw_ = gimbal->yaw_;  // 实际
+  Apitch_ = gimbal->pitch_;
+  Aroll_ = gimbal->roll_;
+#endif
+
 
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //
@@ -157,4 +166,5 @@ void FreemasterDebug() {
   Aimu_yaw = gimbal->imu_new->yaw()+M_PI;
 
   Aid = gimbal->ID();
+  Aerror = gimbal->yaw_-gimbal->yaw;
 }
