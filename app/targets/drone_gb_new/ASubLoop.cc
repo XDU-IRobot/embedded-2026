@@ -11,8 +11,17 @@ void Gimbal::SubLoop500Hz() {
   yaw = ahrs.euler_angle().yaw + M_PI;
   roll = ahrs.euler_angle().roll + M_PI;
 
+  pitch_ = imu_new->pitch() + M_PI;
+  roll_ = imu_new->roll() + M_PI;
+  yaw_ = imu_new->yaw() + M_PI;
+#if CONTROLLER_CHOICE==0
   GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z, SpeedAver(),
                 referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
+#elif CONTROLLER_CHOICE==1
+  GimbalImuSend(imu_new->quat_w(), imu_new->quat_x(), imu_new->quat_y(), imu_new->quat_z(), SpeedAver(),
+                referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
+#endif
+
   if (!Rcchoose()) {
     RCStateUpdate();  // dt7控制更新
   } else {

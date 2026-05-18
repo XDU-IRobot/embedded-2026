@@ -153,8 +153,8 @@ void FreemasterDebug() {
   Acan2drop = gimbal->can2->stats().drop_total_fps;
   Acan2queue = gimbal->can2->stats().enqueue_fps;
 
-  Aimu_pitch = gimbal->imu_new->pitch();
-  Aimu_yaw = gimbal->imu_new->yaw();
+  Aimu_pitch = gimbal->imu_new->pitch()+M_PI;
+  Aimu_yaw = gimbal->imu_new->yaw()+M_PI;
 
   Aid = gimbal->ID();
 }

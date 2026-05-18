@@ -1,5 +1,6 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
+#define CONTROLLER_CHOICE 1 //切换imu数据源
 // 新librm库适配
 #include <librm.hpp>
 #include "can.h"
@@ -16,9 +17,14 @@ extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
 class Gimbal {
  public:
+  //c板数据源
   double yaw = 0;    // imu yaw数据
   double roll = 0;   // imu roll数据
   double pitch = 0;  // imu pitch数据
+//ch040数据源
+  double pitch_ = 0;
+  double roll_ = 0;
+  double yaw_ = 0;
 
   double rc_yaw_data = 0;    // 遥控器yaw数据
   double rc_pitch_data = 0;  // 遥控器pitch数据
