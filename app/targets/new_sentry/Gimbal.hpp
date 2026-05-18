@@ -17,6 +17,30 @@ inline class Gimbal {
   rm::modules::TrajectoryLimiter up_yaw_move_limiter_{4.0f, 16.0f};
   rm::modules::TrajectoryLimiter down_yaw_move_limiter_{4.0f, 16.0f};
 
+  f32 Kf = 1.0f;
+  f32 Ts = 0.002f;
+
+  f32 identify_time_s_ = 0.0f;
+  f32 identify_yaw_center_ = 0.0f;
+  f32 identify_pitch_center_ = 0.0f;
+  f32 identify_yaw_position_ = 0.0f;
+  f32 identify_yaw_speed_ = 0.0f;
+  f32 identify_pitch_position_ = 0.0f;
+  f32 identify_pitch_speed_ = 0.0f;
+
+  f32 yaw_speed_ref = 0.0f;
+  f32 pitch_speed_ref = 0.0f;
+  f32 yaw_accel_ref = 0.0f;
+  f32 pitch_accel_ref = 0.0f;
+
+  f32 yaw_torque_ = 0.0f;
+  f32 yaw_speed_ff_ = 0.0f;
+  f32 up_yaw_current_ = 0.0f;
+  f32 last_yaw_target_ = 0.0f;
+  f32 last_pitch_target_ = 0.0f;
+  f32 last_yaw_speed_ref_ = 0.0f;
+  f32 last_pitch_speed_ref_ = 0.0f;
+
   f32 gimbal_up_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据（编码器控制，弧度制，左正右负）
   f32 gimbal_down_yaw_target_ = 0.0f;  // 云台下部yaw轴目标数据（陀螺仪控制，弧度制，左正右负）
   f32 gimbal_pitch_target_ = 0.0f;     // 云台pitch轴目标数据（编码器控制，弧度制，下正上负）
@@ -51,8 +75,8 @@ inline class Gimbal {
   bool XF_state_ = false;  // 小符状态
 
   const f32 lowest_aimbot_pitch_angle_ = -0.3f;  // 云台自瞄扫描pitch轴最大（弧度制）
-  const f32 highest_pitch_angle_ = 0.6f;         // 云台pitch轴最高（弧度制）
-  const f32 lowest_pitch_angle_ = -0.7f;         // 云台pitch轴最低（弧度制）
+  const f32 highest_pitch_angle_ = 0.5f;         // 云台pitch轴最高（弧度制）
+  const f32 lowest_pitch_angle_ = -0.6f;         // 云台pitch轴最低（弧度制）
   const u16 mid_up_yaw_pos_ = 1360;              // 云台上部yaw轴最大（编码器值）
   const u16 max_up_yaw_pos_ = 2310;              // 云台上部yaw轴最大（编码器值）
   const u16 min_up_yaw_pos_ = 410;               // 云台上部yaw轴最小（编码器值）
@@ -108,28 +132,6 @@ inline class Gimbal {
   void SetMotorCurrent();
 
   void EulerToQuaternion(f32 yaw, f32 pitch, f32 roll);
-
-  EncoderCounter identify_yaw_encoder_counter_;
-  f32 Kf = 1.0f;
-  f32 Ts = 0.002f;
-  bool identify_active_ = false;
-  f32 identify_time_s_ = 0.0f;
-  f32 identify_yaw_center_ = 0.0f;
-  f32 identify_pitch_center_ = 0.0f;
-  f32 identify_yaw_position_ = 0.0f;
-  f32 identify_yaw_speed_ = 0.0f;
-  f32 identify_pitch_position_ = 0.0f;
-  f32 identify_pitch_speed_ = 0.0f;
-  bool ff_verify_active_ = false;
-  f32 ff_verify_time_s_ = 0.0f;
-  f32 yaw_torque_ = 0.0f;
-  bool move_ff_initialized_ = false;
-  f32 yaw_speed_ff_ = 0.0f;
-  f32 up_yaw_current_ = 0.0f;
-  f32 last_yaw_target_ = 0.0f;
-  f32 last_pitch_target_ = 0.0f;
-  f32 last_yaw_speed_ref_ = 0.0f;
-  f32 last_pitch_speed_ref_ = 0.0f;
 } *gimbal;
 
 #endif  // GIMBAL_HPP

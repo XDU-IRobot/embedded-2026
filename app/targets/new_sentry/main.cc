@@ -106,14 +106,14 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // 上部 Yaw PID 参数
-  gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(20000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKi(0.0f).SetKd(120.0f).SetMaxOut(20000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().up_yaw_speed.SetKp(7000.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(0.0f);
   // 下部 Yaw PID 参数
   gimbal_controller.pid().down_yaw_position.SetKp(38.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().down_yaw_speed.SetKp(2.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(80.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ChassisPIDInit() {
@@ -124,8 +124,8 @@ void GlobalWarehouse::ChassisPIDInit() {
 }
 
 void GlobalWarehouse::ShootPIDInit() {
-  shoot_controller.pid().fric_1_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
-  shoot_controller.pid().fric_2_speed.SetKp(5.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().fric_1_speed.SetKp(8.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
+  shoot_controller.pid().fric_2_speed.SetKp(8.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(16384.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_position.SetKp(0.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   shoot_controller.pid().loader_speed.SetKp(8.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
 }
@@ -165,7 +165,7 @@ void GlobalWarehouse::RCStateUpdate() {
               globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
               gimbal->GimbalMove_ = kGbIdentify;
               chassis->ChassisMove_ = kNoForce;
-            } else if (globals->wfly_et16s->switch_position(rc_ch::SE) == SwitchPosition::kUp) {
+            } else if (globals->wfly_et16s->switch_position(rc_ch::SE) == SwitchPosition::kDown) {
               globals->StateMachine_ = kTest;  // 左拨杆拨到下侧，进入测试模式
               gimbal->GimbalMove_ = kGbFfVerify;
               chassis->ChassisMove_ = kNoForce;
@@ -282,9 +282,8 @@ void GlobalWarehouse::SubLoop500Hz() {
 
 void GlobalWarehouse::SubLoop250Hz() {
   globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
-  globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 3.4f);
-  // globals->down_yaw_motor->SetMitCommand(0, 0, 0, 0, 0);
-  // globals->pitch_motor->SetMitCommand(0, 0, 0, 0, 3.4f);
+  globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 3.2f);
+  // globals->pitch_motor->SetMitCommand(0, 0, 0, 0, 0.0f);
 }
 
 void GlobalWarehouse::SubLoop100Hz() {
@@ -293,7 +292,6 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_chassis.Update();
-  gimbal->GimbalIdentifyDataSend();
   for (i8 i = 0; i < 7; i++) {
     if (globals->wfly_et16s->switch_position(i + 4) != SwitchPosition::kUnknown) {
       if (globals->last_switch[i] != globals->wfly_et16s->switch_position(i + 4)) {
@@ -305,9 +303,12 @@ void GlobalWarehouse::SubLoop100Hz() {
 }
 
 void GlobalWarehouse::SubLoop50Hz() {
+  gimbal->GimbalIdentifyDataSend();
   const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
   (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
   buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);
 }
 
-void GlobalWarehouse::SubLoop10Hz() { globals->time = 0; }
+void GlobalWarehouse::SubLoop10Hz() {
+  globals->time = 0;
+}
