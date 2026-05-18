@@ -20,10 +20,6 @@ class Gimbal {
   double roll = 0;   // imu roll数据
   double pitch = 0;  // imu pitch数据
 
-  double yaw_ = 0;    // imu yaw数据(-pi到pi)
-  double roll_ = 0;   // imu roll数据(-pi到pi)
-  double pitch_ = 0;  // imu pitch数据(-pi到pi)
-
   double rc_yaw_data = 0;    // 遥控器yaw数据
   double rc_pitch_data = 0;  // 遥控器pitch数据
 
