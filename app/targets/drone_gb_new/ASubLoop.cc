@@ -18,7 +18,7 @@ void Gimbal::SubLoop500Hz() {
   GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z, SpeedAver(),
                 referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 #elif CONTROLLER_CHOICE==1
-  GimbalImuSend(imu_new->quat_w(), imu_new->quat_x(), imu_new->quat_y(), imu_new->quat_z(), SpeedAver(),
+  GimbalImuSend(-imu_new->quat_x(), imu_new->quat_w(), imu_new->quat_z(), -imu_new->quat_y(), SpeedAver(),
                 referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 #endif
 
