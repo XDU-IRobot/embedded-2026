@@ -1,6 +1,6 @@
 #ifndef BOARDC_GIMBAL_HPP
 #define BOARDC_GIMBAL_HPP
-#define CONTROLLER_CHOICE 1 //切换imu数据源
+#define CONTROLLER_CHOICE 1  // 切换imu数据源
 // 新librm库适配
 #include <librm.hpp>
 #include "can.h"
@@ -17,11 +17,11 @@ extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
 class Gimbal {
  public:
-  //c板数据源
+  // c板数据源
   double yaw = 0;    // imu yaw数据
   double roll = 0;   // imu roll数据
   double pitch = 0;  // imu pitch数据
-//ch040数据源
+                     // ch040数据源
   double pitch_ = 0;
   double roll_ = 0;
   double yaw_ = 0;
@@ -63,13 +63,12 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;      // pitch电机力矩重力补偿量
-#if CONTROLLER_CHOICE==0
+  float pitch_torque = 0.0f;  // pitch电机力矩重力补偿量
+#if CONTROLLER_CHOICE == 0
   float pitch_torque_kp = 0.35f;  // TODO 重力补偿参数
-#elif CONTROLLER_CHOICE==1
+#elif CONTROLLER_CHOICE == 1
   float pitch_torque_kp = 0.5f;  // TODO 重力补偿参数
 #endif
-
 
   float pitch_cmd = 0.0f;       // pitch合输出
   float pitch_speed_tf = 0.0f;  // 速度正向输出

@@ -6,10 +6,10 @@ void Gimbal::GimbalControl() {
       pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
       DM_is_enable = true;
       gimbal_controller.Enable(true);
-#if CONTROLLER_CHOICE==0
+#if CONTROLLER_CHOICE == 0
       rc_yaw_data = yaw;      // 第一次进入更新当前位置
       rc_pitch_data = pitch;  // 使用 IMU pitch 作为初始姿态
-#elif CONTROLLER_CHOICE==1
+#elif CONTROLLER_CHOICE == 1
       rc_yaw_data = yaw_;      // 第一次进入更新当前位置
       rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
 #endif
@@ -51,17 +51,17 @@ void Gimbal::GimbalControl() {
     rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     // 滚转补偿
     auto roll_comp = ApplyRollComp(rc_yaw_data, rc_pitch_data);
-#if CONTROLLER_CHOICE==0
+#if CONTROLLER_CHOICE == 0
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second - 0.03, 0, 0);
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
     pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
-#elif CONTROLLER_CHOICE==1
+#elif CONTROLLER_CHOICE == 1
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second - 0.03, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
@@ -73,10 +73,10 @@ void Gimbal::GimbalControl() {
       pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
       DM_is_enable = true;
       gimbal_controller.Enable(true);
-#if CONTROLLER_CHOICE==0
+#if CONTROLLER_CHOICE == 0
       rc_yaw_data = yaw;
       rc_pitch_data = pitch;  // 使用 IMU pitch 作为初始姿态
-#elif CONTROLLER_CHOICE==1
+#elif CONTROLLER_CHOICE == 1
       rc_yaw_data = yaw_;
       rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
 #endif
@@ -116,17 +116,17 @@ void Gimbal::GimbalControl() {
     }
     // 滚转补偿
     auto roll_comp = ApplyRollComp(rc_yaw_data, rc_pitch_data);
-#if CONTROLLER_CHOICE==0
+#if CONTROLLER_CHOICE == 0
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second - 0.03, 0, 0);
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
     pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
-#elif CONTROLLER_CHOICE==1
+#elif CONTROLLER_CHOICE == 1
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second-0.03, 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second - 0.03, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
