@@ -55,7 +55,7 @@ inline struct GlobalWarehouse {
   rm::device::BMI088 *imu{nullptr};                                     ///< IMU
 
   rm::hal::Serial<128> *ident_uart{nullptr};
-  rm::hal::Serial<18> *dbus{nullptr};  ///< 遥控器串口接口
+  rm::hal::Serial<25> *dbus{nullptr};  ///< 遥控器串口接口
   WflyET16s *wfly_et16s{nullptr};  ///< 天地飞遥控器
 
   rm::hal::Serial<128> *referee_uart{nullptr};                                             ///< 裁判系统串口接口

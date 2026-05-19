@@ -54,7 +54,7 @@ void GlobalWarehouse::Init() {
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
-  dbus = new rm::hal::Serial<18>{huart3, false, true};
+  dbus = new rm::hal::Serial<25>{huart3, false, true};
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
 
   rx_referee = new rm::device::RxReferee{*globals->referee_uart};
