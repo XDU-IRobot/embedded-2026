@@ -3,17 +3,14 @@
 
 namespace rm::device {
 RxReferee::RxReferee(rm::hal::SerialInterface &serial) : serial_(&serial) {
-  static rm::hal::SerialRxCallbackFunction rx_callback =
-      std::bind(&RxReferee::RxCallback, this, std::placeholders::_1, std::placeholders::_2);
-  this->serial_->AttachRxCallback(rx_callback);
+  this->serial_->AttachRxCallback([this](etl::span<const u8> data) { this->RxCallback(data); });
 }
 
-void RxReferee::Begin() { this->serial_->Begin(); }
+void RxReferee::Begin() { this->serial_->Start(); }
 
-void RxReferee::RxCallback(const std::vector<u8> &data, u16 rx_len) {
-  // Heartbeat();
-  for (u16 i = 0; i < rx_len; i++) {
-    *globals->referee_data << data.at(i);
+void RxReferee::RxCallback(etl::span<const u8> data) {
+  for (const auto byte : data) {
+    *globals->referee_data << byte;
   }
 }
 }  // namespace rm::device

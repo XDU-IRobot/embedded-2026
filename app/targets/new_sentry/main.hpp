@@ -54,11 +54,11 @@ inline struct GlobalWarehouse {
   rm::device::HipnucImuCan *hipnuc_imu{nullptr};                        ///< IMU
   rm::device::BMI088 *imu{nullptr};                                     ///< IMU
 
-  rm::hal::Serial *ident_uart{nullptr};
-  rm::hal::Serial *dbus{nullptr};  ///< 遥控器串口接口
+  rm::hal::Serial<128> *ident_uart{nullptr};
+  rm::hal::Serial<18> *dbus{nullptr};  ///< 遥控器串口接口
   WflyET16s *wfly_et16s{nullptr};  ///< 天地飞遥控器
 
-  rm::hal::Serial *referee_uart{nullptr};                                             ///< 裁判系统串口接口
+  rm::hal::Serial<128> *referee_uart{nullptr};                                             ///< 裁判系统串口接口
   rm::device::RxReferee *rx_referee{nullptr};                                         ///< 裁判系统
   rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data{nullptr};  ///< 裁判系统数据
 

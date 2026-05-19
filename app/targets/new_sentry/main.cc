@@ -53,9 +53,9 @@ void GlobalWarehouse::Init() {
   can2 = new rm::hal::Can{hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
-  ident_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  dbus = new rm::hal::Serial{huart3, 25, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
+  ident_uart = new rm::hal::Serial<128>{huart1, false, true};
+  dbus = new rm::hal::Serial<18>{huart3, false, true};
+  referee_uart = new rm::hal::Serial<128>{huart6, false, true};
 
   rx_referee = new rm::device::RxReferee{*globals->referee_uart};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};

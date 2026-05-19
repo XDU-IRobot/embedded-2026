@@ -14,7 +14,8 @@ class RxReferee : public Device {
 
   void Begin();
 
-  void RxCallback(const std::vector<u8> &data, u16 rx_len);
+  // 改为与 Uart::AttachRxCallback 兼容的签名
+  void RxCallback(etl::span<const u8> data);
 
  private:
   rm::hal::SerialInterface *serial_;

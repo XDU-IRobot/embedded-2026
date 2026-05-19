@@ -667,7 +667,7 @@ void Gimbal::GimbalIdentifyDataSend() {
   if (static_cast<size_t>(len) >= sizeof(tx_buf)) {
     len = sizeof(tx_buf) - 1;
   }
-  globals->ident_uart->Write(reinterpret_cast<const u8 *>(tx_buf), static_cast<usize>(len));
+  globals->ident_uart->Write(reinterpret_cast<const u8 *>(tx_buf), static_cast<usize>(len), 500);
 }
 
 void Gimbal::SetMotorCurrent() {
