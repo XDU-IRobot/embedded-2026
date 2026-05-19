@@ -166,7 +166,6 @@ class Gimbal {
   rm::hal::Serial<50> *refereeUart{nullptr};
   u_int8_t dataBox[128];
 
-
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
     can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
@@ -236,7 +235,6 @@ class Gimbal {
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
-
   }
 
   void GimbalPIDInitAIM();

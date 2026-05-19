@@ -50,7 +50,7 @@ class Gimbal {
   rm::hal::Can *can1{nullptr};             // CAN 总线接口
   rm::hal::SerialInterface *referee_uart;  // 裁判系统串口
   rm::device::RxReferee *rx_referee{nullptr};
-  rm::hal::Serial<50> *dbus;              // 遥控器串口接口
+  rm::hal::Serial<50> *dbus;                   // 遥控器串口接口
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
   rm::device::DeviceManager<3> device_shoot;   // 发射管理器

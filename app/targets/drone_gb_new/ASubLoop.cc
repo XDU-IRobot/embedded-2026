@@ -48,10 +48,9 @@ void Gimbal::SubLoop100Hz() {
   }
 }
 void Gimbal::SubLoop30Hz() {
-    if (time_ % 17 == 0) {
-      schedule.schedule();
-    }
-
+  if (time_ % 17 == 0) {
+    schedule.schedule();
+  }
 }
 void Gimbal::SubLoop50Hz() {
   if (time_ % 10 == 0) {
@@ -65,5 +64,4 @@ void Gimbal::SubLoop10Hz() {
     WS2812Control();
     time_ = 0;
   }
-
 }

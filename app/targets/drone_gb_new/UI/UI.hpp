@@ -3,7 +3,6 @@
 #include "referee_user.hpp"
 #include "TaskScheduler.hpp"
 
-
 void Layer0_func();
 void Layer1_func();
 static rm::device::UITask Layer0 = rm::device::UITask(Layer0_func, 10);
