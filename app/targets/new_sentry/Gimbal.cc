@@ -458,7 +458,8 @@ void Gimbal::GimbalMatchUpdate() {
     gimbal->percept_move_complete_ = true;
     gimbal->perception_time_ = 0;
   } else if ((globals->navigate_communicator->perception_flag() != 0x00 || !gimbal->percept_move_complete_) &&
-             gimbal->perception_time_ <= 0 && !globals->navigate_communicator->aimbot_mode()) {
+             !globals->navigate_communicator->aimbot_mode() && !globals->navigate_communicator->outpost_mode() &&
+             gimbal->perception_time_ <= 0) {
     gimbal->GimbalMove_ = kGbPercept;
   } else if (globals->navigate_communicator->scan_mode()) {
     gimbal->GimbalMove_ = kGbScan;
