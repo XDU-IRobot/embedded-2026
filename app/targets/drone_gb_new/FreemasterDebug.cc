@@ -130,8 +130,8 @@ void FreemasterDebug() {
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;
-  Atargetpitch = Aimbot.TargetPitchAngle + M_PI;
-  Atagetyaw = Aimbot.TargetYawAngle + M_PI;
+  Atargetpitch = Aimbot.TargetPitchAngle;
+  Atagetyaw = Aimbot.TargetYawAngle;
 
   Ayaw_position = gimbal->GetYawMotorAngleRad();
   Ayaw_relative = gimbal->yaw_relative;
