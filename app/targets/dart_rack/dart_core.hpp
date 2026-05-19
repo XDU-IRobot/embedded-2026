@@ -62,6 +62,7 @@ struct ManualMode {
   bool is_add_down_done = false;
   bool is_add_up_done = false;
   bool is_add_plate_done = false;
+  bool need_add_state_reset = false;  // 重新进入add阶段时重置static变量
   void ManualModeClear() {
     extern volatile uint8_t g_trigger_limit_ever_hit;
     extern volatile uint8_t g_add_limit_ever_hit;
@@ -88,6 +89,7 @@ struct ManualMode {
     is_add_down_done = false;
     is_add_up_done = false;
     is_add_plate_done = false;
+    need_add_state_reset = true;
 
     g_trigger_limit_ever_hit = 0;
     g_add_limit_ever_hit = 0;
@@ -194,6 +196,6 @@ struct DartRack {
 extern DartRack *dart_rack;
 
 // 裁判系统解析状态全局标志位（用于 FreeMASTER 监控）
-extern volatile uint8_t g_robot_id;  // 新增：读取机器人的ID
+extern volatile uint8_t glb_robot_id;  // 机器人ID
 extern volatile uint8_t g_vision_is_valid;
 extern volatile int32_t g_trigger_error; // 声明全局变量
