@@ -6,31 +6,6 @@
 
 f32 a, b, c, d;
 
-extern "C" {
-volatile f32 fm_ident_yaw_target = 0.0f;
-volatile f32 fm_ident_pitch_target = 0.0f;
-volatile f32 fm_ident_yaw_position = 0.0f;
-volatile f32 fm_ident_pitch_position = 0.0f;
-volatile f32 fm_ident_yaw_current = 0.0f;
-volatile f32 fm_ident_pitch_torque = 0.0f;
-volatile f32 fm_aimbot_state = 0.0f;
-volatile f32 fm_aimbot_target = 0.0f;
-volatile f32 fm_aimbot_yaw = 0.0f;
-volatile f32 fm_aimbot_pitch = 0.0f;
-volatile f32 fm_aimbot_nuc_start_flag = 0.0f;
-volatile f32 fm_aimbot_yaw_vel = 0.0f;
-volatile f32 fm_aimbot_pitch_vel = 0.0f;
-volatile f32 fm_aimbot_yaw_acc = 0.0f;
-volatile f32 fm_aimbot_pitch_acc = 0.0f;
-volatile f32 fm_gimbal_yaw = 0.0f;
-volatile f32 fm_gimbal_pitch = 0.0f;
-volatile f32 fm_ff_yaw_torque = 0.0f;
-volatile f32 fm_ff_pitch_torque = 0.0f;
-volatile f32 fm_pid_yaw = 0.0f;
-volatile f32 fm_pid_pitch = 0.0f;
-volatile f32 fm_ff_yaw_voltage = 0.0f;
-}
-
 namespace {
 constexpr size_t kIdentifyHarmonicCount = 5;
 constexpr f32 kIdentifyBaseFreqHz = 0.1f;
@@ -119,6 +94,17 @@ void Gimbal::GimbalInit() {
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
   gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
   gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
+  gimbal->last_yaw_speed_ref_ = 0.0f;
+  gimbal->last_pitch_speed_ref_ = 0.0f;
+  gimbal->ff_verify_time_s_ = 0.0f;
+  gimbal->identify_time_s_ = 0.0f;
+  gimbal->identify_yaw_position_ = 0.0f;
+  gimbal->identify_yaw_speed_ = 0.0f;
+  gimbal->identify_pitch_position_ = globals->pitch_motor->pos();
+  gimbal->identify_pitch_speed_ = globals->pitch_motor->vel();
+  gimbal->identify_yaw_center_ = 0.0f;
+  gimbal->identify_pitch_center_ = kIdentifyPitchCenter;
+  gimbal->identify_yaw_encoder_counter_.Reset(0, globals->yaw_motor->encoder());
   globals->dail_encoder_counter.Reset(0, globals->dial_motor->encoder());
 }
 
@@ -166,9 +152,6 @@ void Gimbal::GimbalStateUpdate() {
           case kGbAimbotFu:
             gimbal->ShootEnableUpdate();  // 发射机构使能计算
             break;
-          case kGbIdentify:
-            gimbal->ShootIdentifyUpdate();
-            break;
           case kGbRemote:
           default:
             gimbal->ShootDisableUpdate();  // 发射机构失能计算
@@ -198,6 +181,16 @@ void Gimbal::GimbalRCTargetUpdate() {
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, -static_cast<f32>(M_PI), M_PI);  // yaw轴限位
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,    // pitch轴限位
                                                     gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
+  // 遥控模式：从位置目标差分得到速度/加速度
+  const f32 yaw_delta = rm::modules::Wrap(gimbal->gimbal_yaw_target_ - gimbal->last_yaw_target, -static_cast<f32>(M_PI),
+                                          static_cast<f32>(M_PI));
+  yaw_speed_ref = rm::modules::Clamp(yaw_delta / gimbal->Ts, -kNormalFfMaxYawSpeed, kNormalFfMaxYawSpeed);
+  pitch_speed_ref = rm::modules::Clamp((gimbal->gimbal_pitch_target_ - gimbal->last_pitch_target_) / gimbal->Ts,
+                                       -kNormalFfMaxPitchSpeed, kNormalFfMaxPitchSpeed);
+  yaw_accel_ref = rm::modules::Clamp((yaw_speed_ref - gimbal->last_yaw_speed_ref_) / gimbal->Ts, -kNormalFfMaxYawAccel,
+                                     kNormalFfMaxYawAccel);
+  pitch_accel_ref = rm::modules::Clamp((pitch_speed_ref - gimbal->last_pitch_speed_ref_) / gimbal->Ts,
+                                       -kNormalFfMaxPitchAccel, kNormalFfMaxPitchAccel);
 }
 
 void Gimbal::GimbalAimbotTargetUpdate() {
@@ -206,6 +199,11 @@ void Gimbal::GimbalAimbotTargetUpdate() {
                                                                        : globals->rc->mouse_button_right()))) {
     gimbal->gimbal_yaw_target_ = globals->aimbot_communicator->yaw();
     gimbal->gimbal_pitch_target_ = globals->aimbot_communicator->pitch();
+    // 自瞄模式：直接使用 NUC 下发的目标速度/加速度
+    yaw_speed_ref = globals->aimbot_communicator->yaw_vel();
+    pitch_speed_ref = globals->aimbot_communicator->pitch_vel();
+    yaw_accel_ref = globals->aimbot_communicator->yaw_acc();
+    pitch_accel_ref = globals->aimbot_communicator->pitch_acc();
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
@@ -216,52 +214,6 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 }
 
 void Gimbal::GimbalMovePIDUpdate() {
-  if (!gimbal->move_ff_initialized_) {
-    gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
-    gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
-    gimbal->last_yaw_speed_ref_ = 0.0f;
-    gimbal->last_pitch_speed_ref_ = 0.0f;
-    gimbal->move_ff_initialized_ = true;
-  }
-
-  fm_aimbot_state = static_cast<f32>(globals->aimbot_communicator->aimbot_state());
-  fm_aimbot_target = static_cast<f32>(globals->aimbot_communicator->aimbot_target());
-  fm_aimbot_yaw = globals->aimbot_communicator->yaw();
-  fm_aimbot_pitch = globals->aimbot_communicator->pitch();
-  fm_aimbot_nuc_start_flag = static_cast<f32>(globals->aimbot_communicator->nuc_start_flag());
-
-  fm_gimbal_yaw = globals->ahrs.euler_angle().yaw;
-  fm_gimbal_pitch = globals->ahrs.euler_angle().pitch;
-
-  f32 yaw_speed_ref;
-  f32 pitch_speed_ref;
-  f32 yaw_accel_ref;
-  f32 pitch_accel_ref;
-
-  if ((gimbal->GimbalMove_ == kGbAimbot || gimbal->GimbalMove_ == kGbAimbotFu) &&
-      globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) {
-    // 自瞄模式：直接使用 NUC 下发的目标速度/加速度
-    yaw_speed_ref = globals->aimbot_communicator->yaw_vel();
-    pitch_speed_ref = globals->aimbot_communicator->pitch_vel();
-    yaw_accel_ref = globals->aimbot_communicator->yaw_acc();
-    pitch_accel_ref = globals->aimbot_communicator->pitch_acc();
-    fm_aimbot_yaw_vel = yaw_speed_ref;
-    fm_aimbot_pitch_vel = pitch_speed_ref;
-    fm_aimbot_yaw_acc = yaw_accel_ref;
-    fm_aimbot_pitch_acc = pitch_accel_ref;
-  } else {
-    // 遥控模式：从位置目标差分得到速度/加速度
-    const f32 yaw_delta = rm::modules::Wrap(gimbal->gimbal_yaw_target_ - gimbal->last_yaw_target,
-                                            -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
-    yaw_speed_ref = rm::modules::Clamp(yaw_delta / gimbal->Ts, -kNormalFfMaxYawSpeed, kNormalFfMaxYawSpeed);
-    pitch_speed_ref = rm::modules::Clamp((gimbal->gimbal_pitch_target_ - gimbal->last_pitch_target_) / gimbal->Ts,
-                                         -kNormalFfMaxPitchSpeed, kNormalFfMaxPitchSpeed);
-    yaw_accel_ref = rm::modules::Clamp((yaw_speed_ref - gimbal->last_yaw_speed_ref_) / gimbal->Ts,
-                                       -kNormalFfMaxYawAccel, kNormalFfMaxYawAccel);
-    pitch_accel_ref = rm::modules::Clamp((pitch_speed_ref - gimbal->last_pitch_speed_ref_) / gimbal->Ts,
-                                         -kNormalFfMaxPitchAccel, kNormalFfMaxPitchAccel);
-  }
-
   gimbal->yaw_speed_ff = gimbal->Kf * yaw_speed_ref;
   gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
   gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
@@ -275,13 +227,8 @@ void Gimbal::GimbalMovePIDUpdate() {
   const auto ff = g_gimbal_dynamics.ComputeFf(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ref,
                                               pitch_speed_ref, yaw_accel_ref, pitch_accel_ref, g_stationary);
   gimbal->yaw_torque_ = ff.x();
-  fm_ff_yaw_torque = ff.x();
-  fm_ff_pitch_torque = ff.y();
-  fm_pid_yaw = globals->gimbal_controller.output().yaw;
-  fm_pid_pitch = globals->gimbal_controller.output().pitch;
   const f32 yaw_ff_voltage =
       YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->yaw_motor->rpm()) * kRpmToRadPerSec);
-  fm_ff_yaw_voltage = yaw_ff_voltage;
   gimbal->yaw_current_ =
       globals->gimbal_controller.output().yaw + static_cast<f32>(globals->yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
   gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
@@ -290,44 +237,18 @@ void Gimbal::GimbalMovePIDUpdate() {
 }
 
 void Gimbal::ApplyNormalGimbalPID() {
-  globals->gimbal_controller.pid()
-      .yaw_position.SetKp(400.0f)
-      .SetKi(0.0f)
-      .SetKd(10000.0f)
-      .SetMaxOut(30000.0f)
-      .SetMaxIout(0.0f);
-  globals->gimbal_controller.pid().pitch_position.SetKp(45.0f).SetKi(0.0f).SetKd(800.0f).SetMaxOut(10000.0f).SetMaxIout(
-      0.0f);
-  // globals->gimbal_controller.pid().yaw_position.SetKp(400.0f).SetKi(0.0f).SetKd(10000.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
-  // globals->gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.0f).SetKd(500.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
+  globals->gimbal_controller.pid().yaw_position.SetKp(400.f).SetKi(0).SetKd(10000.f).SetMaxOut(30000.f).SetMaxIout(0);
+  globals->gimbal_controller.pid().pitch_position.SetKp(45.f).SetKi(0).SetKd(800.f).SetMaxOut(10000.f).SetMaxIout(0);
 }
 
 void Gimbal::ApplyIdentifyGimbalPID() {
-  globals->gimbal_controller.pid()
-      .yaw_position.SetKp(400000.0f)
-      .SetKi(0.0f)
-      .SetKd(100000.0f)
-      .SetMaxOut(30000.0f)
-      .SetMaxIout(0.0f);
-  globals->gimbal_controller.pid().pitch_position.SetKp(20.0f).SetKi(0.0f).SetKd(50.f).SetMaxOut(10.0f).SetMaxIout(
-      0.0f);
+  globals->gimbal_controller.pid().yaw_position.SetKp(400000).SetKi(0).SetKd(100000).SetMaxOut(30000).SetMaxIout(0);
+  globals->gimbal_controller.pid().pitch_position.SetKp(20).SetKi(0).SetKd(50).SetMaxOut(10).SetMaxIout(0);
 }
 
 void Gimbal::GimbalIdentifyUpdate() {
   gimbal->ApplyIdentifyGimbalPID();
   globals->gimbal_controller.EnableSpeedPid(false);
-  if (!gimbal->identify_active_) {
-    gimbal->identify_yaw_encoder_counter_.Reset(0, globals->yaw_motor->encoder());
-    gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
-    gimbal->identify_active_ = true;
-    gimbal->identify_time_s_ = 0.0f;
-    gimbal->identify_yaw_center_ = 0.0f;
-    gimbal->identify_pitch_center_ = kIdentifyPitchCenter;
-    gimbal->identify_yaw_position_ = 0.0f;
-    gimbal->identify_yaw_speed_ = 0.0f;
-    gimbal->identify_pitch_position_ = globals->pitch_motor->pos();
-    gimbal->identify_pitch_speed_ = globals->pitch_motor->vel();
-  }
 
   gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
   gimbal->identify_yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
@@ -351,36 +272,17 @@ void Gimbal::GimbalIdentifyTargetUpdate() {
 }
 
 void Gimbal::GimbalIdentifyPIDUpdate() {
-  fm_ident_yaw_target = gimbal->gimbal_yaw_target_;
-  fm_ident_pitch_target = PitchRawToIdentifyModel(gimbal->gimbal_pitch_target_);
-  fm_ident_yaw_position = gimbal->identify_yaw_position_;
-  fm_ident_pitch_position = PitchRawToIdentifyModel(gimbal->identify_pitch_position_);
-
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_);
   globals->gimbal_controller.Update(gimbal->identify_yaw_position_, 0.0f, gimbal->identify_pitch_position_, 0.0f);
   gimbal->yaw_current_ =
       rm::modules::Clamp(globals->gimbal_controller.output().yaw, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
   gimbal->yaw_torque_ = YawVoltageCmdToTorque(gimbal->yaw_current_, gimbal->identify_yaw_speed_);
   gimbal->pitch_torque_ = rm::modules::Clamp(globals->gimbal_controller.output().pitch, -10.0f, 10.0f);
-  fm_ident_yaw_current = gimbal->yaw_current_;
-  fm_ident_pitch_torque = gimbal->pitch_torque_;
 }
 
 void Gimbal::GimbalFfVerifyUpdate() {
   globals->gimbal_controller.Enable(false);
   globals->gimbal_controller.EnableSpeedPid(false);
-
-  if (!gimbal->ff_verify_active_) {
-    gimbal->identify_yaw_encoder_counter_.Reset(0, globals->yaw_motor->encoder());
-    gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
-    gimbal->ff_verify_active_ = true;
-    gimbal->ff_verify_time_s_ = 0.0f;
-    gimbal->identify_yaw_position_ = 0.0f;
-    gimbal->identify_yaw_speed_ = 0.0f;
-    gimbal->identify_pitch_position_ = globals->pitch_motor->pos();
-    gimbal->identify_pitch_speed_ = globals->pitch_motor->vel();
-  }
-
   gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
   gimbal->identify_yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
                                    kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
@@ -402,14 +304,6 @@ void Gimbal::GimbalFfVerifyUpdate() {
   gimbal->yaw_torque_ = ff.yaw;
   gimbal->yaw_current_ = YawTorqueToVoltageCmd(gimbal->yaw_torque_, gimbal->identify_yaw_speed_);
   gimbal->pitch_torque_ = rm::modules::Clamp(ff.pitch, -10.0f, 10.0f);
-
-  fm_ident_yaw_target = yaw.q;
-  fm_ident_pitch_target = pitch.q;
-  fm_ident_yaw_position = gimbal->identify_yaw_position_;
-  fm_ident_pitch_position = PitchRawToIdentifyModel(gimbal->identify_pitch_position_);
-  fm_ident_yaw_current = gimbal->yaw_current_;
-  fm_ident_pitch_torque = gimbal->pitch_torque_;
-
   gimbal->ff_verify_time_s_ += gimbal->Ts;
 }
 
@@ -426,12 +320,8 @@ void Gimbal::GimbalEnableUpdate() {
   gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
   if (gimbal->GimbalMove_ != kGbIdentify) {
-    gimbal->identify_active_ = false;
     gimbal->ApplyNormalGimbalPID();
     globals->gimbal_controller.EnableSpeedPid(true);
-  }
-  if (gimbal->GimbalMove_ != kGbFfVerify) {
-    gimbal->ff_verify_active_ = false;
   }
   if (gimbal->GimbalMove_ == kGbRemote) {
     gimbal->GimbalRCTargetUpdate();
@@ -440,10 +330,15 @@ void Gimbal::GimbalEnableUpdate() {
     gimbal->GimbalAimbotTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbotFu) {
-    globals->aim_mode = 0x02;
+    if (globals->aim_mode != 0x02 && globals->aim_mode != 0x03) {
+      globals->aim_mode = 0x02;
+    }
     if (globals->rc->dial() >= 650 && !globals->aim_mood_change_flag) {
-      globals->aim_mode ^= static_cast<u8>(1 << 1);
-      globals->aim_mode ^= static_cast<u8>(1 << 2);
+      if (globals->aim_mode == 0x02) {
+        globals->aim_mode = 0x03;
+      } else if (globals->aim_mode == 0x03) {
+        globals->aim_mode = 0x02;
+      }
       globals->aim_mood_change_flag = true;
     } else if (globals->rc->dial() <= 0) {
       globals->aim_mood_change_flag = false;
@@ -451,10 +346,8 @@ void Gimbal::GimbalEnableUpdate() {
     gimbal->GimbalAimbotTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbIdentify) {
-    gimbal->move_ff_initialized_ = false;
     gimbal->GimbalIdentifyUpdate();
   } else if (gimbal->GimbalMove_ == kGbFfVerify) {
-    gimbal->move_ff_initialized_ = false;
     gimbal->GimbalFfVerifyUpdate();
   } else {
     globals->gimbal_controller.Enable(false);
@@ -467,8 +360,6 @@ void Gimbal::GimbalEnableUpdate() {
 
 void Gimbal::GimbalDisableUpdate() {
   gimbal->DaMiaoMotorDisable();
-  gimbal->identify_active_ = false;
-  gimbal->ff_verify_active_ = false;
   globals->gimbal_controller.EnableSpeedPid(true);
   globals->gimbal_controller.Enable(false);
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
@@ -549,19 +440,6 @@ void Gimbal::ShootEnableUpdate() {
                                    globals->dial_motor->rpm());
 }
 
-void Gimbal::ShootIdentifyUpdate() {
-  globals->shoot_controller.Enable(true);
-  globals->shoot_controller.Arm(true);
-  globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
-  globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_);
-  globals->shoot_controller.SetShootFrequency(0.0f);
-  gimbal->single_shoot_flag_ = false;
-  globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
-                                   static_cast<f32>(globals->dail_encoder_counter.linear_ticks()),
-                                   globals->dial_motor->rpm());
-}
-
 void Gimbal::ShootDisableUpdate() {
   globals->shoot_controller.SetMode(Shoot3Fric::kStop);
   if (globals->StateMachine_ == kUnable) {
@@ -580,7 +458,7 @@ void Gimbal::ShootDisableUpdate() {
 
 void Gimbal::GimbalIdentifyDataSend() {
   if (globals == nullptr || globals->ident_uart == nullptr || globals->StateMachine_ != kTest ||
-      gimbal->GimbalMove_ != kGbIdentify || !gimbal->identify_active_) {
+      gimbal->GimbalMove_ != kGbIdentify) {
     return;
   }
 
@@ -613,9 +491,4 @@ void Gimbal::SetMotorCurrent() {
   globals->friction_left->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_1));
   globals->friction_right->SetCurrent(static_cast<i16>(globals->shoot_controller.output().fric_2));
   globals->dial_motor->SetCurrent(static_cast<i16>(globals->shoot_controller.output().loader));
-
-  // globals->yaw_motor->SetCurrent(0);
-  // globals->friction_left->SetCurrent(0);
-  // globals->friction_right->SetCurrent(0);
-  // globals->dial_motor->SetCurrent(0);
 }

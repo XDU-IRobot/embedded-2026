@@ -11,19 +11,40 @@ inline class Gimbal {
  public:
   StateMachineType GimbalMove_ = {kNoForce};  // 云台运动状态
 
-  f32 yaw_current_ = 0.0f;   // yaw轴力矩数据
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
  private:
+  EncoderCounter identify_yaw_encoder_counter_;
+
   f32 gimbal_yaw_target_ = 0.0f;    // 云台上部yaw轴目标数据
   f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据
 
   f32 ammo_speed_ = -6200.0f;  // 摩擦轮速度
 
-  f32 yaw_speed_ff = 0.0f;
-  f32 last_yaw_target = 0.0f;
   f32 Ts = 0.002f;
   f32 Kf = 1.0f;
+
+  f32 yaw_torque_ = 0.0f;
+  f32 yaw_current_ = 0.0f;
+  f32 yaw_speed_ff = 0.0f;
+  f32 last_yaw_target = 0.0f;
+  f32 last_pitch_target_ = 0.0f;
+  f32 last_yaw_speed_ref_ = 0.0f;
+  f32 last_pitch_speed_ref_ = 0.0f;
+
+  f32 ff_verify_time_s_ = 0.0f;
+  f32 identify_time_s_ = 0.0f;
+  f32 identify_yaw_center_ = 0.0f;
+  f32 identify_pitch_center_ = 0.0f;
+  f32 identify_yaw_position_ = 0.0f;
+  f32 identify_yaw_speed_ = 0.0f;
+  f32 identify_pitch_position_ = 0.0f;
+  f32 identify_pitch_speed_ = 0.0f;
+
+  f32 yaw_speed_ref = 0.0f;
+  f32 pitch_speed_ref = 0.0f;
+  f32 yaw_accel_ref = 0.0f;
+  f32 pitch_accel_ref = 0.0f;
 
   u16 heat_limit_ = 0;    // 热量上限值
   u16 heat_current_ = 0;  // 热量实时值
@@ -91,30 +112,11 @@ inline class Gimbal {
 
   void ShootEnableUpdate();
 
-  void ShootIdentifyUpdate();
-
   void ShootDisableUpdate();
 
   void SetMotorCurrent();
 
   void EulerToQuaternion(f32 yaw, f32 pitch, f32 roll);
-
-  EncoderCounter identify_yaw_encoder_counter_;
-  bool identify_active_ = false;
-  f32 identify_time_s_ = 0.0f;
-  f32 identify_yaw_center_ = 0.0f;
-  f32 identify_pitch_center_ = 0.0f;
-  f32 identify_yaw_position_ = 0.0f;
-  f32 identify_yaw_speed_ = 0.0f;
-  f32 identify_pitch_position_ = 0.0f;
-  f32 identify_pitch_speed_ = 0.0f;
-  bool ff_verify_active_ = false;
-  f32 ff_verify_time_s_ = 0.0f;
-  f32 yaw_torque_ = 0.0f;
-  bool move_ff_initialized_ = false;
-  f32 last_pitch_target_ = 0.0f;
-  f32 last_yaw_speed_ref_ = 0.0f;
-  f32 last_pitch_speed_ref_ = 0.0f;
 } *gimbal;
 
 #endif  // GIMBAL_HPP

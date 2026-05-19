@@ -93,14 +93,10 @@ void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
   gimbal_controller.pid().yaw_position.SetKp(400.0f).SetKi(0.0f).SetKd(10000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
-  // gimbal_controller.pid().yaw_position.SetKp(100.0f).SetKi(0.0f).SetKd(2000.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
-  // gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(45.0f).SetKi(0.0f).SetKd(800.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
-  // gimbal_controller.pid().pitch_position.SetKp(10.0f).SetKi(0.0f).SetKd(200.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
-  // gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(0.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {
@@ -320,23 +316,6 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
                                                 globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
                                                 globals->imu->accel_x(), globals->imu->accel_z()});
-  // 硬触发
-  // if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
-  //   globals->imu_count++;
-  //   globals->time_camera++;
-  //   if (globals->time_camera == 10) {
-  //     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535u);
-  //   }
-  //   if (globals->time_camera == 5) {
-  //     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0u);
-  //   }
-  // } else {
-  //   globals->imu_count = 0;
-  //   globals->time_camera = 0;
-  // }
-  // if (globals->imu_count >= 10000) {
-  //   globals->imu_count = 0;
-  // }
   // can 通信
   f32 ammo_speed;
   if (globals->chassis_communicator->ammo_speed() > 20.0f) {
@@ -354,7 +333,6 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ChassisStateUpdate();
   gimbal->GimbalTask();
   globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
-  // globals->pitch_motor->SetMitCommand(0, 0, 0, 0, 0);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
 }
