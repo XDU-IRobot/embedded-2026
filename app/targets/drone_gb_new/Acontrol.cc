@@ -1,5 +1,6 @@
 #include "gimbal.hpp"
 // 控制逻辑
+Gimbal2DofDynamics drone_gb;
 void Gimbal::GimbalControl() {
   if (GimbalState_ == kManual) {
     if (DM_is_enable == false) {
@@ -35,8 +36,8 @@ void Gimbal::GimbalControl() {
       } else {
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
         yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
-        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
+        rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+        rc_pitch_data += rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
       }
     }
 
@@ -71,7 +72,7 @@ void Gimbal::GimbalControl() {
 
     // 设定目标，并计算
     gimbal_controller.SetTarget(roll_comp.first, roll_comp.second , 0, 0);
-    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
+    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw+yaw_torque*yaw_torque_kp, -25000, 25000));  // 设置输出电流并输出
 
 #endif
@@ -105,8 +106,8 @@ void Gimbal::GimbalControl() {
       } else {
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
         yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
-        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
+        rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+        rc_pitch_data += rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
       }
 
       if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
@@ -141,7 +142,7 @@ void Gimbal::GimbalControl() {
 
     // 设定目标，并计算
     gimbal_controller.SetTarget(roll_comp.first, roll_comp.second , 0, 0);
-    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
+    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw+yaw_torque*yaw_torque_kp, -25000, 25000));  // 设置输出电流并输出
 #endif
   } else {  // 失能
