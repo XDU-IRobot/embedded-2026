@@ -407,6 +407,13 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
 }
 
+void Gimbal::ApplyNormalGimbalPID() {
+  // 上部 Yaw PID 参数
+  globals->gimbal_controller.pid().up_yaw_position.SetKp(20.f).SetKi(0).SetKd(120.f).SetMaxOut(20000.f).SetMaxIout(0);
+  // pitch PID 参数
+  globals->gimbal_controller.pid().pitch_position.SetKp(70.f).SetKi(0).SetKd(0.f).SetMaxOut(30.f).SetMaxIout(0);
+}
+
 void Gimbal::GimbalIdentifyUpdate() {
   // pid 更新
   globals->gimbal_controller.pid().up_yaw_position.SetKp(300.f).SetKi(0).SetKd(800.f).SetMaxOut(25000.f).SetMaxIout(0);
@@ -464,6 +471,7 @@ void Gimbal::GimbalMatchUpdate() {
 void Gimbal::GimbalEnableUpdate() {
   globals->gimbal_controller.Enable(true);
   if (gimbal->GimbalMove_ != kGbIdentify) {
+    gimbal->ApplyNormalGimbalPID();
     globals->gimbal_controller.EnableSpeedPid(true);
   }
   if (gimbal->GimbalMove_ == kGbRemote) {
