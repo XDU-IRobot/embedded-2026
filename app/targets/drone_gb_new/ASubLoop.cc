@@ -1,4 +1,5 @@
 #include "gimbal.hpp"
+#include "UI/UI.hpp"
 // 子线程
 //  遥控器和imu数据解算+DjiMotor发信息
 void Gimbal::SubLoop500Hz() {
@@ -46,6 +47,12 @@ void Gimbal::SubLoop100Hz() {
     FreemasterDebug();    // 调试更新
   }
 }
+void Gimbal::SubLoop30Hz() {
+    if (time_ % 17 == 0) {
+      schedule.schedule();
+    }
+
+}
 void Gimbal::SubLoop50Hz() {
   if (time_ % 10 == 0) {
     // robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
@@ -57,9 +64,6 @@ void Gimbal::SubLoop10Hz() {
     test_ui_num++;
     WS2812Control();
     time_ = 0;
-  }
-  if (time_ % 34 == 0) {
-    schedule.schedule();
   }
 
 }
