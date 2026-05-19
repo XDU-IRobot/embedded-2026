@@ -165,6 +165,9 @@ class Gimbal {
     return {new_yaw, new_pitch};
   }
 
+  rm::hal::Serial<50> *refereeUart{nullptr};
+  u_int8_t dataBox[128];
+
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
     can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
@@ -272,6 +275,7 @@ class Gimbal {
   void SubLoop250Hz();
   void SubLoop100Hz();
   void SubLoop50Hz();
+  void SubLoop30Hz();
   void SubLoop10Hz();
 };
 

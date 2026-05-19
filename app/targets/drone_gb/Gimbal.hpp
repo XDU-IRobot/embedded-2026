@@ -50,7 +50,7 @@ class Gimbal {
   rm::hal::Can *can1{nullptr};             // CAN 总线接口
   rm::hal::SerialInterface *referee_uart;  // 裁判系统串口
   rm::device::RxReferee *rx_referee{nullptr};
-  rm::hal::Serial *dbus{nullptr};              // 遥控器串口接口
+  rm::hal::Serial<50> *dbus;                   // 遥控器串口接口
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
   rm::device::DeviceManager<3> device_shoot;   // 发射管理器
@@ -165,7 +165,7 @@ class Gimbal {
     led = new LED;
 
     can1 = new rm::hal::Can{hcan1};
-    dbus = new rm::hal::Serial{huart3, 36, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+    dbus = new rm::hal::Serial{huart3};
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
 
