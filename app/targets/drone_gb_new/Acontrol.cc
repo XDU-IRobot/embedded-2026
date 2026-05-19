@@ -17,7 +17,7 @@ void Gimbal::GimbalControl() {
 
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
     }
-    GimbalPIDInitMAU();
+    GimbalPIDInit();
     yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
     yaw_delta = 0.0f;
 
@@ -75,7 +75,7 @@ void Gimbal::GimbalControl() {
     // 设定目标，并计算
     gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
-    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw + yaw_torque * yaw_torque_kp, -25000,
+    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_torque * yaw_torque_kp, -25000,
                                              25000));  // 设置输出电流并输出
 
 #endif
@@ -93,7 +93,7 @@ void Gimbal::GimbalControl() {
 #endif
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     }
-    GimbalPIDInitAIM();
+    GimbalPIDInit();
     if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
       rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
 

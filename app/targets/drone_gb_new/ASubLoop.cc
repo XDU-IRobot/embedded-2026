@@ -35,7 +35,7 @@ void Gimbal::SubLoop500Hz() {
 // DmMotor电机发信息
 void Gimbal::SubLoop250Hz() {
   if (time_ % 2 == 0) {
-    pitch_cmd = rm::modules::Clamp(pitch_torque - gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
+    pitch_cmd = rm::modules::Clamp(-pitch_torque - gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
     pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                         // 合输出
 
     // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试

@@ -66,9 +66,9 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;    // pitch电机前馈补偿量
-  float yaw_torque = 0.0f;      // yaw电机前馈补偿量
-  float yaw_torque_kp = 50.0f;  // TODO 力矩转电流输出环比例
+  float pitch_torque = 0.0f;  // pitch电机前馈补偿量
+  float yaw_torque = 0.0f;    // yaw电机前馈补偿量
+  float yaw_torque_kp = 10000.0f;//TODO 力矩转电流输出环比例
 
   float pitch_cmd = 0.0f;       // pitch合输出
   float pitch_speed_tf = 0.0f;  // 速度正向输出
@@ -150,7 +150,9 @@ class Gimbal {
 #if CONTROLLER_CHOICE == 0
     double roll_err = roll;
 #else
-    double roll_err = roll_;
+    double roll_err = 0;
+    if (roll_<0)  roll_err = roll_+M_PI;
+    if (roll_>0)  roll_err = roll_-M_PI;
 #endif
     roll_err = rm::modules::Clamp(roll_err, -roll_comp_limit, roll_comp_limit);
 
@@ -234,9 +236,7 @@ class Gimbal {
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
   }
 
-  void GimbalPIDInitAIM();
-
-  void GimbalPIDInitMAU();
+  void GimbalPIDInit();
 
   void AmmoPIDInit();
 
