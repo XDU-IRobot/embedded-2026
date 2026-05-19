@@ -13,9 +13,9 @@ inline class Chassis {
  private:
   rm::modules::PID chassis_follow_pid_{};
 
-  rm::modules::M3508PowerModel power_model_{};
-  std::array<rm::modules::M3508PowerModel::MotorState, 4> motor_state_{};
-  std::array<rm::modules::M3508PowerModel::PowerInfo, 4> power_info_{};
+  rm::modules::MotorPowerModel power_model_{rm::modules::MotorPowerModel::MotorType::kM3508};
+  std::array<rm::modules::MotorPowerModel::MotorState, 4> motor_state_{};
+  std::array<rm::modules::MotorPowerModel::PowerInfo, 4> power_info_{};
 
   f32 output_currents_[4]{};
   f32 total_power_ = 0.0f;
