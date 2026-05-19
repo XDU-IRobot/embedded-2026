@@ -61,19 +61,21 @@ void Gimbal::GimbalControl() {
     pitch_torque = pitch_torque_kp * cos(pitch);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 #elif CONTROLLER_CHOICE == 1
-    roll_comp_target[0] = roll_comp.first;//yaw
-    roll_comp_target[1] = roll_comp.second;//pitch
+    roll_comp_target[0] = roll_comp.first;   // yaw
+    roll_comp_target[1] = roll_comp.second;  // pitch
 
     // 前馈计算项
-    UpdateRcAngleDiff(roll_comp.first,roll_comp.second, 0.002f);
-    Eigen::Vector2f ff_torque=drone_gb.ComputeFf(roll_comp_target[0],roll_comp_target[1],rc_yaw_vel,rc_pitch_vel,rc_yaw_acc,rc_pitch_acc,Eigen::Vector3f(0.0f, 0.0f, -9.81f));
+    UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
+    Eigen::Vector2f ff_torque = drone_gb.ComputeFf(roll_comp_target[0], roll_comp_target[1], rc_yaw_vel, rc_pitch_vel,
+                                                   rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
     yaw_torque = ff_torque(0);
     pitch_torque = ff_torque(1);
 
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second , 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
-    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw+yaw_torque*yaw_torque_kp, -25000, 25000));  // 设置输出电流并输出
+    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw + yaw_torque * yaw_torque_kp, -25000,
+                                             25000));  // 设置输出电流并输出
 
 #endif
   } else if (GimbalState_ == kAuto) {  // 自瞄模式控制
@@ -131,19 +133,22 @@ void Gimbal::GimbalControl() {
     pitch_torque = pitch_torque_kp * cos(pitch);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 #elif CONTROLLER_CHOICE == 1
-    roll_comp_target[0] = roll_comp.first;//yaw
-    roll_comp_target[1] = roll_comp.second;//pitch
+    roll_comp_target[0] = roll_comp.first;   // yaw
+    roll_comp_target[1] = roll_comp.second;  // pitch
 
     // 前馈计算项
-    UpdateRcAngleDiff(roll_comp.first,roll_comp.second, 0.002f);
-    Eigen::Vector2f ff_torque=drone_gb.ComputeFf(roll_comp_target[0],roll_comp_target[1],rc_yaw_vel,rc_pitch_vel,rc_yaw_acc,rc_pitch_acc,Eigen::Vector3f(0.0f, 0.0f, -9.81f));//TODO要改成自瞄给的值
+    UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
+    Eigen::Vector2f ff_torque =
+        drone_gb.ComputeFf(roll_comp_target[0], roll_comp_target[1], rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc,
+                           Eigen::Vector3f(0.0f, 0.0f, -9.81f));  // TODO要改成自瞄给的值
     yaw_torque = ff_torque(0);
     pitch_torque = ff_torque(1);
 
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second , 0, 0);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
-    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw+yaw_torque*yaw_torque_kp, -25000, 25000));  // 设置输出电流并输出
+    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw + yaw_torque * yaw_torque_kp, -25000,
+                                             25000));  // 设置输出电流并输出
 #endif
   } else {  // 失能
     if (DM_is_enable == true) {
