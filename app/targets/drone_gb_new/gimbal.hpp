@@ -12,6 +12,8 @@
 #include "FreemasterDbug.hpp"
 #include "Usb.hpp"
 #include "WS2812b.hpp"
+#include "dynamics.hpp"
+#include "anglediff2.hpp"
 #include "UI/protocol_user.hpp"
 #include "UI/referee_user.hpp"
 #include "UI/TaskScheduler.hpp"
@@ -22,6 +24,7 @@ void Layer1_func();
 
 extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
+extern Gimbal2DofDynamics drone_gb;
 class Gimbal {
  public:
   // c板数据源
@@ -44,8 +47,8 @@ class Gimbal {
 
   bool DM_is_enable = false;  // 达秒使能标志位
 
-  float pitch_min_pos = 3.00;        // pitch电机最小限位
-  float pitch_max_pos = 3.75;        // pitch电机最大限位
+  float pitch_min_pos = -0.61f;      // pitch电机最小限位
+  float pitch_max_pos = 0.14f;       // pitch电机最大限位
                                      // 机械限位
   float yaw_center_encoder = 5.174;  // TODO云台机械中位对应的编码器角度
   float yaw_relative = 0.0f;         // TODO 当前云台相对机架夹角
@@ -70,21 +73,29 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;  // pitch电机力矩重力补偿量
-#if CONTROLLER_CHOICE == 0
-  float pitch_torque_kp = 0.35f;  // TODO 重力补偿参数
-#elif CONTROLLER_CHOICE == 1
-  float pitch_torque_kp = 0.5f;  // TODO 重力补偿参数
-#endif
+  float pitch_torque = 0.0f;    // pitch电机前馈补偿量
+  float yaw_torque = 0.0f;      // yaw电机前馈补偿量
+  float yaw_torque_kp = 50.0f;  // TODO 力矩转电流输出环比例
 
   float pitch_cmd = 0.0f;       // pitch合输出
   float pitch_speed_tf = 0.0f;  // 速度正向输出
   float pitch_speed_kp = 0.1f;  // 速度输出比例系数
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
-  bool roll_comp_enable = true;  // TODO 滚转补偿开关
-  float roll_comp_kp = 0.1f;     // TODO 补偿系数，rad_pitch_per_rad_roll
-  float roll_comp_limit = 0.3f;  // TODO 最大补偿幅度（rad）
+  bool roll_comp_enable = true;              // TODO 滚转补偿开关
+  float roll_comp_kp = 0.1f;                 // TODO 补偿系数，rad_pitch_per_rad_roll
+  float roll_comp_limit = 0.3f;              // TODO 最大补偿幅度（rad）
+  float roll_comp_target[2] = {0.0f, 0.0f};  // 储存补偿后的目标角度 0yaw,1pitch
+
+  // 前馈手控微分项计算
+  AngleDiff2 rc_yaw_diff;
+  AngleDiff2 rc_pitch_diff;
+
+  float rc_yaw_vel = 0.0f;
+  float rc_yaw_acc = 0.0f;
+
+  float rc_pitch_vel = 0.0f;
+  float rc_pitch_acc = 0.0f;
 
   int robot_id = 0;  // 裁判系统测试
   int ID_last = 0;   // 红蓝方离线标识位
@@ -143,7 +154,11 @@ class Gimbal {
     if (!roll_comp_enable) {
       return {yaw_target, pitch_target};
     }
+#if CONTROLLER_CHOICE == 0
     double roll_err = roll;
+#else
+    double roll_err = roll_;
+#endif
     roll_err = rm::modules::Clamp(roll_err, -roll_comp_limit, roll_comp_limit);
 
     // 近似分解：机体 roll 对于当前朝向 yaw，投影到 yaw/pitch
@@ -224,6 +239,8 @@ class Gimbal {
 
     gimbal_controller.Enable(false);  // 云台控制器
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    rc_yaw_diff.SetFilter(0.35, 0.20);  // 前馈微分项滤波
+    rc_pitch_diff.SetFilter(0.35, 0.20);
 
     shoot_controller.Enable(false);                   // 控制器初始化
     shoot_controller.Arm(false);                      // 摩擦轮武装（允许转动）
@@ -253,6 +270,8 @@ class Gimbal {
   bool Rcchoose();
 
   float GetYawMotorAngleRad();
+
+  void UpdateRcAngleDiff(float yaw_data, float pitch_data, float dt);
 
   void GimbalControl();
 

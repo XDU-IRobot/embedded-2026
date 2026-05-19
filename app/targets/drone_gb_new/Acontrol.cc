@@ -1,5 +1,6 @@
 #include "gimbal.hpp"
 // 控制逻辑
+Gimbal2DofDynamics drone_gb;
 void Gimbal::GimbalControl() {
   if (GimbalState_ == kManual) {
     if (DM_is_enable == false) {
@@ -35,8 +36,8 @@ void Gimbal::GimbalControl() {
       } else {
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
         yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
-        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
+        rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+        rc_pitch_data += rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
       }
     }
 
@@ -47,7 +48,7 @@ void Gimbal::GimbalControl() {
       yaw_delta = 0.0f;
     }
 
-    rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, 0, 2 * M_PI);
+    rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, -M_PI, M_PI);
     rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     // 滚转补偿
     auto roll_comp = ApplyRollComp(rc_yaw_data, rc_pitch_data);
@@ -57,16 +58,26 @@ void Gimbal::GimbalControl() {
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
-    pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
+    pitch_torque = pitch_torque_kp * cos(pitch);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 #elif CONTROLLER_CHOICE == 1
+    roll_comp_target[0] = roll_comp.first;   // yaw
+    roll_comp_target[1] = roll_comp.second;  // pitch
+
+    // 前馈计算项
+    UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
+    Eigen::Vector2f ff_torque =
+        drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
+                           rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
+    yaw_torque = ff_torque(0);
+    pitch_torque = ff_torque(1);
+
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second - 0.03, 0, 0);
-    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
-    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
-    // 重力补偿
-    pitch_torque = pitch_torque_kp * cos(pitch_ - 3.14);  // 这里输出的力矩是反向
-    pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
+    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
+    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw + yaw_torque * yaw_torque_kp, -25000,
+                                             25000));  // 设置输出电流并输出
+
 #endif
   } else if (GimbalState_ == kAuto) {  // 自瞄模式控制
     if (DM_is_enable == false) {       // 使达妙电机使能
@@ -84,11 +95,9 @@ void Gimbal::GimbalControl() {
     }
     GimbalPIDInitAIM();
     if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
-      rc_yaw_data = Aimbot.TargetYawAngle + M_PI;
-      rc_yaw_data = rm::modules::Wrap(rc_yaw_data, 0, 2 * M_PI);
+      rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
 
-      rc_pitch_data = Aimbot.TargetPitchAngle + M_PI;
-      rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
+      rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
     } else {  // 非自瞄状态自动切入手控
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
       yaw_delta = 0.0f;
@@ -100,8 +109,8 @@ void Gimbal::GimbalControl() {
       } else {
         yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
         yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-        rc_pitch_data -= rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
-        rc_pitch_data -= rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
+        rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+        rc_pitch_data += rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
       }
 
       if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
@@ -111,7 +120,7 @@ void Gimbal::GimbalControl() {
         yaw_delta = 0.0f;
       }
 
-      rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, 0, 2 * M_PI);
+      rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, -M_PI, M_PI);
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     }
     // 滚转补偿
@@ -122,16 +131,25 @@ void Gimbal::GimbalControl() {
     gimbal_controller.Update(yaw, -yaw_motor->rpm(), pitch, pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
     // 重力补偿
-    pitch_torque = pitch_torque_kp * cos(pitch - 3.14);  // 这里输出的力矩是反向
+    pitch_torque = pitch_torque_kp * cos(pitch);  // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
 #elif CONTROLLER_CHOICE == 1
+    roll_comp_target[0] = roll_comp.first;   // yaw
+    roll_comp_target[1] = roll_comp.second;  // pitch
+
+    // 前馈计算项
+    UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
+    Eigen::Vector2f ff_torque = drone_gb.ComputeFf(
+        -rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(), rc_yaw_vel,
+        rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));  // TODO要改成自瞄给的值
+    yaw_torque = ff_torque(0);
+    pitch_torque = ff_torque(1);
+
     // 设定目标，并计算
-    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second - 0.03, 0, 0);
-    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, pitch_motor->vel(), 1.f);
-    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw, -25000, 25000));  // 设置输出电流并输出
-    // 重力补偿
-    pitch_torque = pitch_torque_kp * cos(pitch_ - 3.14);  // 这里输出的力矩是反向
-    pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
+    gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
+    gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
+    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw + yaw_torque * yaw_torque_kp, -25000,
+                                             25000));  // 设置输出电流并输出
 #endif
   } else {  // 失能
     if (DM_is_enable == true) {

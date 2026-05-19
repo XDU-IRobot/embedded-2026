@@ -78,6 +78,7 @@ float Acan2queue = 0.0f;
 // imunew
 float Aimu_pitch = 0.0f;
 float Aimu_yaw = 0.0f;
+float Aimu_roll = 0.0f;
 uint16_t Aui_game_time = 0;
 uint8_t Aui_game_progress = 0;
 // 红蓝方
@@ -130,8 +131,8 @@ void FreemasterDebug() {
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;
-  Atargetpitch = Aimbot.TargetPitchAngle + M_PI;
-  Atagetyaw = Aimbot.TargetYawAngle + M_PI;
+  Atargetpitch = Aimbot.TargetPitchAngle;
+  Atagetyaw = Aimbot.TargetYawAngle;
 
   Ayaw_position = gimbal->GetYawMotorAngleRad();
   Ayaw_relative = gimbal->yaw_relative;
@@ -161,8 +162,9 @@ void FreemasterDebug() {
   Acan2drop = gimbal->can2->stats().drop_total_fps;
   Acan2queue = gimbal->can2->stats().enqueue_fps;
 
-  Aimu_pitch = gimbal->imu_new->pitch() + M_PI;
-  Aimu_yaw = gimbal->imu_new->yaw() + M_PI;
+  Aimu_pitch = -gimbal->imu_new->pitch();
+  Aimu_yaw = gimbal->imu_new->yaw();
+  Aimu_roll = -gimbal->imu_new->roll();
 
   Aid = gimbal->ID();
   Aerror = gimbal->yaw_ - gimbal->yaw;

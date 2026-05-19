@@ -91,3 +91,14 @@ bool Gimbal::Rcchoose() {
 float Gimbal::GetYawMotorAngleRad() {  // 编码器返回角度
   return yaw_motor->encoder() * 2.0f * M_PI / 8192.0f;
 }
+
+void Gimbal::UpdateRcAngleDiff(float yaw_data, float pitch_data, float dt) {
+  rc_yaw_diff.Update(yaw_data, dt, true);
+  rc_pitch_diff.Update(pitch_data, dt, false);
+
+  rc_yaw_vel = rc_yaw_diff.vel();
+  rc_yaw_acc = rc_yaw_diff.acc();
+
+  rc_pitch_vel = rc_pitch_diff.vel();
+  rc_pitch_acc = rc_pitch_diff.acc();
+}
