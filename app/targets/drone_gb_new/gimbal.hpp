@@ -66,9 +66,9 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;  // pitch电机前馈补偿量
-  float yaw_torque = 0.0f;    // yaw电机前馈补偿量
-  float yaw_torque_kp = 10000.0f;//TODO 力矩转电流输出环比例
+  float pitch_torque = 0.0f;       // pitch电机前馈补偿量
+  float yaw_torque = 0.0f;         // yaw电机前馈补偿量
+  float yaw_torque_kp = 10000.0f;  // TODO 力矩转电流输出环比例
   Eigen::Vector2f tau_ff;
   float yaw_tau2voltage = 0.0f;
 
@@ -77,7 +77,7 @@ class Gimbal {
   float pitch_speed_kp = 0.1f;  // 速度输出比例系数
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
-  bool roll_comp_enable = false;              // TODO 滚转补偿开关
+  bool roll_comp_enable = false;             // TODO 滚转补偿开关
   float roll_comp_kp = 0.1f;                 // TODO 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;              // TODO 最大补偿幅度（rad）
   float roll_comp_target[2] = {0.0f, 0.0f};  // 储存补偿后的目标角度 0yaw,1pitch
@@ -153,8 +153,8 @@ class Gimbal {
     double roll_err = roll;
 #else
     double roll_err = 0;
-    if (roll_<0)  roll_err = roll_+M_PI;
-    if (roll_>0)  roll_err = roll_-M_PI;
+    if (roll_ < 0) roll_err = roll_ + M_PI;
+    if (roll_ > 0) roll_err = roll_ - M_PI;
 #endif
     roll_err = rm::modules::Clamp(roll_err, -roll_comp_limit, roll_comp_limit);
 

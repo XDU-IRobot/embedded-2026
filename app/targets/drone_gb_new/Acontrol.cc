@@ -66,9 +66,10 @@ void Gimbal::GimbalControl() {
 
     // 前馈计算项
     UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
-    tau_ff = drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
+    tau_ff =
+        drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
                            rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
-    yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;//力矩转换控制电流
+    yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
 
     // 设定目标，并计算
     gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
@@ -140,9 +141,10 @@ void Gimbal::GimbalControl() {
 
     // 前馈计算项
     UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
-    tau_ff = drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
-                           Aimbot.YawSpeed, Aimbot.PitchSpeed, Aimbot.YawAngSpeed, Aimbot.PitchAngSpeed, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
-    yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;//力矩转换控制电流
+    tau_ff = drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI),
+                                -0.45 - pitch_motor->pos(), Aimbot.YawSpeed, Aimbot.PitchSpeed, Aimbot.YawAngSpeed,
+                                Aimbot.PitchAngSpeed, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
+    yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
 
     // 设定目标，并计算
     gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
