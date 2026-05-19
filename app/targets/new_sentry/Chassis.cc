@@ -24,7 +24,7 @@ void Chassis::ChassisStateUpdate() {
     globals->chassis_init_time--;
   }
   if (!globals->device_chassis.all_device_ok() || globals->chassis_init_time > 0 ||
-      globals->down_yaw_motor->status() != 0x1F ||
+      globals->down_yaw_motor->status() != 0x01 ||
       !globals->referee_data->data().robot_status.power_management_chassis_output) {
     chassis->ChassisMove_ = kUnable;
     chassis->ChassisDisableUpdate();  // 底盘电机失能计算

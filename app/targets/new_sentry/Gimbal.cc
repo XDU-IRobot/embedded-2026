@@ -540,30 +540,30 @@ void Gimbal::GimbalDisableUpdate() {
 }
 
 void Gimbal::DaMiaoMotorEnable() {
-  if (globals->down_yaw_motor->status() != 0x1F && globals->down_yaw_motor->status() != 0x0F) {
+  if (globals->down_yaw_motor->status() != 0x01 && globals->down_yaw_motor->status() != 0x00) {
     globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-  } else if (globals->pitch_motor->status() != 0x1F && globals->pitch_motor->status() != 0x0F) {
+  } else if (globals->pitch_motor->status() != 0x01 && globals->pitch_motor->status() != 0x00) {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
   } else {
-    if (globals->down_yaw_motor->status() == 0x0F) {
+    if (globals->down_yaw_motor->status() == 0x00) {
       globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     }
-    if (globals->pitch_motor->status() == 0x0F) {
+    if (globals->pitch_motor->status() == 0x00) {
       globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
     }
   }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
-  if (globals->down_yaw_motor->status() != 0x1F && globals->down_yaw_motor->status() != 0x0F) {
+  if (globals->down_yaw_motor->status() != 0x01 && globals->down_yaw_motor->status() != 0x00) {
     globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-  } else if (globals->pitch_motor->status() != 0x1F && globals->pitch_motor->status() != 0x0F) {
+  } else if (globals->pitch_motor->status() != 0x01 && globals->pitch_motor->status() != 0x00) {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
   } else {
-    if (globals->down_yaw_motor->status() == 0x1F) {
+    if (globals->down_yaw_motor->status() == 0x01) {
       globals->down_yaw_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     }
-    if (globals->pitch_motor->status() == 0x1F) {
+    if (globals->pitch_motor->status() == 0x01) {
       globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     }
   }
