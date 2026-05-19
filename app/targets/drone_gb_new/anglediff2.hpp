@@ -2,7 +2,7 @@
 #define BOARDC_ANGLEDIFF2_H
 
 class AngleDiff2 {
-public:
+ public:
   AngleDiff2() = default;
 
   void Reset(float value) {
@@ -50,7 +50,7 @@ public:
   float vel() const { return vel_; }
   float acc() const { return acc_; }
 
-private:
+ private:
   bool initialized_ = false;
 
   float last_value_ = 0.0f;

@@ -40,8 +40,8 @@ class Gimbal {
 
   bool DM_is_enable = false;  // 达秒使能标志位
 
-  float pitch_min_pos = 0.14f;      // pitch电机最小限位
-  float pitch_max_pos = -0.61f;       // pitch电机最大限位
+  float pitch_min_pos = 0.14f;       // pitch电机最小限位
+  float pitch_max_pos = -0.61f;      // pitch电机最大限位
                                      // 机械限位
   float yaw_center_encoder = 5.174;  // TODO云台机械中位对应的编码器角度
   float yaw_relative = 0.0f;         // TODO 当前云台相对机架夹角
@@ -66,9 +66,9 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;  // pitch电机前馈补偿量
-  float yaw_torque = 0.0f;    // yaw电机前馈补偿量
-  float yaw_torque_kp = 50.0f;//TODO 力矩转电流输出环比例
+  float pitch_torque = 0.0f;    // pitch电机前馈补偿量
+  float yaw_torque = 0.0f;      // yaw电机前馈补偿量
+  float yaw_torque_kp = 50.0f;  // TODO 力矩转电流输出环比例
 
   float pitch_cmd = 0.0f;       // pitch合输出
   float pitch_speed_tf = 0.0f;  // 速度正向输出
