@@ -143,7 +143,7 @@ struct DartRack {
   rm::device::HiWonderServo *add_servo_2_{nullptr};                               ///< 加弹机械底部舵机2 (ID=2)
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *dm_motor_{nullptr};  ///< 达妙电机
   // 裁判系统
-  rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
+  rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee_data_buffer{nullptr};  ///< 裁判系统数据缓冲区
   rm::device::RxReferee *rx_referee{nullptr};
   // usb设备
   USBVisionReceive_SCM_t *vision_data_{nullptr};  ///< 视觉数据

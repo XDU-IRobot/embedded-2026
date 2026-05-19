@@ -21,7 +21,7 @@ void DartRack::Init() {
   add_motor_speed_pid_.SetKp(5).SetKi(0).SetMaxOut(10000).SetMaxIout(0);
   yaw_motor_speed_pid_.SetKp(0.5).SetKi(0).SetKd(0).SetMaxOut(8000).SetMaxIout(0);
 
-  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
+  referee_data_buffer = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
 
   // 硬件接口初始化
   can1_ = new rm::hal::Can{hcan1};
