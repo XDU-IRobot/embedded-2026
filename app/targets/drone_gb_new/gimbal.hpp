@@ -12,6 +12,13 @@
 #include "FreemasterDbug.hpp"
 #include "Usb.hpp"
 #include "WS2812b.hpp"
+#include "UI/protocol_user.hpp"
+#include "UI/referee_user.hpp"
+#include "UI/TaskScheduler.hpp"
+
+
+void Layer0_func();
+void Layer1_func();
 
 extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
@@ -148,6 +155,14 @@ class Gimbal {
     return {new_yaw, new_pitch};
   }
 
+
+  static rm::device::UITask Layer0;
+  static rm::device::UITask Layer1;
+  static rm::device::UITaskScheduler schedule;
+  rm::hal::Serial *refereeUart{nullptr};
+  u_int8_t dataBox[128];
+
+
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
     can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
@@ -215,6 +230,12 @@ class Gimbal {
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
+
+    Layer0 = rm::device::UITask(Layer0_func, 15);
+    Layer1 = rm::device::UITask(Layer1_func, 1);
+    schedule = rm::device::UITaskScheduler(30);
+    schedule.addTask(&Layer0);
+    schedule.addTask(&Layer1);
   }
 
   void GimbalPIDInitAIM();
