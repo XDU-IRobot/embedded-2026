@@ -1,6 +1,6 @@
 #ifndef BOARDC_ANGLEDIFF2_H
 #define BOARDC_ANGLEDIFF2_H
-
+#include <librm.hpp>
 class AngleDiff2 {
  public:
   AngleDiff2() = default;

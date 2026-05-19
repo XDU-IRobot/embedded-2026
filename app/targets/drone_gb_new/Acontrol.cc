@@ -17,7 +17,7 @@ void Gimbal::GimbalControl() {
 
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
     }
-    GimbalPIDInit();
+    GimbalPIDInitMAU();
     yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
     yaw_delta = 0.0f;
 
@@ -66,17 +66,17 @@ void Gimbal::GimbalControl() {
 
     // 前馈计算项
     UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
-    Eigen::Vector2f ff_torque =
-        drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
+    tau_ff = drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
                            rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
-    yaw_torque = ff_torque(0);
-    pitch_torque = ff_torque(1);
+    yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;//力矩转换控制电流
 
     // 设定目标，并计算
     gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
-    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_torque * yaw_torque_kp, -25000,
+    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                              25000));  // 设置输出电流并输出
+    // yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw , -25000,
+    //                                          25000));  // 设置输出电流并输出
 
 #endif
   } else if (GimbalState_ == kAuto) {  // 自瞄模式控制
@@ -93,12 +93,13 @@ void Gimbal::GimbalControl() {
 #endif
       rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
     }
-    GimbalPIDInit();
     if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
+      GimbalPIDInitAIM();
       rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
 
       rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
     } else {  // 非自瞄状态自动切入手控
+      GimbalPIDInitMAU();
       yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
       yaw_delta = 0.0f;
       if (Rcchoose()) {
@@ -139,16 +140,14 @@ void Gimbal::GimbalControl() {
 
     // 前馈计算项
     UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
-    Eigen::Vector2f ff_torque = drone_gb.ComputeFf(
-        -rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(), rc_yaw_vel,
-        rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));  // TODO要改成自瞄给的值
-    yaw_torque = ff_torque(0);
-    pitch_torque = ff_torque(1);
+    tau_ff = drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
+                           Aimbot.YawSpeed, Aimbot.PitchSpeed, Aimbot.YawAngSpeed, Aimbot.PitchAngSpeed, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
+    yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;//力矩转换控制电流
 
     // 设定目标，并计算
     gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
-    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw + yaw_torque * yaw_torque_kp, -25000,
+    yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                              25000));  // 设置输出电流并输出
 #endif
   } else {  // 失能

@@ -40,8 +40,8 @@ class Gimbal {
 
   bool DM_is_enable = false;  // 达秒使能标志位
 
-  float pitch_min_pos = -0.61f;      // pitch电机最小限位
-  float pitch_max_pos = 0.14f;       // pitch电机最大限位
+  float pitch_min_pos = -0.80f;      // pitch电机最小限位
+  float pitch_max_pos = 0.25f;       // pitch电机最大限位
                                      // 机械限位
   float yaw_center_encoder = 5.174;  // TODO云台机械中位对应的编码器角度
   float yaw_relative = 0.0f;         // TODO 当前云台相对机架夹角
@@ -69,13 +69,15 @@ class Gimbal {
   float pitch_torque = 0.0f;  // pitch电机前馈补偿量
   float yaw_torque = 0.0f;    // yaw电机前馈补偿量
   float yaw_torque_kp = 10000.0f;//TODO 力矩转电流输出环比例
+  Eigen::Vector2f tau_ff;
+  float yaw_tau2voltage = 0.0f;
 
   float pitch_cmd = 0.0f;       // pitch合输出
   float pitch_speed_tf = 0.0f;  // 速度正向输出
   float pitch_speed_kp = 0.1f;  // 速度输出比例系数
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
-  bool roll_comp_enable = true;              // TODO 滚转补偿开关
+  bool roll_comp_enable = false;              // TODO 滚转补偿开关
   float roll_comp_kp = 0.1f;                 // TODO 补偿系数，rad_pitch_per_rad_roll
   float roll_comp_limit = 0.3f;              // TODO 最大补偿幅度（rad）
   float roll_comp_target[2] = {0.0f, 0.0f};  // 储存补偿后的目标角度 0yaw,1pitch
@@ -171,7 +173,7 @@ class Gimbal {
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
     can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
-    can2 = new rm::hal::ThrottledCan<128>{3000, hcan2};
+    can2 = new rm::hal::ThrottledCan<128>{6000, hcan2};
     dbus = new rm::hal::Serial<128>{huart3, false, true};
 
     imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
@@ -239,7 +241,9 @@ class Gimbal {
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
   }
 
-  void GimbalPIDInit();
+  void GimbalPIDInitAIM();
+
+  void GimbalPIDInitMAU();
 
   void AmmoPIDInit();
 

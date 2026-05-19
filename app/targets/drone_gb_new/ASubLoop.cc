@@ -10,7 +10,7 @@ void Gimbal::SubLoop500Hz() {
   pitch = -ahrs.euler_angle().pitch;
   yaw = ahrs.euler_angle().yaw;
   roll = -ahrs.euler_angle().roll;
-
+//ch040
   pitch_ = -imu_new->pitch();  // （上正下负）（+-pi）
   roll_ = -imu_new->roll();    //(左正右负)(+-pi)
   yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
@@ -22,11 +22,6 @@ void Gimbal::SubLoop500Hz() {
                 referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 #endif
 
-  if (!Rcchoose()) {
-    RCStateUpdate();  // dt7控制更新
-  } else {
-    Vt03Control();  // vt03控制更新
-  }
   GimbalControl();                               // 云台控制更新
   AmmoControl();                                 // 发射机构更新
   rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
@@ -35,7 +30,18 @@ void Gimbal::SubLoop500Hz() {
 // DmMotor电机发信息
 void Gimbal::SubLoop250Hz() {
   if (time_ % 2 == 0) {
-    pitch_cmd = rm::modules::Clamp(-pitch_torque - gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
+    if (!Rcchoose()) {
+      RCStateUpdate();  // dt7控制更新
+    } else {
+      Vt03Control();  // vt03控制更新
+    }
+    //pitch负值向上输出
+    if (GimbalState_==kManual) {
+      pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch , -10, 10);  // 发送达秒控制信息
+    }
+    else {
+      pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch- tau_ff.y() , -10, 10);  // 发送达秒控制信息
+    }
     pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                         // 合输出
 
     // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试

@@ -48,6 +48,8 @@ float Acan1tx = 0.0f;
 float Acan2tx = 0.0f;
 float Acan1drop = 0.0f;
 float Acan2drop = 0.0f;
+float Acan2drop1 = 0.0f;
+float Acan2drop2 = 0.0f;
 float Acan1queue = 0.0f;
 float Acan2queue = 0.0f;
 // imunew
@@ -116,6 +118,8 @@ void FreemasterDebug() {
 
   Acan2tx = gimbal->can2->stats().tx_fps;
   Acan2drop = gimbal->can2->stats().drop_total_fps;
+  Acan2drop1 = gimbal->can2->stats().drop_expired_fps;
+  Acan2drop2 = gimbal->can2->stats().drop_full_fps;
   Acan2queue = gimbal->can2->stats().enqueue_fps;
 
   Aimu_pitch = -gimbal->imu_new->pitch();
