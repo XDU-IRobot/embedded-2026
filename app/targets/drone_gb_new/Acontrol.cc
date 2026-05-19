@@ -66,8 +66,9 @@ void Gimbal::GimbalControl() {
 
     // 前馈计算项
     UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
-    Eigen::Vector2f ff_torque = drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(), rc_yaw_vel, rc_pitch_vel,
-                                                   rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
+    Eigen::Vector2f ff_torque =
+        drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
+                           rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
     yaw_torque = ff_torque(0);
     pitch_torque = ff_torque(1);
 
@@ -138,9 +139,9 @@ void Gimbal::GimbalControl() {
 
     // 前馈计算项
     UpdateRcAngleDiff(roll_comp.first, roll_comp.second, 0.002f);
-    Eigen::Vector2f ff_torque =
-        drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(), rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc,
-                           Eigen::Vector3f(0.0f, 0.0f, -9.81f));  // TODO要改成自瞄给的值
+    Eigen::Vector2f ff_torque = drone_gb.ComputeFf(
+        -rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(), rc_yaw_vel,
+        rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));  // TODO要改成自瞄给的值
     yaw_torque = ff_torque(0);
     pitch_torque = ff_torque(1);
 
