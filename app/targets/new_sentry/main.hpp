@@ -48,7 +48,7 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::ThrottledCan<128> *can1{nullptr}, *can2{nullptr};                          ///< CAN 总线接口
+  rm::hal::ThrottledCan<128> *can1{nullptr}, *can2{nullptr};            ///< CAN 总线接口
   rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};      ///< CAN 通信器
   rm::device::NavigateCanCommunicator *navigate_communicator{nullptr};  ///< CAN 通信器
   rm::device::HipnucImuCan *hipnuc_imu{nullptr};                        ///< IMU
