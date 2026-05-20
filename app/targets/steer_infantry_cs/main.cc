@@ -30,7 +30,7 @@ extern u8 Info_Arr[128];
 
 void UiRefresh();
 void UiSend();
-void UI_send(rm::hal::Serial *msg, u8 *data, u8 data_len);
+void UI_send(rm::hal::Serial<128> *msg, u8 *data, u8 data_len);
 
 void MainLoop() {
   globals->time++;
@@ -73,8 +73,7 @@ void GlobalWarehouse::Init() {
   gimbal_communicator = new rm::device::GimbalCommunicator(*can1);
   super_cap = new rm::device::GkSupercap(*can1);
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
-  dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kDma, hal::stm32::UartMode::kDma};
+  referee_uart = new rm::hal::Serial<128>{huart6, false, true};
   rx_referee = new rm::device::RxReferee{*referee_uart};
 
   referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
@@ -346,4 +345,4 @@ void UiSend() {
   globals->ui_send_choice ^= true;
 }
 
-void UI_send(rm::hal::Serial *msg, u8 *data, u8 data_len) { msg->Write(data, data_len); }
+void UI_send(rm::hal::Serial<128> *msg, u8 *data, u8 data_len) { msg->Write(data, data_len, 500); }
