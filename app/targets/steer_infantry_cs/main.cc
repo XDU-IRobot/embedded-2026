@@ -68,8 +68,8 @@ void GlobalWarehouse::Init() {
   buzzer = new Buzzer;
   led = new LED;
 
-  can1 = new rm::hal::Can{hcan1};
-  can2 = new rm::hal::Can{hcan2};
+  can1 = new rm::hal::ThrottledCan<128>{7000.0f, hcan1};
+  can2 = new rm::hal::ThrottledCan<128>{7000.0f, hcan2};
   gimbal_communicator = new rm::device::GimbalCommunicator(*can1);
   super_cap = new rm::device::GkSupercap(*can1);
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
@@ -131,6 +131,10 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_y(), globals->imu->gyro_z(),
                                                 globals->imu->gyro_x() + 0.0015f, globals->imu->accel_y(),
                                                 globals->imu->accel_z(), globals->imu->accel_x()});
+  globals->can1->Process();
+  globals->can2->Process();
+  const auto &can1status = globals->can1->stats();
+  const auto &can2status = globals->can2->stats();
   globals->gimbal_communicator->SendGimbalCommand(
       globals->referee_data->data().power_heat_data.shooter_17mm_1_barrel_heat,
       globals->referee_data->data().robot_status.shooter_barrel_heat_limit,
