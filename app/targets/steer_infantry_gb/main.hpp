@@ -41,12 +41,12 @@ inline struct GlobalWarehouse {
 
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                      ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};                                   ///< 遥控器串口接口
+  rm::hal::Serial<18> *dbus{nullptr};                                   ///< 遥控器串口接口
   rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};  ///< CAN 通信器
   rm::device::ChassisCommunicator *chassis_communicator{nullptr};   ///< CAN 通信器
   rm::device::GkSupercap *super_cap{nullptr};                       ///< 超级电容接口
-  rm::hal::Serial *referee_uart{nullptr};                           ///< 裁判系统串口接口
-  rm::hal::Serial *ident_uart{nullptr};
+  rm::hal::Serial<128> *referee_uart{nullptr};                           ///< 裁判系统串口接口
+  rm::hal::Serial<128> *ident_uart{nullptr};
   rm::device::RxReferee *rx_referee{nullptr};  ///< 裁判系统接口
   rm::device::VT03 *image_data{nullptr};       ///< 裁判系统数据缓冲区
 

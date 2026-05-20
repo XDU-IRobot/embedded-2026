@@ -48,9 +48,9 @@ void GlobalWarehouse::Init() {
   aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   super_cap = new rm::device::GkSupercap{*can1};
-  dbus = new rm::hal::Serial{huart3, 18, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
-  referee_uart = new rm::hal::Serial{huart6, 128, hal::stm32::UartMode::kNormal, hal::stm32::UartMode::kDma};
-  ident_uart = new rm::hal::Serial{huart1, 128, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma};
+  dbus = new rm::hal::Serial<18>{huart3, false, true};
+  referee_uart = new rm::hal::Serial<128>{huart6, false, true};
+  ident_uart = new rm::hal::Serial<128>{huart1, false, true};
   rx_referee = new rm::device::RxReferee{*referee_uart};
   image_data = new rm::device::VT03;
 
@@ -75,7 +75,7 @@ void GlobalWarehouse::Init() {
   can2->Begin();
   rc->Begin();
   rx_referee->Begin();
-  ident_uart->Begin();
+  ident_uart->Start();
   buzzer->Init();
   led->Init();
 

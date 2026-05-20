@@ -14,7 +14,7 @@ class RxReferee : public Device {
 
   void Begin();
 
-  void RxCallback(const std::vector<u8> &data, u16 rx_len);
+  void RxCallback(etl::span<const u8> data);
 
  private:
   rm::hal::SerialInterface *serial_;
