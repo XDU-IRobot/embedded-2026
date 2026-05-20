@@ -241,7 +241,7 @@ void Gimbal::GimbalScanTargetUpdate() {
   }
   // pitch轴扫描
   if (globals->navigate_communicator->aimbot_mode()) {
-    gimbal->gimbal_pitch_target_ = -0.0f;
+    gimbal->gimbal_pitch_target_ = -0.45f;
   } else if (globals->navigate_communicator->outpost_mode()) {
     gimbal->gimbal_pitch_target_ = -0.3f;
   } else {

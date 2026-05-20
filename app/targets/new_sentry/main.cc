@@ -49,8 +49,8 @@ void GlobalWarehouse::Init() {
   buzzer = new Buzzer;
   led = new LED;
 
-  can1 = new rm::hal::Can{hcan1};
-  can2 = new rm::hal::Can{hcan2};
+  can1 = new rm::hal::ThrottledCan<128>{7000.0f, hcan1};
+  can2 = new rm::hal::ThrottledCan<128>{7000.0f, hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
@@ -249,41 +249,27 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   chassis->ChassisTask();
-  // 硬触发
-  if (globals->aimbot_communicator->nuc_start_flag() && globals->device_nuc.all_device_ok()) {
-    globals->imu_count++;
-    globals->time_camera++;
-    if (globals->time_camera == 4) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
-      globals->time_camera = 0;
-    }
-    if (globals->time_camera == 1) {
-      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-    }
-  } else {
-    globals->imu_count = 0;
-    globals->time_camera = 0;
-  }
-  if (globals->imu_count >= 10000) {
-    globals->imu_count = 0;
-  }
+  globals->can1->Process();
+  globals->can2->Process();
+  const auto &can1status = globals->can1->stats();
+  const auto &can2status = globals->can2->stats();
   f32 shoot_initial_speed = 0.0f;
-  if (referee_data->data().shoot_data.initial_speed >= 18.f && referee_data->data().shoot_data.initial_speed <= 26.f) {
-    shoot_initial_speed = referee_data->data().shoot_data.initial_speed;
+  if (globals->referee_data->data().shoot_data.initial_speed >= 18.f &&
+      globals->referee_data->data().shoot_data.initial_speed <= 26.f) {
+    shoot_initial_speed = globals->referee_data->data().shoot_data.initial_speed;
   } else {
     shoot_initial_speed = 22.5f;
   }
-  globals->aimbot_communicator->UpdateControl(globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(),
-                                              -globals->hipnuc_imu->roll(), referee_data->data().robot_status.robot_id,
-                                              globals->aim_mode, globals->imu_count, shoot_initial_speed);
+  globals->aimbot_communicator->UpdateControl(
+      globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(), -globals->hipnuc_imu->roll(),
+      globals->referee_data->data().robot_status.robot_id, globals->aim_mode, globals->imu_count, shoot_initial_speed);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
-}
-
-void GlobalWarehouse::SubLoop250Hz() {
   globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
   globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 3.2f);
 }
+
+void GlobalWarehouse::SubLoop250Hz() {}
 
 void GlobalWarehouse::SubLoop100Hz() {
   globals->device_rc.Update();
