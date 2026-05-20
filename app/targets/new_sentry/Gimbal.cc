@@ -221,39 +221,69 @@ void Gimbal::GimbalRCTargetUpdate() {
 
 void Gimbal::GimbalScanTargetUpdate() {
   // 上部yaw轴扫描
-  if (globals->navigate_communicator->aimbot_mode() || globals->navigate_communicator->outpost_mode()) {
+  if (globals->navigate_communicator->aimbot_mode()) {
     gimbal->gimbal_up_yaw_target_ =
         globals->hipnuc_imu->yaw() -
         rm::modules::Map(static_cast<f32>(globals->up_yaw_motor->encoder() - gimbal->mid_up_yaw_pos_),  //
                          0, 8191, 0, 2 * static_cast<f32>(M_PI));
   } else {
-    if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ && globals->up_yaw_motor->encoder() <= 5000) {
+    if (globals->navigate_communicator->outpost_mode()) {
+      if (globals->up_yaw_motor->encoder() >= gimbal->max_outpost_up_yaw_pos_ &&
+          globals->up_yaw_motor->encoder() <= 5000) {
+        gimbal->scan_yaw_flag_ = true;
+      } else if (globals->up_yaw_motor->encoder() <= gimbal->min_outpost_up_yaw_pos_ ||
+                 globals->up_yaw_motor->encoder() >= 6000) {
+        gimbal->scan_yaw_flag_ = false;
+      }
+    } else if (globals->up_yaw_motor->encoder() >= gimbal->max_up_yaw_pos_ &&
+               globals->up_yaw_motor->encoder() <= 5000) {
       gimbal->scan_yaw_flag_ = true;
     } else if (globals->up_yaw_motor->encoder() <= gimbal->min_up_yaw_pos_ ||
                globals->up_yaw_motor->encoder() >= 6000) {
       gimbal->scan_yaw_flag_ = false;
     }
     if (gimbal->scan_yaw_flag_) {
-      gimbal->gimbal_up_yaw_target_ -= 0.0025f;
+      if (globals->navigate_communicator->outpost_mode()) {
+        gimbal->gimbal_up_yaw_target_ -= 0.001f;
+      } else {
+        gimbal->gimbal_up_yaw_target_ -= 0.0025f;
+      }
     } else {
-      gimbal->gimbal_up_yaw_target_ += 0.0025f;
+      if (globals->navigate_communicator->outpost_mode()) {
+        gimbal->gimbal_up_yaw_target_ += 0.001f;
+      } else {
+        gimbal->gimbal_up_yaw_target_ += 0.0025f;
+      }
     }
   }
   // pitch轴扫描
   if (globals->navigate_communicator->aimbot_mode()) {
     gimbal->gimbal_pitch_target_ = -0.45f;
-  } else if (globals->navigate_communicator->outpost_mode()) {
-    gimbal->gimbal_pitch_target_ = -0.3f;
   } else {
-    if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_aimbot_pitch_angle_) {
+    if (globals->navigate_communicator->outpost_mode()) {
+      // gimbal->gimbal_pitch_target_ = -0.3f;
+      if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_outpost_pitch_angle_) {
+        gimbal->scan_pitch_flag_ = false;
+      } else if (gimbal->gimbal_pitch_target_ >= gimbal->highest_outpost_pitch_angle_) {
+        gimbal->scan_pitch_flag_ = true;
+      }
+    } else if (gimbal->gimbal_pitch_target_ <= gimbal->lowest_aimbot_pitch_angle_) {
       gimbal->scan_pitch_flag_ = false;
     } else if (gimbal->gimbal_pitch_target_ >= gimbal->highest_pitch_angle_) {
       gimbal->scan_pitch_flag_ = true;
     }
     if (gimbal->scan_pitch_flag_) {
-      gimbal->gimbal_pitch_target_ -= 0.005f;
+      if (globals->navigate_communicator->outpost_mode()) {
+        gimbal->gimbal_pitch_target_ -= 0.002f;
+      } else {
+        gimbal->gimbal_pitch_target_ -= 0.005f;
+      }
     } else {
-      gimbal->gimbal_pitch_target_ += 0.005f;
+      if (globals->navigate_communicator->outpost_mode()) {
+        gimbal->gimbal_pitch_target_ += 0.002f;
+      } else {
+        gimbal->gimbal_pitch_target_ += 0.005f;
+      }
     }
   }
   // 下部yaw轴扫描
