@@ -43,8 +43,8 @@ void GlobalWarehouse::Init() {
   buzzer = new Buzzer;
   led = new LED;
 
-  can1 = new rm::hal::Can{hcan1};
-  can2 = new rm::hal::Can{hcan2};
+  can1 = new rm::hal::ThrottledCan<128>{7000.0f, hcan1};
+  can2 = new rm::hal::ThrottledCan<128>{7000.0f, hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   super_cap = new rm::device::GkSupercap{*can1};
@@ -316,6 +316,10 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
                                                 globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
                                                 globals->imu->accel_x(), globals->imu->accel_z()});
+  globals->can1->Process();
+  globals->can2->Process();
+  const auto &can1status = globals->can1->stats();
+  const auto &can2status = globals->can2->stats();
   // can 通信
   f32 ammo_speed;
   if (globals->chassis_communicator->ammo_speed() > 20.0f) {
