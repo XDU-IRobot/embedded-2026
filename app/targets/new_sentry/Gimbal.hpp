@@ -109,13 +109,7 @@ inline class Gimbal {
 
   void ApplyNormalGimbalPID();
 
-  void ApplyIdentifyGimbalPID();
-
   void GimbalIdentifyUpdate();
-
-  void GimbalIdentifyTargetUpdate();
-
-  void GimbalIdentifyPIDUpdate();
 
   void GimbalFfVerifyUpdate();
 

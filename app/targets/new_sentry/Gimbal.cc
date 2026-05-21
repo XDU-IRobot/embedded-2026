@@ -2,7 +2,6 @@
 #include "gimbal-tool-suite/dynamics/dynamics.hpp"
 #include <cstdio>
 
-namespace {
 struct GimbalState {
   f32 target_yaw{0.0f};
   f32 current_yaw{0.0f};
@@ -13,7 +12,6 @@ struct GimbalState {
   f32 pitch_s{0.0f};
   f32 pitch_a{0.0f};
 } gimbal_state;
-}  // namespace
 
 namespace {
 constexpr size_t kIdentifyHarmonicCount = 5;
@@ -42,7 +40,7 @@ constexpr f32 kNormalFfMaxPitchAccel = 40.0f;
 Gimbal2DofDynamics g_gimbal_dynamics;
 void InitDynamicsTheta() {
   Eigen::Matrix<float, 9, 1> theta;
-  theta << 0.0704193, 0.06767012, 0.0, 0.22035452, 0.12618492, 0.04860608, 0.47820438, 3.54705607, 0.16939606;
+  theta << 0.0704193, 0.06767012, 0.08630496, 0.25235452, 0.12618492, 0.04860608, 0.47820438, 3.54705607, 0.16939606;
 
   g_gimbal_dynamics.SetTheta(theta);
 }
@@ -424,8 +422,8 @@ void Gimbal::GimbalMovePIDUpdate() {
                                     globals->hipnuc_imu->pitch(), -globals->hipnuc_imu->gyro_x(), 2.0f);
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
   const auto ff =
-      g_gimbal_dynamics.ComputeFf(gimbal->gimbal_up_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ref,
-                                  pitch_speed_ref, yaw_accel_ref, pitch_accel_ref, g_stationary);
+      g_gimbal_dynamics.ComputeFf(globals->up_yaw_motor->encoder(), -globals->pitch_motor->pos() - 2.2f, 0,
+                                  0, 0, 0, g_stationary);
   gimbal->yaw_torque_ = ff.x();
   const f32 yaw_ff_voltage =
       YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec);

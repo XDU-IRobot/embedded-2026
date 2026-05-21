@@ -41,6 +41,10 @@ extern "C" [[noreturn]] void AppMain(void) {
   mainloop_1000hz.Start();
 
   for (;;) {
+    // (void)globals->can1->Process();
+    // (void)globals->can2->Process();
+    // const auto &can1status = globals->can1->stats();
+    // const auto &can2status = globals->can2->stats();
     // __WFI();
   }
 }
@@ -49,8 +53,8 @@ void GlobalWarehouse::Init() {
   buzzer = new Buzzer;
   led = new LED;
 
-  can1 = new rm::hal::ThrottledCan<128>{7000.0f, hcan1};
-  can2 = new rm::hal::ThrottledCan<128>{7000.0f, hcan2};
+  can1 = new rm::hal::Can{hcan1};
+  can2 = new rm::hal::Can{hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
@@ -249,10 +253,6 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   chassis->ChassisTask();
-  globals->can1->Process();
-  globals->can2->Process();
-  const auto &can1status = globals->can1->stats();
-  const auto &can2status = globals->can2->stats();
   f32 shoot_initial_speed = 0.0f;
   if (globals->referee_data->data().shoot_data.initial_speed >= 18.f &&
       globals->referee_data->data().shoot_data.initial_speed <= 26.f) {
