@@ -219,12 +219,15 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
   gimbal->last_yaw_speed_ref_ = yaw_speed_ref;
   gimbal->last_pitch_speed_ref_ = pitch_speed_ref;
+  gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
+  const auto yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
+                             kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
 
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
-  const auto ff = g_gimbal_dynamics.ComputeFf(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, yaw_speed_ref,
+  const auto ff = g_gimbal_dynamics.ComputeFf(yaw_position_, -globals->pitch_motor->pos() - 1.047, yaw_speed_ref,
                                               pitch_speed_ref, yaw_accel_ref, pitch_accel_ref, g_stationary);
   gimbal->yaw_torque_ = ff.x();
   const f32 yaw_ff_voltage =
@@ -372,17 +375,17 @@ void Gimbal::GimbalDisableUpdate() {
 }
 
 void Gimbal::DaMiaoMotorEnable() {
-  if (globals->pitch_motor->status() != 0x1F && globals->pitch_motor->status() != 0x0F) {
+  if (globals->pitch_motor->status() != 0x01 && globals->pitch_motor->status() != 0x00) {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-  } else if (globals->pitch_motor->status() == 0x0F) {
+  } else if (globals->pitch_motor->status() == 0x00) {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
   }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
-  if (globals->pitch_motor->status() != 0x1F && globals->pitch_motor->status() != 0x0F) {
+  if (globals->pitch_motor->status() != 0x01 && globals->pitch_motor->status() != 0x00) {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-  } else if (globals->pitch_motor->status() == 0x1F) {
+  } else if (globals->pitch_motor->status() == 0x01) {
     globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
   }
 }
