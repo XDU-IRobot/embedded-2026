@@ -250,6 +250,8 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{globals->imu->gyro_x(), globals->imu->gyro_y(),
                                                 globals->imu->gyro_z() - 0.0015f, globals->imu->accel_x(),
                                                 globals->imu->accel_y(), globals->imu->accel_z()});
+  rm::device::DjiMotorBase::SendCommand(*can1);
+  rm::device::DjiMotorBase::SendCommand(*can2);
   globals->RCStateUpdate();
   gimbal->GimbalTask();
   chassis->ChassisTask();
@@ -263,8 +265,6 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->aimbot_communicator->UpdateControl(
       globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(), -globals->hipnuc_imu->roll(),
       globals->referee_data->data().robot_status.robot_id, globals->aim_mode, globals->imu_count, shoot_initial_speed);
-  rm::device::DjiMotorBase::SendCommand(*can1);
-  rm::device::DjiMotorBase::SendCommand(*can2);
   globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
   globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 3.2f);
 }
