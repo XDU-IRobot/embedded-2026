@@ -421,9 +421,8 @@ void Gimbal::GimbalMovePIDUpdate() {
                                     globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->hipnuc_imu->pitch(), -globals->hipnuc_imu->gyro_x(), 2.0f);
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
-  const auto ff =
-      g_gimbal_dynamics.ComputeFf(globals->up_yaw_motor->encoder(), -globals->pitch_motor->pos() - 2.2f, 0,
-                                  0, 0, 0, g_stationary);
+  const auto ff = g_gimbal_dynamics.ComputeFf(globals->up_yaw_motor->encoder(), -globals->pitch_motor->pos() - 2.2f, 0,
+                                              0, 0, 0, g_stationary);
   gimbal->yaw_torque_ = ff.x();
   const f32 yaw_ff_voltage =
       YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec);

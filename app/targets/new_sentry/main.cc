@@ -53,8 +53,8 @@ void GlobalWarehouse::Init() {
   buzzer = new Buzzer;
   led = new LED;
 
-  can1 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f,hcan1};
-  can2 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f,hcan2};
+  can1 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f, hcan1};
+  can2 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f, hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator(*can1);
   navigate_communicator = new rm::device::NavigateCanCommunicator(*can2);
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
