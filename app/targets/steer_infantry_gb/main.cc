@@ -35,7 +35,11 @@ extern "C" [[noreturn]] void AppMain(void) {
   mainloop_1000hz.Start();
 
   for (;;) {
-    __WFI();
+    globals->can1->Process();
+    globals->can2->Process();
+    const auto &can1status = globals->can1->stats();
+    const auto &can2status = globals->can2->stats();
+    // __WFI();
   }
 }
 
@@ -316,10 +320,6 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
                                                 globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
                                                 globals->imu->accel_x(), globals->imu->accel_z()});
-  globals->can1->Process();
-  globals->can2->Process();
-  const auto &can1status = globals->can1->stats();
-  const auto &can2status = globals->can2->stats();
   // can 通信
   f32 ammo_speed;
   if (globals->chassis_communicator->ammo_speed() > 20.0f) {
