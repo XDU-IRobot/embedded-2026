@@ -158,6 +158,11 @@ void GlobalWarehouse::RCStateUpdate() {
         break;
 
       case rm::device::DR16::SwitchPosition::kDown:
+        if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
+          globals->Music();
+        }
+        globals->StateMachine_ = kNoForce;
+        break;
       default:
         globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
         break;
