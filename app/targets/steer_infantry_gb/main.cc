@@ -43,8 +43,8 @@ void GlobalWarehouse::Init() {
   buzzer = new Buzzer;
   led = new LED;
 
-  can1 = new rm::hal::ThrottledCan<128>{7000.0f, hcan1};
-  can2 = new rm::hal::ThrottledCan<128>{7000.0f, hcan2};
+  can1 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f, hcan1};
+  can2 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f, hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   super_cap = new rm::device::GkSupercap{*can1};
