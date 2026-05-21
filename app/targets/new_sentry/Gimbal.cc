@@ -11,6 +11,8 @@ struct GimbalState {
   f32 yaw_a{0.0f};
   f32 pitch_s{0.0f};
   f32 pitch_a{0.0f};
+  f32 yaw_torque_ = 0.0f;
+  f32 down_yaw_torque_ = 0.0f;  // 下部yaw轴力矩数据
 } gimbal_state;
 
 namespace {
@@ -127,6 +129,8 @@ void Gimbal::GimbalTask() {
   gimbal_state.pitch_s = globals->aimbot_communicator->pitch_vel();
   gimbal_state.yaw_a = globals->aimbot_communicator->yaw_acc();
   gimbal_state.pitch_a = globals->aimbot_communicator->pitch_acc();
+  gimbal_state.yaw_torque_ = gimbal->yaw_torque_;
+  gimbal_state.down_yaw_torque_ = gimbal->down_yaw_torque_;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -430,6 +434,8 @@ void Gimbal::GimbalMovePIDUpdate() {
                             static_cast<f32>(globals->up_yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
   gimbal->up_yaw_current_ =
       rm::modules::Clamp(gimbal->up_yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
+  gimbal->yaw_torque_ =
+      YawVoltageCmdToTorque(gimbal->up_yaw_current_, static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y();
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
 }
