@@ -8,7 +8,7 @@
 #include "dart_core.hpp"
 // 实体定义，确保链接器能找到
 float Pitch[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-float Yaw[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+float Yaw[4] = {-5.0f, 0.0f, 0.0f, 0.0f};
 
 // 定义三个界面的容器
 static lv_obj_t *view_main;

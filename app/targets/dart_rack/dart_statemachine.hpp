@@ -8,6 +8,7 @@
 
 void DartStateMachineUpdate(DartState &state);
 void DartStateManualUpdate();
+void DartStateShowtimeUpdate();
 void DartStateAdjustUpdate();
 void DartStateAddAdjustUpdate();
 void DartStateAddPlaceOnly();

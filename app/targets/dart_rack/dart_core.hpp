@@ -38,6 +38,78 @@ struct AdjustMode {
 struct AddStateAdjust {
   AbleState enabled = AbleState::kOff;
 };
+
+struct ShowtimeMode {
+  AbleState enabled = AbleState::kOff;
+  ModeState mode = ModeState::kUnable;
+  PhaseState init = PhaseState::kUncomplete;
+  PhaseState add = PhaseState::kUncomplete;
+  PhaseState load = PhaseState::kUncomplete;
+  PhaseState aim = PhaseState::kUncomplete;
+  PhaseState fire = PhaseState::kUncomplete;
+
+  bool is_yaw_init_done = false;
+  bool is_load_reset_done = false;
+  bool is_load_l_reset_done = false;
+  bool is_load_r_reset_done = false;
+  bool is_trigger_reset_done = false;
+  bool is_trigger_force_init_done = false;
+  bool is_trigger_init_done = false;
+  bool is_load_down_done = false;
+  bool is_load_up_done = false;
+  bool is_trigger_lock_done = false;
+  bool is_add_init_done = false;
+  bool is_add_down_done = false;
+  bool is_add_up_done = false;
+  bool is_add_plate_done = false;
+  bool need_add_state_reset = false;
+  void ShowtimeModeClear() {
+    extern volatile uint8_t g_trigger_limit_ever_hit;
+    extern volatile uint8_t g_add_limit_ever_hit;
+    extern volatile uint8_t g_load_l_limit_ever_hit;
+    extern volatile uint8_t g_load_r_limit_ever_hit;
+    extern uint8_t g_trigger_backoff;
+    extern uint8_t g_add_backoff;
+    extern uint8_t g_load_l_backoff;
+    extern uint8_t g_load_r_backoff;
+    extern volatile uint8_t g_trigger_motor_limit_triggered;
+    extern volatile uint8_t g_add_motor_limit_triggered;
+
+    mode = ModeState::kUnable;
+    init = PhaseState::kUncomplete;
+    add = PhaseState::kUncomplete;
+    load = PhaseState::kUncomplete;
+    aim = PhaseState::kUncomplete;
+    fire = PhaseState::kUncomplete;
+    is_yaw_init_done = false;
+    is_load_reset_done = false;
+    is_load_l_reset_done = false;
+    is_load_r_reset_done = false;
+    is_trigger_reset_done = false;
+    is_trigger_force_init_done = false;
+    is_trigger_init_done = false;
+    is_load_down_done = false;
+    is_load_up_done = false;
+    is_trigger_lock_done = false;
+    is_add_init_done = false;
+    is_add_down_done = false;
+    is_add_up_done = false;
+    is_add_plate_done = false;
+    need_add_state_reset = true;
+
+    g_trigger_limit_ever_hit = 0;
+    g_add_limit_ever_hit = 0;
+    g_load_l_limit_ever_hit = 0;
+    g_load_r_limit_ever_hit = 0;
+    g_trigger_backoff = 0;
+    g_add_backoff = 0;
+    g_load_l_backoff = 0;
+    g_load_r_backoff = 0;
+    g_trigger_motor_limit_triggered = 0;
+    g_add_motor_limit_triggered = 0;
+  }
+};
+
 struct ManualMode {
   AbleState enabled = AbleState::kOff;
   ModeState mode = ModeState::kUnable;
@@ -68,6 +140,12 @@ struct ManualMode {
     extern volatile uint8_t g_add_limit_ever_hit;
     extern volatile uint8_t g_load_l_limit_ever_hit;
     extern volatile uint8_t g_load_r_limit_ever_hit;
+    extern uint8_t g_trigger_backoff;
+    extern uint8_t g_add_backoff;
+    extern uint8_t g_load_l_backoff;
+    extern uint8_t g_load_r_backoff;
+    extern volatile uint8_t g_trigger_motor_limit_triggered;
+    extern volatile uint8_t g_add_motor_limit_triggered;
 
     mode = ModeState::kUnable;
     init = PhaseState::kUncomplete;
@@ -95,6 +173,12 @@ struct ManualMode {
     g_add_limit_ever_hit = 0;
     g_load_l_limit_ever_hit = 0;
     g_load_r_limit_ever_hit = 0;
+    g_trigger_backoff = 0;
+    g_add_backoff = 0;
+    g_load_l_backoff = 0;
+    g_load_r_backoff = 0;
+    g_trigger_motor_limit_triggered = 0;
+    g_add_motor_limit_triggered = 0;
   }
 };
 
@@ -102,6 +186,7 @@ struct DartState {
   AbleState unable = AbleState::kOn;
   AutoMode lvgl_mode;
   ManualMode manual_mode;
+  ShowtimeMode showtime_mode;
   AddStateAdjust add_adjust_mode;
   AdjustMode adjust_mode;
 };
@@ -112,12 +197,20 @@ inline void DartStateClear(DartState &state)  // 清空所有状态
   state.lvgl_mode.enabled = AbleState::kOff;
   state.manual_mode.enabled = AbleState::kOff;
   state.manual_mode.ManualModeClear();
+  state.showtime_mode.enabled = AbleState::kOff;
+  state.showtime_mode.ShowtimeModeClear();
 }
 
 inline void DartManualModeClear(ManualMode &mode)  // 清空手动模式状态
 {
   mode.enabled = AbleState::kOff;
   mode.ManualModeClear();
+}
+
+inline void DartShowtimeModeClear(ShowtimeMode &mode)
+{
+  mode.enabled = AbleState::kOff;
+  mode.ShowtimeModeClear();
 }
 
 enum class DartCount : uint8_t { kFirst = 0, kSecond = 1, kThird = 2, kFourth = 3 };
@@ -179,8 +272,8 @@ struct DartRack {
   static constexpr uint16_t kAddPlateLockEcd[3] = {593, 593, 287};    //< 加弹机械臂锁定位置
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
 
-  static constexpr float kServo1Init = 142.0f;
-  static constexpr float kServo2Init = 31.0f;
+  static constexpr float kServo1Init = 123.0f;
+  static constexpr float kServo2Init = 74.0f;
 
   static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
   /*

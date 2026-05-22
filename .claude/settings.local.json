@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python tools/gen_referee_frame.py)"
+      "Bash(python tools/gen_referee_frame.py)",
+      "Bash(grep -v \"\\\\.h$\\\\|\\\\.c$\\\\|\\\\.hpp$\\\\|\\\\.cc$\\\\|\\\\.ioc$\")"
     ]
   }
 }
