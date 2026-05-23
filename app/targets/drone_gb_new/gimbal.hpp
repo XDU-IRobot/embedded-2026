@@ -97,13 +97,13 @@ class Gimbal {
   float rc_vt03_left_x = 0.0f;
   int cnt = 0;  // 进自瞄次数测试
 
-  bool Len_control = 0;    // 是否使用镜头标志位
-  float len_speed = 500.0f;  // 旋转速度
-  float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};//堵转编码器buffer
+  bool Len_control = 0;                                  // 是否使用镜头标志位
+  float len_speed = 500.0f;                              // 旋转速度
+  float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};  // 堵转编码器buffer
 
   int led_blink_time = 0;  // LED闪烁计时器
 
-  rm::hal::ThrottledCan<128> *can1{nullptr};     // CAN 总线接口
+  rm::hal::ThrottledCan<128> *can1{nullptr};  // CAN 总线接口
   rm::hal::ThrottledCan<128> *can2{nullptr};  // CAN 总线接口
   rm::hal::Serial<128> *dbus{nullptr};        // 遥控器串口接口
   rm::device::VT03 *vt03{nullptr};            // 图传对象
