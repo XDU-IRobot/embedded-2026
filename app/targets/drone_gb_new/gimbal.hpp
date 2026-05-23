@@ -97,9 +97,13 @@ class Gimbal {
   float rc_vt03_left_x = 0.0f;
   int cnt = 0;  // 进自瞄次数测试
 
+  bool Len_control = 0;    // 是否使用镜头标志位
+  float len_speed = 500.0f;  // 旋转速度
+  float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};//堵转编码器buffer
+
   int led_blink_time = 0;  // LED闪烁计时器
 
-  rm::hal::ThrottledCan<128> *can1{nullptr};  // CAN 总线接口
+  rm::hal::ThrottledCan<128> *can1{nullptr};     // CAN 总线接口
   rm::hal::ThrottledCan<128> *can2{nullptr};  // CAN 总线接口
   rm::hal::Serial<128> *dbus{nullptr};        // 遥控器串口接口
   rm::device::VT03 *vt03{nullptr};            // 图传对象
@@ -126,6 +130,7 @@ class Gimbal {
   rm::device::M3508 *friction_left{nullptr};                                        // 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                       // 右侧摩擦轮电机
   rm::device::M2006 *dial_motor{nullptr};                                           // 拨盘电机
+  rm::device::M2006 *lens_motor{nullptr};                                           // 望远镜电机
 
   typedef enum {
     kNoForce,  // 云台无力
@@ -197,6 +202,7 @@ class Gimbal {
         3,
     };
     dial_motor = new rm::device::M2006{*can2, 5};
+    lens_motor = new rm::device::M2006{*can2, 7};
 
     // 裁判系统串口接收
     const rm::hal::SerialRxCallbackFunction ref_rx_callback = [&](const etl::span<const uint8_t> &data) {
@@ -272,6 +278,8 @@ class Gimbal {
   float SpeedAver();
 
   bool ID();
+
+  void LensControl();
 
   // 遥控器和imu数据解算+DjiMotor发信息
   void SubLoop500Hz();

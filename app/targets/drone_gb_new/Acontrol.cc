@@ -372,3 +372,34 @@ bool Gimbal::ID() {
   }
   return ID_last;
 }
+
+void Gimbal::LensControl() {
+  bool key_pressed = vt03->data().keyboard_key & (1u << 10);
+
+  // 按键触发启动
+  if (key_pressed && !Len_control) {
+    Len_control = 1;
+    lens_motor->SetCurrent(len_speed);
+  }
+
+  // 不在控制状态，不判断堵转
+  if (!Len_control) {
+    return;
+  }
+
+  // 更新编码器缓存
+  Len_buffer[4] = Len_buffer[3];
+  Len_buffer[3] = Len_buffer[2];
+  Len_buffer[2] = Len_buffer[1];
+  Len_buffer[1] = Len_buffer[0];
+  Len_buffer[0] = lens_motor->encoder();
+
+  // 判断一段时间内编码器是否几乎没变化
+  constexpr int kStallThreshold = 3;  // 根据编码器噪声调整
+  int delta = std::abs(static_cast<int>(Len_buffer[0]) - static_cast<int>(Len_buffer[4]));
+
+  if (delta < kStallThreshold) {
+    lens_motor->SetCurrent(0);
+    Len_control = 0;
+  }
+}

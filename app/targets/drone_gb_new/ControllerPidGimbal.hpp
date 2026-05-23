@@ -31,7 +31,18 @@ class Gimbal2Dof {
     if (!enabled_) {  // 无力，控制量设0直接返回
       output_.yaw = 0.f;
       output_.pitch = 0.f;
+
+      if (last_enabled_) {
+        ClearAllPid();
+      }
+
+      last_enabled_ = false;
       return;
+    }
+
+    if (!last_enabled_) {
+      ClearAllPid();
+      last_enabled_ = true;
     }
 
     pid_.yaw_position.Update(target_.yaw_position, state_.yaw_position, dt);
@@ -69,7 +80,13 @@ class Gimbal2Dof {
   /**
    * @brief 启用或禁用控制器（切换有力无力）
    */
-  void Enable(bool enable) { enabled_ = enable; }
+  void Enable(bool enable) {
+    if (enabled_ != enable) {
+      ClearAllPid();
+    }
+    enabled_ = enable;
+    last_enabled_ = enable;
+  }
 
   // getters
   auto &pid() { return pid_; }
@@ -79,7 +96,17 @@ class Gimbal2Dof {
   auto &output() { return output_; }
 
  private:
+  void ClearAllPid() {
+    pid_.yaw_speed.Clear();
+    pid_.pitch_speed.Clear();
+    pid_.yaw_position.Clear();
+    pid_.pitch_position.Clear();
+    output_.yaw = 0.f;
+    output_.pitch = 0.f;
+  }
+
   bool enabled_{false};           ///< 有力/无力？
+  bool last_enabled_{false};      ///< 上一次使能状态，用于检测使能边沿
   bool speed_pid_enabled_{true};  ///< 单环/双环？
   struct {
     rm::modules::PID yaw_speed, yaw_position, pitch_speed, pitch_position;
