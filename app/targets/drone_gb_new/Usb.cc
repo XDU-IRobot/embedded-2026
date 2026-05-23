@@ -1,19 +1,19 @@
 #include "Usb.hpp"
-#include <algorithm>
 #include "gimbal.hpp"
 
 AimbotFrame_SCM_t Aimbot;
 GimbalImuFrame_SCM_t GimbalImu;
-uint8_t x[50];
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 // USB接收
 void UsbReceive(uint8_t* rx_data, uint8_t len) {
-  std::copy(rx_data, rx_data + len, x);
+  if (len < 3 || len > sizeof(Aimbot)) {
+    return;
+  }
 
-  if (rx_data[0] == 0x55 && rx_data[len - 1] == 0xFF && len <= 50) {
+  if (rx_data[0] == 0x55 && rx_data[len - 1] == 0xFF) {
     switch (rx_data[1]) {
       case AIMBOT_DATA_RECEIVE_ID:
         memcpy(&Aimbot, rx_data, len);
