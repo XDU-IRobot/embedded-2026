@@ -13,5 +13,3 @@ static rm::device::UITask Layer1 = rm::device::UITask(Layer1_func, 1);
 static rm::device::UITaskScheduler schedule = rm::device::UITaskScheduler(30);
 
 #endif  // UI_HPP
-
-

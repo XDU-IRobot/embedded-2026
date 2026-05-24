@@ -364,8 +364,10 @@ class Gimbal {
 
       if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl)) {
         // CTRL held: 键盘控制(W/S/A/D), 遥控器和鼠标输入失效
-        if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW)) rc_pitch_data -= 0.0001f;
-        if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS)) rc_pitch_data += 0.0001f;
+        if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW))
+          rc_pitch_data -= 0.0001f;
+        if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS))
+          rc_pitch_data += 0.0001f;
         if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
         if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
       } else {
@@ -466,7 +468,7 @@ class Gimbal {
       gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                25000));  // 设置输出电流并输出
-    } else {  // 失能
+    } else {                                             // 失能
       if (DM_is_enable == true) {
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         DM_is_enable = false;
@@ -684,63 +686,59 @@ class Gimbal {
     return ID_last;
   }
 
+  void SubLoop500Hz() {
+    // ch040
+    pitch_ = -imu_new->pitch();  // （上正下负）（+-pi）
+    roll_ = -imu_new->roll();    //(左正右负)(+-pi)
+    yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
 
-void SubLoop500Hz() {
-  // ch040
-  pitch_ = -imu_new->pitch();  // （上正下负）（+-pi）
-  roll_ = -imu_new->roll();    //(左正右负)(+-pi)
-  yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
+    GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z, SpeedAver(),
+                  referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 
-  GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z, SpeedAver(),
-                referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
+    GimbalControl();                               // 云台控制更新
+    AmmoControl();                                 // 发射机构更新
+    rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
+    rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
+  }
+  // DmMotor电机发信息
+  void SubLoop250Hz() {
+    if (time_ % 2 == 0) {
+      if (!Rcchoose()) {
+        RCStateUpdate();  // dt7控制更新
+      } else {
+        Vt03Control();  // vt03控制更新
+      }
+      // pitch负值向上输出
+      if (GimbalState_ == kManual) {
+        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
+      } else {
+        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - tau_ff.y(), -10, 10);  // 发送达秒控制信息
+      }
+      pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);  // 合输出
 
-  GimbalControl();                               // 云台控制更新
-  AmmoControl();                                 // 发射机构更新
-  rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
-  rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
-}
-// DmMotor电机发信息
-void SubLoop250Hz() {
-  if (time_ % 2 == 0) {
-    if (!Rcchoose()) {
-      RCStateUpdate();  // dt7控制更新
-    } else {
-      Vt03Control();  // vt03控制更新
+      // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试
     }
-    // pitch负值向上输出
-    if (GimbalState_ == kManual) {
-      pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
-    } else {
-      pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - tau_ff.y(), -10, 10);  // 发送达秒控制信息
+  }
+  void SubLoop100Hz() {
+    if (time_ % 5 == 0) {
+      ShootSpeedControl();  // 弹速手动控制
+      FreemasterDebug();    // 调试更新
     }
-    pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);  // 合输出
-
-    // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试
   }
-}
-void SubLoop100Hz() {
-  if (time_ % 5 == 0) {
-    ShootSpeedControl();  // 弹速手动控制
-    FreemasterDebug();    // 调试更新
+
+  void SubLoop50Hz() {
+    if (time_ % 10 == 0) {
+      // robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
+    }
   }
-}
-
-void SubLoop50Hz() {
-  if (time_ % 10 == 0) {
-    // robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
+  uint8_t test_ui_num = 0;
+  void SubLoop10Hz() {
+    if (time_ % 50 == 0) {
+      test_ui_num++;
+      WS2812Control();
+      time_ = 0;
+    }
   }
-}
-uint8_t test_ui_num = 0;
-void SubLoop10Hz() {
-  if (time_ % 50 == 0) {
-    test_ui_num++;
-    WS2812Control();
-    time_ = 0;
-  }
-}
-
-
-
 };
 
 #endif  // BOARDC_GIMBAL_HPP
