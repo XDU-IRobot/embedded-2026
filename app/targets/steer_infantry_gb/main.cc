@@ -92,11 +92,11 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(400.0f).SetKi(0.0f).SetKd(10000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(600.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_speed.SetKp(580.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(45.0f).SetKi(0.0f).SetKd(800.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.45f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(42.0f).SetKi(0.0f).SetKd(600.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::ShootPIDInit() {
@@ -341,7 +341,6 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_referee.Update();
-  gimbal->GimbalIdentifyDataSend();
   if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
       globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
     if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {
@@ -353,6 +352,7 @@ void GlobalWarehouse::SubLoop100Hz() {
 }
 
 void GlobalWarehouse::SubLoop50Hz() {
+  gimbal->GimbalIdentifyDataSend();
   const auto &[led_r, led_g, led_b] = globals->led_controller.Update();
   (*globals->led)(0xff000000 | led_r << 16 | led_g << 8 | led_b);
   buzzer->SetFrequency(globals->buzzer_controller.Update().frequency);

@@ -31,8 +31,7 @@ constexpr f32 kNormalFfMaxPitchAccel = 40.0f;
 Gimbal2DofDynamics g_gimbal_dynamics;
 bool InitDynamicsTheta() {
   Eigen::Matrix<float, 9, 1> theta;
-  theta << 0.11313911f, 0.12711330f, 0.02701958f, 0.07856400f, 0.03824676f, 0.00151766f, 0.70682046f, 0.35594090f,
-      0.03705741f;
+  theta << 0.11603785, 0.13510521, 0.06316841, 0.08590306, 0.0388916, 0.01889259, 0.56985536, 0.33167135, 0.03996353;
   g_gimbal_dynamics.SetTheta(theta);
   return true;
 }
@@ -227,7 +226,7 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
-  const auto ff = g_gimbal_dynamics.ComputeFf(yaw_position_, -globals->pitch_motor->pos() - 1.047, yaw_speed_ref,
+  const auto ff = g_gimbal_dynamics.ComputeFf(yaw_position_, -globals->pitch_motor->pos() - 1.0f, yaw_speed_ref,
                                               pitch_speed_ref, yaw_accel_ref, pitch_accel_ref, g_stationary);
   gimbal->yaw_torque_ = ff.x();
   const f32 yaw_ff_voltage =
@@ -240,13 +239,16 @@ void Gimbal::GimbalMovePIDUpdate() {
 }
 
 void Gimbal::ApplyNormalGimbalPID() {
-  globals->gimbal_controller.pid().yaw_position.SetKp(400.f).SetKi(0).SetKd(10000.f).SetMaxOut(30000.f).SetMaxIout(0);
-  globals->gimbal_controller.pid().pitch_position.SetKp(45.f).SetKi(0).SetKd(800.f).SetMaxOut(10000.f).SetMaxIout(0);
+  globals->gimbal_controller.pid().yaw_position.SetKp(380.0f).SetKi(0).SetKd(9000.0f).SetMaxOut(30000.0f).SetMaxIout(0);
+  globals->gimbal_controller.pid().yaw_speed.SetKp(580.0f).SetKi(0).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0);
+  // pitch PID 参数
+  globals->gimbal_controller.pid().pitch_position.SetKp(42.0f).SetKi(0).SetKd(600.0f).SetMaxOut(10000.0f).SetMaxIout(0);
+  globals->gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0);
 }
 
 void Gimbal::ApplyIdentifyGimbalPID() {
-  globals->gimbal_controller.pid().yaw_position.SetKp(400000).SetKi(0).SetKd(100000).SetMaxOut(30000).SetMaxIout(0);
-  globals->gimbal_controller.pid().pitch_position.SetKp(20).SetKi(0).SetKd(50).SetMaxOut(10).SetMaxIout(0);
+  globals->gimbal_controller.pid().yaw_position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(0);
+  globals->gimbal_controller.pid().pitch_position.SetKp(45).SetKi(0).SetKd(65).SetMaxOut(10).SetMaxIout(0);
 }
 
 void Gimbal::GimbalIdentifyUpdate() {
