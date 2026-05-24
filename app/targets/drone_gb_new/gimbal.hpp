@@ -20,11 +20,7 @@ extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
 extern Gimbal2DofDynamics drone_gb;
 class Gimbal {
  public:
-  // c板数据源
-  double yaw = 0;    // imu yaw数据
-  double roll = 0;   // imu roll数据
-  double pitch = 0;  // imu pitch数据
-                     // ch040数据源
+  // ch040数据源
   double pitch_ = 0;
   double roll_ = 0;
   double yaw_ = 0;
@@ -66,15 +62,13 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;       // pitch电机前馈补偿量
-  float yaw_torque = 0.0f;         // yaw电机前馈补偿量
-  float yaw_torque_kp = 10000.0f;  // TODO 力矩转电流输出环比例
+  float pitch_torque = 0.0f;    // pitch电机前馈补偿量
+  float pitch_torque_kp = 0.5;  // pitch电机前馈补偿系数
+  float yaw_torque = 0.0f;      // yaw电机前馈补偿量
   Eigen::Vector2f tau_ff;
   float yaw_tau2voltage = 0.0f;
 
-  float pitch_cmd = 0.0f;       // pitch合输出
-  float pitch_speed_tf = 0.0f;  // 速度正向输出
-  float pitch_speed_kp = 0.1f;  // 速度输出比例系数
+  float pitch_cmd = 0.0f;  // pitch合输出
 
   // 滚转补偿参数（用 yaw/pitch 组合抵消小角度 roll）
   bool roll_comp_enable = false;             // TODO 滚转补偿开关
@@ -119,9 +113,7 @@ class Gimbal {
 
   int time_ = 0;  // 系统心跳
 
-  rm::device::BMI088 *imu{nullptr};      // IMU
-  rm::modules::MahonyAhrs ahrs{500.0f};  // TODO Mahony滤波控制频率
-  rm::device::DR16 *rc{nullptr};         // 遥控器
+  rm::device::DR16 *rc{nullptr};  // 遥控器
 
   rm::device::HipnucImuCan *imu_new{nullptr};  // ch040
 
@@ -177,11 +169,10 @@ class Gimbal {
 
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
-    can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
+    can1 = new rm::hal::ThrottledCan<128>{6000, hcan1};
     can2 = new rm::hal::ThrottledCan<128>{6000, hcan2};
     dbus = new rm::hal::Serial<128>{huart3, false, true};
 
-    imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
     imu_new = new rm::device::HipnucImuCan{*can2, 8};
     rc = new rm::device::DR16{*dbus};
     vt03 = new rm::device::VT03;

@@ -1,10 +1,7 @@
 #include "FreemasterDbug.hpp"
-double Apitch = 0;  // 实际位置
-double Ayaw = 0;
-
-float Apitch_ = 0;  // 实际位置(-pi到pi)
-float Ayaw_ = 0;
-float Aroll_ = 0;
+  float Apitch_ = 0;  // 实际位置(-pi到pi)
+  float Ayaw_ = 0;
+  float Aroll_ = 0;
 
 double Arc_pitch = 0;  // 目标位置
 double Arc_yaw = 0;
@@ -15,8 +12,7 @@ float Ayaw_torque_ = 0.0f;
 float Aoutput_yaw = 0.0f;
 float Aoutput_pitch = 0.0f;
 float Apitch_cmd = 0.0f;
-// 摩擦补偿
-float Apitch_speed_tf = 0.0f;
+float Apid_yaw_position = 0.0f;//yaw位置环
 // 裁判系统测试
 float Arobot_id = 0.0f;
 float Ashootspeed = 0.0f;
@@ -28,8 +24,6 @@ uint8_t Aaimfireflag = 0;
 // yaw编码器rad
 float Ayaw_position = 0;
 float Ayaw_relative = 0.0f;
-// pid输出
-float Apid_yaw_position = 0.0f;
 // rc是否在线
 bool Arc_online = 0;
 bool Avt03_online = 0;
@@ -52,29 +46,15 @@ float Acan2drop1 = 0.0f;
 float Acan2drop2 = 0.0f;
 float Acan1queue = 0.0f;
 float Acan2queue = 0.0f;
-// imunew
-float Aimu_pitch = 0.0f;
-float Aimu_yaw = 0.0f;
-float Aimu_roll = 0.0f;
 uint16_t Aui_game_time = 0;
 uint8_t Aui_game_progress = 0;
 // 红蓝方
 uint8_t Aid = 0;
-// error
-float Aerror = 0;
-// 前馈yaw输出值
-float Ayawout = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
-#if CONTROLLER_CHOICE == 0
-  Ayaw_ = gimbal->yaw;  // 实际
-  Apitch_ = gimbal->pitch;
-  Aroll_ = gimbal->roll;
-#elif CONTROLLER_CHOICE == 1
   Ayaw_ = gimbal->yaw_;  // 实际
   Apitch_ = gimbal->pitch_;
   Aroll_ = gimbal->roll_;
-#endif
 
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //
@@ -86,10 +66,8 @@ void FreemasterDebug() {
   Aoutput_pitch = gimbal->gimbal_controller.output().pitch;
   Apitch_cmd = gimbal->pitch_cmd;
 
-  Apitch_speed_tf = gimbal->pitch_speed_tf;  // 摩擦阻力补偿
-
   Arobot_id = gimbal->referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
-  Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
+  Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;//裁判系统弹速
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;
@@ -108,6 +86,7 @@ void FreemasterDebug() {
 
   Apitchspeed = gimbal->pitch_motor->vel();
   Apitchposition = gimbal->pitch_motor->pos();
+
   Apitchoutp = gimbal->gimbal_controller.pid().pitch_position.p_out();
   Apitchouti = gimbal->gimbal_controller.pid().pitch_position.i_out();
   Apitchoutd = *(gimbal->gimbal_controller.pid().pitch_position.d_out());
@@ -122,11 +101,6 @@ void FreemasterDebug() {
   Acan2drop2 = gimbal->can2->stats().drop_full_fps;
   Acan2queue = gimbal->can2->stats().enqueue_fps;
 
-  Aimu_pitch = -gimbal->imu_new->pitch();
-  Aimu_yaw = gimbal->imu_new->yaw();
-  Aimu_roll = -gimbal->imu_new->roll();
-
   Aid = gimbal->ID();
-  Aerror = gimbal->yaw_ - gimbal->yaw;
-  Ayawout = gimbal->yaw_torque;
+  Ayaw_torque_ = gimbal->yaw_torque;
 }
