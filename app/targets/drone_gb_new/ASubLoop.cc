@@ -9,10 +9,10 @@ void Gimbal::SubLoop500Hz() {
   yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
   GimbalImuSend(-imu_new->quat_x(), imu_new->quat_w(), imu_new->quat_z(), -imu_new->quat_y(), SpeedAver(),
                 referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
-  GimbalControl();                               // 云台控制更新
-  AmmoControl();                                 // 发射机构更新
-  rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
-  rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
+  GimbalControl();                                                  // 云台控制更新
+  AmmoControl();                                                    // 发射机构更新
+  rm::device::DjiMotorBase::SendCommand(*can1);                     // 向大疆所有电机发数据
+  rm::device::DjiMotorBase::SendCommand(*can2);                     // 向大疆所有电机发数据
 }
 // DmMotor电机发信息
 void Gimbal::SubLoop250Hz() {
@@ -23,8 +23,8 @@ void Gimbal::SubLoop250Hz() {
       Vt03Control();  // vt03控制更新
     }
     // pitch负值向上输出
-    pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch-pitch_torque, -10, 10);  // 发送达秒控制信息
-    pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);  // 合输出
+    pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
+    pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                          // 合输出
 
     // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试
   }

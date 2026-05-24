@@ -1,7 +1,7 @@
 #include "FreemasterDbug.hpp"
-  float Apitch_ = 0;  // 实际位置(-pi到pi)
-  float Ayaw_ = 0;
-  float Aroll_ = 0;
+float Apitch_ = 0;  // 实际位置(-pi到pi)
+float Ayaw_ = 0;
+float Aroll_ = 0;
 
 double Arc_pitch = 0;  // 目标位置
 double Arc_yaw = 0;
@@ -12,7 +12,7 @@ float Ayaw_torque_ = 0.0f;
 float Aoutput_yaw = 0.0f;
 float Aoutput_pitch = 0.0f;
 float Apitch_cmd = 0.0f;
-float Apid_yaw_position = 0.0f;//yaw位置环
+float Apid_yaw_position = 0.0f;  // yaw位置环
 // 裁判系统测试
 float Arobot_id = 0.0f;
 float Ashootspeed = 0.0f;
@@ -66,8 +66,8 @@ void FreemasterDebug() {
   Aoutput_pitch = gimbal->gimbal_controller.output().pitch;
   Apitch_cmd = gimbal->pitch_cmd;
 
-  Arobot_id = gimbal->referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
-  Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;//裁判系统弹速
+  Arobot_id = gimbal->referee_data_buffer.data().robot_status.robot_id;       // 裁判系统测试
+  Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;  // 裁判系统弹速
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;

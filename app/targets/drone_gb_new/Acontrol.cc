@@ -67,7 +67,7 @@ void Gimbal::GimbalControl() {
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                              25000));  // 设置输出电流并输出
                                                        // 重力补偿
-    pitch_torque = pitch_torque_kp * cos(pitch_);       // 这里输出的力矩是反向
+    pitch_torque = pitch_torque_kp * cos(pitch_);      // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
   } else if (GimbalState_ == kAuto) {  // 自瞄模式控制
     if (DM_is_enable == false) {       // 使达妙电机使能
@@ -127,7 +127,7 @@ void Gimbal::GimbalControl() {
     gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
     yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                              25000));  // 设置输出电流并输出
-    pitch_torque = pitch_torque_kp * cos(pitch_);       // 这里输出的力矩是反向
+    pitch_torque = pitch_torque_kp * cos(pitch_);      // 这里输出的力矩是反向
     pitch_torque = rm::modules::Clamp(pitch_torque, -3, 3);
   } else {  // 失能
     if (DM_is_enable == true) {
