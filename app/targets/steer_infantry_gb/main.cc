@@ -241,18 +241,20 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->xf_flag = false;
     globals->xf_state ^= true;
   }
-  if (globals->df_state) {
-    globals->chassis_state |= static_cast<u8>(1 << 4);
-    globals->chassis_state &= ~static_cast<u8>(1 << 5);
-    globals->aim_mode = 0x02;
-  } else if (globals->xf_state) {
-    globals->chassis_state |= static_cast<u8>(1 << 5);
-    globals->chassis_state &= ~static_cast<u8>(1 << 4);
-    globals->aim_mode = 0x03;
-  } else {
-    globals->aim_mode = 0x01;
-    globals->chassis_state &= ~static_cast<u8>(1 << 4);
-    globals->chassis_state &= ~static_cast<u8>(1 << 5);
+  if (globals->StateMachine_ == kMatch) {
+    if (globals->df_state) {
+      globals->chassis_state |= static_cast<u8>(1 << 4);
+      globals->chassis_state &= ~static_cast<u8>(1 << 5);
+      globals->aim_mode = 0x02;
+    } else if (globals->xf_state) {
+      globals->chassis_state |= static_cast<u8>(1 << 5);
+      globals->chassis_state &= ~static_cast<u8>(1 << 4);
+      globals->aim_mode = 0x03;
+    } else {
+      globals->chassis_state &= ~static_cast<u8>(1 << 4);
+      globals->chassis_state &= ~static_cast<u8>(1 << 5);
+      globals->aim_mode = 0x01;
+    }
   }
   // UI信息
   globals->ui_refresh_flag = globals->image_update_flag ? globals->image_data->data().keyboard_key >> 8 & 0x01
@@ -321,7 +323,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   }
   globals->aimbot_communicator->UpdateControl(
       globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch, globals->ahrs.euler_angle().roll,
-      globals->chassis_communicator->robot_id() ? 103 : 3, 1, globals->imu_count, ammo_speed);
+      globals->chassis_communicator->robot_id() ? 103 : 3, globals->aim_mode, globals->imu_count, ammo_speed);
   globals->chassis_communicator->SendChassisCommand(
       globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,
       globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change);

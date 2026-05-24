@@ -329,23 +329,25 @@ void Gimbal::GimbalEnableUpdate() {
     globals->gimbal_controller.EnableSpeedPid(true);
   }
   if (gimbal->GimbalMove_ == kGbRemote) {
+    globals->aim_mode = 0x01;
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbot) {
+    globals->aim_mode = 0x01;
     gimbal->GimbalAimbotTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbotFu) {
     if (globals->aim_mode != 0x02 && globals->aim_mode != 0x03) {
       globals->aim_mode = 0x02;
     }
-    if (globals->rc->dial() >= 650 && !globals->aim_mood_change_flag) {
+    if (globals->rc->dial() <= -10 && !globals->aim_mood_change_flag) {
       if (globals->aim_mode == 0x02) {
         globals->aim_mode = 0x03;
       } else if (globals->aim_mode == 0x03) {
         globals->aim_mode = 0x02;
       }
       globals->aim_mood_change_flag = true;
-    } else if (globals->rc->dial() <= 0) {
+    } else if (globals->rc->dial() >= 0) {
       globals->aim_mood_change_flag = false;
     }
     gimbal->GimbalAimbotTargetUpdate();
@@ -365,6 +367,7 @@ void Gimbal::GimbalEnableUpdate() {
 
 void Gimbal::GimbalDisableUpdate() {
   gimbal->DaMiaoMotorDisable();
+  globals->aim_mode = 0x01;
   globals->gimbal_controller.EnableSpeedPid(true);
   globals->gimbal_controller.Enable(false);
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
