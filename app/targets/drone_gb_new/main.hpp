@@ -4,6 +4,7 @@
 #include <librm.hpp>
 #include <utility>
 #include "Gimbal.hpp"
+#include "UI/UI.hpp"
 
 extern class Gimbal* gimbal;
 

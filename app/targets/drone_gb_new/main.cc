@@ -1,7 +1,13 @@
 #include "main.hpp"
-#include "UI/UI.hpp"
 
 Gimbal* gimbal = nullptr;
+Gimbal2DofDynamics drone_gb;
+
+void GlobalLoop30Hz() {
+  if (gimbal->time_++ % 17 == 0) {
+    schedule.schedule();
+  }
+}
 
 void MainLoop() {
   gimbal->time_++;
@@ -9,7 +15,7 @@ void MainLoop() {
   gimbal->SubLoop250Hz();
   gimbal->SubLoop100Hz();
   gimbal->SubLoop50Hz();
-  gimbal->SubLoop30Hz();
+  // GlobalLoop30Hz();
   gimbal->SubLoop10Hz();
 }
 

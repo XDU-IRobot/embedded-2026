@@ -17,6 +17,7 @@
  * -9.81]可以实现平动加速度补偿，没有条件的话传[0, 0, -9.81]即可
  * @return Eigen::Vector2f 返回力矩向量 [tau_yaw, tau_pitch]^T
  */
+
 class Gimbal2DofDynamics {
  public:
   Eigen::Vector2f ComputeFf(float q1, float q2, float dq1, float dq2, float ddq1, float ddq2,

@@ -66,15 +66,9 @@ float Aerror = 0;
 float Ayawout = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
-#if CONTROLLER_CHOICE == 0
-  Ayaw_ = gimbal->yaw;  // 实际
-  Apitch_ = gimbal->pitch;
-  Aroll_ = gimbal->roll;
-#elif CONTROLLER_CHOICE == 1
   Ayaw_ = gimbal->yaw_;  // 实际
   Apitch_ = gimbal->pitch_;
   Aroll_ = gimbal->roll_;
-#endif
 
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //
@@ -127,6 +121,5 @@ void FreemasterDebug() {
   Aimu_roll = -gimbal->imu_new->roll();
 
   Aid = gimbal->ID();
-  Aerror = gimbal->yaw_ - gimbal->yaw;
   Ayawout = gimbal->yaw_torque;
 }

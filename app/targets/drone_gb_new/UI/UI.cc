@@ -45,7 +45,7 @@ void Layer0_func() {
 
   if (Layer0_first_time) Layer0_first_time = false;
   u8 len = device::Referee0x301Prepare(gimbal->dataBox, 0, UIGroup0, 0x006, 0x006 + 256);
-  gimbal->refereeUart->Write(gimbal->dataBox, len, 5);
+  gimbal->referee_uart->Write(gimbal->dataBox, len, 5);
 }
 
 // 距离瞄准基线

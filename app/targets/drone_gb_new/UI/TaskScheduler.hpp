@@ -1,7 +1,3 @@
-//
-// Created by Jason on 26-5-18.
-//
-
 #ifndef TASKSCHEDULER_HPP
 #define TASKSCHEDULER_HPP
 #include "etl/vector.h"
