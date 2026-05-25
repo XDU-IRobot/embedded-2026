@@ -75,6 +75,12 @@ uint8_t Aid = 0;
 float Aerror = 0;
 // 前馈yaw输出值
 float Ayawout = 0.0f;
+// 发弹延迟
+float Afire_delay_avg = 0.0f;
+int Afire_delay_samples = 0;
+float Afire_delay_peak = 0.0f;
+float Afire_delay_drop = 0.0f;
+int Afire_delay_state = 0;
 // 调试接口函数
 void FreemasterDebug() {
   Apitch_ = gimbal->pitch_;
@@ -144,4 +150,10 @@ void FreemasterDebug() {
 
   Aid = gimbal->ID();
   Ayawout = gimbal->yaw_torque;
+
+  Afire_delay_avg = gimbal->delay_avg_ms_;
+  Afire_delay_samples = gimbal->delay_sample_count_;
+  Afire_delay_peak = gimbal->delay_peak_rpm_;
+  Afire_delay_drop = gimbal->delay_drop_delta_;
+  Afire_delay_state = static_cast<int>(gimbal->delay_state_);
 }
