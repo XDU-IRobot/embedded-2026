@@ -344,14 +344,13 @@ class Gimbal {
     gimbal_controller.pid().yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // pitch
     gimbal_controller.pid()
-        .pitch_position.SetKp(20.0f)
-        .SetKi(0.0f)
-        .SetKd(100.0f)
-        .SetMaxOut(500.0f)
-        .SetMaxIout(10.0f)
-        .SetDiffLpfAlpha(0.05);
-    gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(5.0f);
-    // .SetDiffLpfAlpha(0.5);
+    .pitch_position.SetKp(30.0f)
+    .SetKi(0.0f)
+    .SetKd(50.0f)
+    .SetMaxOut(500.0f)
+    .SetMaxIout(10.0f)
+    .SetDiffLpfAlpha(0.05);
+    gimbal_controller.pid().pitch_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
   void AmmoPIDInit() {
     shoot_controller.pid().fric_1_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
