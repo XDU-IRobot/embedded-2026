@@ -56,6 +56,14 @@ float Acan2queue = 0.0f;
 float Aimu_pitch = 0.0f;
 float Aimu_yaw = 0.0f;
 float Aimu_roll = 0.0f;
+
+float Ayawchoutp ;
+float Ayawouti ;
+float Ayawoutd ;
+float Ayawschoutp ;
+float Ayawsouti ;
+float Ayawsoutd ;
+
 uint16_t Aui_game_time = 0;
 uint8_t Aui_game_progress = 0;
 // 红蓝方
@@ -66,10 +74,10 @@ float Aerror = 0;
 float Ayawout = 0.0f;
 // 调试接口函数
 void FreemasterDebug() {
-  Ayaw_ = gimbal->yaw_;  // 实际
   Apitch_ = gimbal->pitch_;
   Aroll_ = gimbal->roll_;
 
+  Ayaw_ = gimbal->yaw_;  // 实际
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //
 
@@ -105,6 +113,14 @@ void FreemasterDebug() {
   Apitchoutp = gimbal->gimbal_controller.pid().pitch_position.p_out();
   Apitchouti = gimbal->gimbal_controller.pid().pitch_position.i_out();
   Apitchoutd = *(gimbal->gimbal_controller.pid().pitch_position.d_out());
+
+  Ayawchoutp = gimbal->gimbal_controller.pid().yaw_position.p_out();
+  Ayawouti = gimbal->gimbal_controller.pid().yaw_position.i_out();
+  Ayawoutd = *(gimbal->gimbal_controller.pid().yaw_position.d_out());
+
+  Ayawschoutp = gimbal->gimbal_controller.pid().yaw_speed.p_out();
+  Ayawsouti = gimbal->gimbal_controller.pid().yaw_speed.i_out();
+  Ayawsoutd = *(gimbal->gimbal_controller.pid().yaw_speed.d_out());
 
   Acan1tx = gimbal->can1->stats().tx_fps;
   Acan1drop = gimbal->can1->stats().drop_total_fps;

@@ -324,15 +324,24 @@ class Gimbal {
     rc_pitch_acc = rc_pitch_diff.acc();
   }
   void GimbalPIDInit() {
+    // // yaw
+    // gimbal_controller.pid()
+    //     .yaw_position.SetKp(300.0f)
+    //     .SetKi(0.0f)
+    //     .SetKd(12000.0f)
+    //     .SetMaxOut(10000.0f)
+    //     .SetMaxIout(1000.0f)
+    //     .SetDiffLpfAlpha(0.01);
+    // gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // yaw
     gimbal_controller.pid()
-        .yaw_position.SetKp(300.0f)
+        .yaw_position.SetKp(80.0f)
         .SetKi(0.0f)
-        .SetKd(12000.0f)
+        .SetKd(10000.0f)
         .SetMaxOut(10000.0f)
         .SetMaxIout(1000.0f)
-        .SetDiffLpfAlpha(0.01);
-    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+        .SetDiffLpfAlpha(0.1);
+    gimbal_controller.pid().yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // pitch
     gimbal_controller.pid()
         .pitch_position.SetKp(30.0f)
@@ -407,7 +416,7 @@ class Gimbal {
 
       // 设定目标，并计算
       gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-      gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
+      gimbal_controller.Update(yaw_, -yaw_motor->rpm()*M_PI/30.0, pitch_, -pitch_motor->vel(), 1.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                25000));  // 设置输出电流并输出
       // yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw , -25000,
@@ -692,8 +701,8 @@ class Gimbal {
     roll_ = -imu_new->roll();    //(左正右负)(+-pi)
     yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
 
-    GimbalImuSend(ahrs.quaternion().w, ahrs.quaternion().x, ahrs.quaternion().y, ahrs.quaternion().z, SpeedAver(),
-                  referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
+    GimbalImuSend(-imu_new->quat_x(), imu_new->quat_w(), imu_new->quat_z(), -imu_new->quat_y(), SpeedAver(),
+              referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 
     GimbalControl();                               // 云台控制更新
     AmmoControl();                                 // 发射机构更新
@@ -709,14 +718,13 @@ class Gimbal {
         Vt03Control();  // vt03控制更新
       }
       // pitch负值向上输出
+      pitch_torque=1*sin(pitch_+0.628);
       if (GimbalState_ == kManual) {
-        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch, -10, 10);  // 发送达秒控制信息
+        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch-pitch_torque, -10, 10);  // 发送达秒控制信息
       } else {
-        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - tau_ff.y(), -10, 10);  // 发送达秒控制信息
+        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - tau_ff.y()-pitch_torque, -10, 10);  // 发送达秒控制信息
       }
       pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);  // 合输出
-
-      // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试
     }
   }
   void SubLoop100Hz() {
