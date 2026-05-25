@@ -371,8 +371,7 @@ class Gimbal {
         rc_yaw_data = yaw_;      // 第一次进入更新当前位置
         rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
-      }
-      else {
+      } else {
         yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
         yaw_delta = 0.0f;
 
@@ -427,7 +426,7 @@ class Gimbal {
       }
     } else if (GimbalState_ == kAuto) {
       // 自瞄模式控制
-      if (DM_is_enable == false) {                       // 使达妙电机使能
+      if (DM_is_enable == false) {  // 使达妙电机使能
         if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable))
           DM_is_enable = true;
         else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
@@ -439,13 +438,13 @@ class Gimbal {
         rc_yaw_data = yaw_;
         rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
-      }
-      else {
+      } else {
         if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
           rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
         } else {  // 非自瞄状态自动切入手控
-          yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
+          yaw_relative =
+              rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
           yaw_delta = 0.0f;
           if (Rcchoose()) {
             yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
@@ -487,13 +486,12 @@ class Gimbal {
         yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                  25000));  // 设置输出电流并输出
       }
-    } else {                                             // 失能
+    } else {  // 失能
       if (DM_is_enable == true) {
         if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable)) {
           DM_is_enable = false;
           yaw_motor->SetCurrent(0);
-        }
-        else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable))
+        } else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable))
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
         else
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
