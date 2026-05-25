@@ -43,6 +43,9 @@ float Apitchposout = 0.0f;
 float Apitchoutp = 0.0f;
 float Apitchouti = 0.0f;
 float Apitchoutd = 0.0f;
+float Apitchsoutp = 0.0f;
+float Apitchsouti = 0.0f;
+float Apitchsoutd = 0.0f;
 // 检测can总线发送数据
 float Acan1tx = 0.0f;
 float Acan2tx = 0.0f;
@@ -113,6 +116,9 @@ void FreemasterDebug() {
   Apitchoutp = gimbal->gimbal_controller.pid().pitch_position.p_out();
   Apitchouti = gimbal->gimbal_controller.pid().pitch_position.i_out();
   Apitchoutd = *(gimbal->gimbal_controller.pid().pitch_position.d_out());
+  Apitchsoutp = gimbal->gimbal_controller.pid().pitch_speed.p_out();
+  Apitchsouti = gimbal->gimbal_controller.pid().pitch_speed.i_out();
+  Apitchsoutd = *(gimbal->gimbal_controller.pid().pitch_speed.d_out());
 
   Ayawchoutp = gimbal->gimbal_controller.pid().yaw_position.p_out();
   Ayawouti = gimbal->gimbal_controller.pid().yaw_position.i_out();
