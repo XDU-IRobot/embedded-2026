@@ -419,9 +419,6 @@ class Gimbal {
       gimbal_controller.Update(yaw_, -yaw_motor->rpm()*M_PI/30.0, pitch_, -pitch_motor->vel(), 1.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                25000));  // 设置输出电流并输出
-      // yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw , -25000,
-      //                                          25000));  // 设置输出电流并输出
-
     } else if (GimbalState_ == kAuto) {  // 自瞄模式控制
       if (DM_is_enable == false) {       // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
@@ -433,7 +430,6 @@ class Gimbal {
       }
       if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
         rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
-
         rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
       } else {  // 非自瞄状态自动切入手控
         yaw_relative = rm::modules::Wrap(GetYawMotorAngleRad() - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
@@ -474,7 +470,7 @@ class Gimbal {
 
       // 设定目标，并计算
       gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-      gimbal_controller.Update(yaw_, -yaw_motor->rpm(), pitch_, -pitch_motor->vel(), 1.f);
+      gimbal_controller.Update(yaw_, -yaw_motor->rpm()*M_PI/30.0, pitch_, -pitch_motor->vel(), 1.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                25000));  // 设置输出电流并输出
     } else {                                             // 失能
