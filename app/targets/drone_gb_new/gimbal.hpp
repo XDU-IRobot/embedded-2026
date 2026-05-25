@@ -416,7 +416,7 @@ class Gimbal {
 
       // 设定目标，并计算
       gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-      gimbal_controller.Update(yaw_, -yaw_motor->rpm()*M_PI/30.0, pitch_, -pitch_motor->vel(), 1.f);
+      gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                25000));  // 设置输出电流并输出
       // yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw , -25000,
@@ -702,7 +702,7 @@ class Gimbal {
     yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
 
     GimbalImuSend(-imu_new->quat_x(), imu_new->quat_w(), imu_new->quat_z(), -imu_new->quat_y(), SpeedAver(),
-              referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
+                  referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 
     GimbalControl();                               // 云台控制更新
     AmmoControl();                                 // 发射机构更新
@@ -718,11 +718,12 @@ class Gimbal {
         Vt03Control();  // vt03控制更新
       }
       // pitch负值向上输出
-      pitch_torque=1*sin(pitch_+0.628);
+      pitch_torque = 1 * sin(pitch_ + 0.628);
       if (GimbalState_ == kManual) {
-        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch-pitch_torque, -10, 10);  // 发送达秒控制信息
+        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
       } else {
-        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - tau_ff.y()-pitch_torque, -10, 10);  // 发送达秒控制信息
+        pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - tau_ff.y() - pitch_torque, -10,
+                                       10);  // 发送达秒控制信息
       }
       pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);  // 合输出
     }

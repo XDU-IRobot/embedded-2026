@@ -57,12 +57,12 @@ float Aimu_pitch = 0.0f;
 float Aimu_yaw = 0.0f;
 float Aimu_roll = 0.0f;
 
-float Ayawchoutp ;
-float Ayawouti ;
-float Ayawoutd ;
-float Ayawschoutp ;
-float Ayawsouti ;
-float Ayawsoutd ;
+float Ayawchoutp;
+float Ayawouti;
+float Ayawoutd;
+float Ayawschoutp;
+float Ayawsouti;
+float Ayawsoutd;
 
 uint16_t Aui_game_time = 0;
 uint8_t Aui_game_progress = 0;
@@ -77,7 +77,7 @@ void FreemasterDebug() {
   Apitch_ = gimbal->pitch_;
   Aroll_ = gimbal->roll_;
 
-  Ayaw_ = gimbal->yaw_;  // 实际
+  Ayaw_ = gimbal->yaw_;               // 实际
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //
 
