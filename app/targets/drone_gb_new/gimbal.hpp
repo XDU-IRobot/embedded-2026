@@ -66,7 +66,7 @@ class Gimbal {
   int delay_tick_count_ = 0;
   float delay_avg_ms_ = 0.0f;
   int delay_sample_count_ = 0;
-  float delay_peak_rpm_ = 0.0f;     // 触发后 RPM 峰值
+  float delay_peak_rpm_ = 0.0f;      // 触发后 RPM 峰值
   float delay_drop_delta_ = 200.0f;  // 转速跌落阈值 (RPM)
 
   // pitch补偿系数
@@ -560,8 +560,8 @@ class Gimbal {
       dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
 
       // --- 发弹延迟测量 ---
-      bool trigger_active = (rc->dial() >= 550 || rc->mouse_button_left() || vt03->data().mouse_button_left ||
-                             vt03->data().trigger);
+      bool trigger_active =
+          (rc->dial() >= 550 || rc->mouse_button_left() || vt03->data().mouse_button_left || vt03->data().trigger);
       if (trigger_active && !delay_last_trigger_) {
         delay_state_ = kDelayWaiting;
         delay_tick_count_ = 0;
