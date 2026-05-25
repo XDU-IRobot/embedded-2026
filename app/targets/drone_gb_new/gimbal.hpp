@@ -419,8 +419,8 @@ class Gimbal {
       gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                25000));  // 设置输出电流并输出
-    } else if (GimbalState_ == kAuto) {  // 自瞄模式控制
-      if (DM_is_enable == false) {       // 使达妙电机使能
+    } else if (GimbalState_ == kAuto) {                  // 自瞄模式控制
+      if (DM_is_enable == false) {                       // 使达妙电机使能
         pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         DM_is_enable = true;
         gimbal_controller.Enable(true);
@@ -470,7 +470,7 @@ class Gimbal {
 
       // 设定目标，并计算
       gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-      gimbal_controller.Update(yaw_, -yaw_motor->rpm()*M_PI/30.0, pitch_, -pitch_motor->vel(), 1.f);
+      gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
       yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                25000));  // 设置输出电流并输出
     } else {                                             // 失能
