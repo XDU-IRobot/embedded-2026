@@ -62,9 +62,9 @@ class Gimbal {
   bool auto_reverse_flag = false;                            // 反转标志位
 
   // pitch补偿系数
-  float pitch_torque = 0.0f;    // pitch电机前馈补偿量
+  float pitch_torque = 0.0f;     // pitch电机前馈补偿量
   float pitch_torque_kp = 0.35;  // pitch电机前馈补偿系数
-  float yaw_torque = 0.0f;      // yaw电机前馈补偿量
+  float yaw_torque = 0.0f;       // yaw电机前馈补偿量
   Eigen::Vector2f tau_ff;
   float yaw_tau2voltage = 0.0f;
 

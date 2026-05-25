@@ -24,7 +24,7 @@ void Gimbal::SubLoop250Hz() {
     }
     // pitch负值向上输出
     pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
-    pitch_motor->SetMitCommand(0, 0, -gimbal_controller.output().pitch, 0, 0);                                          // 合输出
+    pitch_motor->SetMitCommand(0, 0, -gimbal_controller.output().pitch, 0, 0);                  // 合输出
 
     // pitch_motor->SetMitCommand(0, 0,-pitch_torque, 0, 0);//单重力补偿测试
   }
