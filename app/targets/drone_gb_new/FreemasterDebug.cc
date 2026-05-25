@@ -1,4 +1,5 @@
 #include "FreemasterDbug.hpp"
+#include "Gimbal.hpp"
 float Apitch_ = 0;  // 实际位置(-pi到pi)
 float Ayaw_ = 0;
 float Aroll_ = 0;
