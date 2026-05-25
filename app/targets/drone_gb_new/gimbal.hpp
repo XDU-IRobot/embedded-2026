@@ -341,12 +341,7 @@ class Gimbal {
         .SetMaxOut(10000.0f)
         .SetMaxIout(1000.0f)
         .SetDiffLpfAlpha(0.1);
-    gimbal_controller.pid()
-        .yaw_speed.SetKp(500.0f)
-        .SetKi(0.0f)
-        .SetKd(0.0f)
-        .SetMaxOut(25000.0f)
-        .SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // pitch
     gimbal_controller.pid()
         .pitch_position.SetKp(20.0f)
@@ -355,13 +350,8 @@ class Gimbal {
         .SetMaxOut(500.0f)
         .SetMaxIout(10.0f)
         .SetDiffLpfAlpha(0.05);
-    gimbal_controller.pid()
-    .pitch_speed.SetKp(0.8f)
-        .SetKi(0.0f)
-        .SetKd(0.0f)
-        .SetMaxOut(10.0f)
-        .SetMaxIout(5.0f);
-        // .SetDiffLpfAlpha(0.5);
+    gimbal_controller.pid().pitch_speed.SetKp(0.8f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    // .SetDiffLpfAlpha(0.5);
   }
   void AmmoPIDInit() {
     shoot_controller.pid().fric_1_speed.SetKp(18.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
@@ -726,15 +716,15 @@ class Gimbal {
       // pitch负值向上输出
       pitch_torque = 1.2 * sin(pitch_ + 0.7);
       // if (GimbalState_ == kManual) {
-      //   pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
+      //   pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  //
+      //   发送达秒控制信息
       // } else {
       //   pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - tau_ff.y() - pitch_torque, -10,
       //                                  10);  // 发送达秒控制信息
       // }
       pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
-      pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);  // 合输出
+      pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                          // 合输出
       // pitch_motor->SetMitCommand(0, 0, -pitch_torque, 0, 0);  // 合输出
-
     }
   }
   void SubLoop100Hz() {
