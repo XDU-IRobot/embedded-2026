@@ -12,7 +12,7 @@ volatile u8 glb_dart_last_hit_target = 0;    // 最近一次己方飞镖击中�
 volatile u8 glb_dart_enemy_hit_count = 0;    // 对方最近被击中目标累计被击中次数 (FreeMaster)
 volatile u8 glb_dart_selected_target = 0;    // 飞镖此时选定的击打目标 (FreeMaster)
 
-volatile u8 glb_dart_launch_opening_status = 0;   // 当前飞镖发射站的状态 (FreeMaster)
+volatile u8 glb_dart_launch_opening_status = 1;   // 当前飞镖发射站的状态 (FreeMaster)
 volatile u16 glb_dart_target_change_time = 0;     // 切换击打目标时的比赛剩余时间（秒）(FreeMaster)
 volatile u16 glb_dart_latest_launch_cmd_time = 0;  // 最后一次操作手确定发射指令时的比赛剩余时间（秒）(FreeMaster)
 volatile u16 glb_referee_head = 0;                 // 环形缓冲区写指针 (FreeMaster)

@@ -65,7 +65,7 @@ class EncoderCounter {
     }
 
     // 如果电机几乎没动，则检查堵转情况
-    if (rm::modules::IsNear(delta, 0, 1)) {
+    if (rm::modules::IsNear(delta, 0, 5)) {
       if (current_ma > 1000 || current_ma <= -1000) {  // 电流大于1A，认为可能堵转，递增堵转时间计数
         ++stall_time_;
       } else {

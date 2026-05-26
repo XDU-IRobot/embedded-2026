@@ -8,7 +8,7 @@
 #include "dart_core.hpp"
 // 实体定义，确保链接器能找到
 float Pitch[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-float Yaw[4] = {-5.0f, 0.0f, 0.0f, 0.0f};
+float Yaw[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 // 定义三个界面的容器
 static lv_obj_t *view_main;
@@ -22,9 +22,9 @@ static lv_obj_t *label_edit_val;      // 在编辑界面显示的 Label
 int current_category = 0;  // 0代表PITCH, 1代表YAW
 int current_index = 0;     // 记录列表选中的序号
 float temp_val = 0;
-// Pitch 数量级是万，Yaw 数量级是 0.1
-static const float pitch_steps[4] = {100000.0f, 50000.0f, 10000.0f, 5000.0f};
-static const float yaw_steps[4] = {10.0f, 5.0f, 1.0f, 0.1f};
+// Pitch 和 Yaw 的数量级均为 0.25
+static const float pitch_steps[4] = {1.0f, 0.75f, 0.50f, 0.25f};
+static const float yaw_steps[4] = {1.0f, 0.75f, 0.50f, 0.25f};
 static lv_obj_t *step_labels_obj[4];  // 存储步长标签对象引用
 
 static lv_indev_t *keypad_indev;  // 全局记录输入设备，以便切换不同的焦点组
@@ -99,10 +99,10 @@ static void btn_list_to_edit_cb(lv_event_t *e) {
 
   // 根据当前类别更新步长标签显示
   if (current_category == 0) {  // Pitch
-    const char *labels[4] = {"100000", "50000", "10000", "5000"};
+    const char *labels[4] = {"1.0", "0.75", "0.50", "0.25"};
     for (int i = 0; i < 4; i++) lv_label_set_text(step_labels_obj[i], labels[i]);
   } else {  // Yaw
-    const char *labels[4] = {"10", "5", "1", "0.1"};
+    const char *labels[4] = {"1.0", "0.75", "0.50", "0.25"};
     for (int i = 0; i < 4; i++) lv_label_set_text(step_labels_obj[i], labels[i]);
   }
 

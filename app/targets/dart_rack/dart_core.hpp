@@ -4,6 +4,8 @@
 #include "usb.hpp"
 #include "encoder_counter.hpp"
 #include "Referee.hpp"
+#include "arm_controller.hpp"
+#include "action_sequencer.hpp"
 
 /// 无操作 GPIO 引脚（硬件未使用 74HC126 收发器时，为 HiWonderServo 提供空实现）
 class NopPin : public rm::hal::PinInterface {
@@ -19,12 +21,17 @@ enum class PhaseState : uint8_t { kUncomplete = 0, kDone = 1 };
 enum class ModeState : uint8_t { kUnable = 0, kInit = 1, kload = 2, kAdd = 3, kAim = 4, kFire = 5 };
 
 enum class AddState {
-  MOVING_BACK,     // 0. 回归初始
-  SUSPENDED_init,  // 1. 悬空安全
-  CAUGHT,          // 2. 抓弹姿态
-  MOVING_FORWARD,  // 3. 正在前移
-  SUSPENDED,       // 4. 悬空状态
-  PLACED           // 5. 放弹姿态
+  BEFORE_CAUGHT,   // 0. 回归初始
+  CAUGHT,          // 1. 抓弹姿态
+  MOVING_FORWARD,  // 2. 正在前移
+  SUSPENDED,       // 3. 悬空状态
+  PLACED           // 4. 放弹姿态
+};
+
+enum class AddPlaceOnlyState {
+  MOVING_FORWARD,  // 0. 正在前移
+  SUSPENDED,       // 1. 悬空状态
+  PLACED           // 2. 放弹姿态
 };
 
 struct AutoMode {
@@ -58,6 +65,7 @@ struct ShowtimeMode {
   bool is_load_down_done = false;
   bool is_load_up_done = false;
   bool is_trigger_lock_done = false;
+  bool is_trigger_relock_done = false;
   bool is_add_init_done = false;
   bool is_add_down_done = false;
   bool is_add_up_done = false;
@@ -91,6 +99,7 @@ struct ShowtimeMode {
     is_load_down_done = false;
     is_load_up_done = false;
     is_trigger_lock_done = false;
+    is_trigger_relock_done = false;
     is_add_init_done = false;
     is_add_down_done = false;
     is_add_up_done = false;
@@ -130,6 +139,7 @@ struct ManualMode {
   bool is_load_down_done = false;
   bool is_load_up_done = false;
   bool is_trigger_lock_done = false;
+  bool is_trigger_relock_done = false;
   bool is_add_init_done = false;
   bool is_add_down_done = false;
   bool is_add_up_done = false;
@@ -163,6 +173,7 @@ struct ManualMode {
     is_load_down_done = false;
     is_load_up_done = false;
     is_trigger_lock_done = false;
+    is_trigger_relock_done = false;
     is_add_init_done = false;
     is_add_down_done = false;
     is_add_up_done = false;
@@ -207,8 +218,7 @@ inline void DartManualModeClear(ManualMode &mode)  // 清空手动模式状态
   mode.ManualModeClear();
 }
 
-inline void DartShowtimeModeClear(ShowtimeMode &mode)
-{
+inline void DartShowtimeModeClear(ShowtimeMode &mode) {
   mode.enabled = AbleState::kOff;
   mode.ShowtimeModeClear();
 }
@@ -257,8 +267,15 @@ struct DartRack {
   EncoderCounter trigger_motor_force_odometer_;
   EncoderCounter add_motor_odometer_;
   DartCount dart_count_{DartCount::kFirst};
-
-  // 视觉结构体
+  ArmController add_controller_{{{{},          //
+                                  {},          //
+                                  {},          //
+                                  {}}},        //
+                                {{{0.f, 0.f},  //
+                                  {0.f, 0.f},  //
+                                  {0.f, 0.f},  //
+                                  {0.f, 0.f}}}};
+   // 视觉结构体
 
   // yaw轴相关常量
   static constexpr float kYawEcdMax = 52.6000f;  //< ME02 编码器最大值
@@ -291,4 +308,4 @@ extern DartRack *dart_rack;
 // 裁判系统解析状态全局标志位（用于 FreeMASTER 监控）
 extern volatile uint8_t glb_robot_id;  // 机器人ID
 extern volatile uint8_t g_vision_is_valid;
-extern volatile int32_t g_trigger_error; // 声明全局变量
+extern volatile int32_t g_trigger_error;  // 声明全局变量
