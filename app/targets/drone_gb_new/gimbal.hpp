@@ -41,7 +41,7 @@ class Gimbal {
   int yaw_center_encoder = 6870;  // TODO云台机械中位对应的编码器角度
   int yaw_encoder_last = 0;
   int yaw_abs = 0;
-  int yaw_min_limit = -4000;  // TODO 左限位
+  int yaw_min_limit = -2000;  // TODO 左限位
   int yaw_max_limit = 5000;   // TODO 右限位
   float yaw_delta = 0.0f;     // rc增加总量
 
@@ -155,6 +155,8 @@ class Gimbal {
   Gimbal2Dof gimbal_controller;  // 二轴云台PID控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
   u_int8_t dataBox[128];
+
+  bool vt03_last_r_key=false;
 
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
@@ -319,8 +321,8 @@ class Gimbal {
     // 0 离线
     device_rc.Update();
     device_vt03.Update();
-    if (rc->online_status() == rm::device::Device::kOk) return 1;
     if (vt03->online_status() == rm::device::Device::kOk) return 2;
+    if (rc->online_status() == rm::device::Device::kOk) return 1;
     return 0;
   }
   void UpdateRcAngleDiff(float yaw_data, float pitch_data, float dt) {
@@ -394,8 +396,8 @@ class Gimbal {
           if (Rcchoose() == 2) {
             yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
             yaw_delta -= rm::modules::Map(vt03->data().mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
-            rc_pitch_data -= rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);     // vt03手控备份
-            rc_pitch_data -= rm::modules::Map(vt03->data().mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
+            rc_pitch_data += rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);     // vt03手控备份
+            rc_pitch_data += rm::modules::Map(vt03->data().mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
           } else if (Rcchoose() == 1) {
             yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
             yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
@@ -641,34 +643,26 @@ class Gimbal {
     return (count > 0) ? (sum / count) : 0.0f;
   }
   void LensControl() {
-    // AmmoState_ 上升沿进入 kFire 时：翻转方向并启动电机
-    if (AmmoState_ == kFire && last_ammo_state_for_lens_ != kFire) {
+    bool r_pressed = vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kR);
+
+    // R键上升沿：翻转方向并启动电机
+    if (r_pressed && !vt03_last_r_key) {
       lens_direction_ = !lens_direction_;
       Len_control = 1;
       lens_motor->SetCurrent(lens_direction_ ? len_speed : -len_speed);
     }
-    last_ammo_state_for_lens_ = AmmoState_;
-
+    vt03_last_r_key = r_pressed;
     // 不在控制状态，不判断堵转
     if (!Len_control) {
       return;
     }
-
-    // 离开 kFire 后立即停转
-    if (AmmoState_ != kFire) {
-      lens_motor->SetCurrent(0);
-      Len_control = 0;
-      return;
-    }
-
     // 更新编码器缓存
     Len_buffer[4] = Len_buffer[3];
     Len_buffer[3] = Len_buffer[2];
     Len_buffer[2] = Len_buffer[1];
     Len_buffer[1] = Len_buffer[0];
     Len_buffer[0] = lens_motor->encoder();
-
-    // 双边堵转检测：编码器一段时间内几乎没变化则停转
+    // 堵转检测：编码器一段时间内几乎没变化则停转
     constexpr int kStallThreshold = 3;
     int delta = std::abs(static_cast<int>(Len_buffer[0]) - static_cast<int>(Len_buffer[4]));
 
@@ -718,44 +712,44 @@ class Gimbal {
     if (!ctrl_pressed && a_pressed ^ d_pressed) {
       if (a_pressed) {
         Set_LED(0, 0, 0, 0);
-        Set_LED(3, 255, 255, 255);
+        Set_LED(2, 255, 255, 255);
       } else if (d_pressed) {
         Set_LED(0, 255, 255, 255);
-        Set_LED(3, 0, 0, 0);
+        Set_LED(2, 0, 0, 0);
       } else {
         Set_LED(0, 0, 0, 0);
-        Set_LED(3, 0, 0, 0);
+        Set_LED(2, 0, 0, 0);
       }
     } else if (q_pressed ^ e_pressed) {
       if (q_pressed) {
         if (led_blink_time < 5)
-          Set_LED(3, 255, 255, 255);
+          Set_LED(2, 0, 255, 255);
         else if (led_blink_time < 10)
-          Set_LED(3, 0, 0, 0);
+          Set_LED(2, 0, 0, 0);
         else
           led_blink_time = 0;
         led_blink_time++;
         Set_LED(0, 0, 0, 0);
       } else if (e_pressed) {
         if (led_blink_time < 5)
-          Set_LED(0, 255, 255, 255);
+          Set_LED(0, 0, 255, 255);
         else if (led_blink_time < 10)
           Set_LED(0, 0, 0, 0);
         else
           led_blink_time = 0;
         led_blink_time++;
-        Set_LED(3, 0, 0, 0);
+        Set_LED(2, 0, 0, 0);
       }
     } else {
       Set_LED(0, 0, 0, 0);
-      Set_LED(3, 0, 0, 0);
+      Set_LED(2, 0, 0, 0);
     }
 
     // 上升
     if (shift_pressed)
-      Set_LED(2, 255, 255, 255);
+      Set_LED(3, 255, 255, 255);
     else
-      Set_LED(2, 0, 0, 0);
+      Set_LED(3, 0, 0, 0);
 
     Set_Brightness(10);
     WS2812_Send();
