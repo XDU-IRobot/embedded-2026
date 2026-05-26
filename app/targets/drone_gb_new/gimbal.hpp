@@ -387,9 +387,9 @@ class Gimbal {
         yaw_delta = 0.0f;
         if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl)) {
           if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW))
-            rc_pitch_data -= 0.0001f;
-          if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS))
             rc_pitch_data += 0.0001f;
+          if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS))
+            rc_pitch_data -= 0.0001f;
           if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
           if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
         } else {
@@ -646,7 +646,7 @@ class Gimbal {
     bool r_pressed = vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kR);
 
     // R键上升沿：翻转方向并启动电机
-    if (r_pressed && !vt03_last_r_key) {
+    if (r_pressed && !vt03_last_r_key&&pitch_<-0.10f) {
       lens_direction_ = !lens_direction_;
       Len_control = 1;
       lens_motor->SetCurrent(lens_direction_ ? len_speed : -len_speed);
