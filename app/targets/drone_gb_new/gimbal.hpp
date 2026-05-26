@@ -36,11 +36,13 @@ class Gimbal {
 
   float pitch_min_pos = -0.80f;      // pitch电机最小限位
   float pitch_max_pos = 0.25f;       // pitch电机最大限位
-                                     // 机械限位
-  float yaw_center_encoder = 5.174;  // TODO云台机械中位对应的编码器角度
-  float yaw_relative = 0.0f;         // TODO 当前云台相对机架夹角
-  float yaw_min_limit = -2.30;       // TODO 左限位
-  float yaw_max_limit = 2.30;        // TODO 右限位
+
+  // 机械限位
+  int yaw_center_encoder = 6870;  // TODO云台机械中位对应的编码器角度
+  int yaw_encoder_last=0;
+  int yaw_abs=0;
+  int yaw_min_limit = -4000;       // TODO 左限位
+  int yaw_max_limit = 5000;        // TODO 右限位
   float yaw_delta = 0.0f;            // rc增加总量
 
   float dirl_speed = 5000;      // TODO 拨盘转速
@@ -156,7 +158,7 @@ class Gimbal {
 
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
-    can1 = new rm::hal::ThrottledCan<128>{3000, hcan1};
+    can1 = new rm::hal::ThrottledCan<128>{6000, hcan1};
     can2 = new rm::hal::ThrottledCan<128>{6000, hcan2};
     dbus = new rm::hal::Serial<128>{huart3, false, true};
 
@@ -223,6 +225,12 @@ class Gimbal {
     shoot_controller.SetMode(Shoot2Fric::kFullAuto);  // 连发模式
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
+
+    yaw_encoder_last=yaw_motor->encoder();
+    int yaw_encoder_err=yaw_encoder_last-yaw_center_encoder;
+    if (yaw_encoder_err>=4000)yaw_encoder_err-=8191;
+    else if(yaw_encoder_err<=-4000)yaw_encoder_err+=8191;
+    yaw_abs+=yaw_encoder_err;
   }
   std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
     if (!roll_comp_enable) {
@@ -349,6 +357,13 @@ class Gimbal {
     shoot_controller.pid().loader_speed.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(2000.0f);
   }
   void GimbalControl() {
+    int yaw_encoder_current=yaw_motor->encoder();
+    int yaw_encoder_err=yaw_encoder_current-yaw_encoder_last;
+    if (yaw_encoder_err>=4000)yaw_encoder_err-=8191;
+    else if(yaw_encoder_err<=-4000)yaw_encoder_err+=8191;
+    yaw_abs+=yaw_encoder_err;
+    yaw_encoder_last=yaw_encoder_current;
+
     if (GimbalState_ == kManual) {
       if (DM_is_enable == false) {
         if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable))
@@ -363,12 +378,8 @@ class Gimbal {
         rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       } else {
-        yaw_relative = rm::modules::Wrap(yaw_motor->encoder() * 2.0f * M_PI / 8192.0f - yaw_center_encoder, -M_PI,
-                                         M_PI);  // 相对机械中点误差
         yaw_delta = 0.0f;
-
         if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl)) {
-          // CTRL held: 键盘控制(W/S/A/D), 遥控器和鼠标输入失效
           if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW))
             rc_pitch_data -= 0.0001f;
           if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS))
@@ -388,11 +399,10 @@ class Gimbal {
             rc_pitch_data += rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
           }
         }
-
-        if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
+        if (yaw_abs >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
           yaw_delta = 0.0f;
         }
-        if (yaw_relative <= yaw_min_limit && yaw_delta > 0.0f) {
+        if (yaw_abs <= yaw_min_limit && yaw_delta > 0.0f) {
           yaw_delta = 0.0f;
         }
 
@@ -435,8 +445,6 @@ class Gimbal {
           rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
         } else {  // 非自瞄状态自动切入手控
-          yaw_relative = rm::modules::Wrap(yaw_motor->encoder() * 2.0f * M_PI / 8192.0f - yaw_center_encoder, -M_PI,
-                                           M_PI);  // 相对机械中点误差
           yaw_delta = 0.0f;
           if (Rcchoose() == 2) {
             yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
@@ -449,11 +457,10 @@ class Gimbal {
             rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
             rc_pitch_data += rm::modules::Map(rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
           }
-
-          if (yaw_relative >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
+          if (yaw_abs >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
             yaw_delta = 0.0f;
           }
-          if (yaw_relative <= yaw_min_limit && yaw_delta > 0.0f) {
+          if (yaw_abs <= yaw_min_limit && yaw_delta > 0.0f) {
             yaw_delta = 0.0f;
           }
 
@@ -776,7 +783,7 @@ class Gimbal {
       }
 
       // pitch负值向上输出
-      pitch_torque = 1.2 * sin(pitch_ + 0.7);
+      pitch_torque = 1.2 * sin(pitch_ + 0.58);
       // if (GimbalState_ == kManual) {
       //   pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  //
       //   发送达秒控制信息
