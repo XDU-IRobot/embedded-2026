@@ -72,15 +72,26 @@ class Gimbal2DofDynamics {
 
  private:
   // 使用本次辨识出的 9 个基参数
+  // const Eigen::Matrix<float, 9, 1> THETA{
+  //     0.020574f,   // theta_1 (I1zz_com) 可根据实机效果清零
+  //     0.022198f,   // theta_2 (I2xx_com) 可根据实机效果清零
+  //     0.043097f,   // theta_3 (I2yy_com)
+  //     -0.043417f,  // theta_4 (m2*l2x 水平偏心)
+  //     -0.108130f,  // theta_5 (m2*l2z 垂直偏心)
+  //     -0.004880f,  // theta_6 (fv1) - Yaw 粘性摩擦
+  //     0.092282f,   // theta_7 (fc1) - Yaw 库仑摩擦
+  //     0.169119f,   // theta_8 (fv2) - Pitch 粘性摩擦
+  //     0.070344f    // theta_9 (fc2) - Pitch 库仑摩擦
+  // };
   const Eigen::Matrix<float, 9, 1> THETA{
-      0.020574f,   // theta_1 (I1zz_com) 可根据实机效果清零
-      0.022198f,   // theta_2 (I2xx_com) 可根据实机效果清零
-      0.043097f,   // theta_3 (I2yy_com)
-      -0.043417f,  // theta_4 (m2*l2x 水平偏心)
-      -0.108130f,  // theta_5 (m2*l2z 垂直偏心)
-      -0.004880f,  // theta_6 (fv1) - Yaw 粘性摩擦
-      0.092282f,   // theta_7 (fc1) - Yaw 库仑摩擦
-      0.169119f,   // theta_8 (fv2) - Pitch 粘性摩擦
-      0.070344f    // theta_9 (fc2) - Pitch 库仑摩擦
-  };
+    0.003356f,  // theta_1 (I1zz_com)
+    0.032321f,  // theta_2 (I2xx_com)
+    0.028466f,  // theta_3 (I2yy_com)
+   -0.066163f,  // theta_4 (m2*l2x 水平偏心)
+   -0.087043f,  // theta_5 (m2*l2z 垂直偏心)
+    0.042131f,  // theta_6 (fv1) - Yaw 粘性摩擦
+    0.000000f,  // theta_7 (fc1) - Yaw 库仑摩擦 (辨识为负，置零)
+    0.139970f,  // theta_8 (fv2) - Pitch 粘性摩擦
+    0.087182f   // theta_9 (fc2) - Pitch 库仑摩擦
+};
 };
