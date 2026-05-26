@@ -447,7 +447,8 @@ void Gimbal::GimbalPIDUpdate() {
     globals->gimbal_controller.pid().up_yaw_position.SetKp(300.0f).SetKd(800.0f);
     globals->gimbal_controller.pid().pitch_position.SetKp(120.0f).SetKd(5000.0f);
   } else if (globals->aimbot_communicator->yaw_vel() == 0 && globals->aimbot_communicator->yaw_acc() == 0 &&
-             globals->aimbot_communicator->pitch_vel() == 0 && globals->aimbot_communicator->pitch_acc() == 0) {
+             globals->aimbot_communicator->pitch_vel() == 0 && globals->aimbot_communicator->pitch_acc() == 0 &&
+             (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 || gimbal->aimbot_time_ > 0)) {
     globals->gimbal_controller.EnableSpeedPid(true);
     globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(100.0f);
     globals->gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKd(0.0f);
