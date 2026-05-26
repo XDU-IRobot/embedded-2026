@@ -646,7 +646,7 @@ class Gimbal {
     bool r_pressed = vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kR);
 
     // R键上升沿：翻转方向并启动电机
-    if (r_pressed && !vt03_last_r_key&&pitch_<-0.10f) {
+    if (r_pressed && !vt03_last_r_key && pitch_ < -0.10f) {
       lens_direction_ = !lens_direction_;
       Len_control = 1;
       lens_motor->SetCurrent(lens_direction_ ? len_speed : -len_speed);
