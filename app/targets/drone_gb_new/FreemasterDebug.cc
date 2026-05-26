@@ -66,7 +66,7 @@ float Ayawoutd;
 float Ayawschoutp;
 float Ayawsouti;
 float Ayawsoutd;
-//望远镜电机反馈值
+// 望远镜电机反馈值
 float Alenposition = 0.0f;
 bool Alens_direction = true;
 

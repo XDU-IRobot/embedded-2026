@@ -102,9 +102,9 @@ class Gimbal {
   int cnt = 0;  // 进自瞄次数测试
 
   bool Len_control = 0;                                  // 是否使用镜头标志位
-  float len_speed = 1000.0f;                              // 旋转速度
+  float len_speed = 1000.0f;                             // 旋转速度
   float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};  // 堵转编码器buffer
-  bool lens_direction_ = true;        // 镜头旋转方向: true=正向, false=反向
+  bool lens_direction_ = true;                           // 镜头旋转方向: true=正向, false=反向
 
   int led_blink_time = 0;  // LED闪烁计时器
 
@@ -133,7 +133,7 @@ class Gimbal {
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  // 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                        // 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                       // 右侧摩擦轮电机
-  rm::device::M2006 *dial_motor{nullptr};// 拨盘电机
+  rm::device::M2006 *dial_motor{nullptr};                                           // 拨盘电机
   rm::device::M2006 *lens_motor{nullptr};
 
   typedef enum {
@@ -146,8 +146,8 @@ class Gimbal {
     kFire              // 发射机构开火
   } StateMachineType;  // 遥控器状态机
 
-  StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
-  StateMachineType GimbalState_ = {kNoForce};  // 初始化云台运动状态
+  StateMachineType AmmoState_ = {kStop};               // 初始化发射机构状态
+  StateMachineType GimbalState_ = {kNoForce};          // 初始化云台运动状态
   StateMachineType last_ammo_state_for_lens_ = kStop;  // 上一帧发射状态，用于镜头方向边沿检测
 
   Gimbal2Dof gimbal_controller;  // 二轴云台PID控制器
@@ -796,7 +796,7 @@ class Gimbal {
     GimbalImuSend(-imu_new->quat_x(), imu_new->quat_w(), imu_new->quat_z(), -imu_new->quat_y(), SpeedAver(),
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 
-    GimbalControl();                               // 云台控制更新
+    GimbalControl();  // 云台控制更新
     // AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
     rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
