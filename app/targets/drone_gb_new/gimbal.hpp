@@ -156,7 +156,7 @@ class Gimbal {
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
   u_int8_t dataBox[128];
 
-  bool vt03_last_r_key=false;
+  bool vt03_last_r_key = false;
 
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
