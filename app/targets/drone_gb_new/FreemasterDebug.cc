@@ -66,6 +66,9 @@ float Ayawoutd;
 float Ayawschoutp;
 float Ayawsouti;
 float Ayawsoutd;
+//望远镜电机反馈值
+float Alenposition = 0.0f;
+bool Alens_direction = true;
 
 uint16_t Aui_game_time = 0;
 uint8_t Aui_game_progress = 0;
@@ -156,4 +159,7 @@ void FreemasterDebug() {
   Afire_delay_peak = gimbal->delay_peak_rpm_;
   Afire_delay_drop = gimbal->delay_drop_delta_;
   Afire_delay_state = static_cast<int>(gimbal->delay_state_);
+
+  Alenposition = gimbal->lens_motor->encoder();
+  Alens_direction = gimbal->lens_direction_;
 }

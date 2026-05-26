@@ -101,6 +101,11 @@ class Gimbal {
   float rc_vt03_left_x = 0.0f;
   int cnt = 0;  // 进自瞄次数测试
 
+  bool Len_control = 0;                                  // 是否使用镜头标志位
+  float len_speed = 1000.0f;                              // 旋转速度
+  float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};  // 堵转编码器buffer
+  bool lens_direction_ = true;        // 镜头旋转方向: true=正向, false=反向
+
   int led_blink_time = 0;  // LED闪烁计时器
 
   rm::hal::ThrottledCan<128> *can1{nullptr};  // CAN 总线接口
@@ -128,7 +133,8 @@ class Gimbal {
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  // 云台 Pitch 电机
   rm::device::M3508 *friction_left{nullptr};                                        // 左侧摩擦轮电机
   rm::device::M3508 *friction_right{nullptr};                                       // 右侧摩擦轮电机
-  rm::device::M2006 *dial_motor{nullptr};                                           // 拨盘电机
+  rm::device::M2006 *dial_motor{nullptr};// 拨盘电机
+  rm::device::M2006 *lens_motor{nullptr};
 
   typedef enum {
     kNoForce,  // 云台无力
@@ -142,6 +148,7 @@ class Gimbal {
 
   StateMachineType AmmoState_ = {kStop};       // 初始化发射机构状态
   StateMachineType GimbalState_ = {kNoForce};  // 初始化云台运动状态
+  StateMachineType last_ammo_state_for_lens_ = kStop;  // 上一帧发射状态，用于镜头方向边沿检测
 
   Gimbal2Dof gimbal_controller;  // 二轴云台PID控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
@@ -193,6 +200,7 @@ class Gimbal {
         3,
     };
     dial_motor = new rm::device::M2006{*can2, 5};
+    lens_motor = new rm::device::M2006{*can1, 1};
 
     // 裁判系统串口接收
     const rm::hal::SerialRxCallbackFunction ref_rx_callback = [&](const etl::span<const uint8_t> &data) {
@@ -426,7 +434,7 @@ class Gimbal {
         tau_ff =
             drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
                                rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
-        yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
+        yaw_tau2voltage = tau_ff.x() * 2530.0f + rc_yaw_vel * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
 
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
@@ -647,6 +655,43 @@ class Gimbal {
     }
     return (count > 0) ? (sum / count) : 0.0f;
   }
+  void LensControl() {
+    // AmmoState_ 上升沿进入 kFire 时：翻转方向并启动电机
+    if (AmmoState_ == kFire && last_ammo_state_for_lens_ != kFire) {
+      lens_direction_ = !lens_direction_;
+      Len_control = 1;
+      lens_motor->SetCurrent(lens_direction_ ? len_speed : -len_speed);
+    }
+    last_ammo_state_for_lens_ = AmmoState_;
+
+    // 不在控制状态，不判断堵转
+    if (!Len_control) {
+      return;
+    }
+
+    // 离开 kFire 后立即停转
+    if (AmmoState_ != kFire) {
+      lens_motor->SetCurrent(0);
+      Len_control = 0;
+      return;
+    }
+
+    // 更新编码器缓存
+    Len_buffer[4] = Len_buffer[3];
+    Len_buffer[3] = Len_buffer[2];
+    Len_buffer[2] = Len_buffer[1];
+    Len_buffer[1] = Len_buffer[0];
+    Len_buffer[0] = lens_motor->encoder();
+
+    // 双边堵转检测：编码器一段时间内几乎没变化则停转
+    constexpr int kStallThreshold = 3;
+    int delta = std::abs(static_cast<int>(Len_buffer[0]) - static_cast<int>(Len_buffer[4]));
+
+    if (delta < kStallThreshold) {
+      lens_motor->SetCurrent(0);
+      Len_control = 0;
+    }
+  }
   void WS2812Control() {
     auto key = vt03->data().keyboard_key;
     bool w_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW);
@@ -752,7 +797,7 @@ class Gimbal {
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 
     GimbalControl();                               // 云台控制更新
-    AmmoControl();                                 // 发射机构更新
+    // AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
     rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
   }
@@ -795,6 +840,7 @@ class Gimbal {
     if (time_ % 50 == 0) {
       test_ui_num++;
       WS2812Control();
+      LensControl();
       time_ = 0;
     }
   }
