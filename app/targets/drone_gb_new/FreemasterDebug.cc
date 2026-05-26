@@ -114,7 +114,6 @@ void FreemasterDebug() {
 
   Apid_yaw_position = gimbal->gimbal_controller.pid().yaw_position.out();
 
-
   Aspeedcnt = gimbal->shootcnt;
 
   Apitchspeed = gimbal->pitch_motor->vel();

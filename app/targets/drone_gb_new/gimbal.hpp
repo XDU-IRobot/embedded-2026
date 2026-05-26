@@ -102,7 +102,7 @@ class Gimbal {
   int cnt = 0;  // 进自瞄次数测试
 
   bool Len_control = 0;                                  // 是否使用镜头标志位
-  float len_speed = 500.0f;                             // 旋转速度
+  float len_speed = 500.0f;                              // 旋转速度
   float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};  // 堵转编码器buffer
   bool lens_direction_ = true;                           // 镜头旋转方向: true=正向, false=反向
 
@@ -153,8 +153,6 @@ class Gimbal {
   Gimbal2Dof gimbal_controller;  // 二轴云台PID控制器
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
   u_int8_t dataBox[128];
-
-
 
   void GimbalInit() {
     time_ = 0;  // 系统心跳置0
@@ -365,7 +363,8 @@ class Gimbal {
         rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);  // 对rc数据进行限位
       } else {
-        yaw_relative = rm::modules::Wrap(yaw_motor->encoder() * 2.0f * M_PI / 8192.0f - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
+        yaw_relative = rm::modules::Wrap(yaw_motor->encoder() * 2.0f * M_PI / 8192.0f - yaw_center_encoder, -M_PI,
+                                         M_PI);  // 相对机械中点误差
         yaw_delta = 0.0f;
 
         if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl)) {
@@ -377,12 +376,12 @@ class Gimbal {
           if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
           if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
         } else {
-          if (Rcchoose()==2) {
+          if (Rcchoose() == 2) {
             yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
             yaw_delta -= rm::modules::Map(vt03->data().mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
             rc_pitch_data -= rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);     // vt03手控备份
             rc_pitch_data -= rm::modules::Map(vt03->data().mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
-          } else if (Rcchoose()==1){
+          } else if (Rcchoose() == 1) {
             yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
             yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
             rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
@@ -436,15 +435,15 @@ class Gimbal {
           rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
         } else {  // 非自瞄状态自动切入手控
-          yaw_relative =
-              rm::modules::Wrap(yaw_motor->encoder() * 2.0f * M_PI / 8192.0f - yaw_center_encoder, -M_PI, M_PI);  // 相对机械中点误差
+          yaw_relative = rm::modules::Wrap(yaw_motor->encoder() * 2.0f * M_PI / 8192.0f - yaw_center_encoder, -M_PI,
+                                           M_PI);  // 相对机械中点误差
           yaw_delta = 0.0f;
-          if (Rcchoose()==2) {
+          if (Rcchoose() == 2) {
             yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
             yaw_delta -= rm::modules::Map(vt03->data().mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
             rc_pitch_data -= rm::modules::Map(vt03->data().left_x, -1, 1, -0.005f, 0.005f);     // vt03手控备份
             rc_pitch_data -= rm::modules::Map(vt03->data().mouse_y, -660, 660, -0.03f, 0.03f);  // vt03鼠标控制
-          } else if (Rcchoose()==1) {
+          } else if (Rcchoose() == 1) {
             yaw_delta -= rm::modules::Map(rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
             yaw_delta -= rm::modules::Map(rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
             rc_pitch_data += rm::modules::Map(rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
@@ -751,8 +750,6 @@ class Gimbal {
     WS2812_Send();
   }
 
-
-
   void SubLoop500Hz() {
     // ch040
     pitch_ = -imu_new->pitch();  // （上正下负）（+-pi）
@@ -769,8 +766,10 @@ class Gimbal {
   }
   void SubLoop250Hz() {
     if (time_ % 2 == 0) {
-      if (Rcchoose()==2) Vt03Control(); // dt7控制更新
-      else if (Rcchoose()==1) RCStateUpdate(); // vt03控制更新
+      if (Rcchoose() == 2)
+        Vt03Control();  // dt7控制更新
+      else if (Rcchoose() == 1)
+        RCStateUpdate();  // vt03控制更新
       else {
         AmmoState_ = kStop;
         GimbalState_ = kNoForce;
