@@ -84,17 +84,17 @@ int Afire_delay_samples = 0;
 float Afire_delay_peak = 0.0f;
 float Afire_delay_drop = 0.0f;
 int Afire_delay_state = 0;
-int Ayaw_encoder_max=0;
-int Ayaw_encoder=0;
+int Ayaw_encoder_max = 0;
+int Ayaw_encoder = 0;
 
 int Ayaw_abs;
 // 调试接口函数
 void FreemasterDebug() {
-  Ayaw_abs=gimbal->yaw_abs;
+  Ayaw_abs = gimbal->yaw_abs;
   Apitch_ = gimbal->pitch_;
   Aroll_ = gimbal->roll_;
-  Ayaw_encoder=gimbal->yaw_motor->encoder();
-  Ayaw_encoder_max=gimbal->yaw_motor->encoder()>Ayaw_encoder_max?gimbal->yaw_motor->encoder():Ayaw_encoder_max;
+  Ayaw_encoder = gimbal->yaw_motor->encoder();
+  Ayaw_encoder_max = gimbal->yaw_motor->encoder() > Ayaw_encoder_max ? gimbal->yaw_motor->encoder() : Ayaw_encoder_max;
   Ayaw_ = gimbal->yaw_;               // 实际
   Arc_yaw = gimbal->rc_yaw_data;      // 遥控
   Arc_pitch = gimbal->rc_pitch_data;  //

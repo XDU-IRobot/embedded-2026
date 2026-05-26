@@ -34,16 +34,16 @@ class Gimbal {
 
   bool DM_is_enable = false;  // 达秒使能标志位
 
-  float pitch_min_pos = -0.80f;      // pitch电机最小限位
-  float pitch_max_pos = 0.25f;       // pitch电机最大限位
+  float pitch_min_pos = -0.80f;  // pitch电机最小限位
+  float pitch_max_pos = 0.25f;   // pitch电机最大限位
 
   // 机械限位
   int yaw_center_encoder = 6870;  // TODO云台机械中位对应的编码器角度
-  int yaw_encoder_last=0;
-  int yaw_abs=0;
-  int yaw_min_limit = -4000;       // TODO 左限位
-  int yaw_max_limit = 5000;        // TODO 右限位
-  float yaw_delta = 0.0f;            // rc增加总量
+  int yaw_encoder_last = 0;
+  int yaw_abs = 0;
+  int yaw_min_limit = -4000;  // TODO 左限位
+  int yaw_max_limit = 5000;   // TODO 右限位
+  float yaw_delta = 0.0f;     // rc增加总量
 
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
@@ -226,11 +226,13 @@ class Gimbal {
     shoot_controller.SetLoaderSpeed(0.0f);            // 拨盘目标线速度
     shoot_controller.SetArmSpeed(0.0f);               // 摩擦轮目标线速度
 
-    yaw_encoder_last=yaw_motor->encoder();
-    int yaw_encoder_err=yaw_encoder_last-yaw_center_encoder;
-    if (yaw_encoder_err>=4000)yaw_encoder_err-=8191;
-    else if(yaw_encoder_err<=-4000)yaw_encoder_err+=8191;
-    yaw_abs+=yaw_encoder_err;
+    yaw_encoder_last = yaw_motor->encoder();
+    int yaw_encoder_err = yaw_encoder_last - yaw_center_encoder;
+    if (yaw_encoder_err >= 4000)
+      yaw_encoder_err -= 8191;
+    else if (yaw_encoder_err <= -4000)
+      yaw_encoder_err += 8191;
+    yaw_abs += yaw_encoder_err;
   }
   std::pair<double, double> ApplyRollComp(double yaw_target, double pitch_target) {
     if (!roll_comp_enable) {
@@ -357,12 +359,14 @@ class Gimbal {
     shoot_controller.pid().loader_speed.SetKp(15.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(2000.0f);
   }
   void GimbalControl() {
-    int yaw_encoder_current=yaw_motor->encoder();
-    int yaw_encoder_err=yaw_encoder_current-yaw_encoder_last;
-    if (yaw_encoder_err>=4000)yaw_encoder_err-=8191;
-    else if(yaw_encoder_err<=-4000)yaw_encoder_err+=8191;
-    yaw_abs+=yaw_encoder_err;
-    yaw_encoder_last=yaw_encoder_current;
+    int yaw_encoder_current = yaw_motor->encoder();
+    int yaw_encoder_err = yaw_encoder_current - yaw_encoder_last;
+    if (yaw_encoder_err >= 4000)
+      yaw_encoder_err -= 8191;
+    else if (yaw_encoder_err <= -4000)
+      yaw_encoder_err += 8191;
+    yaw_abs += yaw_encoder_err;
+    yaw_encoder_last = yaw_encoder_current;
 
     if (GimbalState_ == kManual) {
       if (DM_is_enable == false) {
@@ -766,7 +770,7 @@ class Gimbal {
     GimbalImuSend(-imu_new->quat_x(), imu_new->quat_w(), imu_new->quat_z(), -imu_new->quat_y(), SpeedAver(),
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 
-    GimbalControl();  // 云台控制更新
+    GimbalControl();                               // 云台控制更新
     AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
     rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
