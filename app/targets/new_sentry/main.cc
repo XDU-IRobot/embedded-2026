@@ -266,7 +266,7 @@ void GlobalWarehouse::SubLoop500Hz() {
       globals->hipnuc_imu->yaw(), globals->hipnuc_imu->pitch(), -globals->hipnuc_imu->roll(),
       globals->referee_data->data().robot_status.robot_id, globals->aim_mode, globals->imu_count, shoot_initial_speed);
   globals->down_yaw_motor->SetMitCommand(0, 0, -globals->gimbal_controller.output().down_yaw, 0, 0);
-  globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 3.2f);
+  globals->pitch_motor->SetMitCommand(0, 0, -gimbal->pitch_torque_, 0, 3.4f);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {}

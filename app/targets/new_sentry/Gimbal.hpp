@@ -107,7 +107,7 @@ inline class Gimbal {
 
   void GimbalMovePIDUpdate();
 
-  void ApplyNormalGimbalPID();
+  void GimbalPIDUpdate();
 
   void GimbalIdentifyUpdate();
 

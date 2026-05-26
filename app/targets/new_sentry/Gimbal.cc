@@ -440,18 +440,29 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
 }
 
-void Gimbal::ApplyNormalGimbalPID() {
-  // 上部 Yaw PID 参数
-  globals->gimbal_controller.pid().up_yaw_position.SetKp(20.f).SetKi(0).SetKd(120.f).SetMaxOut(20000.f).SetMaxIout(0);
-  // pitch PID 参数
-  globals->gimbal_controller.pid().pitch_position.SetKp(70.f).SetKi(0).SetKd(0.f).SetMaxOut(30.f).SetMaxIout(0);
+void Gimbal::GimbalPIDUpdate() {
+  // pid 更新
+  if (gimbal->GimbalMove_ == kGbIdentify) {
+    globals->gimbal_controller.EnableSpeedPid(false);
+    globals->gimbal_controller.pid().up_yaw_position.SetKp(300.0f).SetKd(800.0f);
+    globals->gimbal_controller.pid().pitch_position.SetKp(120.0f).SetKd(5000.0f);
+  } else if (globals->aimbot_communicator->yaw_vel() == 0 && globals->aimbot_communicator->yaw_acc() == 0 &&
+             globals->aimbot_communicator->pitch_vel() == 0 && globals->aimbot_communicator->pitch_acc() == 0) {
+    globals->gimbal_controller.EnableSpeedPid(true);
+    globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(100.0f);
+    globals->gimbal_controller.pid().up_yaw_speed.SetKp(8800.0f).SetKd(0.0f);
+    globals->gimbal_controller.pid().pitch_position.SetKp(80.0f).SetKd(0.0f);
+    globals->gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKd(0.0f);
+  } else {
+    globals->gimbal_controller.EnableSpeedPid(true);
+    globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(120.0f);
+    globals->gimbal_controller.pid().up_yaw_speed.SetKp(7000.0f).SetKd(0.0f);
+    globals->gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKd(0.0f);
+    globals->gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKd(0.0f);
+  }
 }
 
 void Gimbal::GimbalIdentifyUpdate() {
-  // pid 更新
-  globals->gimbal_controller.pid().up_yaw_position.SetKp(300.f).SetKi(0).SetKd(800.f).SetMaxOut(25000.f).SetMaxIout(0);
-  globals->gimbal_controller.pid().pitch_position.SetKp(120.f).SetKi(0).SetKd(5000.f).SetMaxOut(10.f).SetMaxIout(0);
-  globals->gimbal_controller.EnableSpeedPid(false);
   // 标定参数更新
   gimbal->identify_yaw_position_ = globals->up_yaw_motor->encoder();
   gimbal->identify_yaw_speed_ = static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec;
@@ -504,10 +515,7 @@ void Gimbal::GimbalMatchUpdate() {
 
 void Gimbal::GimbalEnableUpdate() {
   globals->gimbal_controller.Enable(true);
-  if (gimbal->GimbalMove_ != kGbIdentify) {
-    gimbal->ApplyNormalGimbalPID();
-    globals->gimbal_controller.EnableSpeedPid(true);
-  }
+  gimbal->GimbalPIDUpdate();
   if (gimbal->GimbalMove_ == kGbRemote) {
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
