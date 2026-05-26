@@ -110,13 +110,10 @@ void FreemasterDebug() {
   Atargetpitch = Aimbot.TargetPitchAngle;
   Atagetyaw = Aimbot.TargetYawAngle;
 
-  Ayaw_position = gimbal->GetYawMotorAngleRad();
   Ayaw_relative = gimbal->yaw_relative;
 
   Apid_yaw_position = gimbal->gimbal_controller.pid().yaw_position.out();
 
-  Arc_online = gimbal->RcIsOnline();
-  Avt03_online = gimbal->Vt03IsOnline();
 
   Aspeedcnt = gimbal->shootcnt;
 
@@ -151,7 +148,6 @@ void FreemasterDebug() {
   Aimu_yaw = gimbal->imu_new->yaw();
   Aimu_roll = -gimbal->imu_new->roll();
 
-  Aid = gimbal->ID();
   Ayawout = gimbal->yaw_torque;
 
   Afire_delay_avg = gimbal->delay_avg_ms_;
