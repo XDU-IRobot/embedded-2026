@@ -59,6 +59,16 @@ class Gimbal {
   int auto_reverse_time = 0;                                 // 持续时间变量
   bool auto_reverse_flag = false;                            // 反转标志位
 
+  // 发弹延迟测量（触发上升沿 → 摩擦轮转速下降）
+  enum FireDelayState { kDelayIdle, kDelayWaiting };
+  FireDelayState delay_state_ = kDelayIdle;
+  bool delay_last_trigger_ = false;
+  int delay_tick_count_ = 0;
+  float delay_avg_ms_ = 0.0f;
+  int delay_sample_count_ = 0;
+  float delay_peak_rpm_ = 0.0f;      // 触发后 RPM 峰值
+  float delay_drop_delta_ = 200.0f;  // 转速跌落阈值 (RPM)
+
   // pitch补偿系数
   float pitch_torque = 0.0f;       // pitch电机前馈补偿量
   float yaw_torque = 0.0f;         // yaw电机前馈补偿量
@@ -549,6 +559,30 @@ class Gimbal {
       friction_right->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().fric_2, -10000, 10000));
       dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
 
+      // --- 发弹延迟测量 ---
+      bool trigger_active =
+          (rc->dial() >= 550 || rc->mouse_button_left() || vt03->data().mouse_button_left || vt03->data().trigger);
+      if (trigger_active && !delay_last_trigger_) {
+        delay_state_ = kDelayWaiting;
+        delay_tick_count_ = 0;
+        delay_peak_rpm_ = fabs(friction_left->rpm());
+      }
+      delay_last_trigger_ = trigger_active;
+
+      if (delay_state_ == kDelayWaiting) {
+        delay_tick_count_++;
+        float current_rpm = fabs(friction_left->rpm());
+        if (current_rpm > delay_peak_rpm_) delay_peak_rpm_ = current_rpm;
+
+        // 峰值接近目标转速 且 当前转速从峰值跌落超过阈值
+        if (delay_peak_rpm_ >= friction_speed * 0.85f && current_rpm < delay_peak_rpm_ - delay_drop_delta_) {
+          float delay_ms = delay_tick_count_ * 2.0f;
+          delay_avg_ms_ = (delay_avg_ms_ * delay_sample_count_ + delay_ms) / (delay_sample_count_ + 1);
+          delay_sample_count_++;
+          delay_state_ = kDelayIdle;
+        }
+        if (delay_tick_count_ > 250) delay_state_ = kDelayIdle;  // 500ms 超时
+      }
     }
 
     // 准备状态
