@@ -102,7 +102,7 @@ class Gimbal {
   int cnt = 0;  // 进自瞄次数测试
 
   bool Len_control = 0;                                  // 是否使用镜头标志位
-  float len_speed = 500.0f;                              // 旋转速度
+  float len_speed = 700.0f;                              // 旋转速度
   float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};  // 堵转编码器buffer
   bool lens_direction_ = true;                           // 镜头旋转方向: true=正向, false=反向
 
@@ -304,13 +304,13 @@ class Gimbal {
     vt03_last_fn_right = vt03->data().right_button;
   }
   int Rcchoose() {
-    // 2 标志vt03导出，优先级高于rc
+    // 2 标志vt03导出，优先级低于rc
     // 1 标志rc导出
     // 0 离线
     device_rc.Update();
     device_vt03.Update();
-    if (vt03->online_status() == rm::device::Device::kOk) return 2;
     if (rc->online_status() == rm::device::Device::kOk) return 1;
+    if (vt03->online_status() == rm::device::Device::kOk) return 2;
     return 0;
   }
   void UpdateRcAngleDiff(float yaw_data, float pitch_data, float dt) {
@@ -760,7 +760,7 @@ class Gimbal {
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
 
     GimbalControl();  // 云台控制更新
-    // AmmoControl();                                 // 发射机构更新
+    AmmoControl();                                 // 发射机构更新
     rm::device::DjiMotorBase::SendCommand(*can1);  // 向大疆所有电机发数据
     rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
   }
