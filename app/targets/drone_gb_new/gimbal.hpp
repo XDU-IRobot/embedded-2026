@@ -740,8 +740,7 @@ class Gimbal {
       //                                  10);  // 发送达秒控制信息
       // }
       pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
-      pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);                                          // 合输出
-      // pitch_motor->SetMitCommand(0, 0, -pitch_torque, 0, 0);  // 合输出
+      pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);
     }
   }
   void SubLoop100Hz() {
@@ -750,16 +749,13 @@ class Gimbal {
       FreemasterDebug();    // 调试更新
     }
   }
-
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
       // robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
     }
   }
-  uint8_t test_ui_num = 0;
   void SubLoop10Hz() {
     if (time_ % 50 == 0) {
-      test_ui_num++;
       WS2812Control();
       time_ = 0;
     }
