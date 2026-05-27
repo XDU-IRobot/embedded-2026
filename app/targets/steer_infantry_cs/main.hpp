@@ -42,7 +42,7 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo> *can1{nullptr}, *can2{nullptr};  ///< CAN 总线接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};  ///< CAN 总线接口
   rm::device::GimbalCommunicator *gimbal_communicator{nullptr};                                     ///< CAN 通信器
   rm::device::GkSupercap *super_cap{nullptr};                                         ///< 港科超级电容
   rm::device::BMI088 *imu{nullptr};                                                   ///< IMU

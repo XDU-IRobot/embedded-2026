@@ -60,10 +60,6 @@ extern "C" [[noreturn]] void AppMain(void) {
   mainloop_1000hz.Start();
 
   for (;;) {
-    globals->can1->Process();
-    globals->can2->Process();
-    const auto &can1status = globals->can1->stats();
-    const auto &can2status = globals->can2->stats();
     // __WFI();
   }
 }
@@ -72,8 +68,8 @@ void GlobalWarehouse::Init() {
   buzzer = new Buzzer;
   led = new LED;
 
-  can1 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f, hcan1};
-  can2 = new rm::hal::ThrottledCan<128, rm::modules::SchedulingPolicy::kFifo>{7000.0f, hcan2};
+  can1 = new rm::hal::Can{hcan1};
+  can2 = new rm::hal::Can{hcan2};
   gimbal_communicator = new rm::device::GimbalCommunicator(*can1);
   super_cap = new rm::device::GkSupercap(*can1);
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
