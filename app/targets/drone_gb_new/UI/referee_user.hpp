@@ -46,25 +46,23 @@ class RefereeUser final : public Device {
  private:
   RefereeSubProtocol deserialize_buffer_{};
   RefereeSubProtocolMemoryMap referee_protocol_memory_map_;
-  Referee<revision> &referee_;
+  Referee<revision> *referee_{nullptr};
 
  public:
-  RefereeUser() = delete;
-
-  explicit RefereeUser(Referee<revision> &referee) : referee_(referee) {}
-
+  RefereeUser() = default;
+  void attachReferee(Referee<revision> *referee){referee_ = referee;}
   const RefereeSubProtocol &data() const { return deserialize_buffer_; }
 
   // 增加 data_len_this_time_ 参数以便传入本次接收的数据长度
   void AttachCallback(u16 cmd_id_, u8 seq_) {
     ReportStatus(kOk);
     // 将裁判系统的数据拷贝到反序列化缓冲区。
-    u16 subCmdID = referee_.data().robot_interaction_data.data_cmd_id;
+    u16 subCmdID = referee_->data().robot_interaction_data.data_cmd_id;
     if (cmd_id_ != 0x301) return;
     if (!rm::device::RefereeSubProtocolMemoryMap::map.contains(subCmdID)) return;
     const usize member_offset = rm::device::RefereeSubProtocolMemoryMap::map.at(subCmdID);
     u8 *dest_ptr = reinterpret_cast<u8 *>(&deserialize_buffer_) + member_offset;
-    u8 *src_ptr = const_cast<u8 *>(referee_.data().robot_interaction_data.user_data);
+    u8 *src_ptr = const_cast<u8 *>(referee_->data().robot_interaction_data.user_data);
     std::memcpy(dest_ptr, src_ptr, rm::device::RefereeSubProtocolMemoryMap::mapSize.at(subCmdID));
   }
 };
@@ -72,8 +70,7 @@ class RefereeUser final : public Device {
 
 namespace rm::device {
 template <typename T>
-[[nodiscard]] inline u8 Referee0x301Prepare(u8 *data, const u16 start_index, T &info, const u16 sender,
-                                            const u16 receiver) {
+[[nodiscard]] inline u8 Referee0x301Prepare(u8 *data, const u16 start_index, T &info, const u16 sender, const u16 receiver) {
   static u8 seq_ = 0;
   u16 index_ = start_index;
   data[index_++] = kRefProtocolHeaderSof;

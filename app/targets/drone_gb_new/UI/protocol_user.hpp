@@ -83,8 +83,8 @@ struct EnemyRobotProjectileAllowance {
 };
 
 struct EnemyGoldCoinRFID {
-  u16 enemy_gold_remaining;  // 字节0-1：对方剩余金币数
-  u16 enemy_gold_total;      // 字节2-3：对方累计总金币数
+  u16 enemy_gold_remaining; // 字节0-1：对方剩余金币数
+  u16 enemy_gold_total; // 字节2-3：对方累计总金币数
 
   union {
     u32 raw;
@@ -158,17 +158,17 @@ struct EnemyGoldCoinRFID {
 
 struct EnemyRobotBuff {
   enum class SentryPosture : u8 {
-    ATTACK = 1,   // 进攻姿态
-    DEFENSE = 2,  // 防御姿态
-    MOBILE = 3    // 移动姿态
+    ATTACK = 1, // 进攻姿态
+    DEFENSE = 2, // 防御姿态
+    MOBILE = 3 // 移动姿态
   };
 
   struct RobotBuffInfo {
-    u8 hp_recovery;       // 回血增益（百分比）
-    u16 heat_cooling;     // 射击热量冷却增益（直接值）
-    u8 defense;           // 防御增益（百分比）
-    u8 negative_defense;  // 负防御增益（百分比）
-    u16 attack;           // 攻击增益（百分比）
+    u8 hp_recovery; // 回血增益（百分比）
+    u16 heat_cooling; // 射击热量冷却增益（直接值）
+    u8 defense; // 防御增益（百分比）
+    u8 negative_defense; // 负防御增益（百分比）
+    u16 attack; // 攻击增益（百分比）
   };
 
   // byte 0~6
@@ -206,9 +206,9 @@ struct Hero2Drone {
 };
 
 struct Drone2Hero {
-  f32 cmd_yaw_angle{0};
-  i16 cmd_ammo_adjust{0};
-  u8 cmd_shooting{0};
+  f32 cmd_yaw_angle;
+  i16 cmd_ammo_adjust;
+  u8 cmd_shooting;
 };
 
 struct UILayer {
@@ -221,157 +221,179 @@ struct UILayer {
   u8 layer;
 };
 
-struct UIFigure1 {
+/**
+ * @brief 禁止直接构造这个类，应该被包含在具体协议中！
+ */
+struct UIFigure {
+private:
+  u8 figure_name[3];
+  u32 operate_type : 3;
+  u32 figure_type : 3;
+  u32 layer : 4;
+  u32 color : 4;
+  u32 details_a : 9;
+  u32 details_b : 9;
+  u32 width : 10;
+  u32 start_x : 11;
+  u32 start_y : 11;
+
+  union {
+    struct {
+      u32 details_c : 10;
+      u32 details_d : 11;
+      u32 details_e : 11;
+    };
+
+    f32 floatValue;
+    i32 intValue;
+  };
+
+  UIFigure() = default;
+  UIFigure(UIFigure const &) = default;
+  UIFigure(UIFigure &&) = default;
+
+  friend struct UIFigure1;
+  friend struct UIFigure2;
+  friend struct UIFigure5;
+  friend struct UIFigure7;
+  friend struct UICharacter;
+
+public:
   enum class Operation : u8 {
-    None = 0,    // 空操作
-    Add = 1,     // 增加
-    Edit = 2,    // 修改
-    Delete = 3,  // 删除
+    None = 0, // 空操作
+    Add = 1, // 增加
+    Edit = 2, // 修改
+    Delete = 3, // 删除
   };
 
   enum class FigureType : u8 {
-    StraightLine = 0,    // 直线
-    Rectangle = 1,       // 矩形
-    PerfectCircle = 2,   // 正圆
-    Ellipse = 3,         // 椭圆
-    Arc = 4,             // 弧线
-    FloatingNumber = 5,  // 浮点数
-    Integer = 6,         // 整数
-    Character = 7        // 字符
+    StraightLine = 0, // 直线
+    Rectangle = 1, // 矩形
+    PerfectCircle = 2, // 正圆
+    Ellipse = 3, // 椭圆
+    Arc = 4, // 弧线
+    FloatingNumber = 5, // 浮点数
+    Integer = 6, // 整数
+    Character = 7 // 字符
   };
 
   enum class Color : u8 {
-    RedBlue = 0,  // Red/Blue (Own Side color)
-    Yellow = 1,   // 黄色
-    Green = 2,    // 绿色
-    Orange = 3,   // 橙色
-    Magenta = 4,  // 品红色
-    Pink = 5,     // 粉红色
-    Cyan = 6,     // 青色
-    Black = 7,    // 黑色
-    White = 8     // 白色
+    RedBlue = 0, // Red/Blue (Own Side color)
+    Yellow = 1, // 黄色
+    Green = 2, // 绿色
+    Orange = 3, // 橙色
+    Magenta = 4, // 品红色
+    Pink = 5, // 粉红色
+    Cyan = 6, // 青色
+    Black = 7, // 黑色
+    White = 8 // 白色
   };
-
-  struct Figure {
-    u8 figure_name[3];
-    u32 operate_type : 3;
-    u32 figure_type : 3;
-    u32 layer : 4;
-    u32 color : 4;
-    u32 details_a : 9;
-    u32 details_b : 9;
-    u32 width : 10;
-    u32 start_x : 11;
-    u32 start_y : 11;
-
-    union {
-      struct {
-        u32 details_c : 10;
-        u32 details_d : 11;
-        u32 details_e : 11;
-      };
-
-      f32 floatValue;
-      i32 intValue;
-    };
-  };
-
-  Figure figure;
 
   void fillFigure(const char *name_, Operation operate_type_, FigureType figure_type_, u8 layer_, Color color_,
-                  u16 width_, u16 start_x_, u16 start_y_, u16 a_, u16 b_, u16 c_, u16 d_, u16 e_) {
-    memcpy(figure.figure_name, name_, 3);
-    figure.operate_type = static_cast<u32>(operate_type_);
-    figure.figure_type = static_cast<u32>(figure_type_);
-    figure.layer = layer_;
-    figure.color = static_cast<u32>(color_);
-    figure.details_a = a_;
-    figure.details_b = b_;
-    figure.details_c = c_;
-    figure.details_d = d_;
-    figure.details_e = e_;
-    figure.width = width_;
-    figure.start_x = start_x_;
-    figure.start_y = start_y_;
+                  u16 width_,
+                  u16 start_x_, u16 start_y_, u16 a_, u16 b_, u16 c_, u16 d_, u16 e_) {
+    memcpy(figure_name, name_, 3);
+    operate_type = static_cast<u32>(operate_type_);
+    figure_type = static_cast<u32>(figure_type_);
+    layer = layer_;
+    color = static_cast<u32>(color_);
+    details_a = a_;
+    details_b = b_;
+    details_c = c_;
+    details_d = d_;
+    details_e = e_;
+    width = width_;
+    start_x = start_x_;
+    start_y = start_y_;
   };
 
   void fillLine(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
-                u16 start_y_, u16 end_x_, u16 end_y_) {
-    fillFigure(name_, operate_type_, FigureType::StraightLine, layer_, color_, width_, start_x_, start_y_, 0, 0, 0,
-               end_x_, end_y_);
+                u16 start_y_,
+                u16 end_x_, u16 end_y_) {
+    fillFigure(name_, operate_type_, FigureType::StraightLine, layer_, color_, width_,
+               start_x_, start_y_, 0, 0, 0, end_x_, end_y_);
   };
 
   void fillRec(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
-               u16 start_y_, u16 end_x_, u16 end_y_) {
-    fillFigure(name_, operate_type_, FigureType::Rectangle, layer_, color_, width_, start_x_, start_y_, 0, 0, 0, end_x_,
-               end_y_);
+               u16 start_y_,
+               u16 end_x_, u16 end_y_) {
+    fillFigure(name_, operate_type_, FigureType::Rectangle, layer_, color_, width_, start_x_,
+               start_y_, 0, 0, 0, end_x_, end_y_);
   }
 
   void fillRound(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
-                 u16 start_y_, u16 radius_) {
-    fillFigure(name_, operate_type_, FigureType::PerfectCircle, layer_, color_, width_, start_x_, start_y_, 0, 0,
-               radius_, 0, 0);
+                 u16 start_y_,
+                 u16 radius_) {
+    fillFigure(name_, operate_type_, FigureType::PerfectCircle, layer_, color_, width_,
+               start_x_, start_y_, 0, 0, radius_, 0, 0);
   }
 
   void fillEllipse(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
-                   u16 start_y_, u16 x_half_length_, u16 y_half_length_) {
-    fillFigure(name_, operate_type_, FigureType::Ellipse, layer_, color_, width_, start_x_, start_y_, 0, 0, 0,
-               x_half_length_, y_half_length_);
+                   u16 start_y_,
+                   u16 x_half_length_, u16 y_half_length_) {
+    fillFigure(name_, operate_type_, FigureType::Ellipse, layer_, color_, width_, start_x_,
+               start_y_, 0, 0, 0, x_half_length_, y_half_length_);
   }
 
   void fillArc(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
-               u16 start_y_, u16 start_angle_, u16 end_angle_, u16 x_half_length_, u16 y_half_length_) {
-    fillFigure(name_, operate_type_, FigureType::Arc, layer_, color_, width_, start_x_, start_y_, start_angle_,
-               end_angle_, 0, x_half_length_, y_half_length_);
+               u16 start_y_,
+               u16 start_angle_, u16 end_angle_, u16 x_half_length_, u16 y_half_length_) {
+    fillFigure(name_, operate_type_, FigureType::Arc, layer_, color_, width_, start_x_,
+               start_y_, start_angle_, end_angle_, 0, x_half_length_, y_half_length_);
   }
 
   void fillFloat(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
-                 u16 start_y_, u16 font_size_, f32 value) {
-    fillFigure(name_, operate_type_, FigureType::FloatingNumber, layer_, color_, width_, start_x_, start_y_, font_size_,
-               0, 0, 0, 0);
-    figure.intValue = static_cast<i32>(value);
+                 u16 start_y_,
+                 u16 font_size_, f32 value) {
+    fillFigure(name_, operate_type_, FigureType::FloatingNumber, layer_, color_, width_,
+               start_x_, start_y_, font_size_, 0, 0, 0, 0);
+    intValue = static_cast<i32>(value);
   }
 
   void fillIntegrate(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
                      u16 start_y_, u16 font_size_, i32 value) {
-    fillFigure(name_, operate_type_, FigureType::Integer, layer_, color_, width_, start_x_, start_y_, font_size_, 0, 0,
-               0, 0);
-    figure.intValue = value;
+    fillFigure(name_, operate_type_, FigureType::Integer, layer_, color_, width_, start_x_,
+               start_y_, font_size_, 0, 0, 0, 0);
+    intValue = value;
   }
 
   void fillCharacter(const char *name_, Operation operate_type_, u8 layer_, Color color_, u8 width_, u16 start_x_,
                      u16 start_y_, u16 font_size_, u16 length_) {
-    fillFigure(name_, operate_type_, FigureType::Character, layer_, color_, width_, start_x_, start_y_, font_size_,
-               length_, 0, 0, 0);
+    fillFigure(name_, operate_type_, FigureType::Character, layer_, color_, width_, start_x_,
+               start_y_, font_size_, length_, 0, 0, 0);
   }
 };
 
+struct UIFigure1 {
+  UIFigure figure1{};
+};
+
 struct UIFigure2 {
-  UIFigure1 figure1;
-  UIFigure1 figure2;
+  UIFigure figure1{};
+  UIFigure figure2{};
 };
 
 struct UIFigure5 {
-  UIFigure1 figure1;
-  UIFigure1 figure2;
-  UIFigure1 figure3;
-  UIFigure1 figure4;
-  UIFigure1 figure5;
+  UIFigure figure1{};
+  UIFigure figure2{};
+  UIFigure figure3{};
+  UIFigure figure4{};
+  UIFigure figure5{};
 };
 
 struct UIFigure7 {
-  UIFigure1 figure1;
-  UIFigure1 figure2;
-  UIFigure1 figure3;
-  UIFigure1 figure4;
-  UIFigure1 figure5;
-  UIFigure1 figure6;
-  UIFigure1 figure7;
+  UIFigure figure1{};
+  UIFigure figure2{};
+  UIFigure figure3{};
+  UIFigure figure4{};
+  UIFigure figure5{};
+  UIFigure figure6{};
+  UIFigure figure7{};
 };
 
 struct UICharacter {
-  UIFigure1 character;
-  u8 data[30];
+  UIFigure character{};
+  u8 data[30]{};
 };
 
 struct RefereeSubCmdId {
@@ -429,11 +451,11 @@ struct MapRobotPosition {
 template <typename T>
 struct TypeToCmd;
 
-#define DEFINE_TYPE_TO_CMD(TypeName, CmdName)                 \
-  template <>                                                 \
-  struct TypeToCmd<TypeName> {                                \
-    static constexpr u16 value = RefereeSubCmdId::k##CmdName; \
-  };
+#define DEFINE_TYPE_TO_CMD(TypeName, CmdName) \
+template <> \
+struct TypeToCmd<TypeName> { \
+static constexpr u16 value = RefereeSubCmdId::k##CmdName; \
+};
 
 // 批量定义所有子命令
 DEFINE_TYPE_TO_CMD(AllyRobotPosition, AllyRobotPosition)
@@ -481,40 +503,40 @@ constexpr int getCmd(const T &obj) {
 
 #pragma pack(push, 1)
 struct RefereeSubProtocol {
-  struct AllyRobotPosition ally_robot_position;                           // 0x0200
-  struct EnemyRobotPosition enemy_robot_position;                         // 0x0201
-  struct EnemyRobotHP enemy_robot_HP;                                     // 0x0202
-  struct EnemyRobotProjectileAllowance enemy_robot_projectile_allowance;  // 0x0203
-  struct EnemyGoldCoinRFID enemy_gold_coin_RFID;                          // 0x0204
-  struct EnemyRobotBuff enemy_robot_buff;                                 // 0x0205
-  struct Hero2Drone hero_2_drone;
-  struct Drone2Hero drone_2_hero;
+  struct AllyRobotPosition ally_robot_position{}; // 0x0200
+  struct EnemyRobotPosition enemy_robot_position{}; // 0x0201
+  struct EnemyRobotHP enemy_robot_HP{}; // 0x0202
+  struct EnemyRobotProjectileAllowance enemy_robot_projectile_allowance{}; // 0x0203
+  struct EnemyGoldCoinRFID enemy_gold_coin_RFID{}; // 0x0204
+  struct EnemyRobotBuff enemy_robot_buff{}; // 0x0205
+  struct Hero2Drone hero_2_drone{};
+  struct Drone2Hero drone_2_hero{};
 };
 #pragma pack(pop)
 
 struct RefereeSubProtocolMemoryMap {
   static MAPBOX_ETERNAL_CONSTEXPR const auto map = mapbox::eternal::map<u16, usize>(
-      {{RefereeSubCmdId::kAllyRobotPosition, offsetof(RefereeSubProtocol, ally_robot_position)},
-       {RefereeSubCmdId::kEnemyRobotPosition, offsetof(RefereeSubProtocol, enemy_robot_position)},
-       {RefereeSubCmdId::kEnemyRobotHP, offsetof(RefereeSubProtocol, enemy_robot_HP)},
-       {RefereeSubCmdId::kEnemyRobotProjectileAllowance,
-        offsetof(RefereeSubProtocol, enemy_robot_projectile_allowance)},
-       {RefereeSubCmdId::kEnemyGoldCoinRFID, offsetof(RefereeSubProtocol, enemy_gold_coin_RFID)},
-       {RefereeSubCmdId::kEnemyRobotBuff, offsetof(RefereeSubProtocol, enemy_robot_buff)},
-       {RefereeSubCmdId::kAllRadarInfo, offsetof(RefereeSubProtocol, enemy_robot_HP)},
-       {RefereeSubCmdId::kHero2Drone, offsetof(RefereeSubProtocol, hero_2_drone)},
-       {RefereeSubCmdId::kDrone2Hero, offsetof(RefereeSubProtocol, drone_2_hero)}});
+  {{RefereeSubCmdId::kAllyRobotPosition, offsetof(RefereeSubProtocol, ally_robot_position)},
+   {RefereeSubCmdId::kEnemyRobotPosition, offsetof(RefereeSubProtocol, enemy_robot_position)},
+   {RefereeSubCmdId::kEnemyRobotHP, offsetof(RefereeSubProtocol, enemy_robot_HP)},
+   {RefereeSubCmdId::kEnemyRobotProjectileAllowance,
+    offsetof(RefereeSubProtocol, enemy_robot_projectile_allowance)},
+   {RefereeSubCmdId::kEnemyGoldCoinRFID, offsetof(RefereeSubProtocol, enemy_gold_coin_RFID)},
+   {RefereeSubCmdId::kEnemyRobotBuff, offsetof(RefereeSubProtocol, enemy_robot_buff)},
+   {RefereeSubCmdId::kAllRadarInfo, offsetof(RefereeSubProtocol, enemy_robot_HP)},
+   {RefereeSubCmdId::kHero2Drone, offsetof(RefereeSubProtocol, hero_2_drone)},
+   {RefereeSubCmdId::kDrone2Hero, offsetof(RefereeSubProtocol, drone_2_hero)}});
   static MAPBOX_ETERNAL_CONSTEXPR const auto mapSize = mapbox::eternal::map<u16, usize>(
-      {{RefereeSubCmdId::kAllRadarInfo, sizeof(RefereeSubProtocol) - sizeof(RefereeSubProtocol::ally_robot_position) -
-                                            sizeof(RefereeSubProtocol::enemy_robot_position)},
-       {RefereeSubCmdId::kAllyRobotPosition, sizeof(RefereeSubProtocol::ally_robot_position)},
-       {RefereeSubCmdId::kEnemyRobotPosition, sizeof(RefereeSubProtocol::enemy_robot_position)},
-       {RefereeSubCmdId::kEnemyRobotHP, sizeof(RefereeSubProtocol::enemy_robot_HP)},
-       {RefereeSubCmdId::kEnemyRobotProjectileAllowance, sizeof(RefereeSubProtocol::enemy_robot_projectile_allowance)},
-       {RefereeSubCmdId::kEnemyGoldCoinRFID, sizeof(RefereeSubProtocol::enemy_gold_coin_RFID)},
-       {RefereeSubCmdId::kEnemyRobotBuff, sizeof(RefereeSubProtocol::enemy_robot_buff)},
-       {RefereeSubCmdId::kHero2Drone, sizeof(RefereeSubProtocol::hero_2_drone)},
-       {RefereeSubCmdId::kDrone2Hero, sizeof(RefereeSubProtocol::drone_2_hero)}});
+  {{RefereeSubCmdId::kAllRadarInfo, sizeof(RefereeSubProtocol) - sizeof(RefereeSubProtocol::ally_robot_position) -
+                                    sizeof(RefereeSubProtocol::enemy_robot_position)},
+   {RefereeSubCmdId::kAllyRobotPosition, sizeof(RefereeSubProtocol::ally_robot_position)},
+   {RefereeSubCmdId::kEnemyRobotPosition, sizeof(RefereeSubProtocol::enemy_robot_position)},
+   {RefereeSubCmdId::kEnemyRobotHP, sizeof(RefereeSubProtocol::enemy_robot_HP)},
+   {RefereeSubCmdId::kEnemyRobotProjectileAllowance, sizeof(RefereeSubProtocol::enemy_robot_projectile_allowance)},
+   {RefereeSubCmdId::kEnemyGoldCoinRFID, sizeof(RefereeSubProtocol::enemy_gold_coin_RFID)},
+   {RefereeSubCmdId::kEnemyRobotBuff, sizeof(RefereeSubProtocol::enemy_robot_buff)},
+   {RefereeSubCmdId::kHero2Drone, sizeof(RefereeSubProtocol::hero_2_drone)},
+   {RefereeSubCmdId::kDrone2Hero, sizeof(RefereeSubProtocol::drone_2_hero)}});
 };
-}  // namespace rm::device
+} // namespace rm::device
 #endif  // PROTOCOL_USER_HPP
