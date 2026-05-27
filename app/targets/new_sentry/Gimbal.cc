@@ -645,12 +645,12 @@ void Gimbal::ShootEnableUpdate() {
              (!globals->navigate_communicator->aimbot_mode() && globals->StateMachine_ == kMatch &&
               globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
-    if (heat_limit_ - heat_current_ > 100) {
+    if (heat_limit_ - heat_current_ > 120) {
       globals->shoot_controller.SetShootFrequency(20.0f);
     } else if (heat_limit_ - heat_current_ < 20) {
       globals->shoot_controller.SetShootFrequency(0.0f);
     } else {
-      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f + 5.0f);
+      globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f);
     }
   } else {
     globals->shoot_controller.SetShootFrequency(0.0f);
