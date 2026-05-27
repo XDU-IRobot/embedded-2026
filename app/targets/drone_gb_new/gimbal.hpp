@@ -126,7 +126,7 @@ class Gimbal {
   rm::device::DeviceManager<2> device_gimbal;  // 云台管理器
   rm::device::DeviceManager<3> device_shoot;   // 发射管理器
 
-  int time_ = 0;  // 系统心跳
+  uint16_t time_ = 0;  // 系统心跳
 
   rm::modules::MahonyAhrs ahrs{500.0f};  // TODO Mahony滤波控制频率
   rm::device::DR16 *rc{nullptr};         // 遥控器
@@ -895,7 +895,6 @@ class Gimbal {
     if (time_ % 50 == 0) {
       WS2812Control();
       LensControl();
-      time_ = 0;
     }
   }
 };
