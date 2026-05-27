@@ -48,7 +48,7 @@ class Gimbal {
 
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
-  float friction_speed = 6500;  // TODO 摩擦轮转速
+  float friction_speed = 6000;  // TODO 摩擦轮转速
   float shootstep = 100;        // TODO 手动调速步长
   int shootcnt = 0;             // 步长计数
   int shoottime = 150;          // TODO 弹速控制间隔

@@ -20,6 +20,7 @@ float Apitch_speed_tf = 0.0f;
 // 裁判系统测试
 float Arobot_id = 0.0f;
 float Ashootspeed = 0.0f;
+float Ashootspeedave = 0.0f;
 // 自瞄数据输出
 float Atargetpitch = 0.0f;
 float Atagetyaw = 0.0f;
@@ -110,6 +111,7 @@ void FreemasterDebug() {
 
   Arobot_id = gimbal->referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
   Ashootspeed = gimbal->referee_data_buffer.data().shoot_data.initial_speed;
+  Ashootspeedave = gimbal->SpeedAver();
 
   Aaimbotflag = Aimbot.AimbotState;  // 自瞄回传数据测试
   Aaimfireflag = Aimbot.AutoFire;
