@@ -39,8 +39,7 @@ void static_UI_add() {
     schedule.addTask(&UIalBlueEDIT);
     schedule.delTask(&UIhpRedEDIT);
     schedule.delTask(&UIalRedEDIT);
-  }
-  else {
+  } else {
     schedule.addTaskStatic(&UIRobotHeaderRedADD);
     schedule.addTaskStatic(&UIalRedADD);
     schedule.addTaskStatic(&UIhpRedADD);

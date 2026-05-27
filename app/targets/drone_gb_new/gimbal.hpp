@@ -119,7 +119,7 @@ class Gimbal {
   rm::hal::SerialInterface *referee_uart;                                          // 裁判系统串口
   rm::device::Referee<rm::device::RefereeRevision::kNewV120> referee_data_buffer;  // 裁判系统数据缓冲区
   rm::device::RefereeUser<rm::device::RefereeRevision::kNewV120> referee_user;
-  rm::hal::SerialInterface *vt03_uart;                                             // 图传串口
+  rm::hal::SerialInterface *vt03_uart;  // 图传串口
 
   rm::device::DeviceManager<1> device_rc;      // 遥控管理器，维护所有设备在线状态
   rm::device::DeviceManager<1> device_vt03;    // 新遥控器管理器
@@ -205,9 +205,9 @@ class Gimbal {
       }
     };
     vt03_uart->AttachRxCallback(tc_rx_callback);
-    referee_data_buffer.AttachCallback(std::bind(&rm::device::RefereeUser<rm::device::RefereeRevision::kNewV120>::AttachCallback,
-                                    referee_user, std::placeholders::_1,
-                                    std::placeholders::_2));
+    referee_data_buffer.AttachCallback(
+        std::bind(&rm::device::RefereeUser<rm::device::RefereeRevision::kNewV120>::AttachCallback, referee_user,
+                  std::placeholders::_1, std::placeholders::_2));
 
     device_rc << rc;                                                // 副遥控器
     device_vt03 << vt03;                                            // 主遙控器
@@ -393,21 +393,18 @@ class Gimbal {
       } else {
         yaw_delta = 0.0f;
         if (Rcchoose() == 2 && vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl)) {
-            if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW))
-              rc_pitch_data += 0.0001f;
-            if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS))
-              rc_pitch_data -= 0.0001f;
-            if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
-            if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
-        }else if (Rcchoose()==1 && rc->key(rm::device::DR16::Key::kCtrl)) {
-          if (rc->key(rm::device::DR16::Key::kW))
+          if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kW))
             rc_pitch_data += 0.0001f;
-          if (rc->key(rm::device::DR16::Key::kS))
+          if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kS))
             rc_pitch_data -= 0.0001f;
+          if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA)) yaw_delta += 0.0001f;
+          if (vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD)) yaw_delta -= 0.0001f;
+        } else if (Rcchoose() == 1 && rc->key(rm::device::DR16::Key::kCtrl)) {
+          if (rc->key(rm::device::DR16::Key::kW)) rc_pitch_data += 0.0001f;
+          if (rc->key(rm::device::DR16::Key::kS)) rc_pitch_data -= 0.0001f;
           if (rc->key(rm::device::DR16::Key::kA)) yaw_delta += 0.0001f;
           if (rc->key(rm::device::DR16::Key::kD)) yaw_delta -= 0.0001f;
-        }
-        else {
+        } else {
           if (Rcchoose() == 2) {
             yaw_delta -= rm::modules::Map(vt03->data().left_y, -1, 1, -0.005f, 0.005f);         // vt03手控备份
             yaw_delta -= rm::modules::Map(vt03->data().mouse_x, -660, 660, -0.03f, 0.03f);      // vt03鼠标控制
@@ -622,7 +619,7 @@ class Gimbal {
   void ShootSpeedControl() {  // 弹速控制
     shoottime_--;
     if (shoottime_ < 0) {
-      if (Rcchoose()==2) {
+      if (Rcchoose() == 2) {
         if ((vt03->data().keyboard_key & (1u << 12)) && (!(vt03->data().keyboard_key & (1u << 5)))) {
           friction_speed -= shootstep;
           shootcnt -= 1;
@@ -633,8 +630,7 @@ class Gimbal {
           friction_speed = 6500;
           shootcnt = 0;
         }
-      }
-      else if (Rcchoose()==1) {
+      } else if (Rcchoose() == 1) {
         if (rc->key(rm::device::DR16::Key::kCtrl) && rc->key(rm::device::DR16::Key::kX)) {
           friction_speed -= shootstep;
           shootcnt -= 1;
@@ -675,14 +671,14 @@ class Gimbal {
     bool r_pressed = vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kR);
 
     // R键上升沿：翻转方向并启动电机
-    if (Rcchoose()==2) {
+    if (Rcchoose() == 2) {
       if (r_pressed && !vt03_last_r_key && pitch_ < -0.10f) {
         lens_direction_ = !lens_direction_;
         Len_control = 1;
         lens_motor->SetCurrent(lens_direction_ ? len_speed : -len_speed);
       }
       vt03_last_r_key = r_pressed;
-    }else if (Rcchoose()==1) {
+    } else if (Rcchoose() == 1) {
       if (rc->key(rm::device::DR16::Key::kR) && !vt03_last_r_key && pitch_ < -0.10f) {
         lens_direction_ = !lens_direction_;
         Len_control = 1;
@@ -721,7 +717,7 @@ class Gimbal {
     bool x_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kX);
     bool c_pressed = key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kC);
 
-    if (Rcchoose()==2) {
+    if (Rcchoose() == 2) {
       if (z_pressed && x_pressed && c_pressed) {
         if (led_blink_time < 5) {
           Set_LED(0, 255, 0, 0);
@@ -777,9 +773,9 @@ class Gimbal {
         Set_LED(3, 255, 0, 0);
       else
         Set_LED(3, 255, 255, 0);
-    }
-    else if (Rcchoose()==1) {
-      if (rc->key(rm::device::DR16::Key::kZ) && rc->key(rm::device::DR16::Key::kX) && rc->key(rm::device::DR16::Key::kC)) {
+    } else if (Rcchoose() == 1) {
+      if (rc->key(rm::device::DR16::Key::kZ) && rc->key(rm::device::DR16::Key::kX) &&
+          rc->key(rm::device::DR16::Key::kC)) {
         if (led_blink_time < 5) {
           Set_LED(0, 255, 0, 0);
           Set_LED(1, 255, 0, 0);
@@ -795,15 +791,18 @@ class Gimbal {
         led_blink_time++;
       }
       // 前进后退
-      if (!rc->key(rm::device::DR16::Key::kCtrl) && !rc->key(rm::device::DR16::Key::kShift) && rc->key(rm::device::DR16::Key::kW) && !rc->key(rm::device::DR16::Key::kS))
+      if (!rc->key(rm::device::DR16::Key::kCtrl) && !rc->key(rm::device::DR16::Key::kShift) &&
+          rc->key(rm::device::DR16::Key::kW) && !rc->key(rm::device::DR16::Key::kS))
         Set_LED(1, 0, 255, 0);
-      else if (!rc->key(rm::device::DR16::Key::kCtrl) && !rc->key(rm::device::DR16::Key::kShift) && !rc->key(rm::device::DR16::Key::kW) && rc->key(rm::device::DR16::Key::kS))
+      else if (!rc->key(rm::device::DR16::Key::kCtrl) && !rc->key(rm::device::DR16::Key::kShift) &&
+               !rc->key(rm::device::DR16::Key::kW) && rc->key(rm::device::DR16::Key::kS))
         Set_LED(1, 255, 0, 0);
       else
         Set_LED(1, 255, 255, 0);
 
       // 左右or偏航
-      if (!rc->key(rm::device::DR16::Key::kCtrl) && !rc->key(rm::device::DR16::Key::kShift) && rc->key(rm::device::DR16::Key::kA) ^ rc->key(rm::device::DR16::Key::kD)) {
+      if (!rc->key(rm::device::DR16::Key::kCtrl) && !rc->key(rm::device::DR16::Key::kShift) &&
+          rc->key(rm::device::DR16::Key::kA) ^ rc->key(rm::device::DR16::Key::kD)) {
         if (rc->key(rm::device::DR16::Key::kA)) {
           Set_LED(0, 0, 0, 0);
           Set_LED(2, 255, 255, 255);
@@ -814,7 +813,8 @@ class Gimbal {
           Set_LED(0, 0, 0, 0);
           Set_LED(2, 0, 0, 0);
         }
-      } else if (!rc->key(rm::device::DR16::Key::kCtrl) && rc->key(rm::device::DR16::Key::kShift) && rc->key(rm::device::DR16::Key::kA) ^ rc->key(rm::device::DR16::Key::kD)) {
+      } else if (!rc->key(rm::device::DR16::Key::kCtrl) && rc->key(rm::device::DR16::Key::kShift) &&
+                 rc->key(rm::device::DR16::Key::kA) ^ rc->key(rm::device::DR16::Key::kD)) {
         if (rc->key(rm::device::DR16::Key::kA)) {
           Set_LED(2, 0, 255, 255);
           Set_LED(0, 0, 0, 0);
@@ -828,9 +828,11 @@ class Gimbal {
       }
 
       // 上升
-      if (!rc->key(rm::device::DR16::Key::kCtrl) && rc->key(rm::device::DR16::Key::kShift) && rc->key(rm::device::DR16::Key::kW) && !rc->key(rm::device::DR16::Key::kS))
+      if (!rc->key(rm::device::DR16::Key::kCtrl) && rc->key(rm::device::DR16::Key::kShift) &&
+          rc->key(rm::device::DR16::Key::kW) && !rc->key(rm::device::DR16::Key::kS))
         Set_LED(3, 0, 255, 0);
-      else if (!rc->key(rm::device::DR16::Key::kCtrl) && rc->key(rm::device::DR16::Key::kShift) && !rc->key(rm::device::DR16::Key::kW) && rc->key(rm::device::DR16::Key::kS))
+      else if (!rc->key(rm::device::DR16::Key::kCtrl) && rc->key(rm::device::DR16::Key::kShift) &&
+               !rc->key(rm::device::DR16::Key::kW) && rc->key(rm::device::DR16::Key::kS))
         Set_LED(3, 255, 0, 0);
       else
         Set_LED(3, 255, 255, 0);
