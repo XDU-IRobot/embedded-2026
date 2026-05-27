@@ -259,7 +259,7 @@ struct DartRack {
   rm::modules::PID trigger_motor_force_pid_{};
   rm::modules::PID yaw_motor_speed_pid_{};
   rm::modules::PID add_motor_speed_pid_{};
-
+  rm::modules::PID yaw_motor_angle_pid_{};
   // 编码器计圈器
   EncoderCounter load_motor_r_odometer_;
   EncoderCounter load_motor_l_odometer_;
