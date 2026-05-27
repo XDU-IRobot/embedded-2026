@@ -607,13 +607,13 @@ class Gimbal {
   void ShootSpeedControl() {  // 弹速控制
     shoottime_--;
     if (shoottime_ < 0) {
-      if ((vt03->data().keyboard_key & (1u << 11)) && (vt03->data().keyboard_key & (1u << 5))) {
+      if ((vt03->data().keyboard_key & (1u << 12)) && (!(vt03->data().keyboard_key & (1u << 5)))) {
         friction_speed -= shootstep;
-        shootcnt += 1;
-      } else if ((vt03->data().keyboard_key & (1u << 12)) && (vt03->data().keyboard_key & (1u << 5))) {
-        friction_speed += shootstep;
         shootcnt -= 1;
-      } else if (vt03->data().keyboard_key & (1u << 13) && (vt03->data().keyboard_key & (1u << 5))) {
+      } else if ((vt03->data().keyboard_key & (1u << 13)) && (!(vt03->data().keyboard_key & (1u << 5)))) {
+        friction_speed += shootstep;
+        shootcnt += 1;
+      } else if (vt03->data().keyboard_key & (1u << 11) && (!(vt03->data().keyboard_key & (1u << 5)))) {
         friction_speed = 6500;
         shootcnt = 0;
       }
