@@ -57,24 +57,22 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     return static_cast<rm::i16>(clamped >= 0.0f ? (clamped + 0.5f) : (clamped - 0.5f));
   }
 
-  // Frame A (8 bytes): [0..1] vt03_online, [2..3] gyro_z, [4..5] gyro_x, [6..7] reserved
+  // Frame A: [0..1] vt03_online, [2..3] gyro_z, [4..5] gyro_x, [6] mouse_left, [7] mouse_right
   void EncodeFrameA() {
     tx_a_[0] = (vt03_ && vt03_->online_status() == rm::device::Device::kOk) ? 1 : 0;
     tx_a_[1] = 0;
     PackI16(RadToMilliI16(imu_ ? imu_->gyro_z() : 0.f), &tx_a_[2]);
     PackI16(RadToMilliI16(imu_ ? imu_->gyro_x() : 0.f), &tx_a_[4]);
-    tx_a_[6] = 0;
-    tx_a_[7] = 0;
+    tx_a_[6] = static_cast<rm::u8>(vt03_ ? (vt03_->data().mouse_button_left ? 1 : 0) : 0);
+    tx_a_[7] = static_cast<rm::u8>(vt03_ ? (vt03_->data().mouse_button_right ? 1 : 0) : 0);
   }
 
-  // Frame B (8 bytes): [0..1] mouse_x, [2..3] mouse_y, [4] left, [5] right, [6..7] keyboard_key
+  // Frame B: [0..1] mouse_x, [2..3] mouse_y, [4..5] mouse_z, [6..7] keyboard_key
   void EncodeFrameB() {
     if (vt03_) {
-      button_left = vt03_->data().mouse_button_left;
       PackI16(vt03_->data().mouse_x, &tx_b_[0]);
       PackI16(vt03_->data().mouse_y, &tx_b_[2]);
-      tx_b_[4] = static_cast<rm::u8>(vt03_->data().mouse_button_left ? 1 : 0);
-      tx_b_[5] = static_cast<rm::u8>(vt03_->data().mouse_button_right ? 1 : 0);
+      PackI16(vt03_->data().mouse_z, &tx_b_[4]);
       PackU16(vt03_->data().keyboard_key, &tx_b_[6]);
     }
   }
