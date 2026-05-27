@@ -70,6 +70,8 @@ static bool yaw_finished = false;
 static bool trigger_finished = false;
 volatile int16_t current_load_l = 0;
 volatile int16_t current_load_r = 0;
+static bool first_fire =false;
+static bool second_fire =false;
 
 void DartStateMachineUpdate(DartState &state) {
   if (g_all_darts_completed) {
@@ -182,6 +184,7 @@ void DartStateManualUpdate() {
       // 初始化逻辑 - 只有第一发执行
       if (dart_rack->dart_count_ != DartCount::kFirst) {
         // 非第一发延时500个周期再进入load状态
+        //如果是first_fire
         static uint32_t init_delay_cnt = 0;
         init_delay_cnt++;
         if (init_delay_cnt >= 500) {
@@ -197,6 +200,9 @@ void DartStateManualUpdate() {
       break;
     case ModeState::kload:
       if (dart_rack->state_.manual_mode.load == PhaseState::kUncomplete) {
+        //根据时间判断是第几次开舱门
+        //如果是first_fire 打第一发第二发 如果第三发就先不上膛
+        //如果是second_fire 上膛第三发开始 正常开舱门开始就上膛换弹
         if (glb_dart_launch_opening_status != 1) {
           DartStateLoadUpdate();
         }
@@ -991,7 +997,7 @@ void DartStateAimUpdate() {
   trigger_ticks =dart_rack->trigger_motor_odometer_.linear_ticks();
 
   if (trigger_ticks > PerHeight[i]) {
-    dart_rack->trigger_motor_speed_pid_.Update(-5000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
+    dart_rack->trigger_motor_speed_pid_.Update(-8000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
     dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
   }else {
     dart_rack->trigger_motor_speed_pid_.Update(0.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
@@ -1014,7 +1020,6 @@ void DartStateAimUpdate() {
     yaw_approach_suspended= true;
   }
   if (std::abs(yaw_vision-PerWidth[i]) < tolerance ||yaw_approach_suspended) {
-    dart_rack->yaw_motor_angle_pid_.Update(0.0f,yaw_vision,1.0f);
     dart_rack->yaw_motor_speed_pid_.Update(0.0f,dart_rack->yaw_motor_->rpm(),1.0f);
     dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
     if (std::abs(rpm)<50) {
