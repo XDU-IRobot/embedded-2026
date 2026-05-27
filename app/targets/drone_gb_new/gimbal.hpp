@@ -206,8 +206,7 @@ class Gimbal {
     };
     vt03_uart->AttachRxCallback(tc_rx_callback);
     referee_data_buffer.AttachCallback(
-        std::bind(&rm::device::RefereeUser<rm::device::RefereeRevision::kNewV120>::AttachCallback, referee_user,
-                  std::placeholders::_1, std::placeholders::_2));
+        [ObjectPtr = &referee_user]<typename T0, typename T1>(T0 && PH1, T1 && PH2) { ObjectPtr->AttachCallback(std::forward<T0>(PH1), std::forward<T1>(PH2)); });
 
     device_rc << rc;                                                // 副遥控器
     device_vt03 << vt03;                                            // 主遙控器

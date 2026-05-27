@@ -50,10 +50,10 @@ void UIDroneHero_edit() {
                              gimbal->referee_user.data().hero_2_drone.hero_initial_speed * 1000);
   UIGroup1.figure5.fillFloat("cya", UIFigure::Operation::Edit, 0, UIFigure::Color::RedBlue, 5, 1460, 520, 24,
                              cmd_yaw * 180 / 3.1415 * 1000);
-  UIGroup1.figure6.fillFloat("dyw", UIFigure::Operation::Edit, 0, UIFigure::Color::Yellow, 5, 1460, 420, 20,
-                             gimbal->yaw_ * 1000);
-  UIGroup1.figure7.fillFloat("dpt", UIFigure::Operation::Edit, 0, UIFigure::Color::Black, 5, 1620, 420, 20,
-                             gimbal->pitch_ * 1000);
+  UIGroup1.figure6.fillFloat("dyw", UIFigure::Operation::Edit, 0, UIFigure::Color::Yellow, 2, 1460, 420, 20,
+                             gimbal->yaw_ * 180 / 3.1415 * 1000);
+  UIGroup1.figure7.fillFloat("dpt", UIFigure::Operation::Edit, 0, UIFigure::Color::White, 2, 1620, 420, 20,
+                             gimbal->pitch_ * 180 / 3.1415 * 1000);
   const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
   gimbal->referee_uart->Write(dataBox, dataLen);
 }
@@ -83,12 +83,12 @@ void D2H_func() {
   } else {
     if (gimbal->Rcchoose() == 2) {
       if (gimbal->vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA))
-        cmd_yaw += 0.000125f;
+        cmd_yaw += 0.005f;
       if (gimbal->vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD))
-        cmd_yaw -= 0.000125f;
+        cmd_yaw -= 0.005f;
     } else if (gimbal->Rcchoose() == 1) {
-      if (gimbal->rc->key(DR16::Key::kA)) cmd_yaw += 0.000125f;
-      if (gimbal->rc->key(DR16::Key::kD)) cmd_yaw -= 0.000125f;
+      if (gimbal->rc->key(DR16::Key::kA)) cmd_yaw += 0.005f;
+      if (gimbal->rc->key(DR16::Key::kD)) cmd_yaw -= 0.005f;
     }
     if (last_rc_key_x == false && now_rc_key_x) {
       cmd_ammo += 10;

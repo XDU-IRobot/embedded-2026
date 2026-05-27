@@ -50,7 +50,9 @@ class RefereeUser final : public Device {
 
  public:
   RefereeUser() = default;
-  void attachReferee(Referee<revision> *referee) { referee_ = referee; }
+  void attachReferee(Referee<revision> *referee) {
+    referee_ = referee;
+  }
   const RefereeSubProtocol &data() const { return deserialize_buffer_; }
 
   // 增加 data_len_this_time_ 参数以便传入本次接收的数据长度
