@@ -6,6 +6,7 @@
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
 #include "controllers/quad_steering_chassis.hpp"
+#include "subReferee/referee_user.hpp"
 
 #include "GimbalCommunicator.hpp"
 #include "Referee.hpp"
@@ -47,8 +48,10 @@ inline struct GlobalWarehouse {
   rm::device::GkSupercap *super_cap{nullptr};                                         ///< 港科超级电容
   rm::device::BMI088 *imu{nullptr};                                                   ///< IMU
   rm::hal::Serial<128> *referee_uart{nullptr};                                        ///< 裁判系统串口接口
-  rm::device::RxReferee *rx_referee{nullptr};                                         ///< 裁判系统
-  rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data{nullptr};  ///< 裁判系统数据
+  rm::device::RxReferee *rx_referee{nullptr};                                         ///< 裁判系统解包
+  rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee_data{nullptr};  ///< 裁判系统数据
+  rm::device::RefereeUser<rm::device::RefereeRevision::kNewV120> *subReferee{nullptr};
+  u_int8_t dataBox[128];
 
   // 设备 //
   rm::device::DeviceManager<1> device_gimbal;
@@ -97,6 +100,8 @@ inline struct GlobalWarehouse {
   void SubLoop100Hz();
 
   void SubLoop50Hz();
+
+  void SubLoop30Hz();
 
   void SubLoop10Hz();
 

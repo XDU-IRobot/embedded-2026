@@ -10,8 +10,13 @@
 #include "Chassis.hpp"
 #include "queue.hpp"
 #include "UI.hpp"
+#include "subReferee/TaskScheduler.hpp"
+#include "UI/UIuser1.hpp"
+#include "UI/UIDrone.hpp"
 
 using namespace rm;
+
+static auto schedule = device::UITaskScheduler(30);
 
 Queue_t UI_send_buffer[2];
 u32 irq;
@@ -28,6 +33,7 @@ extern u16 robot_id;
 extern u8 len;
 extern u8 Info_Arr[128];
 
+void static_UI_add();
 void UiRefresh();
 void UiSend();
 void UI_send(rm::hal::Serial<128> *msg, u8 *data, u8 data_len);
@@ -38,6 +44,7 @@ void MainLoop() {
   globals->SubLoop250Hz();
   globals->SubLoop100Hz();
   globals->SubLoop50Hz();
+  globals->SubLoop30Hz();
   globals->SubLoop10Hz();
 }
 
@@ -76,7 +83,11 @@ void GlobalWarehouse::Init() {
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
   rx_referee = new rm::device::RxReferee{*referee_uart};
 
-  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
+  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
+  subReferee = new rm::device::RefereeUser(*referee_data);
+  referee_data->AttachCallback([this]<typename T0, typename T1>(T0 &&PH1, T1 &&PH2) {
+    subReferee->AttachCallback(std::forward<T0>(PH1), std::forward<T1>(PH2));
+  });
 
   yaw_motor = new rm::device::GM6020{*can1, 4};
 
@@ -168,7 +179,13 @@ void GlobalWarehouse::SubLoop50Hz() {
 void GlobalWarehouse::SubLoop10Hz() {
   if (globals->time % 50 == 0) {
     UiRefresh();
-    globals->time = 0;
+    // globals->time = 0;
+  }
+}
+
+void GlobalWarehouse::SubLoop30Hz() {
+  if (globals->time % 34 == 0) {
+    schedule.schedule();
   }
 }
 
@@ -176,6 +193,7 @@ void UiRefresh() {
   // 接收机器人ID
   robot_id = globals->referee_data->data().robot_status.robot_id;
   if (globals->gimbal_communicator->UI_show_flag() == 1) {
+    static_UI_add();
     Line_Draw(&image_x, (char *)"xxx", UI_Graph_ADD, 0, UI_Color_Orange, 2, 918, 515, 978, 515);
     Line_Draw(&image_y, (char *)"yyy", UI_Graph_ADD, 0, UI_Color_Orange, 2, 948, 465, 948, 565);
 
@@ -346,3 +364,27 @@ void UiSend() {
 }
 
 void UI_send(rm::hal::Serial<128> *msg, u8 *data, u8 data_len) { msg->Write(data, data_len, 500); }
+
+static auto UIRobotHeaderBlueADD = device::UITask(UITextHeaderRobotBlue_add);
+
+static auto UIhpBlueADD = device::UITask(UITextHeaderHPBlue_add);
+static auto UIhpBlueEDIT = device::UITask(UITextHeaderHPBlue_edit, 2);
+
+static auto UIalBlueADD = device::UITask(UITextHeaderAllowBlue_add);
+static auto UIalBlueEDIT = device::UITask(UITextHeaderAllowBlue_edit, 2);
+
+static auto UIDroneHeroADD = device::UITask(UIDroneHero_add);
+static auto UIDroneHeroEDIT = device::UITask(UIDroneHero_edit, 5);
+
+static auto UId2h = device::UITask(D2H_func, 5);
+
+void static_UI_add() {
+  schedule.addTaskStatic(&UIDroneHeroADD);
+  schedule.addTaskStatic(&UIRobotHeaderBlueADD);
+  schedule.addTaskStatic(&UIalBlueADD);
+  schedule.addTaskStatic(&UIhpBlueADD);
+
+  schedule.addTask(&UIDroneHeroEDIT);
+  schedule.addTask(&UIhpBlueEDIT);
+  schedule.addTask(&UIalBlueEDIT);
+}
