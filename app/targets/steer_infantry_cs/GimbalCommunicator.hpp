@@ -17,6 +17,7 @@ class GimbalCommunicator final : public CanDevice {
   [[nodiscard]] u8 get_target_flag() const { return get_target_flag_; }
   [[nodiscard]] u8 suggest_fire_flag() const { return suggest_fire_flag_; }
   [[nodiscard]] i8 aim_speed_change() const { return aim_speed_change_; }
+  [[nodiscard]] auto robot_hp() const { return robot_hp_; }
 
   void RxCallback(const hal::CanFrame *msg) override;
   void SendGimbalCommand(u16 current_heat, u16 heat_limit, float ammo_speed, u8 power_state, u8 robot_id);
@@ -29,6 +30,7 @@ class GimbalCommunicator final : public CanDevice {
   u8 get_target_flag_{};
   u8 suggest_fire_flag_{};
   i8 aim_speed_change_{};
+  u16 robot_hp_[5]{};
   u8 tx_buf_[8]{};
 };
 }  // namespace rm::device

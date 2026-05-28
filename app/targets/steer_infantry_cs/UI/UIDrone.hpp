@@ -5,7 +5,7 @@
 #ifndef DRONEHERO_HPP
 #define DRONEHERO_HPP
 
-extern void UIDroneHero_add();
-extern void UIDroneHero_edit();
+extern void UIInfantryAdd();
+extern void UIInfantryEdit();
 
 #endif //DRONEHERO_HPP

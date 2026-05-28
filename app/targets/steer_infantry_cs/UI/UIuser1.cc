@@ -52,7 +52,7 @@ void UITextHeaderHPRed_add() {
 
 void UITextHeaderHPRed_edit() {
   static UIFigure7 UITextHeaderHP;
-  // memcpy(&robotHP, globals->referee_data->data().robot_custom_data_3.data,10);
+  memcpy(&robotHP, globals->gimbal_communicator->robot_hp(), 10);
   if (globals->subReferee->data().enemy_robot_buff.hero.defense >= 100) {
     UITextHeaderHP.figure1.fillIntegrate("HP1", UIFigure::Operation::Edit, 0, UIFigure::Color::Yellow, 4, 1170, 850, 20,
                                          robotHP.hero_1_HP);

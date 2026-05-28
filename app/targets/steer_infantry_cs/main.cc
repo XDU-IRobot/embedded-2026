@@ -193,24 +193,7 @@ void UiRefresh() {
   robot_id = globals->referee_data->data().robot_status.robot_id;
   if (globals->gimbal_communicator->UI_show_flag() == 1) {
     static_UI_add();
-    Line_Draw(&image_x, (char *)"xxx", UI_Graph_ADD, 0, UI_Color_Orange, 2, 918, 515, 978, 515);
-    Line_Draw(&image_y, (char *)"yyy", UI_Graph_ADD, 0, UI_Color_Orange, 2, 948, 465, 948, 565);
 
-    Float_Draw(&super_cap_energy, (char *)"cms", UI_Graph_ADD, 2, UI_Color_Green, 27, 2, 5, 900, 270,
-               static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
-    Float_Draw(&ammo_speed_jugde, (char *)"asj", UI_Graph_ADD, 2, UI_Color_White, 25, 2, 2, 360, 850,
-               static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
-
-    Rectangle_Draw(&get_target_flag, (char *)"gtf", UI_Graph_ADD, 2, UI_Color_Purplish_red, 5, 350, 807, 580, 768);
-    Rectangle_Draw(&suggest_fire_flag, (char *)"sff", UI_Graph_ADD, 2, UI_Color_Purplish_red, 5, 350, 766, 630, 731);
-    Rectangle_Draw(&chassis_mode_flag, (char *)"cmf", UI_Graph_ADD, 2, UI_Color_Purplish_red, 5, 1392, 808, 1422, 770);
-    Rectangle_Draw(&buff_mode_flag, (char *)"bmf", UI_Graph_ADD, 2, UI_Color_Purplish_red, 5, 1542, 808, 1572, 770);
-    Rectangle_Draw(&speed_mode_flag, (char *)"smf", UI_Graph_ADD, 2, UI_Color_Purplish_red, 5, 1342, 766, 1372, 728);
-
-    Char_Draw(&aimbot, (char *)"aim", UI_Graph_ADD, 1, UI_Color_Green, 25, 22, 2, 360, 800,
-              (char *)"GETTARGET\nSUGGESTFIRE");
-    Char_Draw(&mode, (char *)"mod", UI_Graph_ADD, 1, UI_Color_Green, 25, 20, 2, 1300, 800,
-              (char *)"F R N U D X\nH N S");
 
     irq = (u32)&aimbot;
     EnQueue(&UI_send_buffer[1], (u8 *)&irq, 4);
@@ -372,8 +355,8 @@ static auto UIhpBlueEDIT = device::UITask(UITextHeaderHPBlue_edit, 2);
 static auto UIalBlueADD = device::UITask(UITextHeaderAllowBlue_add);
 static auto UIalBlueEDIT = device::UITask(UITextHeaderAllowBlue_edit, 2);
 
-static auto UIDroneHeroADD = device::UITask(UIDroneHero_add);
-static auto UIDroneHeroEDIT = device::UITask(UIDroneHero_edit, 5);
+static auto UIDroneHeroADD = device::UITask(UIInfantryAdd);
+static auto UIDroneHeroEDIT = device::UITask(UIInfantryEdit, 5);
 
 void static_UI_add() {
   schedule.addTaskStatic(&UIDroneHeroADD);

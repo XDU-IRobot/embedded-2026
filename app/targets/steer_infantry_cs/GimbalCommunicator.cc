@@ -1,7 +1,7 @@
 #include "GimbalCommunicator.hpp"
 
 namespace rm::device {
-GimbalCommunicator::GimbalCommunicator(hal::CanInterface &can) : CanDevice(can, 0x120) {}
+GimbalCommunicator::GimbalCommunicator(hal::CanInterface &can) : CanDevice(can, 0x110, 0x120) {}
 
 void GimbalCommunicator::RxCallback(const hal::CanFrame *msg) {
   if (msg->rx_std_id == 0x120) {
@@ -9,9 +9,16 @@ void GimbalCommunicator::RxCallback(const hal::CanFrame *msg) {
     remote_speed_y_ = static_cast<f32>(static_cast<i8>(msg->data[1])) / 100.0f;
     chassis_mode_ = static_cast<u8>(msg->data[2]);
     UI_show_flag_ = static_cast<u8>(msg->data[3]);
-    get_target_flag_ = static_cast<u8>(msg->data[4]);
-    suggest_fire_flag_ = static_cast<u8>(msg->data[5]);
-    aim_speed_change_ = static_cast<i8>(msg->data[6]);
+    get_target_flag_ = static_cast<u8>(msg->data[4]) >> 0 & 0x01;
+    suggest_fire_flag_ = static_cast<u8>(msg->data[4]) >> 1 & 0x01;
+    aim_speed_change_ = static_cast<i8>(msg->data[5]);
+    robot_hp_[0] = static_cast<u16>(msg->data[6]) << 8 | msg->data[7];
+  }
+  if (msg->rx_std_id == 0x110) {
+    robot_hp_[1] = static_cast<u16>(msg->data[0]) << 8 | msg->data[1];
+    robot_hp_[2] = static_cast<u16>(msg->data[2]) << 8 | msg->data[3];
+    robot_hp_[3] = static_cast<u16>(msg->data[4]) << 8 | msg->data[5];
+    robot_hp_[4] = static_cast<u16>(msg->data[6]) << 8 | msg->data[7];
   }
 }
 
