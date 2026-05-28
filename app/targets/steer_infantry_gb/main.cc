@@ -95,7 +95,7 @@ void GlobalWarehouse::GimbalPIDInit() {
   gimbal_controller.pid().yaw_position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().yaw_speed.SetKp(580.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(42.0f).SetKi(0.0f).SetKd(600.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().pitch_position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 

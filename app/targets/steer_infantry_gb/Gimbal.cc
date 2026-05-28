@@ -226,8 +226,8 @@ void Gimbal::GimbalMovePIDUpdate() {
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
-  const auto ff = g_gimbal_dynamics.ComputeFf(yaw_position_, -globals->pitch_motor->pos() - 1.0f, yaw_speed_ref,
-                                              pitch_speed_ref, yaw_accel_ref, pitch_accel_ref, g_stationary);
+  const auto ff =
+      g_gimbal_dynamics.ComputeFf(yaw_position_, -globals->pitch_motor->pos() - 1.0f, 0, 0, 0, 0, g_stationary);
   gimbal->yaw_torque_ = ff.x();
   const f32 yaw_ff_voltage =
       YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->yaw_motor->rpm()) * kRpmToRadPerSec);
