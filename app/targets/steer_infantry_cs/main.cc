@@ -376,8 +376,6 @@ static auto UIalBlueEDIT = device::UITask(UITextHeaderAllowBlue_edit, 2);
 static auto UIDroneHeroADD = device::UITask(UIDroneHero_add);
 static auto UIDroneHeroEDIT = device::UITask(UIDroneHero_edit, 5);
 
-static auto UId2h = device::UITask(D2H_func, 5);
-
 void static_UI_add() {
   schedule.addTaskStatic(&UIDroneHeroADD);
   schedule.addTaskStatic(&UIRobotHeaderBlueADD);
