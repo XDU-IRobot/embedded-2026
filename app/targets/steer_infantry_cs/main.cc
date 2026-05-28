@@ -10,7 +10,7 @@
 #include "Chassis.hpp"
 #include "subReferee/TaskScheduler.hpp"
 #include "UI/UIuser1.hpp"
-#include "UI/UIDrone.hpp"
+#include "UI/UIInfantry.hpp"
 
 using namespace rm;
 

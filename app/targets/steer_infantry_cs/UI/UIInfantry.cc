@@ -2,7 +2,7 @@
 // Created by Jason on 26-5-27.
 //
 
-#include "UIDrone.hpp"
+#include "UIInfantry.hpp"
 #include "librm.hpp"
 #include "../main.hpp"
 #include "../Chassis.hpp"
@@ -89,12 +89,12 @@ void UIInfantryEdit() {
   // 底盘模式
   if (chassis->ChassisMove_ == kFollow) {
     UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1492, 728, 1522, 690);
-  } else if (chassis->ChassisMove_ == kRotate) {
+  } else if (chassis->ChassisMove_ == kRotate || chassis->ChassisMove_ == kReRotate) {
     UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1542, 728, 1572, 690);
   } else if (chassis->ChassisMove_ == kNoForce) {
     UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1592, 728, 1622, 690);
   } else {
-    UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1692, 728, 1722, 690);
+    UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1642, 728, 1672, 690);
   }
   if (chassis->buff_state_ == kDaFu) {
     UIGroup1.figure6.fillRec("bmf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1692, 728, 1722, 690);
@@ -111,7 +111,7 @@ void UIInfantryEdit() {
     UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1542, 686, 1572, 648);
   }
   if (globals->referee_data->data().power_heat_data.buffer_energy < 40) {
-    UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1592, 686, 1522, 648);
+    UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 1592, 686, 1622, 648);
   }
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
   globals->referee_uart->Write(globals->dataBox, dataLen, 500);
