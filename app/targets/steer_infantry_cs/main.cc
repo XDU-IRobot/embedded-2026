@@ -183,11 +183,17 @@ static auto UIhpBlueEDIT = device::UITask(UITextHeaderHPBlue_edit, 2);
 static auto UIalBlueADD = device::UITask(UITextHeaderAllowBlue_add);
 static auto UIalBlueEDIT = device::UITask(UITextHeaderAllowBlue_edit, 2);
 
-static auto UIDroneHeroADD = device::UITask(UIInfantryAdd);
-static auto UIDroneHeroEDIT = device::UITask(UIInfantryEdit, 5);
+static auto UIDroneHeroADD1 = device::UITask(UIInfantryAdd1);
+static auto UIDroneHeroADD2 = device::UITask(UIInfantryAdd2);
+static auto UIDroneHeroADD3 = device::UITask(UIInfantryAdd3);
+static auto UIDroneHeroADD4 = device::UITask(UIInfantryAdd4);
+static auto UIDroneHeroEDIT = device::UITask(UIInfantryEdit, 10);
 
 void static_UI_add() {
-  schedule.addTaskStatic(&UIDroneHeroADD);
+  schedule.addTaskStatic(&UIDroneHeroADD1);
+  schedule.addTaskStatic(&UIDroneHeroADD2);
+  schedule.addTaskStatic(&UIDroneHeroADD3);
+  schedule.addTaskStatic(&UIDroneHeroADD4);
   schedule.addTaskStatic(&UIRobotHeaderBlueADD);
   schedule.addTaskStatic(&UIalBlueADD);
   schedule.addTaskStatic(&UIhpBlueADD);

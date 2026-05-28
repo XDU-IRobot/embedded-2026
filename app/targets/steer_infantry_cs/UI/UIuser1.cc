@@ -20,7 +20,7 @@ struct EmyRobotHP {
 } robotHP;
 
 u8 dataBox[128] = {};  // 发送缓冲区
-u16 robotID = 104;     // 在主函数中设置为裁判系统的机器人ID
+u16 robotID = 0;     // 在主函数中设置为裁判系统的机器人ID
 
 void UITextHeaderRobotRed_add() {
   UICharacter UITextHeader;
