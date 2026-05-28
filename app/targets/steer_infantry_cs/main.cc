@@ -81,10 +81,9 @@ void GlobalWarehouse::Init() {
   super_cap = new rm::device::GkSupercap(*can1);
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
-  rx_referee = new rm::device::RxReferee{*referee_uart};
-
-  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
   subReferee = new rm::device::RefereeUser(*referee_data);
+  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
+  rx_referee = new rm::device::RxReferee{*referee_uart, *referee_data};
   referee_data->AttachCallback([this]<typename T0, typename T1>(T0 &&PH1, T1 &&PH2) {
     subReferee->AttachCallback(std::forward<T0>(PH1), std::forward<T1>(PH2));
   });

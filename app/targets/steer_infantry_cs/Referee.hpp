@@ -7,17 +7,19 @@ using namespace rm;
 
 namespace rm::device {
 class RxReferee : public Device {
- public:
+public:
   RxReferee() = delete;
 
-  explicit RxReferee(rm::hal::SerialInterface &serial);
+  explicit RxReferee(rm::hal::SerialInterface &serial, Referee<RefereeRevision::kNewV120> &referee);
 
   void Begin();
 
+  // 改为与 Uart::AttachRxCallback 兼容的签名
   void RxCallback(etl::span<const u8> data);
 
- private:
+private:
   rm::hal::SerialInterface *serial_;
+  rm::device::Referee<RefereeRevision::kNewV120> &referee_;
 };
 }  // namespace rm::device
 
