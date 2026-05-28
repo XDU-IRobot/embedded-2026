@@ -183,22 +183,40 @@ static auto UIhpBlueEDIT = device::UITask(UITextHeaderHPBlue_edit, 2);
 static auto UIalBlueADD = device::UITask(UITextHeaderAllowBlue_add);
 static auto UIalBlueEDIT = device::UITask(UITextHeaderAllowBlue_edit, 2);
 
-static auto UIDroneHeroADD1 = device::UITask(UIInfantryAdd1);
-static auto UIDroneHeroADD2 = device::UITask(UIInfantryAdd2);
-static auto UIDroneHeroADD3 = device::UITask(UIInfantryAdd3);
-static auto UIDroneHeroADD4 = device::UITask(UIInfantryAdd4);
-static auto UIDroneHeroEDIT = device::UITask(UIInfantryEdit, 10);
+static auto UIRobotHeaderRedADD = device::UITask(UITextHeaderRobotRed_add);
+
+static auto UIhpRedADD = device::UITask(UITextHeaderHPRed_add);
+static auto UIhpRedEDIT = device::UITask(UITextHeaderHPRed_edit, 2);
+
+static auto UIalRedADD = device::UITask(UITextHeaderAllowRed_add);
+static auto UIalRedEDIT = device::UITask(UITextHeaderAllowRed_edit, 2);
+
+static auto UIInfantryADD1 = device::UITask(UIInfantryAdd1);
+static auto UIInfantryADD2 = device::UITask(UIInfantryAdd2);
+static auto UIInfantryADD3 = device::UITask(UIInfantryAdd3);
+static auto UIInfantryADD4 = device::UITask(UIInfantryAdd4);
+static auto UIInfantryEDIT = device::UITask(UIInfantryEdit, 10);
 
 void static_UI_add() {
-  schedule.addTaskStatic(&UIDroneHeroADD1);
-  schedule.addTaskStatic(&UIDroneHeroADD2);
-  schedule.addTaskStatic(&UIDroneHeroADD3);
-  schedule.addTaskStatic(&UIDroneHeroADD4);
-  schedule.addTaskStatic(&UIRobotHeaderBlueADD);
-  schedule.addTaskStatic(&UIalBlueADD);
-  schedule.addTaskStatic(&UIhpBlueADD);
+  schedule.addTaskStatic(&UIInfantryADD1);
+  schedule.addTaskStatic(&UIInfantryADD2);
+  schedule.addTaskStatic(&UIInfantryADD3);
+  schedule.addTaskStatic(&UIInfantryADD4);
 
-  schedule.addTask(&UIDroneHeroEDIT);
-  schedule.addTask(&UIhpBlueEDIT);
-  schedule.addTask(&UIalBlueEDIT);
+  schedule.addTask(&UIInfantryEDIT);
+  if (robotID >= 100) {
+    schedule.addTaskStatic(&UIRobotHeaderBlueADD);
+    schedule.addTaskStatic(&UIalBlueADD);
+    schedule.addTaskStatic(&UIhpBlueADD);
+
+    schedule.addTask(&UIhpBlueEDIT);
+    schedule.addTask(&UIalBlueEDIT);
+  } else {
+    schedule.addTaskStatic(&UIRobotHeaderRedADD);
+    schedule.addTaskStatic(&UIhpRedADD);
+    schedule.addTaskStatic(&UIalRedADD);
+
+    schedule.addTask(&UIhpRedEDIT);
+    schedule.addTask(&UIalRedEDIT);
+  }
 }
