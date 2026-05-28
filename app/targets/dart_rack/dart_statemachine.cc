@@ -59,20 +59,20 @@ static uint8_t trigger_backoff_state = 0;
 volatile float yaw_deg = 100.0f;
 volatile int16_t rpm = 0;
 volatile int32_t rpm_trigger = 0;
-volatile float angle_out =0.0f;
-volatile float speed_out =0.0f;
-volatile float yaw_vision =0.0f;
+volatile float angle_out = 0.0f;
+volatile float speed_out = 0.0f;
+volatile float yaw_vision = 0.0f;
 volatile int32_t trigger_ticks = 0;
 static bool trigger_done = false;
-static uint8_t i=0;
+static uint8_t i = 0;
 static bool trigger_pressed = false;
 static bool yaw_finished = false;
 static bool trigger_finished = false;
 volatile int16_t current_load_l = 0;
 volatile int16_t current_load_r = 0;
-static bool first_fire =false;
-static bool second_fire =false;
-
+static bool open_lauch_state = false;
+static bool close_lauch_state = false;
+volatile int8_t current_fire_count = 0;
 void DartStateMachineUpdate(DartState &state) {
   if (g_all_darts_completed) {
     if (dart_rack->rc_->switch_l() == rm::device::DR16::SwitchPosition::kDown &&
@@ -184,7 +184,7 @@ void DartStateManualUpdate() {
       // 初始化逻辑 - 只有第一发执行
       if (dart_rack->dart_count_ != DartCount::kFirst) {
         // 非第一发延时500个周期再进入load状态
-        //如果是first_fire
+        // 如果是first_fire
         static uint32_t init_delay_cnt = 0;
         init_delay_cnt++;
         if (init_delay_cnt >= 500) {
@@ -198,19 +198,52 @@ void DartStateManualUpdate() {
         dart_rack->state_.manual_mode.mode = ModeState::kload;
       }
       break;
-    case ModeState::kload:
+    case ModeState::kload: {
+      // 舱门状态检测
+      static uint8_t prev_launch_status = 1;  // 上一次舱门状态，初始为关闭
+      uint8_t cur_launch_status = glb_dart_launch_opening_status;
+
+      // 检测开启过程(从过渡到开启)
+      if (prev_launch_status == 1 && cur_launch_status == 2) {
+        open_lauch_state = true;
+      }
+      // 检测关闭过程(从过渡到关闭)
+      if (prev_launch_status == 2 && cur_launch_status == 1) {
+        close_lauch_state = true;
+      }
+      // 读完一个开启关闭之后重置状态位，current_fire_count加1
+      if (open_lauch_state && close_lauch_state) {
+        open_lauch_state = false;
+        close_lauch_state = false;
+        current_fire_count++;
+      }
+      prev_launch_status = cur_launch_status;
+
+      //屏蔽第四发
+
+      // if (dart_rack->dart_count_ == DartCount::kFourth) {
+      //     return;
+      // }
+
+      if (dart_rack->dart_count_ == DartCount::kThird) {
+        if (current_fire_count == 0) {
+          return;
+        }
+        if (current_fire_count == 1 && open_lauch_state == false) {
+          return;
+        }
+      }
+      // 第三发 第二次开舱门 才不return
       if (dart_rack->state_.manual_mode.load == PhaseState::kUncomplete) {
-        //根据时间判断是第几次开舱门
-        //如果是first_fire 打第一发第二发 如果第三发就先不上膛
-        //如果是second_fire 上膛第三发开始 正常开舱门开始就上膛换弹
+        // 第三发镖开始时，如果还没读到第二次舱门开启，就不进入loadupdate
         if (glb_dart_launch_opening_status != 1) {
           DartStateLoadUpdate();
         }
-        // DartStateLoadUpdate();
       } else if (dart_rack->state_.manual_mode.load == PhaseState::kDone) {
         dart_rack->state_.manual_mode.mode = ModeState::kAdd;
       }
       break;
+    }
 
     case ModeState::kAdd:
       if (dart_rack->state_.manual_mode.add == PhaseState::kUncomplete) {
@@ -232,8 +265,8 @@ void DartStateManualUpdate() {
 
     case ModeState::kAim:
       if (dart_rack->state_.manual_mode.aim == PhaseState::kUncomplete) {
-         DartStateAimUpdate();
-        //dart_rack->state_.manual_mode.aim = PhaseState::kDone;
+        DartStateAimUpdate();
+        // dart_rack->state_.manual_mode.aim = PhaseState::kDone;
       } else if (dart_rack->state_.manual_mode.aim == PhaseState::kDone) {
         dart_rack->state_.manual_mode.mode = ModeState::kFire;
       }
@@ -392,6 +425,7 @@ void DartStateLoadUpdate() {
   // 上膛逻辑
   current_load_l = dart_rack->load_motor_l_->current();
   current_load_r = dart_rack->load_motor_r_->current();
+
   // 0. 第三发第四发：add_motor 回位逻辑
   // 先反转撞限位，再正转脱离限位，完成后不再执行
   if (dart_rack->dart_count_ == DartCount::kThird || dart_rack->dart_count_ == DartCount::kFourth) {
@@ -448,10 +482,10 @@ void DartStateLoadUpdate() {
         // 限位断开，停止电机，标记复位完成
         dart_rack->trigger_motor_speed_pid_.Update(0.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
         dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
-        if (std::abs(rpm_trigger)<50) {
+        if (std::abs(rpm_trigger) < 50) {
           static int32_t trigger_cnt = 0;
           trigger_cnt++;
-          if (trigger_cnt >=500){
+          if (trigger_cnt >= 500) {
             trigger_cnt = 0;
             trigger_backoff_state = 3;
             dart_rack->trigger_motor_speed_pid_.Clear();
@@ -493,16 +527,15 @@ void DartStateLoadUpdate() {
     }
 
     // 滑台下拉判断：linear_ticks 或堵转
-
-    if (dart_rack->load_motor_l_odometer_.stall_time() >= 100 &&
-         dart_rack->load_motor_r_odometer_.stall_time() >= 100) {
+    if (dart_rack->load_motor_l_odometer_.stall_time() >= 150 &&
+        dart_rack->load_motor_r_odometer_.stall_time() >= 150) {
       dart_rack->load_motor_l_speed_pid_.Clear();
       dart_rack->load_motor_r_speed_pid_.Clear();
       dart_rack->load_motor_l_->SetCurrent(0);
       dart_rack->load_motor_r_->SetCurrent(0);
       dart_rack->state_.manual_mode.is_load_down_done = true;
-    } else if (dart_rack->load_motor_l_odometer_.stall_time() <= 100 &&
-               dart_rack->load_motor_r_odometer_.stall_time() <= 100) {
+    } else if (dart_rack->load_motor_l_odometer_.stall_time() <= 150 &&
+               dart_rack->load_motor_r_odometer_.stall_time() <= 150) {
       if (dart_rack->load_motor_r_odometer_.linear_ticks() > DartRack::kTriggerEcdMax ||
           dart_rack->load_motor_l_odometer_.linear_ticks() < -DartRack::kTriggerEcdMax) {
         dart_rack->load_motor_l_speed_pid_.Update(-1000.0f, dart_rack->load_motor_l_->rpm(), 1.0f);
@@ -682,7 +715,9 @@ void DartStateAddUpdate() {
       // 下发舵机位置
       state_timer++;
       target_servo1 = (dart_rack->dart_count_ == DartCount::kThird) ? S1 + 383.0f : S1 + 383.0f;
-      target_servo2 = (dart_rack->dart_count_ == DartCount::kThird) ? S2 + 112.0f : S2 + 112.0f;// 舵机到位检测：每15周期读一次，错开读取两个舵机
+      target_servo2 = (dart_rack->dart_count_ == DartCount::kThird)
+                          ? S2 + 112.0f
+                          : S2 + 112.0f;  // 舵机到位检测：每15周期读一次，错开读取两个舵机
       static bool gpio_triggered = false;
       static uint16_t gpio_on_cnt = 0;
       if (!gpio_triggered) {
@@ -712,24 +747,24 @@ void DartStateAddUpdate() {
       // 舵机到位后执行GPIO和电机操作
       if (gpio_triggered) {
         gpio_on_cnt++;
-        if (gpio_on_cnt >500) {
+        if (gpio_on_cnt > 500) {
           target_dm_angle = -0.055f;
-          target_servo1 = S1 +463.927;
-          target_servo2 = S2 +135.781;
+          target_servo1 = S1 + 463.927;
+          target_servo2 = S2 + 135.781;
         }
-          if (gpio_on_cnt > 500) {
-            if (!add_forward_done) {
-              if (dart_rack->add_motor_odometer_.linear_ticks() < 1350000) {
-                dart_rack->add_motor_speed_pid_.Update(9800.0f, dart_rack->add_motor_->rpm(), 1.0f);
-                dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
-              } else {
-                dart_rack->add_motor_->SetCurrent(0);
-                dart_rack->add_motor_speed_pid_.Clear();
-                add_forward_done = true;
-              }
+        if (gpio_on_cnt > 500) {
+          if (!add_forward_done) {
+            if (dart_rack->add_motor_odometer_.linear_ticks() < 1350000) {
+              dart_rack->add_motor_speed_pid_.Update(9800.0f, dart_rack->add_motor_->rpm(), 1.0f);
+              dart_rack->add_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->add_motor_speed_pid_.out()));
             } else {
               dart_rack->add_motor_->SetCurrent(0);
+              dart_rack->add_motor_speed_pid_.Clear();
+              add_forward_done = true;
             }
+          } else {
+            dart_rack->add_motor_->SetCurrent(0);
+          }
         }
         if (add_forward_done) {
           add_forward_done = false;
@@ -976,77 +1011,74 @@ void DartStateAimUpdate() {
   yaw_deg = dart_rack->yaw_encoder_->angle_deg();
   rpm = dart_rack->yaw_motor_->rpm();
   rpm_trigger = dart_rack->trigger_motor_->rpm();
-  yaw_vision = dart_rack->vision_data_->Yaw ;
-  static bool yaw_approach_suspended= false;
-   i = static_cast<uint8_t>(dart_rack->dart_count_);
+  yaw_vision = dart_rack->vision_data_->Yaw;
+  static bool yaw_approach_suspended = false;
+  i = static_cast<uint8_t>(dart_rack->dart_count_);
   constexpr float tolerance = 5.0f;
-  constexpr float PerWidth[4] ={50.0f , -30.0f , 30.0f , 100.0f};
-  constexpr int32_t PerHeight[4] ={-2000000 ,-2000000 ,-2000000 ,-2000000};
-
+  constexpr float PerWidth[4] = {-20.0f,-20.0f, -20.0f, -20.0f};
+  constexpr int32_t PerHeight[4] = {-2500000, -2500000, -2500000, -2500000};
   // 以下为正常推进逻辑（复位完成后或第一发时执行）
 
-  //error为正,往右边,error为负,往左边
-  //先更新角度环,再更新速度环
-  dart_rack->yaw_motor_angle_pid_.Update(PerWidth[i] , yaw_vision ,1.0f);
-  angle_out =dart_rack->yaw_motor_angle_pid_.out();
-  dart_rack->yaw_motor_speed_pid_.Update(angle_out, dart_rack->yaw_motor_->rpm(),1.0f);
-  speed_out =dart_rack->yaw_motor_speed_pid_.out();
+  // error为正,往右边,error为负,往左边
+  // 先更新角度环,再更新速度环
+  dart_rack->yaw_motor_angle_pid_.Update(PerWidth[i], yaw_vision, 1.0f);
+  angle_out = dart_rack->yaw_motor_angle_pid_.out();
+  dart_rack->yaw_motor_speed_pid_.Update(angle_out, dart_rack->yaw_motor_->rpm(), 1.0f);
+  speed_out = dart_rack->yaw_motor_speed_pid_.out();
   dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
 
   // trigger
-  trigger_ticks =dart_rack->trigger_motor_odometer_.linear_ticks();
+  trigger_ticks = dart_rack->trigger_motor_odometer_.linear_ticks();
 
   if (trigger_ticks > PerHeight[i]) {
     dart_rack->trigger_motor_speed_pid_.Update(-8000.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
     dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
-  }else {
+  } else {
     dart_rack->trigger_motor_speed_pid_.Update(0.0f, dart_rack->trigger_motor_->rpm(), 1.0f);
     dart_rack->trigger_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->trigger_motor_speed_pid_.out()));
     trigger_done = true;
   }
   if (trigger_done) {
-    if (std::abs(rpm_trigger)<50) {
+    if (std::abs(rpm_trigger) < 50) {
       static int32_t trigger_cnt = 0;
       trigger_cnt++;
-      if (trigger_cnt >=500)
-        trigger_cnt = 0;
+      if (trigger_cnt >= 500) trigger_cnt = 0;
       dart_rack->trigger_motor_speed_pid_.Clear();
       dart_rack->trigger_motor_->SetCurrent(0);
       trigger_finished = true;
     }
   }
 
-  if (yaw_deg >= DartRack::kYawEcdMax || yaw_deg <= DartRack::kYawEcdMin ) {
-    yaw_approach_suspended= true;
+  if (yaw_deg >= DartRack::kYawEcdMax || yaw_deg <= DartRack::kYawEcdMin) {
+    yaw_approach_suspended = true;
   }
-  if (std::abs(yaw_vision-PerWidth[i]) < tolerance ||yaw_approach_suspended) {
-    dart_rack->yaw_motor_speed_pid_.Update(0.0f,dart_rack->yaw_motor_->rpm(),1.0f);
+  if (std::abs(yaw_vision - PerWidth[i]) < tolerance || yaw_approach_suspended) {
+    dart_rack->yaw_motor_speed_pid_.Update(0.0f, dart_rack->yaw_motor_->rpm(), 1.0f);
     dart_rack->yaw_motor_->SetCurrent(static_cast<rm::i16>(dart_rack->yaw_motor_speed_pid_.out()));
-    if (std::abs(rpm)<50) {
+    if (std::abs(rpm) < 50) {
       static int32_t yaw_cnt = 0;
       yaw_cnt++;
-    if (yaw_cnt >=500)
-      yaw_cnt = 0;
+      if (yaw_cnt >= 500) yaw_cnt = 0;
       dart_rack->yaw_motor_angle_pid_.Clear();
       dart_rack->yaw_motor_speed_pid_.Clear();
       dart_rack->yaw_motor_->SetCurrent(0);
       yaw_finished = true;
     }
   }
-if(trigger_finished && yaw_finished ) {
-  dart_rack->yaw_motor_angle_pid_.Clear();
-  dart_rack->yaw_motor_speed_pid_.Clear();
-  dart_rack->yaw_motor_->SetCurrent(0);
-  dart_rack->trigger_motor_speed_pid_.Clear();
-  dart_rack->trigger_motor_->SetCurrent(0);
-  dart_rack->state_.manual_mode.aim=PhaseState::kDone;
+  if (trigger_finished && yaw_finished) {
+    dart_rack->yaw_motor_angle_pid_.Clear();
+    dart_rack->yaw_motor_speed_pid_.Clear();
+    dart_rack->yaw_motor_->SetCurrent(0);
+    dart_rack->trigger_motor_speed_pid_.Clear();
+    dart_rack->trigger_motor_->SetCurrent(0);
+    dart_rack->state_.manual_mode.aim = PhaseState::kDone;
 
-  // 重置所有静态变量，为下一次瞄准做准备
-  yaw_approach_suspended = false;
-  trigger_finished = false;
-  yaw_finished = false;
-  trigger_done = false;
-  trigger_backoff_state = 0;
+    // 重置所有静态变量，为下一次瞄准做准备
+    yaw_approach_suspended = false;
+    trigger_finished = false;
+    yaw_finished = false;
+    trigger_done = false;
+    trigger_backoff_state = 0;
   }
 }
 

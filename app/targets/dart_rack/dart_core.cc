@@ -14,8 +14,8 @@ static NopPin nop_rx_en;
 
 void DartRack::Init() {
   // PID初始化
-  load_motor_l_speed_pid_.SetKp(20).SetKi(0).SetKd(0).SetMaxOut(8800).SetMaxIout(20);
-  load_motor_r_speed_pid_.SetKp(20).SetKi(0).SetKd(0).SetMaxOut(8800).SetMaxIout(20);
+  load_motor_l_speed_pid_.SetKp(20).SetKi(0).SetKd(0).SetMaxOut(9000).SetMaxIout(20);
+  load_motor_r_speed_pid_.SetKp(20).SetKi(0).SetKd(0).SetMaxOut(9000).SetMaxIout(20);
   trigger_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
   trigger_motor_force_pid_.SetKp(-20).SetKi(0).SetKd(0).SetMaxOut(15000).SetMaxIout(0);
   add_motor_speed_pid_.SetKp(5).SetKi(0).SetMaxOut(10000).SetMaxIout(0);
