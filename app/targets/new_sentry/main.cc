@@ -60,8 +60,8 @@ void GlobalWarehouse::Init() {
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
   dbus = new rm::hal::Serial<25>{huart3, false, true};
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
-
-  rx_referee = new rm::device::RxReferee{*globals->referee_uart};
+  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
+  rx_referee = new rm::device::RxReferee{*globals->referee_uart, *globals->referee_data};
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   hipnuc_imu = new rm::device::HipnucImuCan{*can2, 8};
 
@@ -74,8 +74,6 @@ void GlobalWarehouse::Init() {
   friction_left = new rm::device::M3508{*can2, 3};
   friction_right = new rm::device::M3508{*can2, 2};
   dial_motor = new rm::device::M3508{*can2, 4};
-
-  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV110>;
 
   wheel_lf = new rm::device::M3508{*can1, 1};
   wheel_rf = new rm::device::M3508{*can1, 3};

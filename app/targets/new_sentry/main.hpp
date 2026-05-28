@@ -60,7 +60,7 @@ inline struct GlobalWarehouse {
 
   rm::hal::Serial<128> *referee_uart{nullptr};                                        ///< 裁判系统串口接口
   rm::device::RxReferee *rx_referee{nullptr};                                         ///< 裁判系统
-  rm::device::Referee<rm::device::RefereeRevision::kNewV110> *referee_data{nullptr};  ///< 裁判系统数据
+  rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee_data{nullptr};  ///< 裁判系统数据
 
   // 云台
   rm::device::GM6020 *up_yaw_motor{nullptr};                                           ///< 云台 Yaw 上电机
