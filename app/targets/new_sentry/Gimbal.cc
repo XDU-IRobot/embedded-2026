@@ -201,21 +201,22 @@ void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_down_yaw_target_ = rm::modules::Wrap(gimbal->gimbal_down_yaw_target_, -static_cast<f32>(M_PI), M_PI);
   gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,  // pitch轴限位
                                                     gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
-  // 遥控模式：从位置目标差分得到速度/加速度
-  const f32 yaw_delta = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_ - gimbal->last_yaw_target_,
-                                          -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
-  yaw_speed_ref = rm::modules::Clamp(yaw_delta / gimbal->Ts, -kNormalFfMaxYawSpeed, kNormalFfMaxYawSpeed);
-  pitch_speed_ref = rm::modules::Clamp((gimbal->gimbal_pitch_target_ - gimbal->last_pitch_target_) / gimbal->Ts,
-                                       -kNormalFfMaxPitchSpeed, kNormalFfMaxPitchSpeed);
-  yaw_accel_ref = rm::modules::Clamp((yaw_speed_ref - gimbal->last_yaw_speed_ref_) / gimbal->Ts, -kNormalFfMaxYawAccel,
-                                     kNormalFfMaxYawAccel);
-  pitch_accel_ref = rm::modules::Clamp((pitch_speed_ref - gimbal->last_pitch_speed_ref_) / gimbal->Ts,
-                                       -kNormalFfMaxPitchAccel, kNormalFfMaxPitchAccel);
-  gimbal->yaw_speed_ff_ = gimbal->Kf * yaw_speed_ref;
-  gimbal->last_yaw_target_ = gimbal->gimbal_up_yaw_target_;
-  gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
-  gimbal->last_yaw_speed_ref_ = yaw_speed_ref;
-  gimbal->last_pitch_speed_ref_ = pitch_speed_ref;
+  // // 遥控模式：从位置目标差分得到速度/加速度
+  // const f32 yaw_delta = rm::modules::Wrap(gimbal->gimbal_up_yaw_target_ - gimbal->last_yaw_target_,
+  //                                         -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
+  // yaw_speed_ref = rm::modules::Clamp(yaw_delta / gimbal->Ts, -kNormalFfMaxYawSpeed, kNormalFfMaxYawSpeed);
+  // pitch_speed_ref = rm::modules::Clamp((gimbal->gimbal_pitch_target_ - gimbal->last_pitch_target_) / gimbal->Ts,
+  //                                      -kNormalFfMaxPitchSpeed, kNormalFfMaxPitchSpeed);
+  // yaw_accel_ref = rm::modules::Clamp((yaw_speed_ref - gimbal->last_yaw_speed_ref_) / gimbal->Ts,
+  // -kNormalFfMaxYawAccel,
+  //                                    kNormalFfMaxYawAccel);
+  // pitch_accel_ref = rm::modules::Clamp((pitch_speed_ref - gimbal->last_pitch_speed_ref_) / gimbal->Ts,
+  //                                      -kNormalFfMaxPitchAccel, kNormalFfMaxPitchAccel);
+  // gimbal->yaw_speed_ff_ = gimbal->Kf * yaw_speed_ref;
+  // gimbal->last_yaw_target_ = gimbal->gimbal_up_yaw_target_;
+  // gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
+  // gimbal->last_yaw_speed_ref_ = yaw_speed_ref;
+  // gimbal->last_pitch_speed_ref_ = pitch_speed_ref;
 
   gimbal->up_yaw_move_limiter_.ResetAt(globals->hipnuc_imu->yaw());
   gimbal->down_yaw_move_limiter_.ResetAt(globals->ahrs.euler_angle().yaw);
@@ -427,9 +428,8 @@ void Gimbal::GimbalMovePIDUpdate() {
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
   const auto ff = g_gimbal_dynamics.ComputeFf(globals->up_yaw_motor->encoder(), -globals->pitch_motor->pos() - 2.2f, 0,
                                               0, 0, 0, g_stationary);
-  gimbal->yaw_torque_ = ff.x();
   const f32 yaw_ff_voltage =
-      YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec);
+      YawTorqueToVoltageCmd(ff.x(), static_cast<f32>(globals->up_yaw_motor->rpm()) * kRpmToRadPerSec);
   gimbal->up_yaw_current_ = globals->gimbal_controller.output().up_yaw +
                             static_cast<f32>(globals->up_yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
   gimbal->up_yaw_current_ =
