@@ -113,9 +113,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   }
 
   // Frame E (2 bytes): [0..1] sentry_7_HP
-  void EncodeFrameE() {
-    PackU16(robot_hp_.sentry_7_HP, &tx_e_[0]);
-  }
+  void EncodeFrameE() { PackU16(robot_hp_.sentry_7_HP, &tx_e_[0]); }
 
   const rm::device::HipnucImu* imu_{nullptr};
   rm::device::VT03* vt03_{nullptr};
