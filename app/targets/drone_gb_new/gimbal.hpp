@@ -47,7 +47,7 @@ class Gimbal {
   int yaw_max_limit = 5000;   // TODO 右限位
   float yaw_delta = 0.0f;     // rc增加总量
 
-  float dirl_speed_base=5000;
+  float dirl_speed_base = 5000;
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
   float friction_speed = 6000;  // TODO 摩擦轮转速
@@ -292,8 +292,7 @@ class Gimbal {
         GimbalState_ = kNoForce;
         break;
     }
-    if (!referee_data_buffer.data().robot_status.power_management_gimbal_output)
-      GimbalState_ = kNoForce;
+    if (!referee_data_buffer.data().robot_status.power_management_gimbal_output) GimbalState_ = kNoForce;
   }
   void UpdateRcAngleDiff(float yaw_data, float pitch_data, float dt) {
     rc_yaw_diff.Update(yaw_data, dt, true);
@@ -414,8 +413,7 @@ class Gimbal {
         if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
           rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
-        }
-        else {
+        } else {
           yaw_delta = 0.0f;
           if (control_rc->key(rm::device::DR16::Key::kCtrl)) {
             if (control_rc->key(rm::device::DR16::Key::kW)) rc_pitch_data += 0.0001f;
@@ -570,13 +568,16 @@ class Gimbal {
     }
   }
   void HeatLimit() {
-    if (referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat!=0&&
-      referee_data_buffer.data().robot_status.shooter_barrel_heat_limit!=0) {
-      float percentage=referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat/referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
-      if (percentage>=1.0f)percentage=1.0f;
+    if (referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat != 0 &&
+        referee_data_buffer.data().robot_status.shooter_barrel_heat_limit != 0) {
+      float percentage = referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat /
+                         referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
+      if (percentage >= 1.0f) percentage = 1.0f;
 
-      if (percentage>=0.4) dirl_speed=dirl_speed_base-(percentage-0.4)*5000;
-      else dirl_speed=dirl_speed_base;
+      if (percentage >= 0.4)
+        dirl_speed = dirl_speed_base - (percentage - 0.4) * 5000;
+      else
+        dirl_speed = dirl_speed_base;
     }
   }
   void ShootSpeedControl() {  // 弹速控制

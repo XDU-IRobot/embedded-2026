@@ -27,8 +27,8 @@ float Atagetyaw = 0.0f;
 uint8_t Aaimbotflag = 0;
 uint8_t Aaimfireflag = 0;
 
-u16 Aa1=0;
-u16 Aa2=0;
+u16 Aa1 = 0;
+u16 Aa2 = 0;
 // yaw编码器rad
 float Ayaw_position = 0;
 float Ayaw_relative = 0.0f;
@@ -121,10 +121,10 @@ void FreemasterDebug() {
   Atargetpitch = Aimbot.TargetPitchAngle;
   Atagetyaw = Aimbot.TargetYawAngle;
 
-  Aa2=gimbal->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
-  Aa1=gimbal->referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
+  Aa2 = gimbal->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
+  Aa1 = gimbal->referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
 
-  Adirl_speed=gimbal->dirl_speed;
+  Adirl_speed = gimbal->dirl_speed;
   // Ayaw_relative = gimbal->yaw_relative;
 
   Apid_yaw_position = gimbal->gimbal_controller.pid().yaw_position.out();

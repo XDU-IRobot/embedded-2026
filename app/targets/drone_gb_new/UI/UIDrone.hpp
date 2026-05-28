@@ -13,5 +13,4 @@ void drone_state_1_edit();
 void base_line_add_1();
 void base_line_add_2();
 
-
 #endif  // DRONEHERO_HPP

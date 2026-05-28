@@ -137,7 +137,6 @@ void drone_state_1_edit() {
   else
     UIGroup1.figure4.fillRound("aut", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 3, 960, 540, 100);
 
-
   const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
   gimbal->referee_uart->Write(dataBox, dataLen);
 }
