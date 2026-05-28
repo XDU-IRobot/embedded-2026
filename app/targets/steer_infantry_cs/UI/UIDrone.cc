@@ -5,6 +5,7 @@
 #include "UIDrone.hpp"
 #include "librm.hpp"
 #include "../main.hpp"
+#include "../Chassis.hpp"
 
 using namespace rm;
 using namespace rm::device;
@@ -22,45 +23,90 @@ void UIInfantryAdd() {
   UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 1392, 808, 1422, 770);
   UIGroup1.figure6.fillRec("bmf", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 1542, 808, 1572, 770);
   UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 1342, 766, 1372, 728);
-
-  UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 900, 270, 27,
+  UIFigure2 UIGroup2;
+  UIGroup2.figure1.fillFloat("cms", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 900, 270, 27,
                              static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
-  UIGroup1.figure1.fillFloat("asj", UIFigure::Operation::Add, 0, UIFigure::Color::White, 2, 360, 850, 25,
+  UIGroup2.figure2.fillFloat("asj", UIFigure::Operation::Add, 0, UIFigure::Color::White, 2, 360, 850, 25,
                              static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
-
-  UIGroup1.figure1.fillCharacter("aim", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 360, 800, 25,
-                                 *"GETTARGET\nSUGGESTFIRE");
-  UIGroup1.figure1.fillCharacter("mod", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 1300, 800, 25,
-                                 *"F R N U D X\nH N S");
-  // UICharacter UITextHeader;
-  // UITextHeader.character.fillCharacter("Hed", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 6, 55, 890, 24, 29);
-  // memcpy(UITextHeader.data, "SEN7 DRO6 STD4 STD3 ENG2 HRO1", 29);
-  // const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UITextHeader, robotID, robotID + 256);
-  // globals->referee_uart->Write(globals->dataBox, dataLen, 500);
-
-  UIGroup1.figure1.fillFloat("yaw", UIFigure::Operation::Add, 0, UIFigure::Color::Yellow, 5, 1460, 470, 20,
-                             globals->subReferee->data().hero_2_drone.hero_yaw_angle * 1000);
-  UIGroup1.figure2.fillFloat("pit", UIFigure::Operation::Add, 0, UIFigure::Color::Black, 5, 1620, 470, 20,
-                             globals->subReferee->data().hero_2_drone.hero_pitch_angle * 1000);
-  UIGroup1.figure3.fillIntegrate("adj", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 1650, 580, 22,
-                                 globals->subReferee->data().hero_2_drone.hero_ammo_adjust);
-  UIGroup1.figure4.fillFloat("isp", UIFigure::Operation::Add, 0, UIFigure::Color::Cyan, 5, 1460, 580, 22,
-                             globals->subReferee->data().hero_2_drone.hero_initial_speed * 1000);
-
-  const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
-  globals->referee_uart->Write(globals->dataBox, dataLen, 500);
+  const auto dataLen1 = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
+  globals->referee_uart->Write(globals->dataBox, dataLen1, 500);
+  const auto dataLen2 = Referee0x301Prepare(globals->dataBox, 0, UIGroup2, robotID, robotID + 256);
+  globals->referee_uart->Write(globals->dataBox, dataLen2, 500);
+  UICharacter UITextHeader1;
+  UITextHeader1.character.fillCharacter("Hed", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 6, 55, 890, 24,
+                                        29);
+  memcpy(UITextHeader1.data, "GETTARGET\nSUGGESTFIRE", 21);
+  const auto dataLen3 = Referee0x301Prepare(globals->dataBox, 0, UITextHeader1, robotID, robotID + 256);
+  globals->referee_uart->Write(globals->dataBox, dataLen3, 500);
+  UICharacter UITextHeader2;
+  UITextHeader2.character.fillCharacter("Hed", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 6, 55, 890, 24,
+                                        29);
+  memcpy(UITextHeader2.data, "F R N U D X\nH N S", 17);
+  const auto dataLen4 = Referee0x301Prepare(globals->dataBox, 0, UITextHeader2, robotID, robotID + 256);
+  globals->referee_uart->Write(globals->dataBox, dataLen4, 500);
 }
 
 void UIInfantryEdit() {
-  UIFigure5 UIGroup1;
-  UIGroup1.figure1.fillFloat("yaw", UIFigure::Operation::Edit, 0, UIFigure::Color::Yellow, 5, 1460, 470, 20,
-                             globals->subReferee->data().hero_2_drone.hero_yaw_angle * 1000);
-  UIGroup1.figure2.fillFloat("pit", UIFigure::Operation::Edit, 0, UIFigure::Color::Black, 5, 1620, 470, 20,
-                             globals->subReferee->data().hero_2_drone.hero_pitch_angle * 1000);
-  UIGroup1.figure3.fillIntegrate("adj", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 5, 1650, 580, 22,
-                                 globals->subReferee->data().hero_2_drone.hero_ammo_adjust);
-  UIGroup1.figure4.fillFloat("isp", UIFigure::Operation::Edit, 0, UIFigure::Color::Cyan, 5, 1460, 580, 22,
-                             globals->subReferee->data().hero_2_drone.hero_initial_speed * 1000);
+  UIFigure7 UIGroup1;
+  // 电容电压
+  if (chassis->speed_mode_ == kHighSpeed) {
+    UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 5, 900, 270, 27,
+                               static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
+  } else {
+    UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Edit, 0, UIFigure::Color::RedBlue, 5, 900, 270, 27,
+                               static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
+  }
+  // 弹速调节
+  if (globals->gimbal_communicator->aim_speed_change() > 0) {
+    UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Edit, 2, UIFigure::Color::Green, 2, 360, 850, 25,
+                               static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
+  } else if (globals->gimbal_communicator->aim_speed_change() < 0) {
+    UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Edit, 2, UIFigure::Color::Pink, 2, 360, 850, 25,
+                               static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
+  } else {
+    UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Edit, 2, UIFigure::Color::White, 2, 360, 850, 25,
+                               static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
+  }
+  // // 自瞄模式
+  if (globals->gimbal_communicator->get_target_flag() == 1) {
+    UIGroup1.figure3.fillRec("gtf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 350, 807, 580, 768);
+  } else {
+    UIGroup1.figure3.fillRec("gtf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 0, 350, 807, 580, 768);
+  }
+
+  if (globals->gimbal_communicator->suggest_fire_flag() == 1) {
+    UIGroup1.figure4.fillRec("sff", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 350, 766, 630, 731);
+  } else {
+    UIGroup1.figure4.fillRec("sff", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 0, 350, 766, 630, 731);
+  }
+
+  // 底盘模式
+  if (chassis->ChassisMove_ == kFollow) {
+    UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1292, 808, 1322, 770);
+  } else if (chassis->ChassisMove_ == kRotate) {
+    UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1342, 808, 1372, 770);
+  } else if (chassis->ChassisMove_ == kNoForce) {
+    UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1392, 808, 1422, 770);
+  } else {
+    UIGroup1.figure5.fillRec("cmf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1492, 808, 1522, 770);
+  }
+  if (chassis->buff_state_ == kDaFu) {
+    UIGroup1.figure6.fillRec("bmf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1492, 808, 1522, 770);
+  } else if (chassis->buff_state_ == kXiaoFu) {
+    UIGroup1.figure6.fillRec("bmf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1542, 808, 1572, 770);
+  } else {
+    UIGroup1.figure6.fillRec("bmf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 0, 1542, 808, 1572, 770);
+  }
+
+  // 底盘速度模式
+  if (chassis->speed_mode_ == kHighSpeed) {
+    UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1292, 766, 1322, 728);
+  } else {
+    UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1342, 766, 1372, 728);
+  }
+  if (globals->referee_data->data().power_heat_data.buffer_energy < 40) {
+    UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Edit, 2, UIFigure::Color::Magenta, 3, 1392, 766, 1422, 728);
+  }
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
   globals->referee_uart->Write(globals->dataBox, dataLen, 500);
 }
