@@ -23,14 +23,21 @@ void UIInfantryAdd() {
   UIGroup1.figure6.fillRec("bmf", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 1542, 808, 1572, 770);
   UIGroup1.figure7.fillRec("smf", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 1342, 766, 1372, 728);
 
-  UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 27, 900, 270, 2,
+  UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 900, 270, 27,
                              static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
-  UIGroup1.figure1.fillFloat("asj", UIFigure::Operation::Add, 0, UIFigure::Color::White, 25, 360, 850, 2,
+  UIGroup1.figure1.fillFloat("asj", UIFigure::Operation::Add, 0, UIFigure::Color::White, 2, 360, 850, 25,
                              static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
 
-  Char_Draw(&aimbot, (char *)"aim", UI_Graph_ADD, 1, UI_Color_Green, 25, 22, 2, 360, 800,
-            (char *)"GETTARGET\nSUGGESTFIRE");
-  Char_Draw(&mode, (char *)"mod", UI_Graph_ADD, 1, UI_Color_Green, 25, 20, 2, 1300, 800, (char *)"F R N U D X\nH N S");
+  UIGroup1.figure1.fillCharacter("aim", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 360, 800, 25,
+                                 *"GETTARGET\nSUGGESTFIRE");
+  UIGroup1.figure1.fillCharacter("mod", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 1300, 800, 25,
+                                 *"F R N U D X\nH N S");
+  // UICharacter UITextHeader;
+  // UITextHeader.character.fillCharacter("Hed", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 6, 55, 890, 24, 29);
+  // memcpy(UITextHeader.data, "SEN7 DRO6 STD4 STD3 ENG2 HRO1", 29);
+  // const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UITextHeader, robotID, robotID + 256);
+  // globals->referee_uart->Write(globals->dataBox, dataLen, 500);
+
   UIGroup1.figure1.fillFloat("yaw", UIFigure::Operation::Add, 0, UIFigure::Color::Yellow, 5, 1460, 470, 20,
                              globals->subReferee->data().hero_2_drone.hero_yaw_angle * 1000);
   UIGroup1.figure2.fillFloat("pit", UIFigure::Operation::Add, 0, UIFigure::Color::Black, 5, 1620, 470, 20,
