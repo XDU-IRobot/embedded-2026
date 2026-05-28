@@ -17,19 +17,30 @@ rm::hal::Serial* vt03_uart{nullptr};
 rm::device::VT03* vt03{nullptr};
 GimbalToChassisTxBridge* gb_to_chassis{nullptr};
 
+// referee
+rm::device::Referee<rm::device::RefereeRevision::kNewV120>* referee{nullptr};
+EmyRobotHP robotHP{};
+
 // for debug
 float yaw = 0.f;
 float pitch = 0.f;
 float roll = 0.f;
+static int sof_count = 0;
 
 void Vt03RxCallback(const std::vector<rm::u8>& data, rm::u16 rx_len) {
   for (rm::u16 i = 0; i < rx_len; i++) {
+    if (data.at(i) == 0xA5) sof_count++;
     *vt03 << data.at(i);
+    *referee << data.at(i);
   }
 }
 
 void MainLoop() {
   if (gb_to_chassis != nullptr) {
+    if (referee) {
+      memcpy(&robotHP, &referee->data().robot_custom_data_3.data, 10);
+      gb_to_chassis->UpdateRobotHP(robotHP);
+    }
     gb_to_chassis->QueueSend();
   }
 
@@ -46,8 +57,12 @@ extern "C" [[noreturn]] void AppMain(void) {
   imu_uart = new rm::hal::stm32::Uart(huart1, 518, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma);
   imu = new rm::device::HipnucImu(*imu_uart);
 
-  vt03_uart = new rm::hal::Serial(huart6, 128, rm::hal::stm32::UartMode::kDma, rm::hal::stm32::UartMode::kDma);
+  vt03_uart = new rm::hal::Serial(huart6, 256, rm::hal::stm32::UartMode::kDma, rm::hal::stm32::UartMode::kDma);
   vt03 = new rm::device::VT03;
+
+  // referee
+  referee = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
+
   vt03_uart->AttachRxCallback(Vt03RxCallback);
 
   gb_to_chassis = new GimbalToChassisTxBridge(*can_to_chassis, imu, vt03);

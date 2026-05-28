@@ -5,15 +5,28 @@
 
 #include <librm.hpp>
 bool button_left;
+
+struct EmyRobotHP {
+  rm::u16 hero_1_HP;
+  rm::u16 engineer_2_HP;
+  rm::u16 standard_3_HP;
+  rm::u16 standard_4_HP;
+  rm::u16 sentry_7_HP;
+};
+
 class GimbalToChassisTxBridge final : public rm::device::CanDevice {
  public:
   static constexpr rm::u16 kTxStdIdA = 0x110;
   static constexpr rm::u16 kTxStdIdB = 0x111;
   static constexpr rm::u16 kTxStdIdC = 0x112;
+  static constexpr rm::u16 kTxStdIdD = 0x113;
+  static constexpr rm::u16 kTxStdIdE = 0x114;
   static constexpr rm::usize kPayloadSize = 8U;
 
   GimbalToChassisTxBridge(rm::hal::CanInterface& can, const rm::device::HipnucImu* imu, rm::device::VT03* vt03)
-      : CanDevice(can, kTxStdIdA, kTxStdIdB, kTxStdIdC), imu_(imu), vt03_(vt03) {}
+      : CanDevice(can, kTxStdIdA, kTxStdIdB, kTxStdIdC, kTxStdIdD, kTxStdIdE), imu_(imu), vt03_(vt03) {}
+
+  void UpdateRobotHP(const EmyRobotHP& hp) { robot_hp_ = hp; }
 
   void RxCallback(const rm::hal::CanFrame* msg) override {}
 
@@ -25,7 +38,11 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
 
     if (send_count_ % 50 == 0) {
       EncodeFrameB();
+      EncodeFrameD();
+      EncodeFrameE();
       can_->Write(kTxStdIdB, tx_b_.data(), tx_b_.size());
+      can_->Write(kTxStdIdD, tx_d_.data(), tx_d_.size());
+      can_->Write(kTxStdIdE, tx_e_.data(), tx_e_.size());
     }
     send_count_++;
 
@@ -87,10 +104,26 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     }
   }
 
+  // Frame D (8 bytes): [0..1] hero_1_HP, [2..3] engineer_2_HP, [4..5] standard_3_HP, [6..7] standard_4_HP
+  void EncodeFrameD() {
+    PackU16(robot_hp_.hero_1_HP, &tx_d_[0]);
+    PackU16(robot_hp_.engineer_2_HP, &tx_d_[2]);
+    PackU16(robot_hp_.standard_3_HP, &tx_d_[4]);
+    PackU16(robot_hp_.standard_4_HP, &tx_d_[6]);
+  }
+
+  // Frame E (2 bytes): [0..1] sentry_7_HP
+  void EncodeFrameE() {
+    PackU16(robot_hp_.sentry_7_HP, &tx_e_[0]);
+  }
+
   const rm::device::HipnucImu* imu_{nullptr};
   rm::device::VT03* vt03_{nullptr};
+  EmyRobotHP robot_hp_{};
   std::array<rm::u8, kPayloadSize> tx_a_{};
   std::array<rm::u8, kPayloadSize> tx_b_{};
   std::array<rm::u8, kPayloadSize> tx_c_{};
+  std::array<rm::u8, kPayloadSize> tx_d_{};
+  std::array<rm::u8, kPayloadSize> tx_e_{};
   uint32_t send_count_{0};
 };
