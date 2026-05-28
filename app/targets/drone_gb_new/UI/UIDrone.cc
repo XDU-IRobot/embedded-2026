@@ -64,32 +64,19 @@ void D2H_func() {
   static auto now_rc_key_x = false;
   static auto now_rc_key_c = false;
   static auto state_ = false;
-  if (gimbal->Rcchoose() == 2) {
-    now_rc_key_x = gimbal->vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kX);
-    now_rc_key_c = gimbal->vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kC);
-    state_ = gimbal->vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kCtrl);
-  } else if (gimbal->Rcchoose() == 1) {
-    now_rc_key_x = gimbal->rc->key(DR16::Key::kX);
-    now_rc_key_c = gimbal->rc->key(DR16::Key::kC);
-    state_ = gimbal->rc->key(DR16::Key::kCtrl);
-  } else {
-    now_rc_key_x = false;
-    now_rc_key_c = false;
-    state_ = false;
-  }
+
+  now_rc_key_x = gimbal->control_rc->key(DR16::Key::kX);
+  now_rc_key_c = gimbal->control_rc->key(DR16::Key::kC);
+  state_ = gimbal->control_rc->key(DR16::Key::kCtrl);
+
   if (!state_) {
     cmd_yaw = gimbal->referee_user.data().hero_2_drone.hero_yaw_angle;
     cmd_ammo = gimbal->referee_user.data().hero_2_drone.hero_ammo_adjust;
   } else {
-    if (gimbal->Rcchoose() == 2) {
-      if (gimbal->vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kA))
-        cmd_yaw += 0.005f;
-      if (gimbal->vt03->data().keyboard_key & static_cast<int16_t>(rm::device::VT03::KeyboardKey::kD))
-        cmd_yaw -= 0.005f;
-    } else if (gimbal->Rcchoose() == 1) {
-      if (gimbal->rc->key(DR16::Key::kA)) cmd_yaw += 0.005f;
-      if (gimbal->rc->key(DR16::Key::kD)) cmd_yaw -= 0.005f;
-    }
+
+    if (gimbal->control_rc->key(DR16::Key::kA)) cmd_yaw += 0.005f;
+    if (gimbal->control_rc->key(DR16::Key::kD)) cmd_yaw -= 0.005f;
+
     if (last_rc_key_x == false && now_rc_key_x) {
       cmd_ammo += 10;
     } else if (last_rc_key_c == false && now_rc_key_c) {
@@ -98,14 +85,7 @@ void D2H_func() {
   }
   last_rc_key_x = now_rc_key_x;
   last_rc_key_c = now_rc_key_c;
-
-  if (gimbal->Rcchoose() == 2) {
-    cmd_fire = gimbal->vt03->data().mouse_button_left;
-  } else if (gimbal->Rcchoose() == 1) {
-    cmd_fire = gimbal->rc->mouse_button_left();
-  } else {
-    cmd_fire = false;
-  }
+  cmd_fire = gimbal->control_rc->mouse_button_left();
   Drone2Hero d2h{cmd_yaw, cmd_ammo, cmd_fire};
   const auto size = Referee0x301Prepare(dataBox, 0, d2h, robotID, robotID - 5);
   gimbal->referee_uart->Write(dataBox, size);
