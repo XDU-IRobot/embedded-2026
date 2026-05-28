@@ -30,6 +30,9 @@ static auto UIDroneHeroEDIT = UITask(UIDroneHero_edit, 10);
 
 static auto UId2h = UITask(D2H_func, 10);
 
+static auto UIState1ADD = UITask(drone_state_1_add);
+static auto UIState1EDIT = UITask(drone_state_1_edit, 2);
+
 void static_UI_add() {
   if (robotID > 100) {
     schedule.addTaskStatic(&UIRobotHeaderBlueADD);
@@ -51,6 +54,8 @@ void static_UI_add() {
   schedule.addTaskStatic(&UIDroneHeroADD);
   schedule.addTask(&UIDroneHeroEDIT);
   schedule.addTask(&UId2h);
+  schedule.addTaskStatic(&UIState1ADD);
+  schedule.addTask(&UIState1EDIT);
 }
 
 void GlobalLoop30Hz() {
