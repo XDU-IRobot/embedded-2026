@@ -113,13 +113,10 @@ void D2H_func() {
 
 void drone_state_1_add() {
   UIFigure7 UIGroup1;
-  UIGroup1.figure1.fillIntegrate("gim", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 300, 760, 20,
-                             0);
-  UIGroup1.figure2.fillIntegrate("fir", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 300, 730, 20,
-                             0);
-  UIGroup1.figure3.fillIntegrate("shr", UIFigure::Operation::Add, 0, UIFigure::Color::White, 5, 320, 700, 20,
-                           0);
-  UIGroup1.figure4.fillRec("auto",UIFigure::Operation::Add,0,UIFigure::Color::Magenta, 0, 290, 765, 320,735);
+  UIGroup1.figure1.fillIntegrate("gim", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 300, 760, 20, 0);
+  UIGroup1.figure2.fillIntegrate("fir", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 300, 730, 20, 0);
+  UIGroup1.figure3.fillIntegrate("shr", UIFigure::Operation::Add, 0, UIFigure::Color::White, 5, 320, 700, 20, 0);
+  UIGroup1.figure4.fillRec("auto", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 0, 290, 765, 320, 735);
   const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
   gimbal->referee_uart->Write(dataBox, dataLen);
 }
@@ -127,13 +124,15 @@ void drone_state_1_add() {
 void drone_state_1_edit() {
   UIFigure7 UIGroup1;
   UIGroup1.figure1.fillIntegrate("gim", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 5, 300, 760, 20,
-                             gimbal->AmmoState_);
+                                 gimbal->AmmoState_);
   UIGroup1.figure2.fillIntegrate("fir", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 5, 300, 730, 20,
-                             gimbal->GimbalState_);
+                                 gimbal->GimbalState_);
   UIGroup1.figure3.fillIntegrate("shr", UIFigure::Operation::Edit, 0, UIFigure::Color::White, 5, 320, 700, 20,
-                         gimbal->shootcnt);
-  if (Aimbot.AimbotState == 4||Aimbot.AimbotState == 2) UIGroup1.figure4.fillRec("auto",UIFigure::Operation::Edit,5,UIFigure::Color::Magenta, 5, 290, 765, 320,735);
-  else UIGroup1.figure4.fillRec("auto",UIFigure::Operation::Edit,0,UIFigure::Color::Magenta, 0, 290, 765, 320,735);
+                                 gimbal->shootcnt);
+  if (Aimbot.AimbotState == 4 || Aimbot.AimbotState == 2)
+    UIGroup1.figure4.fillRec("auto", UIFigure::Operation::Edit, 5, UIFigure::Color::Magenta, 5, 290, 765, 320, 735);
+  else
+    UIGroup1.figure4.fillRec("auto", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 0, 290, 765, 320, 735);
   const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
   gimbal->referee_uart->Write(dataBox, dataLen);
 }
