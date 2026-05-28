@@ -451,10 +451,7 @@ void Gimbal::GimbalPIDUpdate() {
     //            globals->aimbot_communicator->pitch_vel() == 0 && globals->aimbot_communicator->pitch_acc() == 0 &&
     //            (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 || gimbal->aimbot_time_ > 0)) {
     //   globals->gimbal_controller.EnableSpeedPid(true);
-    globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(100.0f);
-    globals->gimbal_controller.pid().up_yaw_speed.SetKp(7000.0f).SetKd(0.0f);
-    globals->gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKd(0.0f);
-    globals->gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKd(0.0f);
+///9
     // } else {
     //   globals->gimbal_controller.EnableSpeedPid(true);
     //   globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(120.0f);
@@ -517,7 +514,7 @@ void Gimbal::GimbalMatchUpdate() {
 
 void Gimbal::GimbalEnableUpdate() {
   globals->gimbal_controller.Enable(true);
-  gimbal->GimbalPIDUpdate();
+  // gimbal->GimbalPIDUpdate();
   if (gimbal->GimbalMove_ == kGbRemote) {
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
