@@ -265,7 +265,6 @@ class Gimbal {
     return {new_yaw, new_pitch};
   }
   void RCStateUpdate() {
-
     switch (control_rc->switch_r()) {
       case rm::device::DR16::SwitchPosition::kUp:  // 发射控制逻辑
         AmmoState_ = kFire;
@@ -292,7 +291,8 @@ class Gimbal {
         GimbalState_ = kNoForce;
         break;
     }
-    if (!referee_data_buffer.data().robot_status.power_management_gimbal_output && !control_rc->key(DR16::Key::kG))GimbalState_ = kNoForce;
+    if (!referee_data_buffer.data().robot_status.power_management_gimbal_output && !control_rc->key(DR16::Key::kG))
+      GimbalState_ = kNoForce;
   }
   void UpdateRcAngleDiff(float yaw_data, float pitch_data, float dt) {
     rc_yaw_diff.Update(yaw_data, dt, true);
@@ -330,7 +330,7 @@ class Gimbal {
     shoot_controller.pid().loader_speed.SetKp(25.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(2000.0f);
   }
   void GimbalControl() {
-    control_rc->act(*rc,*vt03);
+    control_rc->act(*rc, *vt03);
     int yaw_encoder_current = yaw_motor->encoder();
     int yaw_encoder_err = yaw_encoder_current - yaw_encoder_last;
     if (yaw_encoder_err >= 4000)
@@ -363,10 +363,10 @@ class Gimbal {
           if (control_rc->key(rm::device::DR16::Key::kA)) yaw_delta += 0.0001f;
           if (control_rc->key(rm::device::DR16::Key::kD)) yaw_delta -= 0.0001f;
         } else {
-            yaw_delta -= rm::modules::Map(control_rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
-            yaw_delta -= rm::modules::Map(control_rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
-            rc_pitch_data += rm::modules::Map(control_rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
-            rc_pitch_data += rm::modules::Map(control_rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
+          yaw_delta -= rm::modules::Map(control_rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+          yaw_delta -= rm::modules::Map(control_rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
+          rc_pitch_data += rm::modules::Map(control_rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+          rc_pitch_data += rm::modules::Map(control_rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
         }
         if (yaw_abs >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
           yaw_delta = 0.0f;
@@ -495,8 +495,7 @@ class Gimbal {
       dial_motor->SetCurrent((int16_t)rm::modules::Clamp(shoot_controller.output().loader, -10000, 10000));
 
       // --- 发弹延迟测量 ---
-      bool trigger_active =
-          (control_rc->dial() >= 550 || control_rc->mouse_button_left());
+      bool trigger_active = (control_rc->dial() >= 550 || control_rc->mouse_button_left());
       if (trigger_active && !delay_last_trigger_) {
         delay_state_ = kDelayWaiting;
         delay_tick_count_ = 0;
@@ -547,16 +546,16 @@ class Gimbal {
   void ShootSpeedControl() {  // 弹速控制
     shoottime_--;
     if (shoottime_ < 0) {
-        if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kX)) {
-          friction_speed -= shootstep;
-          shootcnt -= 1;
-        } else if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kC)) {
-          friction_speed += shootstep;
-          shootcnt += 1;
-        } else if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kZ)) {
-          friction_speed = 6500;
-          shootcnt = 0;
-        }
+      if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kX)) {
+        friction_speed -= shootstep;
+        shootcnt -= 1;
+      } else if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kC)) {
+        friction_speed += shootstep;
+        shootcnt += 1;
+      } else if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kZ)) {
+        friction_speed = 6500;
+        shootcnt = 0;
+      }
       shoottime_ = shoottime;
     }
   }
@@ -584,12 +583,12 @@ class Gimbal {
   }
   void LensControl() {
     // R键上升沿：翻转方向并启动电机
-      if (control_rc->key(rm::device::DR16::Key::kR) && !vt03_last_r_key && pitch_ < -0.10f) {
-        lens_direction_ = !lens_direction_;
-        Len_control = 1;
-        lens_motor->SetCurrent(lens_direction_ ? len_speed : -len_speed);
-      }
-      vt03_last_r_key = control_rc->key(rm::device::DR16::Key::kR);
+    if (control_rc->key(rm::device::DR16::Key::kR) && !vt03_last_r_key && pitch_ < -0.10f) {
+      lens_direction_ = !lens_direction_;
+      Len_control = 1;
+      lens_motor->SetCurrent(lens_direction_ ? len_speed : -len_speed);
+    }
+    vt03_last_r_key = control_rc->key(rm::device::DR16::Key::kR);
 
     // 不在控制状态，不判断堵转
     if (!Len_control) {
@@ -611,22 +610,22 @@ class Gimbal {
     }
   }
   void WS2812Control() {
-      if (control_rc->key(rm::device::DR16::Key::kZ) && control_rc->key(rm::device::DR16::Key::kX) &&
-          control_rc->key(rm::device::DR16::Key::kC)) {
-        if (led_blink_time < 2) {
-          Set_LED(0, 255, 0, 0);
-          Set_LED(1, 255, 0, 0);
-          Set_LED(2, 255, 0, 0);
-          Set_LED(3, 255, 0, 0);
-        } else if (led_blink_time < 4) {
-          Set_LED(0, 0, 0, 0);
-          Set_LED(1, 0, 0, 0);
-          Set_LED(2, 0, 0, 0);
-          Set_LED(3, 0, 0, 0);
-        } else led_blink_time = 0;
-        led_blink_time++;
-      }
-    else {
+    if (control_rc->key(rm::device::DR16::Key::kZ) && control_rc->key(rm::device::DR16::Key::kX) &&
+        control_rc->key(rm::device::DR16::Key::kC)) {
+      if (led_blink_time < 2) {
+        Set_LED(0, 255, 0, 0);
+        Set_LED(1, 255, 0, 0);
+        Set_LED(2, 255, 0, 0);
+        Set_LED(3, 255, 0, 0);
+      } else if (led_blink_time < 4) {
+        Set_LED(0, 0, 0, 0);
+        Set_LED(1, 0, 0, 0);
+        Set_LED(2, 0, 0, 0);
+        Set_LED(3, 0, 0, 0);
+      } else
+        led_blink_time = 0;
+      led_blink_time++;
+    } else {
       // 前进后退
       if (!control_rc->key(rm::device::DR16::Key::kCtrl) && !control_rc->key(rm::device::DR16::Key::kShift) &&
           control_rc->key(rm::device::DR16::Key::kW) && !control_rc->key(rm::device::DR16::Key::kS))
@@ -651,7 +650,7 @@ class Gimbal {
           Set_LED(2, 0, 0, 0);
         }
       } else if (!control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kShift) &&
-                     control_rc->key(rm::device::DR16::Key::kA) ^ control_rc->key(rm::device::DR16::Key::kD)) {
+                 control_rc->key(rm::device::DR16::Key::kA) ^ control_rc->key(rm::device::DR16::Key::kD)) {
         if (control_rc->key(rm::device::DR16::Key::kA)) {
           Set_LED(2, 0, 255, 255);
           Set_LED(0, 0, 0, 0);
@@ -660,8 +659,8 @@ class Gimbal {
           Set_LED(2, 0, 0, 0);
         }
       } else {
-       Set_LED(0, 0, 0, 0);
-       Set_LED(2, 0, 0, 0);
+        Set_LED(0, 0, 0, 0);
+        Set_LED(2, 0, 0, 0);
       }
 
       // 上升
@@ -706,7 +705,6 @@ class Gimbal {
     // }
     pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
     pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);
-
   }
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {

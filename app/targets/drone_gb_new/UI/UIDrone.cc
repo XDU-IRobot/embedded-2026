@@ -73,7 +73,6 @@ void D2H_func() {
     cmd_yaw = gimbal->referee_user.data().hero_2_drone.hero_yaw_angle;
     cmd_ammo = gimbal->referee_user.data().hero_2_drone.hero_ammo_adjust;
   } else {
-
     if (gimbal->control_rc->key(DR16::Key::kA)) cmd_yaw += 0.005f;
     if (gimbal->control_rc->key(DR16::Key::kD)) cmd_yaw -= 0.005f;
 

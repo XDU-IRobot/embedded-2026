@@ -54,4 +54,4 @@ i16 ControlSource::mouse_z() const { return this->mouse_[2]; }
 bool ControlSource::mouse_button_left() const { return this->mouse_button_[0]; }
 bool ControlSource::mouse_button_right() const { return this->mouse_button_[1]; }
 bool ControlSource::key(DR16::Key key) const { return (this->keyboard_key_ & static_cast<u16>(key)); }
-} // namespace rm::device
+}  // namespace rm::device
