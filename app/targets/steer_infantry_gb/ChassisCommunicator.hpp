@@ -20,7 +20,8 @@ class ChassisCommunicator final : public CanDevice {
 
   void RxCallback(const hal::CanFrame *msg) override;
   void SendChassisCommand(f32 chassis_move_x, f32 chassis_move_y, u8 chassis_state, u8 ui_refresh_flag,
-                          u8 get_target_flag, u8 suggest_fire_flag, i8 aim_speed_change);
+                          u8 get_target_flag, u8 suggest_fire_flag, i8 aim_speed_change, u16 hp1, u16 hp2, u16 hp3,
+                          u16 hp4, u16 hp5);
 
  private:
   u16 heat_real_{};

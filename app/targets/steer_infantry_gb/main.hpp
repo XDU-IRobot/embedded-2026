@@ -48,6 +48,7 @@ inline struct GlobalWarehouse {
   rm::hal::Serial<128> *referee_uart{nullptr};                      ///< 裁判系统串口接口
   rm::hal::Serial<128> *ident_uart{nullptr};
   rm::device::RxReferee *rx_referee{nullptr};  ///< 裁判系统接口
+  rm::device::Referee<rm::device::RefereeRevision::kNewV120> *ref;
   rm::device::VT03 *image_data{nullptr};       ///< 裁判系统数据缓冲区
 
   // 设备 //
@@ -74,6 +75,7 @@ inline struct GlobalWarehouse {
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
 
+  u16 robot_hp[5]{};
   uint8_t time = 0;                   // 时间
   uint16_t init_time = 1000;          // 初始化时间
   uint16_t hurt_time = 0;             // 受伤小陀螺倒计时

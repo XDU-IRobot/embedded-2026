@@ -51,8 +51,9 @@ void GlobalWarehouse::Init() {
   dbus = new rm::hal::Serial<18>{huart3, false, true};
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
-  rx_referee = new rm::device::RxReferee{*referee_uart};
   image_data = new rm::device::VT03;
+  ref = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
+  rx_referee = new rm::device::RxReferee{*referee_uart, *image_data, *ref};
 
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   rc = new rm::device::DR16{*dbus};
@@ -321,12 +322,14 @@ void GlobalWarehouse::SubLoop500Hz() {
   } else {
     ammo_speed = 23.5f;
   }
+  memcpy(&robot_hp, globals->ref->data().robot_custom_data_3.data, 10);
   globals->aimbot_communicator->UpdateControl(
       globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch, globals->ahrs.euler_angle().roll,
       globals->chassis_communicator->robot_id() ? 103 : 3, globals->aim_mode, globals->imu_count, ammo_speed);
   globals->chassis_communicator->SendChassisCommand(
       globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,
-      globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change);
+      globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change, globals->robot_hp[0],
+      globals->robot_hp[1], globals->robot_hp[2], globals->robot_hp[3], globals->robot_hp[4]);
   globals->RCStateUpdate();
   globals->ChassisStateUpdate();
   gimbal->GimbalTask();
