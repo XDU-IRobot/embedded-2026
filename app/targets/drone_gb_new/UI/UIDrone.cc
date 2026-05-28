@@ -95,7 +95,31 @@ void drone_state_1_add() {
   UIGroup1.figure1.fillIntegrate("gim", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 300, 760, 20, 0);
   UIGroup1.figure2.fillIntegrate("fir", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 300, 730, 20, 0);
   UIGroup1.figure3.fillIntegrate("shr", UIFigure::Operation::Add, 0, UIFigure::Color::White, 5, 320, 700, 20, 0);
-  UIGroup1.figure4.fillRec("auto", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 0, 290, 765, 320, 735);
+  UIGroup1.figure4.fillRound("aut", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 3, 960, 540, 100);
+  const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
+  gimbal->referee_uart->Write(dataBox, dataLen);
+}
+
+void base_line_add_1() {
+  UIFigure7 UIGroup1;
+  UIGroup1.figure1.fillLine("ba1", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 1, 933, 522, 951, 468);
+  UIGroup1.figure2.fillLine("ba2", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 1, 983, 522, 962, 468);
+  UIGroup1.figure3.fillLine("li2", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 2, 933, 522, 983, 522);
+  UIGroup1.figure4.fillLine("li4", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 2, 941, 515, 968, 515);
+  UIGroup1.figure5.fillLine("li6", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 2, 945, 507, 963, 507);
+  UIGroup1.figure6.fillLine("li8", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 2, 947, 493, 961, 493);
+  UIGroup1.figure7.fillLine("l10", UIFigure::Operation::Add, 0, UIFigure::Color::Orange, 2, 951, 468, 962, 468);
+  const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
+  gimbal->referee_uart->Write(dataBox, dataLen);
+}
+
+void base_line_add_2() {
+  UIFigure7 UIGroup1;
+  UIGroup1.figure1.fillLine("bb1", UIFigure::Operation::Add, 0, UIFigure::Color::White, 3, 887, 209, 900, 13);
+  UIGroup1.figure2.fillLine("bb2", UIFigure::Operation::Add, 0, UIFigure::Color::White, 3, 1019, 209, 985, 13);
+  UIGroup1.figure3.fillLine("bl6", UIFigure::Operation::Add, 0, UIFigure::Color::White, 3, 887, 209, 1019, 209);
+  UIGroup1.figure4.fillLine("bl8", UIFigure::Operation::Add, 0, UIFigure::Color::White, 3, 890, 50, 1000, 50);
+  UIGroup1.figure5.fillLine("b10", UIFigure::Operation::Add, 0, UIFigure::Color::White, 3, 900, 13, 985, 13);
   const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
   gimbal->referee_uart->Write(dataBox, dataLen);
 }
@@ -109,9 +133,11 @@ void drone_state_1_edit() {
   UIGroup1.figure3.fillIntegrate("shr", UIFigure::Operation::Edit, 0, UIFigure::Color::White, 5, 320, 700, 20,
                                  gimbal->shootcnt);
   if (Aimbot.AimbotState == 4 || Aimbot.AimbotState == 2)
-    UIGroup1.figure4.fillRec("auto", UIFigure::Operation::Edit, 5, UIFigure::Color::Magenta, 5, 290, 765, 320, 735);
+    UIGroup1.figure4.fillRound("aut", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 3, 960, 540, 100);
   else
-    UIGroup1.figure4.fillRec("auto", UIFigure::Operation::Edit, 0, UIFigure::Color::Magenta, 0, 290, 765, 320, 735);
+    UIGroup1.figure4.fillRound("aut", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 3, 960, 540, 100);
+
+
   const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
   gimbal->referee_uart->Write(dataBox, dataLen);
 }

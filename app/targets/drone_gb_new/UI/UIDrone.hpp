@@ -10,5 +10,8 @@ extern void UIDroneHero_edit();
 extern void D2H_func();
 void drone_state_1_add();
 void drone_state_1_edit();
+void base_line_add_1();
+void base_line_add_2();
+
 
 #endif  // DRONEHERO_HPP

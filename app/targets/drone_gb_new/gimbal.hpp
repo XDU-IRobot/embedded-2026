@@ -47,6 +47,7 @@ class Gimbal {
   int yaw_max_limit = 5000;   // TODO 右限位
   float yaw_delta = 0.0f;     // rc增加总量
 
+  float dirl_speed_base=5000;
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
   float friction_speed = 6000;  // TODO 摩擦轮转速
@@ -282,7 +283,7 @@ class Gimbal {
         GimbalState_ = kAuto;
         break;
       case DR16::SwitchPosition::kMid:  // 中位按下鼠标右键跟随
-        if (control_rc->mouse_button_right() && (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4))
+        if (control_rc->mouse_button_right())
           GimbalState_ = kAuto;
         else
           GimbalState_ = kManual;
@@ -291,7 +292,7 @@ class Gimbal {
         GimbalState_ = kNoForce;
         break;
     }
-    if (!referee_data_buffer.data().robot_status.power_management_gimbal_output && !control_rc->key(DR16::Key::kG))
+    if (!referee_data_buffer.data().robot_status.power_management_gimbal_output)
       GimbalState_ = kNoForce;
   }
   void UpdateRcAngleDiff(float yaw_data, float pitch_data, float dt) {
@@ -410,9 +411,33 @@ class Gimbal {
         rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {
-        rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
-        rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
+        if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
+          rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
+          rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
+        }
+        else {
+          yaw_delta = 0.0f;
+          if (control_rc->key(rm::device::DR16::Key::kCtrl)) {
+            if (control_rc->key(rm::device::DR16::Key::kW)) rc_pitch_data += 0.0001f;
+            if (control_rc->key(rm::device::DR16::Key::kS)) rc_pitch_data -= 0.0001f;
+            if (control_rc->key(rm::device::DR16::Key::kA)) yaw_delta += 0.0001f;
+            if (control_rc->key(rm::device::DR16::Key::kD)) yaw_delta -= 0.0001f;
+          } else {
+            yaw_delta -= rm::modules::Map(control_rc->left_x(), -660, 660, -0.005f, 0.005f);      // dt7手控
+            yaw_delta -= rm::modules::Map(control_rc->mouse_x(), -660, 660, -0.03f, 0.03f);       // dt7备份控制
+            rc_pitch_data += rm::modules::Map(control_rc->left_y(), -660, 660, -0.005f, 0.005f);  // dt7手控
+            rc_pitch_data += rm::modules::Map(control_rc->mouse_y(), -660, 660, -0.03f, 0.03f);   // dt7备份控制
+          }
+          if (yaw_abs >= yaw_max_limit && yaw_delta < 0.0f) {  // 机械限位返回逻辑
+            yaw_delta = 0.0f;
+          }
+          if (yaw_abs <= yaw_min_limit && yaw_delta > 0.0f) {
+            yaw_delta = 0.0f;
+          }
 
+          rc_yaw_data = rm::modules::Wrap(rc_yaw_data + yaw_delta, -M_PI, M_PI);
+          rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
+        }
         // 滚转补偿
         auto roll_comp = ApplyRollComp(rc_yaw_data, rc_pitch_data);
         roll_comp_target[0] = roll_comp.first;   // yaw
@@ -445,6 +470,7 @@ class Gimbal {
     }
   }
   void AmmoControl() {
+    // HeatLimit();
     // 发射状态
     if (AmmoState_ == kFire) {
       shoot_controller.Enable(true);
@@ -541,6 +567,16 @@ class Gimbal {
       friction_left->SetCurrent(0);
       friction_right->SetCurrent(0);
       dial_motor->SetCurrent(0);
+    }
+  }
+  void HeatLimit() {
+    if (referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat!=0&&
+      referee_data_buffer.data().robot_status.shooter_barrel_heat_limit!=0) {
+      float percentage=referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat/referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
+      if (percentage>=1.0f)percentage=1.0f;
+
+      if (percentage>=0.4) dirl_speed=dirl_speed_base-(percentage-0.4)*5000;
+      else dirl_speed=dirl_speed_base;
     }
   }
   void ShootSpeedControl() {  // 弹速控制

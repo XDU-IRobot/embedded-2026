@@ -12,17 +12,26 @@ void ControlSource::act(DR16 &dr16_, VT03 &vt03_) {
 }
 void ControlSource::fact(const DR16 &dr16_) {
   memcpy(this->axes_, dr16_.axes_, sizeof(this->axes_));
-  memcpy(this->mouse_, dr16_.mouse_, sizeof(this->mouse_));
-  memcpy(this->mouse_button_, dr16_.mouse_button_, sizeof(this->mouse_button_));
-  memcpy(this->switches_, dr16_.switches_, sizeof(this->switches_));
+  this->axes_[0] = dr16_.right_x();
+  this->axes_[1] = dr16_.right_y();
+  this->axes_[2] = dr16_.left_x();
+  this->axes_[3] = dr16_.left_y();
+  this->axes_[4] = dr16_.dial();
+  this->mouse_[0] = dr16_.mouse_x();
+  this->mouse_[1] = dr16_.mouse_y();
+  this->mouse_[2] = dr16_.mouse_z();
+  this->mouse_button_[0] = dr16_.mouse_button_left();
+  this->mouse_button_[1] = dr16_.mouse_button_right();
+  this->switches_[0] = dr16_.switch_r();
+  this->switches_[1] = dr16_.switch_l();
   this->keyboard_key_ = dr16_.keyboard_key_;
 }
 void ControlSource::fact(const VT03 &vt03_) {
   memset(this->axes_, 0, sizeof(this->axes_));
-  this->axes_[0] = vt03_.data().right_x * 660;
-  this->axes_[1] = vt03_.data().right_y * 660;
-  this->axes_[2] = vt03_.data().left_x * 660;
-  this->axes_[3] = vt03_.data().left_y * 660;
+  this->axes_[0] = vt03_.data().right_y * 660;
+  this->axes_[1] = vt03_.data().right_x * 660;
+  this->axes_[2] = vt03_.data().left_y * 660;
+  this->axes_[3] = vt03_.data().left_x * 660;
   this->axes_[4] = vt03_.data().dial * 660;
   this->mouse_[0] = vt03_.data().mouse_x;
   this->mouse_[1] = vt03_.data().mouse_y;
