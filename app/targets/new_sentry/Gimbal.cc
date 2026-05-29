@@ -654,7 +654,7 @@ void Gimbal::ShootEnableUpdate() {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     if (heat_limit_ - heat_current_ > 120) {
       globals->shoot_controller.SetShootFrequency(20.0f);
-    } else if (heat_limit_ - heat_current_ < 20) {
+    } else if (heat_limit_ - heat_current_ < 40) {
       globals->shoot_controller.SetShootFrequency(0.0f);
     } else {
       globals->shoot_controller.SetShootFrequency(static_cast<f32>(heat_limit_ - heat_current_) / 6.0f);
