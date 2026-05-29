@@ -37,8 +37,7 @@ void UIInfantryAdd2() {
 }
 void UIInfantryAdd3() {
   UICharacter UITextHeader;
-  UITextHeader.character.fillCharacter("aim", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 160, 720, 25,
-                                        21);
+  UITextHeader.character.fillCharacter("aim", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 160, 720, 25, 21);
   memcpy(UITextHeader.data, "GETTARGET\nSUGGESTFIRE", 21);
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UITextHeader, robotID, robotID + 256);
   globals->referee_uart->Write(globals->dataBox, dataLen, 500);
@@ -46,7 +45,7 @@ void UIInfantryAdd3() {
 void UIInfantryAdd4() {
   UICharacter UITextHeader;
   UITextHeader.character.fillCharacter("mod", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 1500, 720, 25,
-                                        17);
+                                       17);
   memcpy(UITextHeader.data, "F R N U D X\nH N S", 17);
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UITextHeader, robotID, robotID + 256);
   globals->referee_uart->Write(globals->dataBox, dataLen, 500);

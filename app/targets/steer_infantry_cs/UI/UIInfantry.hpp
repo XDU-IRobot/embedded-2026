@@ -11,4 +11,4 @@ extern void UIInfantryAdd3();
 extern void UIInfantryAdd4();
 extern void UIInfantryEdit();
 
-#endif //DRONEHERO_HPP
+#endif  // DRONEHERO_HPP

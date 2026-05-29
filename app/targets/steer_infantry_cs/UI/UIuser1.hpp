@@ -19,4 +19,4 @@ extern void UITextHeaderHPBlue_edit();
 extern void UITextHeaderAllowBlue_add();
 extern void UITextHeaderAllowBlue_edit();
 
-#endif //UIUSER1_HPP
+#endif  // UIUSER1_HPP

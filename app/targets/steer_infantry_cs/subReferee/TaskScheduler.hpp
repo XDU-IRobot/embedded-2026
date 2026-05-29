@@ -13,37 +13,43 @@ class UITask {
   float acc_{0.0f};
   bool is_scheduled_{false};
 
-public:
+ public:
   UITask() = delete;
 
-  explicit UITask(void (*func)(), const float freq = 0.0f): func_(func), freq_(freq) {
-  };
+  explicit UITask(void (*func)(), const float freq = 0.0f) : func_(func), freq_(freq) {};
   friend class UITaskScheduler;
 };
 
 // warning : 作为UI而言，freq必须小于等于30hz，注意只有30个任务。
 class UITaskScheduler {
-  float freq_{0}; // 严格与这个管理器调用频率一致
+  float freq_{0};  // 严格与这个管理器调用频率一致
   etl::vector<UITask *, 30> tasks_;
   etl::vector<UITask *, 30> tasks_static_;
 
-public:
+ public:
   UITaskScheduler() = delete;
 
-  explicit UITaskScheduler(const float freq): freq_(freq) {
-  };
+  explicit UITaskScheduler(const float freq) : freq_(freq) {};
 
   bool addTask(UITask *task) {
-    if (task->is_scheduled_ == true || task->freq_ <= 0) { return false; }
-    if (tasks_.available() <= 0) { return false; }
+    if (task->is_scheduled_ == true || task->freq_ <= 0) {
+      return false;
+    }
+    if (tasks_.available() <= 0) {
+      return false;
+    }
     tasks_.push_back(task);
     task->is_scheduled_ = true;
     return true;
   }
 
   bool addTaskStatic(UITask *task) {
-    if (task->is_scheduled_ == true || task->freq_ > 0) { return false; }
-    if (tasks_static_.available() <= 0) { return false; }
+    if (task->is_scheduled_ == true || task->freq_ > 0) {
+      return false;
+    }
+    if (tasks_static_.available() <= 0) {
+      return false;
+    }
     tasks_static_.push_back(task);
     task->is_scheduled_ = true;
     return true;
@@ -101,6 +107,6 @@ public:
     }
   }
 };
-}
+}  // namespace rm::device
 
-#endif //TASKSCHEDULER_HPP
+#endif  // TASKSCHEDULER_HPP
