@@ -45,7 +45,7 @@ void GlobalWarehouse::Init() {
 
   can1 = new rm::hal::Can{hcan1};
   can2 = new rm::hal::Can{hcan2};
-  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can1};
+  aimbot_communicator = new rm::device::AimbotCanCommunicator{*can2};
   chassis_communicator = new rm::device::ChassisCommunicator{*can1};
   super_cap = new rm::device::GkSupercap{*can1};
   dbus = new rm::hal::Serial<18>{huart3, false, true};
@@ -93,7 +93,7 @@ void GlobalWarehouse::Init() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化PID
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
+  gimbal_controller.pid().yaw_position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(12000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().yaw_speed.SetKp(580.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0.0f);
   // pitch PID 参数
   gimbal_controller.pid().pitch_position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
@@ -311,6 +311,7 @@ void GlobalWarehouse::Music() {
 }
 
 void GlobalWarehouse::SubLoop500Hz() {
+  globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
   globals->imu->Update();
   globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
                                                 globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
@@ -326,14 +327,13 @@ void GlobalWarehouse::SubLoop500Hz() {
   globals->aimbot_communicator->UpdateControl(
       globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch, globals->ahrs.euler_angle().roll,
       globals->chassis_communicator->robot_id() ? 103 : 3, globals->aim_mode, globals->imu_count, ammo_speed);
+  globals->RCStateUpdate();
+  globals->ChassisStateUpdate();
   globals->chassis_communicator->SendChassisCommand(
       globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,
       globals->get_target_flag, globals->suggest_fire_flag, globals->aim_speed_change, globals->robot_hp[0],
       globals->robot_hp[1], globals->robot_hp[2], globals->robot_hp[3], globals->robot_hp[4]);
-  globals->RCStateUpdate();
-  globals->ChassisStateUpdate();
   gimbal->GimbalTask();
-  globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
 }

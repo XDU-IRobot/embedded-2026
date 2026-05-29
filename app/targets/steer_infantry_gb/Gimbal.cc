@@ -198,6 +198,10 @@ void Gimbal::GimbalAimbotTargetUpdate() {
                                                                        : globals->rc->mouse_button_right()))) {
     gimbal->gimbal_yaw_target_ = globals->aimbot_communicator->yaw();
     gimbal->gimbal_pitch_target_ = globals->aimbot_communicator->pitch();
+    gimbal->gimbal_yaw_target_ =
+    rm::modules::Wrap(gimbal->gimbal_yaw_target_, -static_cast<f32>(M_PI), M_PI);  // yaw轴限位
+    gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,    // pitch轴限位
+                                                      gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
     // 自瞄模式：直接使用 NUC 下发的目标速度/加速度
     yaw_speed_ref = globals->aimbot_communicator->yaw_vel();
     pitch_speed_ref = globals->aimbot_communicator->pitch_vel();
@@ -206,10 +210,6 @@ void Gimbal::GimbalAimbotTargetUpdate() {
   } else {
     gimbal->GimbalRCTargetUpdate();
   }
-  gimbal->gimbal_yaw_target_ =
-      rm::modules::Wrap(gimbal->gimbal_yaw_target_, -static_cast<f32>(M_PI), M_PI);  // yaw轴限位
-  gimbal->gimbal_pitch_target_ = rm::modules::Clamp(gimbal->gimbal_pitch_target_,    // pitch轴限位
-                                                    gimbal->lowest_pitch_angle_, gimbal->highest_pitch_angle_);
 }
 
 void Gimbal::GimbalMovePIDUpdate() {
