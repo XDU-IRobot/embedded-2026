@@ -37,7 +37,7 @@ class Gimbal {
   bool DM_is_enable = false;  // 达秒使能标志位
 
   float pitch_min_pos = -0.80f;  // pitch电机最小限位
-  float pitch_max_pos = 0.20f;   // pitch电机最大限位
+  float pitch_max_pos = 0.15f;   // pitch电机最大限位
 
   // 机械限位
   int yaw_center_encoder = 6870;  // TODO云台机械中位对应的编码器角度
@@ -386,7 +386,7 @@ class Gimbal {
             drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
                                rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
         yaw_tau2voltage = tau_ff.x() * 2530.0f + rc_yaw_vel * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
-        yaw_tau2voltage = 0;
+        // yaw_tau2voltage = 0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
         gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
@@ -445,7 +445,7 @@ class Gimbal {
                                     -0.45 - pitch_motor->pos(), Aimbot.YawSpeed, Aimbot.PitchSpeed, Aimbot.YawAngSpeed,
                                     Aimbot.PitchAngSpeed, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
         yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
-        yaw_tau2voltage = 0;
+        // yaw_tau2voltage = 0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
         gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
@@ -466,7 +466,6 @@ class Gimbal {
     }
   }
   void AmmoControl() {
-    // HeatLimit();
     // 发射状态
     if (AmmoState_ == kFire) {
       shoot_controller.Enable(true);
@@ -568,12 +567,11 @@ class Gimbal {
   void HeatLimit() {
     if (referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat != 0 &&
         referee_data_buffer.data().robot_status.shooter_barrel_heat_limit != 0) {
-      float percentage = referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat /
-                         referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
+      float percentage = (float)referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat /
+                         (float)referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
       if (percentage >= 1.0f) percentage = 1.0f;
-
-      if (percentage >= 0.4)
-        dirl_speed = dirl_speed_base - (percentage - 0.4) * 5000;
+      if (percentage >= 0.6)
+        dirl_speed = dirl_speed_base - (percentage - 0.6) * 5000;
       else
         dirl_speed = dirl_speed_base;
     }
@@ -746,6 +744,7 @@ class Gimbal {
   }
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {
+      HeatLimit();
       ShootSpeedControl();  // 弹速手动控制
       FreemasterDebug();    // 调试更新
     }

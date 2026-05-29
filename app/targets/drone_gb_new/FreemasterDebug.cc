@@ -93,6 +93,9 @@ int Ayaw_encoder = 0;
 float Adirl_speed;
 int Ayaw_abs;
 int Ashootcnt;
+
+float AheatLimt = 0;
+float Aheatnow = 0;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_abs = gimbal->yaw_abs;
@@ -174,4 +177,7 @@ void FreemasterDebug() {
 
   Alenposition = gimbal->lens_motor->encoder();
   Alens_direction = gimbal->lens_direction_;
+
+  AheatLimt = gimbal->referee_data_buffer.data().robot_status.shooter_barrel_heat_limit;
+  Aheatnow = gimbal->referee_data_buffer.data().power_heat_data.shooter_17mm_1_barrel_heat;
 }
