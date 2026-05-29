@@ -447,17 +447,22 @@ void Gimbal::GimbalPIDUpdate() {
     globals->gimbal_controller.pid().up_yaw_position.SetKp(300.0f).SetKd(800.0f);
     globals->gimbal_controller.pid().pitch_position.SetKp(120.0f).SetKd(5000.0f);
   } else {
-    // } else if (globals->aimbot_communicator->yaw_vel() == 0 && globals->aimbot_communicator->yaw_acc() == 0 &&
-    //            globals->aimbot_communicator->pitch_vel() == 0 && globals->aimbot_communicator->pitch_acc() == 0 &&
-    //            (globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 || gimbal->aimbot_time_ > 0)) {
-    //   globals->gimbal_controller.EnableSpeedPid(true);
-///9
-    // } else {
-    //   globals->gimbal_controller.EnableSpeedPid(true);
-    //   globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(120.0f);
-    //   globals->gimbal_controller.pid().up_yaw_speed.SetKp(7000.0f).SetKd(0.0f);
-    //   globals->gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKd(0.0f);
-    //   globals->gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKd(0.0f);
+    if (globals->aim_mode == 0x01) {
+      globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(120.0f);
+      globals->gimbal_controller.pid().up_yaw_speed.SetKp(7000.0f).SetKd(0.0f);
+      globals->gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKd(0.0f);
+      globals->gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKd(0.0f);
+    } else if (globals->aim_mode == 0x02 || globals->aim_mode == 0x03) {
+      globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(120.0f);
+      globals->gimbal_controller.pid().up_yaw_speed.SetKp(7000.0f).SetKd(0.0f);
+      globals->gimbal_controller.pid().pitch_position.SetKp(70.0f).SetKd(0.0f);
+      globals->gimbal_controller.pid().pitch_speed.SetKp(0.6f).SetKd(0.0f);
+    } else if (globals->aim_mode == 0x04) {
+      globals->gimbal_controller.pid().up_yaw_position.SetKp(20.0f).SetKd(120.0f);
+      globals->gimbal_controller.pid().up_yaw_speed.SetKp(7000.0f).SetKd(0.0f);
+      globals->gimbal_controller.pid().pitch_position.SetKp(120.0f).SetKd(0.0f);
+      globals->gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKd(0.0f);
+    }
   }
 }
 
@@ -514,7 +519,7 @@ void Gimbal::GimbalMatchUpdate() {
 
 void Gimbal::GimbalEnableUpdate() {
   globals->gimbal_controller.Enable(true);
-  // gimbal->GimbalPIDUpdate();
+  gimbal->GimbalPIDUpdate();
   if (gimbal->GimbalMove_ == kGbRemote) {
     gimbal->GimbalRCTargetUpdate();
     gimbal->GimbalMovePIDUpdate();
