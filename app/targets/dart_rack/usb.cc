@@ -3,7 +3,7 @@
 
 uint8_t x[50];
 
-volatile uint32_t g_usb_rx_count = 0;
+volatile uint32_t g_usb_rx_count ;
 volatile uint32_t g_usb_rx_matched = 0;
 uint8_t g_vision_id = 0;
 volatile float g_vision_pitch = 0.0f;
