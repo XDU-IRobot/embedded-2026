@@ -107,7 +107,7 @@ void FreemasterDebug() {
   Apitch_torque_ = gimbal->pitch_torque;  // 前馈补偿
   Ayaw_torque_ = gimbal->yaw_torque;      // 前馈补偿
 
-  Ashootcnt=gimbal->shootcnt;
+  Ashootcnt = gimbal->shootcnt;
   Aoutput_yaw = gimbal->gimbal_controller.output().yaw;
   Aoutput_pitch = gimbal->gimbal_controller.output().pitch;
   Apitch_cmd = gimbal->pitch_cmd;
