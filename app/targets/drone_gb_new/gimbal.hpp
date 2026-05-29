@@ -53,8 +53,6 @@ class Gimbal {
   float friction_speed = 6000;  // TODO 摩擦轮转速
   float shootstep = 100;        // TODO 手动调速步长
   int shootcnt = 0;             // 步长计数
-  int shoottime = 50;          // TODO 弹速控制间隔
-  int shoottime_ = shoottime;
 
   float spaver[10] = {0.0f};  // 弹速平均数组
 
@@ -581,20 +579,23 @@ class Gimbal {
     }
   }
  void ShootSpeedControl() {  // 弹速控制
-    if (shoottime_>0)shoottime_--;
-    else {
-      if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kX)) {
-        friction_speed -= shootstep;
-        shootcnt -= 1;
-      } else if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kC)) {
-        friction_speed += shootstep;
-        shootcnt += 1;
-      } else if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kZ)) {
-        friction_speed = 6500;
-        shootcnt = 0;
-      }
-      shoottime_ = shoottime;
+    // static bool last_key_ctrl;
+    static bool last_key_x{false};
+    static bool last_key_c{false};
+    static bool last_key_z{false};
+    if (!control_rc->key(DR16::Key::kCtrl) && !last_key_x && control_rc->key(DR16::Key::kX)) {
+      friction_speed -= shootstep;
+      shootcnt -= 1;
+    } else if (!control_rc->key(DR16::Key::kCtrl) && !last_key_c && control_rc->key(DR16::Key::kC)) {
+      friction_speed += shootstep;
+      shootcnt += 1;
+    } else if (!control_rc->key(DR16::Key::kCtrl) && !last_key_z && control_rc->key(DR16::Key::kZ)) {
+      friction_speed = 6500;
+      shootcnt = 0;
     }
+    last_key_x = control_rc->key(DR16::Key::kX);
+    last_key_c = control_rc->key(DR16::Key::kC);
+    last_key_z = control_rc->key(DR16::Key::kZ);
   }
   float SpeedAver() {
     float new_speed = referee_data_buffer.data().shoot_data.initial_speed;
@@ -666,12 +667,12 @@ class Gimbal {
       // 前进后退
       if (!control_rc->key(rm::device::DR16::Key::kCtrl) && !control_rc->key(rm::device::DR16::Key::kShift) &&
           control_rc->key(rm::device::DR16::Key::kW) && !control_rc->key(rm::device::DR16::Key::kS))
-        Set_LED(1, 0, 255, 0);
+        Set_LED(1, 0, 0, 255);
       else if (!control_rc->key(rm::device::DR16::Key::kCtrl) && !control_rc->key(rm::device::DR16::Key::kShift) &&
                !control_rc->key(rm::device::DR16::Key::kW) && control_rc->key(rm::device::DR16::Key::kS))
         Set_LED(1, 255, 0, 0);
       else
-        Set_LED(1, 255, 255, 0);
+        Set_LED(1, 0, 0, 0);
 
       // 左右or偏航
       if (!control_rc->key(rm::device::DR16::Key::kCtrl) && !control_rc->key(rm::device::DR16::Key::kShift) &&
@@ -703,12 +704,12 @@ class Gimbal {
       // 上升
       if (!control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kShift) &&
           control_rc->key(rm::device::DR16::Key::kW) && !control_rc->key(rm::device::DR16::Key::kS))
-        Set_LED(3, 0, 255, 0);
+        Set_LED(3, 0, 0, 255);
       else if (!control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kShift) &&
                !control_rc->key(rm::device::DR16::Key::kW) && control_rc->key(rm::device::DR16::Key::kS))
         Set_LED(3, 255, 0, 0);
       else
-        Set_LED(3, 255, 255, 0);
+        Set_LED(3, 0, 0, 0);
     }
     Set_Brightness(25);
     WS2812_Send();
