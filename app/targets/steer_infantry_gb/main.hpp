@@ -40,7 +40,7 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};  ///< CAN 总线接口
+  rm::hal::Can *can1{nullptr}, *can2{nullptr};                      ///< CAN 总线接口
   rm::hal::Serial<18> *dbus{nullptr};                               ///< 遥控器串口接口
   rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};  ///< CAN 通信器
   rm::device::ChassisCommunicator *chassis_communicator{nullptr};   ///< CAN 通信器
@@ -49,7 +49,7 @@ inline struct GlobalWarehouse {
   rm::hal::Serial<128> *ident_uart{nullptr};
   rm::device::RxReferee *rx_referee{nullptr};  ///< 裁判系统接口
   rm::device::Referee<rm::device::RefereeRevision::kNewV120> *ref;
-  rm::device::VT03 *image_data{nullptr};       ///< 裁判系统数据缓冲区
+  rm::device::VT03 *image_data{nullptr};  ///< 裁判系统数据缓冲区
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
