@@ -44,7 +44,7 @@ class Gimbal {
   int yaw_encoder_last = 0;
   int yaw_abs = 0;
   int yaw_min_limit = -2000;  // TODO 左限位
-  int yaw_max_limit = 5000;   // TODO 右限位
+  int yaw_max_limit = 4300;   // TODO 右限位
   float yaw_delta = 0.0f;     // rc增加总量
 
   float dirl_speed_base = 5000;
@@ -53,7 +53,7 @@ class Gimbal {
   float friction_speed = 6000;  // TODO 摩擦轮转速
   float shootstep = 100;        // TODO 手动调速步长
   int shootcnt = 0;             // 步长计数
-  int shoottime = 150;          // TODO 弹速控制间隔
+  int shoottime = 50;          // TODO 弹速控制间隔
   int shoottime_ = shoottime;
 
   float spaver[10] = {0.0f};  // 弹速平均数组
@@ -309,11 +309,11 @@ class Gimbal {
     gimbal_controller.pid()
         .yaw_position.SetKp(80.0f)
         .SetKi(0.0f)
-        .SetKd(10000.0f)
+        .SetKd(6000.0f)
         .SetMaxOut(10000.0f)
         .SetMaxIout(1000.0f)
         .SetDiffLpfAlpha(0.1);
-    gimbal_controller.pid().yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+        gimbal_controller.pid().yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // pitch
     gimbal_controller.pid()
         .pitch_position.SetKp(30.0f)
@@ -388,7 +388,7 @@ class Gimbal {
             drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
                                rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
         yaw_tau2voltage = tau_ff.x() * 2530.0f + rc_yaw_vel * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
-
+        yaw_tau2voltage=0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
         gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
@@ -447,7 +447,7 @@ class Gimbal {
                                     -0.45 - pitch_motor->pos(), Aimbot.YawSpeed, Aimbot.PitchSpeed, Aimbot.YawAngSpeed,
                                     Aimbot.PitchAngSpeed, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
         yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
-
+        yaw_tau2voltage=0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
         gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
@@ -580,9 +580,9 @@ class Gimbal {
         dirl_speed = dirl_speed_base;
     }
   }
-  void ShootSpeedControl() {  // 弹速控制
-    shoottime_--;
-    if (shoottime_ < 0) {
+ void ShootSpeedControl() {  // 弹速控制
+    if (shoottime_>0)shoottime_--;
+    else {
       if (control_rc->key(rm::device::DR16::Key::kCtrl) && control_rc->key(rm::device::DR16::Key::kX)) {
         friction_speed -= shootstep;
         shootcnt -= 1;

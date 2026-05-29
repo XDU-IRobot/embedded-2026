@@ -92,6 +92,7 @@ int Ayaw_encoder_max = 0;
 int Ayaw_encoder = 0;
 float Adirl_speed;
 int Ayaw_abs;
+int Ashootcnt;
 // 调试接口函数
 void FreemasterDebug() {
   Ayaw_abs = gimbal->yaw_abs;
@@ -106,6 +107,7 @@ void FreemasterDebug() {
   Apitch_torque_ = gimbal->pitch_torque;  // 前馈补偿
   Ayaw_torque_ = gimbal->yaw_torque;      // 前馈补偿
 
+  Ashootcnt=gimbal->shootcnt;
   Aoutput_yaw = gimbal->gimbal_controller.output().yaw;
   Aoutput_pitch = gimbal->gimbal_controller.output().pitch;
   Apitch_cmd = gimbal->pitch_cmd;
