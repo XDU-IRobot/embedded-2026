@@ -409,10 +409,9 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {
         if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
-          if (Aimbot.AutoFire) {//坏方向偏置
-            rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle+0.035, -M_PI, M_PI);
-          }
-          else {//正常方向不加偏置
+          if (Aimbot.AutoFire) {  // 坏方向偏置
+            rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle + 0.035, -M_PI, M_PI);
+          } else {  // 正常方向不加偏置
             rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
           }
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
