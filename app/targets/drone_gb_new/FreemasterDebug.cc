@@ -70,6 +70,8 @@ float Ayawoutd;
 float Ayawschoutp;
 float Ayawsouti;
 float Ayawsoutd;
+float Ayawcmd = 0.0f;
+float Ayawff = 0.0f;
 // 望远镜电机反馈值
 float Alenposition = 0.0f;
 bool Alens_direction = true;
@@ -114,6 +116,8 @@ void FreemasterDebug() {
   Aoutput_yaw = gimbal->gimbal_controller.output().yaw;
   Aoutput_pitch = gimbal->gimbal_controller.output().pitch;
   Apitch_cmd = gimbal->pitch_cmd;
+  Ayawcmd = -gimbal->gimbal_controller.output().yaw - gimbal->yaw_tau2voltage;
+  Ayawff = gimbal->yaw_tau2voltage;
 
   Apitch_speed_tf = gimbal->pitch_speed_tf;  // 摩擦阻力补偿
 

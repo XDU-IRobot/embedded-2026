@@ -94,4 +94,15 @@ class Gimbal2DofDynamics {
       0.139970f,   // theta_8 (fv2) - Pitch 粘性摩擦
       0.087182f    // theta_9 (fc2) - Pitch 库仑摩擦
   };
+//   const Eigen::Matrix<float, 9, 1> THETA{
+//     0.010791f,  // theta_1 (I1zz_com)
+//     0.028639f,  // theta_2 (I2xx_com)
+//     0.029814f,  // theta_3 (I2yy_com)
+//    -0.060337f,  // theta_4 (m2*l2x 水平偏心)
+//    -0.095360f,  // theta_5 (m2*l2z 垂直偏心)
+//     0.026611f,  // theta_6 (fv1) - Yaw 粘性摩擦
+//     0.002278f,  // theta_7 (fc1) - Yaw 库仑摩擦
+//     0.195730f,  // theta_8 (fv2) - Pitch 粘性摩擦
+//     0.042307f   // theta_9 (fc2) - Pitch 库仑摩擦
+// };
 };

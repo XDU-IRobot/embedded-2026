@@ -305,13 +305,13 @@ class Gimbal {
   void GimbalPIDInit() {
     // yaw
     gimbal_controller.pid()
-        .yaw_position.SetKp(80.0f)
+        .yaw_position.SetKp(50.0f)
         .SetKi(0.0f)
         .SetKd(6000.0f)
         .SetMaxOut(10000.0f)
         .SetMaxIout(1000.0f)
         .SetDiffLpfAlpha(0.1);
-    gimbal_controller.pid().yaw_speed.SetKp(500.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
+    gimbal_controller.pid().yaw_speed.SetKp(350.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);
     // pitch
     gimbal_controller.pid()
         .pitch_position.SetKp(30.0f)
@@ -409,7 +409,12 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {
         if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
-          rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
+          if (Aimbot.AutoFire) {//坏方向偏置
+            rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle+0.035, -M_PI, M_PI);
+          }
+          else {//正常方向不加偏置
+            rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
+          }
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
         } else {
           yaw_delta = 0.0f;
