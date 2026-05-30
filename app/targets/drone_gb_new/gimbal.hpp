@@ -109,7 +109,7 @@ class Gimbal {
   float Len_buffer[5] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};  // 堵转编码器buffer
   bool lens_direction_ = true;                           // 镜头旋转方向: true=正向, false=反向
 
-  float AimDistance = 0.0f;//自瞄预测距离
+  float AimDistance = 0.0f;  // 自瞄预测距离
 
   int led_blink_time = 0;  // LED闪烁计时器
 
@@ -307,13 +307,15 @@ class Gimbal {
   void GimbalPIDInit() {
     // yaw
     gimbal_controller.pid()
-        .yaw_position.SetKp(70.0f)   // 50
+        .yaw_position
+        .SetKp(70.0f)  // 50
         .SetKi(0.0f)
         .SetKd(6000.0f)
         .SetMaxOut(10000.0f)
         .SetMaxIout(1000.0f)
         .SetDiffLpfAlpha(0.1);
-    gimbal_controller.pid().yaw_speed.SetKp(370.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(1000.0f);    //350  0   0
+    gimbal_controller.pid().yaw_speed.SetKp(370.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(
+        1000.0f);  // 350  0   0
     // pitch
     gimbal_controller.pid()
         .pitch_position.SetKp(30.0f)
@@ -356,7 +358,7 @@ class Gimbal {
 
         if (pitch_motor->status() >= 0x08) {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        }else {
+        } else {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
           DM_is_enable = true;
         }
@@ -408,17 +410,17 @@ class Gimbal {
     } else if (GimbalState_ == kAuto) {
       // 自瞄模式控制
       if (DM_is_enable == false) {  // 使达妙电机使能
-      //   if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable)) {
-      //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-      //     DM_is_enable = true;
-      //   }
-      //   else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
-      //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-      //   else
-      //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+        //   if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable)) {
+        //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+        //     DM_is_enable = true;
+        //   }
+        //   else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
+        //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+        //   else
+        //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
         if (pitch_motor->status() >= 0x08) {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        }else {
+        } else {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
           DM_is_enable = true;
         }
@@ -429,10 +431,9 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {
         if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
-          if (Aimbot.AutoFire) {//坏方向偏置
+          if (Aimbot.AutoFire) {  // 坏方向偏置
             rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle + 0.035, -M_PI, M_PI);
-          }
-          else {//正常方向不加偏置
+          } else {  // 正常方向不加偏置
             rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
           }
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
@@ -487,7 +488,7 @@ class Gimbal {
         //   pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         if (pitch_motor->status() >= 0x08) {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        }else {
+        } else {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
           DM_is_enable = false;
         }
