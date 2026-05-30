@@ -225,16 +225,15 @@ void DartStateManualUpdate() {
       prev_launch_status = cur_launch_status;
 
       // 屏蔽第四发
-
       if (dart_rack->dart_count_ == DartCount::kFourth) {
         return;
       }
 
       if (dart_rack->dart_count_ == DartCount::kThird) {
-        if (current_fire_count == 0 || current_fire_count == 1) {
+        if (current_fire_count == 0 ) {
           return;
         }
-        if (current_fire_count == 2 && open_lauch_state == false) {
+        if (current_fire_count == 1 && open_lauch_state == false) {
           return;
         }
       }
@@ -571,7 +570,7 @@ void DartStateLoadUpdate() {
       dart_rack->trigger_motor_force_->SetCurrent(0);
       dart_rack->trigger_motor_force_pid_.Clear();
       trigger_cnt++;
-      if (trigger_cnt > 100) {
+      if (trigger_cnt > 80) {
         watch_status = 5;
         dart_rack->state_.manual_mode.is_trigger_relock_done = true;
         first_stall_reached = false;
@@ -1035,8 +1034,10 @@ void DartStateAimUpdate() {
     invalid_lock_cnt = 0;
   }
   constexpr float tolerance = 5.0f;
-  constexpr float PerWidth[4] = {-20.0f, -20.0f, -20.0f, -20.0f};
-  constexpr int32_t PerHeight[4] = {-2500000, -2500000, -2500000, -2500000};
+  //向右perwidth是负 向左perwidth是正
+  //perheight 只能给负值 绝对值越大越低 反之越高
+  constexpr float PerWidth[4] = {0.0f, 0.0f, 0.0f, 0.0f}; //yaw
+  constexpr int32_t PerHeight[4] = {-500000, -500000, -500000, -500000}; //pitch
   // 以下为正常推进逻辑（复位完成后或第一发时执行）
 
   if (!yaw_approach_suspended) {
