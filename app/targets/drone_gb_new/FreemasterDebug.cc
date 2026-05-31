@@ -64,12 +64,19 @@ float Aimu_pitch = 0.0f;
 float Aimu_yaw = 0.0f;
 float Aimu_roll = 0.0f;
 
-float Ayawchoutp;
+float Ayawoutp;
 float Ayawouti;
 float Ayawoutd;
-float Ayawschoutp;
+float Ayawout;
+float Ayawsoutp;
 float Ayawsouti;
 float Ayawsoutd;
+float Ayawsout;
+float Ayawssoutp;
+float Ayawssouti;
+float Ayawssoutd;
+float Ayawssout;
+
 float Ayawcmd = 0.0f;
 float Ayawff = 0.0f;
 // 望远镜电机反馈值
@@ -83,7 +90,7 @@ uint8_t Aid = 0;
 // error
 float Aerror = 0;
 // 前馈yaw输出值
-float Ayawout = 0.0f;
+// float Ayawout = 0.0f;
 // 发弹延迟
 float Afire_delay_avg = 0.0f;
 int Afire_delay_samples = 0;
@@ -116,7 +123,7 @@ void FreemasterDebug() {
   Aoutput_yaw = gimbal->gimbal_controller.output().yaw;
   Aoutput_pitch = gimbal->gimbal_controller.output().pitch;
   Apitch_cmd = gimbal->pitch_cmd;
-  Ayawcmd = -gimbal->gimbal_controller.output().yaw - gimbal->yaw_tau2voltage;
+  Ayawcmd = gimbal->gimbal_controller.output().yaw + gimbal->yaw_tau2voltage;
   Ayawff = gimbal->yaw_tau2voltage;
 
   Apitch_speed_tf = gimbal->pitch_speed_tf;  // 摩擦阻力补偿
@@ -149,13 +156,20 @@ void FreemasterDebug() {
   Apitchsouti = gimbal->gimbal_controller.pid().pitch_speed.i_out();
   Apitchsoutd = *(gimbal->gimbal_controller.pid().pitch_speed.d_out());
 
-  Ayawchoutp = gimbal->gimbal_controller.pid().yaw_position.p_out();
+  Ayawoutp = gimbal->gimbal_controller.pid().yaw_position.p_out();
   Ayawouti = gimbal->gimbal_controller.pid().yaw_position.i_out();
   Ayawoutd = *(gimbal->gimbal_controller.pid().yaw_position.d_out());
+  Ayawout=gimbal->gimbal_controller.pid().yaw_position.out();
 
-  Ayawschoutp = gimbal->gimbal_controller.pid().yaw_speed.p_out();
+  Ayawsoutp = gimbal->gimbal_controller.pid().yaw_speed.p_out();
   Ayawsouti = gimbal->gimbal_controller.pid().yaw_speed.i_out();
   Ayawsoutd = *(gimbal->gimbal_controller.pid().yaw_speed.d_out());
+  Ayawsout=gimbal->gimbal_controller.pid().yaw_speed.out();
+
+  Ayawssoutp=gimbal->gimbal_controller.pid().yaw_current.p_out();
+  Ayawssouti=gimbal->gimbal_controller.pid().yaw_current.i_out();
+  Ayawssoutd=*gimbal->gimbal_controller.pid().yaw_current.d_out();
+  Ayawssout=gimbal->gimbal_controller.pid().yaw_current.out();
 
   Acan1tx = gimbal->can1->stats().tx_fps;
   Acan1drop = gimbal->can1->stats().drop_total_fps;
@@ -171,7 +185,7 @@ void FreemasterDebug() {
   Aimu_yaw = gimbal->imu_new->yaw();
   Aimu_roll = -gimbal->imu_new->roll();
 
-  Ayawout = gimbal->yaw_torque;
+  // Ayawout = gimbal->yaw_torque;
 
   Afire_delay_avg = gimbal->delay_avg_ms_;
   Afire_delay_samples = gimbal->delay_sample_count_;

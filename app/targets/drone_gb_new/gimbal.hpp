@@ -232,6 +232,9 @@ class Gimbal {
     AmmoPIDInit();
 
     gimbal_controller.Enable(false);  // 云台控制器
+    gimbal_controller.EnableSpeedPid(true);         // 两轴都开启速度环（和以前一样）
+    gimbal_controller.EnableYawCurrentPid(true);    // 仅 yaw 再串上电流环
+
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     rc_yaw_diff.SetFilter(0.35, 0.20);  // 前馈微分项滤波
     rc_pitch_diff.SetFilter(0.35, 0.20);
@@ -308,14 +311,26 @@ class Gimbal {
     // yaw
     gimbal_controller.pid()
         .yaw_position
-        .SetKp(70.0f)  // 50
+        .SetKp(16.0f)
         .SetKi(0.0f)
-        .SetKd(6000.0f)
-        .SetMaxOut(10000.0f)
+        .SetKd(3.0f)
+        .SetMaxOut(3000.0f)
+        .SetMaxIout(10.0f)
+        .SetDiffLpfAlpha(0.01);
+    gimbal_controller.pid().yaw_speed
+        .SetKp(5000.0f)
+        .SetKi(0.0f)
+        .SetKd(700.0f)
+        .SetMaxOut(25000.0f)
         .SetMaxIout(1000.0f)
-        .SetDiffLpfAlpha(0.1);
-    gimbal_controller.pid().yaw_speed.SetKp(370.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(25000.0f).SetMaxIout(
-        1000.0f);  // 350  0   0
+        .SetDiffLpfAlpha(0.01);
+    gimbal_controller.pid().yaw_current
+        .SetKp(0.5f)
+        .SetKi(0.0f)
+        .SetKd(0.5f)
+        .SetMaxOut(25000.0f)
+        .SetMaxIout(1000.0f)
+        .SetDiffLpfAlpha(0.01);
     // pitch
     gimbal_controller.pid()
         .pitch_position.SetKp(30.0f)
@@ -324,7 +339,12 @@ class Gimbal {
         .SetMaxOut(500.0f)
         .SetMaxIout(10.0f)
         .SetDiffLpfAlpha(0.05);
-    gimbal_controller.pid().pitch_speed.SetKp(1.0f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    gimbal_controller.pid().pitch_speed
+        .SetKp(0.85f)
+        .SetKi(0.0f)
+        .SetKd(0.001f)
+        .SetMaxOut(10.0f)
+        .SetMaxIout(5.0f);
   }
   void AmmoPIDInit() {
     shoot_controller.pid().fric_1_speed.SetKp(25.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
@@ -347,22 +367,14 @@ class Gimbal {
 
     if (GimbalState_ == kManual) {
       if (DM_is_enable == false) {
-        // if (pitch_motor->status() == static_cast<u8>(DmMotorStatus::kEnable)) {
-        //   pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-        //   DM_is_enable = true;
-        // }
-        // else if (pitch_motor->status() != static_cast<u8>(DmMotorStatus::kDisable))
-        //   pitch_motor->SendInstruction(DmMotorInstructions::kClearError);
-        // else
-        //   pitch_motor->SendInstruction(DmMotorInstructions::kEnable);
-
-        if (pitch_motor->status() >= 0x08) {
-          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        } else {
+        if (pitch_motor->status() == static_cast<u8>(DmMotorStatus::kEnable)) {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
           DM_is_enable = true;
         }
-
+        else if (pitch_motor->status() != static_cast<u8>(DmMotorStatus::kDisable))
+          pitch_motor->SendInstruction(DmMotorInstructions::kClearError);
+        else
+          pitch_motor->SendInstruction(DmMotorInstructions::kEnable);
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw_;      // 第一次进入更新当前位置
         rc_pitch_data = pitch_;  // 使用 IMU pitch 作为初始姿态
@@ -400,30 +412,24 @@ class Gimbal {
             drone_gb.ComputeFf(-rm::modules::Wrap(yaw_motor->pos_rad() - 5.14, -M_PI, M_PI), -0.45 - pitch_motor->pos(),
                                rc_yaw_vel, rc_pitch_vel, rc_yaw_acc, rc_pitch_acc, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
         yaw_tau2voltage = tau_ff.x() * 2530.0f + rc_yaw_vel * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
-        // yaw_tau2voltage = 0;
+        yaw_tau2voltage = 0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
+        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, yaw_motor->current(),pitch_, -pitch_motor->vel(), 0,1.f);
         yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                  25000));  // 设置输出电流并输出
       }
     } else if (GimbalState_ == kAuto) {
       // 自瞄模式控制
       if (DM_is_enable == false) {  // 使达妙电机使能
-        //   if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable)) {
-        //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-        //     DM_is_enable = true;
-        //   }
-        //   else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
-        //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        //   else
-        //     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
-        if (pitch_motor->status() >= 0x08) {
-          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        } else {
+        if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable)) {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
           DM_is_enable = true;
         }
+        else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
+          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+        else
+          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
 
         gimbal_controller.Enable(true);
         rc_yaw_data = yaw_;
@@ -431,11 +437,7 @@ class Gimbal {
         rc_pitch_data = rm::modules::Clamp(rc_pitch_data, pitch_min_pos, pitch_max_pos);
       } else {
         if (Aimbot.AimbotState == 2 || Aimbot.AimbotState == 4) {
-          if (Aimbot.AutoFire) {  // 坏方向偏置
-            rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle + 0.035, -M_PI, M_PI);
-          } else {  // 正常方向不加偏置
-            rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
-          }
+          rc_yaw_data = rm::modules::Wrap(Aimbot.TargetYawAngle, -M_PI, M_PI);
           rc_pitch_data = rm::modules::Clamp(Aimbot.TargetPitchAngle, pitch_min_pos, pitch_max_pos);
         } else {
           yaw_delta = 0.0f;
@@ -471,27 +473,21 @@ class Gimbal {
                                     -0.45 - pitch_motor->pos(), Aimbot.YawSpeed, Aimbot.PitchSpeed, Aimbot.YawAngSpeed,
                                     Aimbot.PitchAngSpeed, Eigen::Vector3f(0.0f, 0.0f, -9.81f));
         yaw_tau2voltage = tau_ff.x() * 2530.0f + Aimbot.YawSpeed * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
-        // yaw_tau2voltage = 0;
+        yaw_tau2voltage = 0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, pitch_, -pitch_motor->vel(), 1.f);
+        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0,yaw_motor->current(), pitch_, -pitch_motor->vel(),0, 1.f);
         yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                  25000));  // 设置输出电流并输出
       }
     } else {  // 失能
       if (DM_is_enable == true) {
-        // if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
-        //   DM_is_enable = false;
-        // else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable))
-        //   pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        // else
-        //   pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
-        if (pitch_motor->status() >= 0x08) {
-          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-        } else {
-          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+        if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
           DM_is_enable = false;
-        }
+        else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable))
+          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+        else
+          pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
         gimbal_controller.Enable(false);
         yaw_motor->SetCurrent(0);
       }
