@@ -159,17 +159,17 @@ void FreemasterDebug() {
   Ayawoutp = gimbal->gimbal_controller.pid().yaw_position.p_out();
   Ayawouti = gimbal->gimbal_controller.pid().yaw_position.i_out();
   Ayawoutd = *(gimbal->gimbal_controller.pid().yaw_position.d_out());
-  Ayawout=gimbal->gimbal_controller.pid().yaw_position.out();
+  Ayawout = gimbal->gimbal_controller.pid().yaw_position.out();
 
   Ayawsoutp = gimbal->gimbal_controller.pid().yaw_speed.p_out();
   Ayawsouti = gimbal->gimbal_controller.pid().yaw_speed.i_out();
   Ayawsoutd = *(gimbal->gimbal_controller.pid().yaw_speed.d_out());
-  Ayawsout=gimbal->gimbal_controller.pid().yaw_speed.out();
+  Ayawsout = gimbal->gimbal_controller.pid().yaw_speed.out();
 
-  Ayawssoutp=gimbal->gimbal_controller.pid().yaw_current.p_out();
-  Ayawssouti=gimbal->gimbal_controller.pid().yaw_current.i_out();
-  Ayawssoutd=*gimbal->gimbal_controller.pid().yaw_current.d_out();
-  Ayawssout=gimbal->gimbal_controller.pid().yaw_current.out();
+  Ayawssoutp = gimbal->gimbal_controller.pid().yaw_current.p_out();
+  Ayawssouti = gimbal->gimbal_controller.pid().yaw_current.i_out();
+  Ayawssoutd = *gimbal->gimbal_controller.pid().yaw_current.d_out();
+  Ayawssout = gimbal->gimbal_controller.pid().yaw_current.out();
 
   Acan1tx = gimbal->can1->stats().tx_fps;
   Acan1drop = gimbal->can1->stats().drop_total_fps;

@@ -231,9 +231,9 @@ class Gimbal {
     GimbalPIDInit();
     AmmoPIDInit();
 
-    gimbal_controller.Enable(false);  // 云台控制器
-    gimbal_controller.EnableSpeedPid(true);         // 两轴都开启速度环（和以前一样）
-    gimbal_controller.EnableYawCurrentPid(true);    // 仅 yaw 再串上电流环
+    gimbal_controller.Enable(false);              // 云台控制器
+    gimbal_controller.EnableSpeedPid(true);       // 两轴都开启速度环（和以前一样）
+    gimbal_controller.EnableYawCurrentPid(true);  // 仅 yaw 再串上电流环
 
     pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
     rc_yaw_diff.SetFilter(0.35, 0.20);  // 前馈微分项滤波
@@ -310,22 +310,21 @@ class Gimbal {
   void GimbalPIDInit() {
     // yaw
     gimbal_controller.pid()
-        .yaw_position
-        .SetKp(16.0f)
+        .yaw_position.SetKp(16.0f)
         .SetKi(0.0f)
         .SetKd(3.0f)
         .SetMaxOut(3000.0f)
         .SetMaxIout(10.0f)
         .SetDiffLpfAlpha(0.01);
-    gimbal_controller.pid().yaw_speed
-        .SetKp(5000.0f)
+    gimbal_controller.pid()
+        .yaw_speed.SetKp(5000.0f)
         .SetKi(0.0f)
         .SetKd(700.0f)
         .SetMaxOut(25000.0f)
         .SetMaxIout(1000.0f)
         .SetDiffLpfAlpha(0.01);
-    gimbal_controller.pid().yaw_current
-        .SetKp(0.5f)
+    gimbal_controller.pid()
+        .yaw_current.SetKp(0.5f)
         .SetKi(0.0f)
         .SetKd(0.5f)
         .SetMaxOut(25000.0f)
@@ -339,12 +338,7 @@ class Gimbal {
         .SetMaxOut(500.0f)
         .SetMaxIout(10.0f)
         .SetDiffLpfAlpha(0.05);
-    gimbal_controller.pid().pitch_speed
-        .SetKp(0.95f)
-        .SetKi(0.0f)
-        .SetKd(0.001f)
-        .SetMaxOut(10.0f)
-        .SetMaxIout(5.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(0.95f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
   void AmmoPIDInit() {
     shoot_controller.pid().fric_1_speed.SetKp(25.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
@@ -370,8 +364,7 @@ class Gimbal {
         if (pitch_motor->status() == static_cast<u8>(DmMotorStatus::kEnable)) {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
           DM_is_enable = true;
-        }
-        else if (pitch_motor->status() != static_cast<u8>(DmMotorStatus::kDisable))
+        } else if (pitch_motor->status() != static_cast<u8>(DmMotorStatus::kDisable))
           pitch_motor->SendInstruction(DmMotorInstructions::kClearError);
         else
           pitch_motor->SendInstruction(DmMotorInstructions::kEnable);
@@ -415,7 +408,8 @@ class Gimbal {
         yaw_tau2voltage = 0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, yaw_motor->current(),pitch_, -pitch_motor->vel(), 0,1.f);
+        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, yaw_motor->current(), pitch_,
+                                 -pitch_motor->vel(), 0, 1.f);
         yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                  25000));  // 设置输出电流并输出
       }
@@ -425,8 +419,7 @@ class Gimbal {
         if (pitch_motor->status() == static_cast<rm::u8>(rm::device::DmMotorStatus::kEnable)) {
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
           DM_is_enable = true;
-        }
-        else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
+        } else if (pitch_motor->status() != static_cast<rm::u8>(rm::device::DmMotorStatus::kDisable))
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
         else
           pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
@@ -476,7 +469,8 @@ class Gimbal {
         yaw_tau2voltage = 0;
         // 设定目标，并计算
         gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
-        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0,yaw_motor->current(), pitch_, -pitch_motor->vel(),0, 1.f);
+        gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, yaw_motor->current(), pitch_,
+                                 -pitch_motor->vel(), 0, 1.f);
         yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
                                                  25000));  // 设置输出电流并输出
       }
