@@ -333,14 +333,14 @@ class Gimbal {
         .SetDiffLpfAlpha(0.01);
     // pitch
     gimbal_controller.pid()
-        .pitch_position.SetKp(30.0f)
+        .pitch_position.SetKp(25.0f)
         .SetKi(0.0f)
-        .SetKd(50.0f)
+        .SetKd(20.0f)
         .SetMaxOut(500.0f)
         .SetMaxIout(10.0f)
         .SetDiffLpfAlpha(0.05);
     gimbal_controller.pid().pitch_speed
-        .SetKp(0.85f)
+        .SetKp(0.95f)
         .SetKi(0.0f)
         .SetKd(0.001f)
         .SetMaxOut(10.0f)
