@@ -14,6 +14,7 @@
 #include "anglediff2.hpp"
 #include "RcControl.hpp"
 #include "UI/referee_user.hpp"
+#include "ControllerFeedForward.hpp"
 
 extern void FreemasterDebug();
 extern AimbotFrame_SCM_t Aimbot;  // 自瞄数据引出
@@ -161,9 +162,13 @@ class Gimbal {
   Shoot2Fric shoot_controller;   // 双摩擦轮发射机构控制器
   u_int8_t dataBox[128];
 
+  Feedforward yaw_ff;
+
   bool vt03_last_r_key = false;
 
   void GimbalInit() {
+    yaw_ff.Init(0.002, 0.2);
+
     time_ = 0;  // 系统心跳置0
     referee_user.attachReferee(&referee_data_buffer);
     can1 = new rm::hal::ThrottledCan<128>{6000, hcan1};
@@ -332,13 +337,13 @@ class Gimbal {
         .SetDiffLpfAlpha(0.01);
     // pitch
     gimbal_controller.pid()
-        .pitch_position.SetKp(25.0f)
+        .pitch_position.SetKp(22.f)
         .SetKi(0.0f)
-        .SetKd(20.0f)
+        .SetKd(0.5f)
         .SetMaxOut(500.0f)
         .SetMaxIout(10.0f)
         .SetDiffLpfAlpha(0.05);
-    gimbal_controller.pid().pitch_speed.SetKp(0.95f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
+    gimbal_controller.pid().pitch_speed.SetKp(1.f).SetKi(0.0f).SetKd(0.001f).SetMaxOut(10.0f).SetMaxIout(5.0f);
   }
   void AmmoPIDInit() {
     shoot_controller.pid().fric_1_speed.SetKp(25.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(20000.0f).SetMaxIout(1000.0f);
@@ -407,7 +412,7 @@ class Gimbal {
         yaw_tau2voltage = tau_ff.x() * 2530.0f + rc_yaw_vel * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
         yaw_tau2voltage = 0;
         // 设定目标，并计算
-        gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
+        gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, yaw_ff.Update(roll_comp.first), 0);
         gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, yaw_motor->current(), pitch_,
                                  -pitch_motor->vel(), 0, 1.f);
         yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
@@ -753,7 +758,7 @@ class Gimbal {
     RCStateUpdate();  // vt03控制更新
 
     // pitch负值向上输出
-    pitch_torque = 1.2 * sin(pitch_ + 0.58);
+    pitch_torque = 1.2 * sin(pitch_ + 0.54);
     // if (GimbalState_ == kManual) {
     //   pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  //
     //   发送达秒控制信息
@@ -763,6 +768,8 @@ class Gimbal {
     // }
     pitch_cmd = rm::modules::Clamp(-gimbal_controller.output().pitch - pitch_torque, -10, 10);  // 发送达秒控制信息
     pitch_motor->SetMitCommand(0, 0, pitch_cmd, 0, 0);
+    // pitch_motor->SetMitCommand(0, 0, -pitch_torque, 0, 0);
+
   }
   void SubLoop100Hz() {
     if (time_ % 5 == 0) {
@@ -780,6 +787,7 @@ class Gimbal {
     if (time_ % 50 == 0) {
       WS2812Control();
       LensControl();
+      time_=0;
     }
   }
 };
