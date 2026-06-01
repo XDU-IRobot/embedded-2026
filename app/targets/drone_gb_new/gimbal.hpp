@@ -51,11 +51,12 @@ class Gimbal {
   float dirl_speed_base = 5000;
   float dirl_speed = 5000;      // TODO 拨盘转速
   float redirl_speed = 1000;    // TODO 拨盘反转速
-  float friction_speed = 6000;  // TODO 摩擦轮转速
-  float shootstep = 100;        // TODO 手动调速步长
+  float friction_speed = 6200;  // TODO 摩擦轮转速
+  float friction_speed_base = 6200;  // TODO 摩擦轮转速
+  float shootstep = 50;        // TODO 手动调速步长
   int shootcnt = 0;             // 步长计数
 
-  float spaver[10] = {0.0f};  // 弹速平均数组
+  float spaver[5] = {0.0f};  // 弹速平均数组
 
   // 拨盘自动反转
   float auto_reverse_buffer[5] = {1.f, 2.f, 3.f, 4.f, 5.f};  // TODO 缓存区大小
@@ -313,7 +314,29 @@ class Gimbal {
     rc_pitch_acc = rc_pitch_diff.acc();
   }
   void GimbalPIDInit() {
-    // yaw
+    //电流环控制参数
+    // // yaw
+    // gimbal_controller.pid()
+    //     .yaw_position.SetKp(12.0f)//12
+    //     .SetKi(0.0f)
+    //     .SetKd(2.0f)//2
+    //     .SetMaxOut(3000.0f)
+    //     .SetMaxIout(10.0f)
+    //     .SetDiffLpfAlpha(0.01);
+    // gimbal_controller.pid()
+    //     .yaw_speed.SetKp(5500.0f)
+    //     .SetKi(0.0f)
+    //     .SetKd(500.0f)
+    //     .SetMaxOut(16384.0f)
+    //     .SetMaxIout(1000.0f)
+    //     .SetDiffLpfAlpha(0.01);
+    // gimbal_controller.pid()
+    //     .yaw_current.SetKp(0.5f)
+    //     .SetKi(0.0f)
+    //     .SetKd(0.5f)
+    //     .SetMaxOut(16384.0f)
+    //     .SetMaxIout(1000.0f)
+    //     .SetDiffLpfAlpha(0.01);
     gimbal_controller.pid()
         .yaw_position.SetKp(16.0f)
         .SetKi(0.0f)
@@ -412,7 +435,7 @@ class Gimbal {
         yaw_tau2voltage = tau_ff.x() * 2530.0f + rc_yaw_vel * (60.0f / (2.0f * M_PI)) * 78.0f;  // 力矩转换控制电流
         yaw_tau2voltage = 0;
         // 设定目标，并计算
-        gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, yaw_ff.Update(roll_comp.first), 0);
+        gimbal_controller.SetTarget(roll_comp.first, roll_comp.second, 0, 0);
         gimbal_controller.Update(yaw_, -yaw_motor->rpm() * M_PI / 30.0, yaw_motor->current(), pitch_,
                                  -pitch_motor->vel(), 0, 1.f);
         yaw_motor->SetCurrent(rm::modules::Clamp(-gimbal_controller.output().yaw - yaw_tau2voltage, -25000,
@@ -615,7 +638,7 @@ class Gimbal {
       friction_speed += shootstep;
       shootcnt += 1;
     } else if (!control_rc->key(DR16::Key::kCtrl) && !last_key_z && control_rc->key(DR16::Key::kZ)) {
-      friction_speed = 6500;
+      friction_speed = friction_speed_base;
       shootcnt = 0;
     }
     last_key_x = control_rc->key(DR16::Key::kX);
@@ -625,24 +648,23 @@ class Gimbal {
   float SpeedAver() {
     float new_speed = referee_data_buffer.data().shoot_data.initial_speed;
 
-    // 如果数据有效且与上次记录不同，则更新滑动窗口
-    if (new_speed > 0 && new_speed != spaver[9]) {
-      for (int i = 0; i < 9; i++) {
+    if (new_speed > 15 && new_speed != spaver[4]) {
+      for (int i = 0; i < 4; i++) {
         spaver[i] = spaver[i + 1];
       }
-      spaver[9] = new_speed;
+      spaver[4] = new_speed;
     }
 
     // 计算平均值
     float sum = 0;
     int count = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
       if (spaver[i] != 0) {
         sum += spaver[i];
         count++;
       }
     }
-    return (count > 0) ? (sum / count) : 0.0f;
+    return (count > 0) ? (sum / count) : 22.5f;
   }
   void LensControl() {
     // R键上升沿：翻转方向并启动电机
@@ -742,9 +764,14 @@ class Gimbal {
 
   void SubLoop500Hz() {
     // ch040
-    pitch_ = -imu_new->pitch();  // （上正下负）（+-pi）
-    roll_ = -imu_new->roll();    //(左正右负)(+-pi)
-    yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
+    // pitch_ = -imu_new->pitch();  // （上正下负）（+-pi）
+    // roll_ = -imu_new->roll();    //(左正右负)(+-pi)
+    // yaw_ = imu_new->yaw();       //(左正右负)（+-pi）
+    f32 euler_rpy_temp[3], quaternion_temp[4] = {imu_new->quat_w(), -imu_new->quat_x(), -imu_new->quat_y(),imu_new->quat_z()};
+    modules::QuatToEuler(quaternion_temp, euler_rpy_temp);
+    pitch_ = euler_rpy_temp[1];  // （上正下负）（+-pi）
+    roll_ = euler_rpy_temp[0];    //(左正右负)(+-pi)
+    yaw_ = euler_rpy_temp[2];       //(左正右负)（+-pi）
 
     GimbalImuSend(-imu_new->quat_x(), imu_new->quat_w(), imu_new->quat_z(), -imu_new->quat_y(), SpeedAver(),
                   referee_data_buffer.data().robot_status.robot_id);  // usb传输数据
@@ -755,7 +782,7 @@ class Gimbal {
     rm::device::DjiMotorBase::SendCommand(*can2);  // 向大疆所有电机发数据
   }
   void SubLoop250Hz() {
-    RCStateUpdate();  // vt03控制更新
+    RCStateUpdate();
 
     // pitch负值向上输出
     pitch_torque = 1.2 * sin(pitch_ + 0.54);
@@ -780,7 +807,6 @@ class Gimbal {
   }
   void SubLoop50Hz() {
     if (time_ % 10 == 0) {
-      // robot_id = referee_data_buffer.data().robot_status.robot_id;  // 裁判系统测试
     }
   }
   void SubLoop10Hz() {
