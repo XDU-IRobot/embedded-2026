@@ -95,7 +95,7 @@ void drone_state_1_add() {
   UIGroup1.figure1.fillIntegrate("gim", UIFigure::Operation::Add, 0, UIFigure::Color::Magenta, 5, 300, 760, 20, 0);
   UIGroup1.figure2.fillIntegrate("fir", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 300, 730, 20, 0);
   UIGroup1.figure3.fillIntegrate("shr", UIFigure::Operation::Add, 0, UIFigure::Color::White, 5, 320, 700, 20, 0);
-  UIGroup1.figure4.fillRec("aut", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 3, 794, 422, 1096,665);
+  UIGroup1.figure4.fillRec("aut", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 3, 794, 422, 1096, 665);
   const auto dataLen = Referee0x301Prepare(dataBox, 0, UIGroup1, robotID, robotID + 256);
   gimbal->referee_uart->Write(dataBox, dataLen);
 }

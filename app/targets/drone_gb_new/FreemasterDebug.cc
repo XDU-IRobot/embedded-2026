@@ -105,10 +105,10 @@ int Ashootcnt;
 
 float AheatLimt = 0;
 float Aheatnow = 0;
-float ASpeedAver=0;
+float ASpeedAver = 0;
 // 调试接口函数
 void FreemasterDebug() {
-  ASpeedAver=gimbal->SpeedAver();
+  ASpeedAver = gimbal->SpeedAver();
   Ayaw_abs = gimbal->yaw_abs;
   Apitch_ = gimbal->pitch_;
   Aroll_ = gimbal->roll_;
