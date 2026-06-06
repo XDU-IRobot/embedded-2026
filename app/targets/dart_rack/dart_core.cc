@@ -14,10 +14,10 @@ static NopPin nop_rx_en;
 
 void DartRack::Init() {
   // PID初始化
-  load_motor_l_speed_pid_.SetKp(25).SetKi(0).SetKd(0).SetMaxOut(11000).SetMaxIout(20);
-  load_motor_r_speed_pid_.SetKp(25).SetKi(0).SetKd(0).SetMaxOut(11000).SetMaxIout(20);
+  load_motor_l_speed_pid_.SetKp(18).SetKi(0).SetKd(0).SetMaxOut(9000).SetMaxIout(20);
+  load_motor_r_speed_pid_.SetKp(18).SetKi(0).SetKd(0).SetMaxOut(9000).SetMaxIout(20);
   trigger_motor_speed_pid_.SetKp(5).SetKi(0).SetKd(0).SetMaxOut(10000).SetMaxIout(0);
-  trigger_motor_force_pid_.SetKp(-20).SetKi(0).SetKd(0).SetMaxOut(15000).SetMaxIout(0);
+  trigger_motor_force_pid_.SetKp(-20).SetKi(0).SetKd(0).SetMaxOut(13000).SetMaxIout(0);
   add_motor_speed_pid_.SetKp(5).SetKi(0).SetMaxOut(10000).SetMaxIout(0);
   yaw_motor_speed_pid_.SetKp(20).SetKi(0).SetKd(5).SetMaxOut(8000).SetMaxIout(0);
   yaw_motor_angle_pid_.SetKp(45).SetKi(3).SetKd(10).SetMaxOut(8000).SetMaxIout(0);
@@ -45,12 +45,12 @@ void DartRack::Init() {
   rx_referee->Begin();
 
   // 电机初始化
-  load_motor_l_ = new rm::device::M3508{*can1_, 3};
-  load_motor_r_ = new rm::device::M3508{*can1_, 4};
-  trigger_motor_ = new rm::device::M2006{*can1_, 5};
+  load_motor_l_ = new rm::device::M3508{*can2_, 3};
+  load_motor_r_ = new rm::device::M3508{*can2_, 4};
+  trigger_motor_ = new rm::device::M2006{*can2_, 5};
   add_motor_ = new rm::device::M2006{*can1_, 6};
   yaw_motor_ = new rm::device::M2006{*can1_, 7};
-  trigger_motor_force_ = new rm::device::M2006{*can1_, 8};
+  trigger_motor_force_ = new rm::device::M2006{*can2_, 8};
 
   vision_data_ = new USBVisionReceive_SCM_t;
   vision_data_->Yaw = 0.0f;
@@ -60,7 +60,8 @@ void DartRack::Init() {
 
   can1_->SetFilter(0, 0);
   can1_->Begin();
-
+  can2_->SetFilter(0, 0);
+  can2_->Begin();
   // 达妙电机配置
   rm::device::DmMotorSettings<rm::device::DmMotorControlMode::kMit> dm_settings = {
       .master_id = 0x11,                              // 取决于达妙上位机里设置的反馈ID

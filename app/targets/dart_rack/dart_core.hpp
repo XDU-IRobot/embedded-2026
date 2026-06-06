@@ -290,7 +290,7 @@ struct DartRack {
   static constexpr uint16_t kAddPlateUnlockEcd[3] = {940, 940, 641};  //< 加弹机械臂释放位置593,204,214
 
   static constexpr float kServo1Init = 123.0f;
-  static constexpr float kServo2Init = 77.0f;
+  static constexpr float kServo2Init = 66.0f;
 
   static constexpr int32_t kLoadEcdPerDart = 650000;  //< 上膛电机每发镖编码器最小增量
   /*
