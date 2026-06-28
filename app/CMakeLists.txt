@@ -44,6 +44,8 @@ add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)
 
 # 轮腿云台
-file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/wl_gb/*.cc)
-add_exe_target(wl_gb "${DART_RACK_SOURCES};${COMMON_SOURCES}")
-target_compile_definitions(dart_rack PRIVATE DART_RACK)
+file(GLOB_RECURSE WL_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/wl_gb/*.cc)
+add_exe_target(wl_gb "${WL_GB_SOURCES};${COMMON_SOURCES}")
+set(WHEEL_LEGGED_ROBOT_VARIANT "2" CACHE STRING "Wheel-legged robot: 1=hero, 2=infantry3(default), 3=infantry4")
+set_property(CACHE WHEEL_LEGGED_ROBOT_VARIANT PROPERTY STRINGS 1 2 3)
+target_compile_definitions(wl_gb PRIVATE WHEEL_LEGGED_ROBOT_VARIANT=${WHEEL_LEGGED_ROBOT_VARIANT})

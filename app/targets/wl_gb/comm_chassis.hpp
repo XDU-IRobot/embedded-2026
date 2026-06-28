@@ -27,22 +27,33 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
       : CanDevice(can, kTxStdIdA, kTxStdIdB, kTxStdIdC, kTxStdIdD, kTxStdIdE), imu_(imu), vt03_(vt03) {}
 
   void UpdateRobotHP(const EmyRobotHP& hp) { robot_hp_ = hp; }
+  void SetChassisFricRpm(rm::i16 left, rm::i16 right) {
+    fric_left_rpm_ = left;
+    fric_right_rpm_ = right;
+  }
 
   void RxCallback(const rm::hal::CanFrame* msg) override {}
 
   bool QueueSend() {
-    EncodeFrameA();
-    EncodeFrameC();
-    can_->Write(kTxStdIdA, tx_a_.data(), tx_a_.size());
-    can_->Write(kTxStdIdC, tx_c_.data(), tx_c_.size());
+    // Frame A/C: 500Hz (每2周期发一次，主循环1kHz)
+    if (send_count_ % 2 == 0) {
+      EncodeFrameA();
+      EncodeFrameC();
+      can_->Write(kTxStdIdA, tx_a_.data(), tx_a_.size());
+      can_->Write(kTxStdIdC, tx_c_.data(), tx_c_.size());
+    }
+
+    // Frame E: 500Hz (每2周期发一次，主循环1kHz)
+    if (send_count_ % 2 == 0) {
+      EncodeFrameE();
+      can_->Write(kTxStdIdE, tx_e_.data(), tx_e_.size());
+    }
 
     if (send_count_ % 50 == 0) {
       EncodeFrameB();
       EncodeFrameD();
-      EncodeFrameE();
       can_->Write(kTxStdIdB, tx_b_.data(), tx_b_.size());
       can_->Write(kTxStdIdD, tx_d_.data(), tx_d_.size());
-      can_->Write(kTxStdIdE, tx_e_.data(), tx_e_.size());
     }
     send_count_++;
 
@@ -112,16 +123,47 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     PackU16(robot_hp_.standard_4_HP, &tx_d_[6]);
   }
 
-  // Frame E (2 bytes): [0..1] sentry_7_HP
-  void EncodeFrameE() { PackU16(robot_hp_.sentry_7_HP, &tx_e_[0]); }
+  // Frame E (8 bytes): [0..1] sentry_7_HP, [2..3] fric_left_rpm, [4..5] fric_right_rpm
+  void EncodeFrameE() {
+    PackU16(robot_hp_.sentry_7_HP, &tx_e_[0]);
+    PackI16(fric_left_rpm_, &tx_e_[2]);
+    PackI16(fric_right_rpm_, &tx_e_[4]);
+  }
 
   const rm::device::HipnucImu* imu_{nullptr};
   rm::device::VT03* vt03_{nullptr};
   EmyRobotHP robot_hp_{};
+  rm::i16 fric_left_rpm_{0};
+  rm::i16 fric_right_rpm_{0};
   std::array<rm::u8, kPayloadSize> tx_a_{};
   std::array<rm::u8, kPayloadSize> tx_b_{};
   std::array<rm::u8, kPayloadSize> tx_c_{};
   std::array<rm::u8, kPayloadSize> tx_d_{};
   std::array<rm::u8, kPayloadSize> tx_e_{};
   uint32_t send_count_{0};
+};
+
+class ChassisToGimbalRxBridge final : public rm::device::CanDevice {
+ public:
+  static constexpr rm::u16 kRxStdId = 0x120;
+  static constexpr rm::usize kPayloadSize = 8U;
+
+  explicit ChassisToGimbalRxBridge(rm::hal::CanInterface& can)
+      : CanDevice(can, kRxStdId) {}
+
+  void RxCallback(const rm::hal::CanFrame* msg) override {
+    if (msg == nullptr) return;
+    if (msg->rx_std_id == kRxStdId && msg->dlc >= kPayloadSize) {
+      combat_mode_ = (msg->data[0] != 0);
+      frame_count_++;
+      ReportStatus(kOk);
+    }
+  }
+
+  [[nodiscard]] bool combat_mode() const { return combat_mode_; }
+  [[nodiscard]] rm::u32 frame_count() const { return frame_count_; }
+
+ private:
+  bool combat_mode_{false};
+  rm::u32 frame_count_{0};
 };

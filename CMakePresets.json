@@ -6,7 +6,7 @@
             "hidden": true,
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
-		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
+            "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
             "cacheVariables": {
             }
         },
@@ -14,7 +14,29 @@
             "name": "Debug",
             "inherits": "default",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "WHEEL_LEGGED_ROBOT_VARIANT": "2"
+            }
+        },
+        {
+            "name": "Debug-hero",
+            "inherits": "Debug",
+            "cacheVariables": {
+                "WHEEL_LEGGED_ROBOT_VARIANT": "1"
+            }
+        },
+        {
+            "name": "Debug-infantry3",
+            "inherits": "Debug",
+            "cacheVariables": {
+                "WHEEL_LEGGED_ROBOT_VARIANT": "2"
+            }
+        },
+        {
+            "name": "Debug-infantry4",
+            "inherits": "Debug",
+            "cacheVariables": {
+                "WHEEL_LEGGED_ROBOT_VARIANT": "3"
             }
         },
         {
@@ -29,6 +51,18 @@
         {
             "name": "Debug",
             "configurePreset": "Debug"
+        },
+        {
+            "name": "Debug-hero",
+            "configurePreset": "Debug-hero"
+        },
+        {
+            "name": "Debug-infantry3",
+            "configurePreset": "Debug-infantry3"
+        },
+        {
+            "name": "Debug-infantry4",
+            "configurePreset": "Debug-infantry4"
         },
         {
             "name": "Release",
