@@ -156,7 +156,7 @@ void Chassis::ChassisDisableUpdate() {
 
 void Chassis::SpeedModeChange() {
   // 超级电容是否可开启判断
-  if (globals->super_cap->CapEnergy() > 80 && !globals->super_cap->ErrorCode() && chassis->high_speed_mode_flag &&
+  if (globals->super_cap->GetCapEnergy() > 80 && !globals->super_cap->GetErrorCode() && chassis->high_speed_mode_flag &&
       globals->referee_data->data().power_heat_data.buffer_energy > 30) {
     chassis->speed_mode_ = kHighSpeed;
   } else {

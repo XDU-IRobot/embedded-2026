@@ -29,7 +29,7 @@ void UIInfantryAdd1() {
 void UIInfantryAdd2() {
   UIFigure2 UIGroup1;
   UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 900, 270, 27,
-                             static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
+                             static_cast<f32>(globals->super_cap->GetCapEnergy()) * 1000.0f);
   UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Add, 0, UIFigure::Color::White, 2, 100, 720, 25,
                              static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
@@ -56,10 +56,10 @@ void UIInfantryEdit() {
   // 电容电压
   if (chassis->speed_mode_ == kHighSpeed) {
     UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 5, 900, 270, 27,
-                               static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
+                               static_cast<f32>(globals->super_cap->GetCapEnergy()) * 1000.0f);
   } else {
     UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Edit, 0, UIFigure::Color::RedBlue, 5, 900, 270, 27,
-                               static_cast<f32>(globals->super_cap->CapEnergy()) * 1000.0f);
+                               static_cast<f32>(globals->super_cap->GetCapEnergy()) * 1000.0f);
   }
   // 弹速调节
   if (globals->gimbal_communicator->aim_speed_change() > 0) {
