@@ -46,9 +46,9 @@ class ShootCtrl {
 
     fric_speed_target_rpm_ =
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
-      kFwTargetSpeedRpm;
+        kFwTargetSpeedRpm;
 #else
-      kFricSpeedTargetRpm;
+        kFricSpeedTargetRpm;
 #endif
   }
 
@@ -104,8 +104,7 @@ class ShootCtrl {
 
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
   int16_t fw_rpm(int index) const {
-    if (index >= 0 && index < kFrictionWheelCount && fw_motors_[index])
-      return fw_motors_[index]->rpm();
+    if (index >= 0 && index < kFrictionWheelCount && fw_motors_[index]) return fw_motors_[index]->rpm();
     return 0;
   }
 #else

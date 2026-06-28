@@ -148,8 +148,7 @@ class ChassisToGimbalRxBridge final : public rm::device::CanDevice {
   static constexpr rm::u16 kRxStdId = 0x120;
   static constexpr rm::usize kPayloadSize = 8U;
 
-  explicit ChassisToGimbalRxBridge(rm::hal::CanInterface& can)
-      : CanDevice(can, kRxStdId) {}
+  explicit ChassisToGimbalRxBridge(rm::hal::CanInterface& can) : CanDevice(can, kRxStdId) {}
 
   void RxCallback(const rm::hal::CanFrame* msg) override {
     if (msg == nullptr) return;
