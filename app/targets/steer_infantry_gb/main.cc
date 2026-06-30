@@ -209,7 +209,7 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
   }
   // 高速模式
-  if (globals->super_cap->CapEnergy() <= 80 || globals->super_cap->ErrorCode()) {
+  if (globals->super_cap->GetCapEnergy() <= 80 || globals->super_cap->GetErrorCode()) {
     globals->chassis_state &= ~static_cast<u8>(1 << 3);
   } else if (globals->StateMachine_ == kMatch) {
     if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01

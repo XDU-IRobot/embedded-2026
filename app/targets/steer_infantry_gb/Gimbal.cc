@@ -231,10 +231,16 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->yaw_torque_ = ff.x();
   const f32 yaw_ff_voltage =
       YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->yaw_motor->rpm()) * kRpmToRadPerSec);
+  // gimbal->yaw_current_ =
+  //     globals->gimbal_controller.output().yaw + static_cast<f32>(globals->yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
+  // gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
+  // gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y();
+  // gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
+  //去除系统前馈版本（自瞄测试版）
   gimbal->yaw_current_ =
-      globals->gimbal_controller.output().yaw + static_cast<f32>(globals->yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
+      globals->gimbal_controller.output().yaw + static_cast<f32>(globals->yaw_motor->rpm()) * 100.f ;
   gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
-  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y();
+  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch ;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
 }
 
@@ -416,10 +422,9 @@ void Gimbal::ShootEnableUpdate() {
     } else if (gimbal->single_shoot_time_ == 0) {
       gimbal->single_shoot_flag_ = false;
     }
-  } else if ((globals->StateMachine_ == kTest &&
-              ((globals->rc->dial() >= 10 && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
-                globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
-               globals->rc->dial() >= 650)) ||
+  } else if ((globals->StateMachine_ == kTest && ((globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
+                                                   globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
+                                                  globals->rc->dial() >= 650)) ||
              (globals->StateMachine_ == kMatch &&
               (((globals->image_update_flag ? globals->image_data->data().mouse_button_left
                                             : globals->rc->mouse_button_left()) &&  // 左键按下
