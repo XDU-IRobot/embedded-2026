@@ -58,15 +58,15 @@ void MainLoop() {
   // VT03 Z/X 键调速
   if (vt03) {
     const bool ctrl_pressed = (vt03->data().keyboard_key & 0x1000) != 0;  // Ctrl
-    const bool z_pressed = (vt03->data().keyboard_key & 0x0002) != 0;    // Z
-    const bool x_pressed = (vt03->data().keyboard_key & 0x0004) != 0;    // X
-    
+    const bool z_pressed = (vt03->data().keyboard_key & 0x0002) != 0;     // Z
+    const bool x_pressed = (vt03->data().keyboard_key & 0x0004) != 0;     // X
+
     // Ctrl+Z: 减速
     if (ctrl_pressed && z_pressed && !z_pressed_prev) {
       shoot_ctrl.AdjustSpeed(-kFricSpeedStepRpm);
     }
     z_pressed_prev = z_pressed;
-    
+
     // Ctrl+X: 升速
     if (ctrl_pressed && x_pressed && !x_pressed_prev) {
       shoot_ctrl.AdjustSpeed(kFricSpeedStepRpm);
