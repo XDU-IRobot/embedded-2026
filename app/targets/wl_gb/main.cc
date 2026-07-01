@@ -27,11 +27,20 @@ EmyRobotHP robotHP{};
 // shoot controller
 ShootCtrl shoot_ctrl{};
 
+// 摩擦轮电机转速, 1-6 对应 CAN ID 1-6
+int16_t fw_rpm_1 = 0;
+int16_t fw_rpm_2 = 0;
+int16_t fw_rpm_3 = 0;
+int16_t fw_rpm_4 = 0;
+int16_t fw_rpm_5 = 0;
+int16_t fw_rpm_6 = 0;
+
 // for debug
 float yaw = 0.f;
 float pitch = 0.f;
 float roll = 0.f;
 static int sof_count = 0;
+static int imu_status = 0;
 
 void Vt03RxCallback(const std::vector<rm::u8>& data, rm::u16 rx_len) {
   for (rm::u16 i = 0; i < rx_len; i++) {
@@ -75,11 +84,16 @@ void MainLoop() {
       gb_to_chassis->UpdateRobotHP(robotHP);
     }
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
-    int16_t fric_rpm_sum = 0;
-    for (int i = 0; i < kFrictionWheelCount; ++i) {
-      fric_rpm_sum += shoot_ctrl.fw_rpm(i);
-    }
+    fw_rpm_1 = shoot_ctrl.fw_rpm(0);
+    fw_rpm_2 = shoot_ctrl.fw_rpm(1);
+    fw_rpm_3 = shoot_ctrl.fw_rpm(2);
+    fw_rpm_4 = shoot_ctrl.fw_rpm(3);
+    fw_rpm_5 = shoot_ctrl.fw_rpm(4);
+    fw_rpm_6 = shoot_ctrl.fw_rpm(5);
+    int16_t fric_rpm_sum = fw_rpm_1 + fw_rpm_2 + fw_rpm_3 + fw_rpm_4 + fw_rpm_5 + fw_rpm_6;
     gb_to_chassis->SetChassisFricRpm(fric_rpm_sum / kFrictionWheelCount, 0);
+    imu_status = static_cast<int>(imu->online_status());
+
 #else
     gb_to_chassis->SetChassisFricRpm(shoot_ctrl.fric_left_rpm(), shoot_ctrl.fric_right_rpm());
 #endif

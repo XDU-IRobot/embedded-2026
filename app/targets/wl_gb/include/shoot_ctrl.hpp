@@ -6,8 +6,8 @@
 constexpr int kFrictionWheelCount = 6;
 constexpr uint16_t kFwMotorIds[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 constexpr float kFwTargetSpeedRpm = 3400.0f;
-constexpr float kFwSpeedKp = 30.0f;
-constexpr float kFwSpeedKi = 0.01f;
+constexpr float kFwSpeedKp = 10.0f;
+constexpr float kFwSpeedKi = 0.0f;
 constexpr float kFwSpeedKd = 0.0f;
 constexpr float kFwSpeedMaxOut = 10000.0f;
 constexpr float kFwSpeedMaxIout = 0.0f;
@@ -34,7 +34,7 @@ class ShootCtrl {
 
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
     for (int i = 0; i < kFrictionWheelCount; ++i) {
-      fw_motors_[i].emplace(can, kFwMotorIds[i], i > 0);
+      fw_motors_[i].emplace(can, kFwMotorIds[i]);
       fw_speed_pid_[i].emplace(kFwSpeedKp, kFwSpeedKi, kFwSpeedKd, kFwSpeedMaxOut, kFwSpeedMaxIout);
     }
 #else
@@ -57,14 +57,19 @@ class ShootCtrl {
 
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
     for (int i = 0; i < kFrictionWheelCount; ++i) {
+      // ID 2,5 正转, 其余反转
+      const bool positive = (i == 1 || i == 4);
       if (enter_shoot) {
-        const float target = (i % 2 == 0) ? fric_speed_target_rpm_ : -fric_speed_target_rpm_;
+        const float target = positive ? fric_speed_target_rpm_ : -fric_speed_target_rpm_;
         fw_speed_pid_[i]->Update(target, fw_motors_[i]->rpm());
         fw_motors_[i]->SetCurrent(fw_speed_pid_[i]->out());
+        // fw_motors_[i]->SetCurrent(0);
       } else {
-        if (fw_motors_[i]->rpm() >= kFwBrakeThresholdRpm) {
-          fw_speed_pid_[i]->Update(kFwBrakeTargetRpm, fw_motors_[i]->rpm());
+        if (std::abs(fw_motors_[i]->rpm()) >= kFwBrakeThresholdRpm) {
+          const float brake_target = positive ? kFwBrakeTargetRpm : -kFwBrakeTargetRpm;
+          fw_speed_pid_[i]->Update(brake_target, fw_motors_[i]->rpm());
           fw_motors_[i]->SetCurrent(fw_speed_pid_[i]->out());
+          // fw_motors_[i]->SetCurrent(0/*);
         } else {
           fw_speed_pid_[i]->Clear();
           fw_motors_[i]->SetCurrent(0);
