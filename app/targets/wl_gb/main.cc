@@ -11,11 +11,11 @@
 #include "comm_chassis.hpp"
 #include "wl_gb/include/shoot_ctrl.hpp"
 
-rm::hal::stm32::Uart* imu_uart{nullptr};
+rm::hal::stm32::Uart<518>* imu_uart{nullptr};
 rm::device::HipnucImu* imu{nullptr};
 rm::hal::ThrottledCan<>* can_to_chassis{nullptr};
 rm::hal::ThrottledCan<>* can_to_shoot{nullptr};
-rm::hal::Serial* vt03_uart{nullptr};
+rm::hal::Serial<256>* vt03_uart{nullptr};
 rm::device::VT03* vt03{nullptr};
 GimbalToChassisTxBridge* gb_to_chassis{nullptr};
 ChassisToGimbalRxBridge* chassis_rx{nullptr};
@@ -42,11 +42,11 @@ float roll = 0.f;
 static int sof_count = 0;
 static int imu_status = 0;
 
-void Vt03RxCallback(const std::vector<rm::u8>& data, rm::u16 rx_len) {
-  for (rm::u16 i = 0; i < rx_len; i++) {
-    if (data.at(i) == 0xA5) sof_count++;
-    *vt03 << data.at(i);
-    *referee << data.at(i);
+void Vt03RxCallback(etl::span<const rm::u8> data) {
+  for (auto byte : data) {
+    if (byte == 0xA5) sof_count++;
+    *vt03 << byte;
+    *referee << byte;
   }
 }
 
@@ -106,18 +106,18 @@ void MainLoop() {
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
-  can_to_chassis = new rm::hal::ThrottledCan<>{hcan1, 5000.0};
+  can_to_chassis = new rm::hal::ThrottledCan<>{5000.0, hcan1};
   can_to_chassis->SetFilter(0, 0);
   can_to_chassis->Begin();
 
-  can_to_shoot = new rm::hal::ThrottledCan<>{hcan2, 5000.0};
+  can_to_shoot = new rm::hal::ThrottledCan<>{5000.0, hcan2};
   can_to_shoot->SetFilter(0, 0);
   can_to_shoot->Begin();
 
-  imu_uart = new rm::hal::stm32::Uart(huart1, 518, rm::hal::stm32::UartMode::kNormal, rm::hal::stm32::UartMode::kDma);
+  imu_uart = new rm::hal::stm32::Uart<518>(huart1, false, true);
   imu = new rm::device::HipnucImu(*imu_uart);
 
-  vt03_uart = new rm::hal::Serial(huart6, 256, rm::hal::stm32::UartMode::kDma, rm::hal::stm32::UartMode::kDma);
+  vt03_uart = new rm::hal::Serial<256>(huart6, true, true);
   vt03 = new rm::device::VT03;
 
   // referee
@@ -132,7 +132,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   shoot_ctrl.Init(*can_to_shoot);
 
   imu->Begin();
-  vt03_uart->Begin();
+  vt03_uart->Start();
 
   // 创建主循环定时任务，定频1khz
   TimerTask mainloop_1000hz{

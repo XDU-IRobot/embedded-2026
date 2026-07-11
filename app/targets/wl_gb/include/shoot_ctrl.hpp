@@ -5,7 +5,8 @@
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
 constexpr int kFrictionWheelCount = 6;
 constexpr uint16_t kFwMotorIds[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-constexpr float kFwTargetSpeedRpm = 3400.0f;
+constexpr float kFwTargetSpeedRpm_123 = 5050.0f;
+constexpr float kFwTargetSpeedRpm_456 = 5050.0f;
 constexpr float kFwSpeedKp = 10.0f;
 constexpr float kFwSpeedKi = 0.0f;
 constexpr float kFwSpeedKd = 0.0f;
@@ -46,9 +47,12 @@ class ShootCtrl {
 
     fric_speed_target_rpm_ =
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
-        kFwTargetSpeedRpm;
+        kFwTargetSpeedRpm_123;
 #else
         kFricSpeedTargetRpm;
+#endif
+#if WHEEL_LEGGED_ROBOT_VARIANT == 1
+    fric_speed_target_rpm_456_ = kFwTargetSpeedRpm_456;
 #endif
   }
 
@@ -59,8 +63,9 @@ class ShootCtrl {
     for (int i = 0; i < kFrictionWheelCount; ++i) {
       // ID 2,5 正转, 其余反转
       const bool positive = (i == 1 || i == 4);
+      const float speed_target = (i < 3) ? fric_speed_target_rpm_ : fric_speed_target_rpm_456_;
       if (enter_shoot) {
-        const float target = positive ? fric_speed_target_rpm_ : -fric_speed_target_rpm_;
+        const float target = positive ? speed_target : -speed_target;
         fw_speed_pid_[i]->Update(target, fw_motors_[i]->rpm());
         fw_motors_[i]->SetCurrent(fw_speed_pid_[i]->out());
         // fw_motors_[i]->SetCurrent(0);
@@ -103,7 +108,12 @@ class ShootCtrl {
 #endif
   }
 
-  void AdjustSpeed(float delta) { fric_speed_target_rpm_ += delta; }
+  void AdjustSpeed(float delta) {
+    fric_speed_target_rpm_ += delta;
+#if WHEEL_LEGGED_ROBOT_VARIANT == 1
+    fric_speed_target_rpm_456_ += delta;
+#endif
+  }
 
   float fric_speed_target_rpm() const { return fric_speed_target_rpm_; }
 
@@ -120,8 +130,8 @@ class ShootCtrl {
  private:
   rm::hal::CanInterface* can_{nullptr};
   float fric_speed_target_rpm_{0.0f};
-
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
+  float fric_speed_target_rpm_456_{0.0f};
   std::optional<rm::device::M3508> fw_motors_[kFrictionWheelCount];
   std::optional<rm::modules::PID> fw_speed_pid_[kFrictionWheelCount];
 #else
