@@ -7,8 +7,13 @@
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
 constexpr int kFrictionWheelCount = 6;
 constexpr uint16_t kFwMotorIds[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-constexpr float kFwTargetSpeedRpm_123 = 5050.0f;
-constexpr float kFwTargetSpeedRpm_456 = 5050.0f;
+// 吊射参数
+// constexpr float kFwTargetSpeedRpm_123 = 5050.0f;
+// constexpr float kFwTargetSpeedRpm_456 = 5050.0f;
+// 平时参数
+constexpr float kFwTargetSpeedRpm_123 = 3650.0f;
+constexpr float kFwTargetSpeedRpm_456 = 3650.0f;
+
 constexpr float kFwSpeedKp = 10.0f;
 constexpr float kFwSpeedKi = 0.0f;
 constexpr float kFwSpeedKd = 0.0f;
