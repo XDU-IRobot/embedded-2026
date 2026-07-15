@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include <librm.hpp>
 
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
@@ -28,6 +30,9 @@ constexpr float kFricBrakeThresholdRpm = 500.0f;
 
 constexpr float kFricSpeedStepRpm = 20.0f;
 
+constexpr float kShotReadyThresholdRpm = 50.0f;
+constexpr float kShotDropThresholdRpm = 140.0f;
+
 class ShootCtrl {
  public:
   void Init(rm::hal::CanInterface& can) {
@@ -40,7 +45,7 @@ class ShootCtrl {
     }
 #else
     fric_left_.emplace(can, 0x01);
-    fric_right_.emplace(can, 0x04);
+    fric_right_.emplace(can, 0x02);
     fric_left_pid_.emplace(kFricSpeedKp, kFricSpeedKi, kFricSpeedKd, kFricSpeedMaxOut, kFricSpeedMaxIout);
     fric_right_pid_.emplace(kFricSpeedKp, kFricSpeedKi, kFricSpeedKd, kFricSpeedMaxOut, kFricSpeedMaxIout);
 #endif
@@ -57,6 +62,7 @@ class ShootCtrl {
   }
 
   void Update(bool enter_shoot) {
+    shot_this_cycle_ = false;
     if (!can_) return;
 
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
@@ -81,6 +87,9 @@ class ShootCtrl {
         }
       }
     }
+    if (enter_shoot) {
+      DetectShot();
+    }
     rm::device::DjiMotorBase::SendCommand(*can_);
 #else
     if (enter_shoot) {
@@ -88,6 +97,7 @@ class ShootCtrl {
       fric_left_->SetCurrent(fric_left_pid_->out());
       fric_right_pid_->Update(-fric_speed_target_rpm_, fric_right_->rpm());
       fric_right_->SetCurrent(fric_right_pid_->out());
+      DetectShot();
     } else {
       if (fric_left_->rpm() >= kFricBrakeThresholdRpm) {
         fric_left_pid_->Update(kFricBrakeTargetRpm, fric_left_->rpm());
@@ -115,6 +125,13 @@ class ShootCtrl {
 #endif
   }
 
+  bool PopShotDetected() {
+    bool v = shot_this_cycle_;
+    shot_this_cycle_ = false;
+    return v;
+  }
+  uint32_t shot_count() const { return shot_count_; }
+
   float fric_speed_target_rpm() const { return fric_speed_target_rpm_; }
 
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
@@ -127,9 +144,53 @@ class ShootCtrl {
   int16_t fric_right_rpm() const { return fric_right_ ? fric_right_->rpm() : 0; }
 #endif
 
+#if WHEEL_LEGGED_ROBOT_VARIANT == 1
+  void DetectShot() {
+    const float target_abs = std::fabs(fric_speed_target_rpm_456_);
+    const float rpm_abs_4 = std::fabs(fw_motors_[3]->rpm());
+    const float rpm_abs_5 = std::fabs(fw_motors_[4]->rpm());
+    const float rpm_abs_6 = std::fabs(fw_motors_[5]->rpm());
+
+    if (target_abs > 0.0f && rpm_abs_4 >= target_abs - kShotReadyThresholdRpm &&
+        rpm_abs_5 >= target_abs - kShotReadyThresholdRpm &&
+        rpm_abs_6 >= target_abs - kShotReadyThresholdRpm) {
+      fric_ready_ = true;
+    }
+
+    if (fric_ready_ && (target_abs - rpm_abs_4 > kShotDropThresholdRpm ||
+                        target_abs - rpm_abs_5 > kShotDropThresholdRpm ||
+                        target_abs - rpm_abs_6 > kShotDropThresholdRpm)) {
+      ++shot_count_;
+      fric_ready_ = false;
+      shot_this_cycle_ = true;
+    }
+  }
+#else
+  void DetectShot() {
+    const float target_abs = std::fabs(fric_speed_target_rpm_);
+    const float left_abs = std::fabs(fric_left_->rpm());
+    const float right_abs = std::fabs(fric_right_->rpm());
+
+    if (target_abs > 0.0f && left_abs >= target_abs - kShotReadyThresholdRpm &&
+        right_abs >= target_abs - kShotReadyThresholdRpm) {
+      fric_ready_ = true;
+    }
+
+    if (fric_ready_ && (target_abs - left_abs > kShotDropThresholdRpm ||
+                        target_abs - right_abs > kShotDropThresholdRpm)) {
+      ++shot_count_;
+      fric_ready_ = false;
+      shot_this_cycle_ = true;
+    }
+  }
+#endif
+
  private:
   rm::hal::CanInterface* can_{nullptr};
   float fric_speed_target_rpm_{0.0f};
+  bool fric_ready_{false};
+  uint32_t shot_count_{0};
+  bool shot_this_cycle_{false};
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
   float fric_speed_target_rpm_456_{0.0f};
   std::optional<rm::device::M3508> fw_motors_[kFrictionWheelCount];

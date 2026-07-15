@@ -78,6 +78,11 @@ void MainLoop() {
   const bool enter_shoot = (chassis_rx && chassis_rx->combat_mode());
   shoot_ctrl.Update(enter_shoot);
 
+  // 打弹检测：检测到打弹时通知底盘
+  if (shoot_ctrl.PopShotDetected() && gb_to_chassis != nullptr) {
+    gb_to_chassis->SetShotDetected();
+  }
+
   if (gb_to_chassis != nullptr) {
     if (referee) {
       memcpy(&robotHP, &referee->data().robot_custom_data_3.data, 10);

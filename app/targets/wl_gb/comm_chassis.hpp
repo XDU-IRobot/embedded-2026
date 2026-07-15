@@ -31,6 +31,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     fric_left_rpm_ = left;
     fric_right_rpm_ = right;
   }
+  void SetShotDetected() { shot_detected_ = true; }
 
   void RxCallback(const rm::hal::CanFrame* msg) override {}
 
@@ -85,10 +86,11 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     return static_cast<rm::i16>(clamped >= 0.0f ? (clamped + 0.5f) : (clamped - 0.5f));
   }
 
-  // Frame A: [0..1] vt03_online, [2..3] gyro_z, [4..5] gyro_x, [6] mouse_left, [7] mouse_right
+  // Frame A: [0..1] vt03_online, shot_detected, [2..3] gyro_z, [4..5] gyro_x, [6] mouse_left, [7] mouse_right
   void EncodeFrameA() {
     tx_a_[0] = (vt03_ && vt03_->online_status() == rm::device::Device::kOk) ? 1 : 0;
-    tx_a_[1] = 0;
+    tx_a_[1] = shot_detected_ ? 1 : 0;
+    shot_detected_ = false;
     PackI16(RadToMilliI16(imu_ ? imu_->gyro_z() : 0.f), &tx_a_[2]);
     PackI16(RadToMilliI16(imu_ ? imu_->gyro_x() : 0.f), &tx_a_[4]);
     tx_a_[6] = static_cast<rm::u8>(vt03_ ? (vt03_->data().mouse_button_left ? 1 : 0) : 0);
@@ -135,6 +137,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   EmyRobotHP robot_hp_{};
   rm::i16 fric_left_rpm_{0};
   rm::i16 fric_right_rpm_{0};
+  bool shot_detected_{false};
   std::array<rm::u8, kPayloadSize> tx_a_{};
   std::array<rm::u8, kPayloadSize> tx_b_{};
   std::array<rm::u8, kPayloadSize> tx_c_{};
