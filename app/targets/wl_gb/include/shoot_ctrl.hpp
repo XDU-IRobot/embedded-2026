@@ -152,14 +152,13 @@ class ShootCtrl {
     const float rpm_abs_6 = std::fabs(fw_motors_[5]->rpm());
 
     if (target_abs > 0.0f && rpm_abs_4 >= target_abs - kShotReadyThresholdRpm &&
-        rpm_abs_5 >= target_abs - kShotReadyThresholdRpm &&
-        rpm_abs_6 >= target_abs - kShotReadyThresholdRpm) {
+        rpm_abs_5 >= target_abs - kShotReadyThresholdRpm && rpm_abs_6 >= target_abs - kShotReadyThresholdRpm) {
       fric_ready_ = true;
     }
 
-    if (fric_ready_ && (target_abs - rpm_abs_4 > kShotDropThresholdRpm ||
-                        target_abs - rpm_abs_5 > kShotDropThresholdRpm ||
-                        target_abs - rpm_abs_6 > kShotDropThresholdRpm)) {
+    if (fric_ready_ &&
+        (target_abs - rpm_abs_4 > kShotDropThresholdRpm || target_abs - rpm_abs_5 > kShotDropThresholdRpm ||
+         target_abs - rpm_abs_6 > kShotDropThresholdRpm)) {
       ++shot_count_;
       fric_ready_ = false;
       shot_this_cycle_ = true;
@@ -176,8 +175,8 @@ class ShootCtrl {
       fric_ready_ = true;
     }
 
-    if (fric_ready_ && (target_abs - left_abs > kShotDropThresholdRpm ||
-                        target_abs - right_abs > kShotDropThresholdRpm)) {
+    if (fric_ready_ &&
+        (target_abs - left_abs > kShotDropThresholdRpm || target_abs - right_abs > kShotDropThresholdRpm)) {
       ++shot_count_;
       fric_ready_ = false;
       shot_this_cycle_ = true;
