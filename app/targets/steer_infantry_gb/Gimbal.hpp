@@ -55,6 +55,15 @@ inline class Gimbal {
 
   bool DM_enable_flag_ = false;  // 4310电机使能标志
 
+  // 开火延迟测量
+  enum FireDelayState { kFdIdle, kFdArmed, kFdDropped };
+  FireDelayState fd_state_ = kFdIdle;
+  uint32_t fd_tick_ = 0;
+  float fd_peak_rpm_ = 0.0f;
+  uint32_t fd_arm_tick_ = 0;
+  float fd_sum_ms_ = 0.0f;
+  int fd_count_ = 0;
+
   bool scan_yaw_flag_ = false;    // 扫描yaw轴方向标识位
   bool scan_pitch_flag_ = false;  // 扫描pitch轴方向标识位
 
@@ -74,6 +83,8 @@ inline class Gimbal {
   void GimbalTask();
 
   void GimbalIdentifyDataSend();
+
+  float GetFireDelayAvg() const { return fd_count_ > 0 ? fd_sum_ms_ / static_cast<float>(fd_count_) : 0.0f; }
 
  private:
   void GimbalStateUpdate();

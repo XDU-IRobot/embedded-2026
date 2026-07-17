@@ -131,4 +131,6 @@ inline struct GlobalWarehouse {
   void Music();
 } *globals;
 
+extern float AdelayTime;  // 开火延迟 (ms) 平均值, FreeMaster 可读
+
 #endif  // MAIN_HPP

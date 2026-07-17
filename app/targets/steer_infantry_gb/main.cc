@@ -11,6 +11,8 @@
 
 using namespace rm;
 
+float AdelayTime = 0.0f;  // 开火延迟 (ms) 平均值
+
 void MainLoop() {
   globals->time++;
   globals->SubLoop500Hz();
@@ -346,6 +348,9 @@ void GlobalWarehouse::SubLoop100Hz() {
   globals->device_gimbal.Update();
   globals->device_shoot.Update();
   globals->device_referee.Update();
+
+  // 更新开火延迟平均值
+  AdelayTime = gimbal->GetFireDelayAvg();
   if (globals->rc->switch_l() != rm::device::DR16::SwitchPosition::kUnknown &&
       globals->rc->switch_r() != rm::device::DR16::SwitchPosition::kUnknown) {
     if (globals->rc->switch_l() != globals->last_switch_l || globals->rc->switch_r() != globals->last_switch_r) {

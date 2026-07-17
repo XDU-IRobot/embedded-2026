@@ -445,9 +445,57 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Update(globals->friction_left->rpm(), globals->friction_right->rpm(), 0,
                                    static_cast<f32>(globals->dail_encoder_counter.linear_ticks()),
                                    globals->dial_motor->rpm());
+
+  // --- 开火延迟测量 (500Hz, 每tick=2ms) ---
+  fd_tick_++;
+  float fric_rpm = std::fabs(static_cast<float>(globals->friction_left->rpm()));
+
+  bool is_firing;
+  if (gimbal->single_shoot_flag_) {
+    is_firing = !globals->shoot_controller.shoot_flag();
+  } else {
+    is_firing = (globals->shoot_controller.target().loader_speed != 0.0f);
+  }
+
+  switch (fd_state_) {
+    case kFdIdle:
+      if (is_firing) {
+        fd_peak_rpm_ = fric_rpm;
+        fd_arm_tick_ = fd_tick_;
+        fd_state_ = kFdArmed;
+      }
+      break;
+    case kFdArmed:
+      if (fric_rpm > fd_peak_rpm_) fd_peak_rpm_ = fric_rpm;
+      if (fric_rpm <= fd_peak_rpm_ - 100.0f) {
+        float delay_ms = static_cast<float>(fd_tick_ - fd_arm_tick_) * 2.0f;
+        if (delay_ms > 0.0f && delay_ms < 500.0f) {
+          fd_sum_ms_ += delay_ms;
+          fd_count_++;
+        }
+        fd_state_ = kFdDropped;
+      } else if ((fd_tick_ - fd_arm_tick_) > 250) {
+        fd_state_ = kFdIdle;
+      }
+      break;
+    case kFdDropped:
+      if (fric_rpm >= fd_peak_rpm_ - 50.0f) {
+        if (is_firing) {
+          fd_peak_rpm_ = fric_rpm;
+          fd_arm_tick_ = fd_tick_;
+          fd_state_ = kFdArmed;
+        } else {
+          fd_state_ = kFdIdle;
+        }
+      } else if (!is_firing && (fd_tick_ - fd_arm_tick_) > 500) {
+        fd_state_ = kFdIdle;
+      }
+      break;
+  }
 }
 
 void Gimbal::ShootDisableUpdate() {
+  fd_state_ = kFdIdle;  // 重置开火延迟状态机
   globals->shoot_controller.SetMode(Shoot3Fric::kStop);
   if (globals->StateMachine_ == kUnable) {
     globals->shoot_controller.Enable(false);
