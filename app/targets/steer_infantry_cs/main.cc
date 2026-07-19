@@ -8,6 +8,7 @@
 
 #include "main.hpp"
 #include "Chassis.hpp"
+#include "freemaster.hpp"
 #include "subReferee/TaskScheduler.hpp"
 #include "UI/UIuser1.hpp"
 #include "UI/UIInfantry.hpp"
@@ -38,7 +39,7 @@ extern "C" [[noreturn]] void AppMain(void) {
   globals->Init();
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
-  // 创建主循环定时任务，定频1khz
+  // 创建主循环定时任务，定频500hz
   TimerTask mainloop_1000hz{
       &htim13,                                   //
       etl::delegate<void()>::create<MainLoop>()  //
@@ -143,6 +144,7 @@ void GlobalWarehouse::SubLoop250Hz() {
 void GlobalWarehouse::SubLoop100Hz() {
   if (globals->time % 5 == 0) {
     globals->device_chassis.Update();
+    freemaster();
   }
 }
 
