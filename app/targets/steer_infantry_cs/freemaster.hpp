@@ -94,10 +94,8 @@ inline void freemaster() {
 
   const auto &referee = globals->referee_data->data();
   auto &controller = globals->chassis_controller;
-  rm::device::GM6020 *const steer_motors[4]{globals->steer_lf, globals->steer_rf, globals->steer_lb,
-                                             globals->steer_rb};
-  rm::device::M3508 *const wheel_motors[4]{globals->wheel_lf, globals->wheel_rf, globals->wheel_lb,
-                                            globals->wheel_rb};
+  rm::device::GM6020 *const steer_motors[4]{globals->steer_lf, globals->steer_rf, globals->steer_lb, globals->steer_rb};
+  rm::device::M3508 *const wheel_motors[4]{globals->wheel_lf, globals->wheel_rf, globals->wheel_lb, globals->wheel_rb};
 
   freemaster_data.sample_count = freemaster_data.sample_count + 1U;
 
@@ -115,9 +113,8 @@ inline void freemaster() {
   freemaster_data.chassis_yaw_encoder = globals->yaw_motor->encoder();
   freemaster_data.chassis_yaw_angle_rad =
       rm::modules::Map(static_cast<f32>(freemaster_data.chassis_yaw_encoder), 0.0f, 8192.0f, 0.0f, kTwoPi);
-  freemaster_data.chassis_yaw_delta_rad =
-      rm::modules::Wrap(kFrontDownYawAngle - freemaster_data.chassis_yaw_angle_rad, -static_cast<f32>(M_PI),
-                        static_cast<f32>(M_PI));
+  freemaster_data.chassis_yaw_delta_rad = rm::modules::Wrap(kFrontDownYawAngle - freemaster_data.chassis_yaw_angle_rad,
+                                                            -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
 
   freemaster_data.robot_id = referee.robot_status.robot_id;
   freemaster_data.robot_level = referee.robot_status.robot_level;
@@ -142,16 +139,15 @@ inline void freemaster() {
   freemaster_data.supercap_referee_power_limit = globals->super_cap_tx.feedback_referee_power_limit;
   freemaster_data.supercap_referee_energy_buffer = globals->super_cap_tx.feedback_referee_energy_buffer;
 
-  const f32 steer_command[4]{controller.output().lf_steer, controller.output().rf_steer,
-                             controller.output().lb_steer, controller.output().rb_steer};
-  const f32 wheel_command[4]{controller.output().lf_wheel, controller.output().rf_wheel,
-                             controller.output().lb_wheel, controller.output().rb_wheel};
+  const f32 steer_command[4]{controller.output().lf_steer, controller.output().rf_steer, controller.output().lb_steer,
+                             controller.output().rb_steer};
+  const f32 wheel_command[4]{controller.output().lf_wheel, controller.output().rf_wheel, controller.output().lb_wheel,
+                             controller.output().rb_wheel};
   for (usize i = 0; i < 4; ++i) {
     freemaster_data.steer_encoder[i] = steer_motors[i]->encoder();
-    freemaster_data.steer_position_rad[i] =
-        rm::modules::Map(static_cast<f32>(static_cast<i32>(freemaster_data.steer_encoder[i]) -
-                                          static_cast<i32>(kSteerInitEncoder[i])),
-                         0.0f, 8191.0f, 0.0f, kTwoPi);
+    freemaster_data.steer_position_rad[i] = rm::modules::Map(
+        static_cast<f32>(static_cast<i32>(freemaster_data.steer_encoder[i]) - static_cast<i32>(kSteerInitEncoder[i])),
+        0.0f, 8191.0f, 0.0f, kTwoPi);
     freemaster_data.steer_rpm[i] = steer_motors[i]->rpm();
     freemaster_data.steer_feedback_current[i] = steer_motors[i]->current();
     freemaster_data.steer_command[i] = steer_command[i];
