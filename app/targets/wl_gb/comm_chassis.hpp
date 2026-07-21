@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstring>
 
 #include <librm.hpp>
 bool button_left;
@@ -157,15 +158,18 @@ class ChassisToGimbalRxBridge final : public rm::device::CanDevice {
     if (msg == nullptr) return;
     if (msg->rx_std_id == kRxStdId && msg->dlc >= kPayloadSize) {
       combat_mode_ = (msg->data[0] != 0);
+      std::memcpy(&bullet_speed_mps_, &msg->data[1], sizeof(float));
       frame_count_++;
       ReportStatus(kOk);
     }
   }
 
   [[nodiscard]] bool combat_mode() const { return combat_mode_; }
+  [[nodiscard]] float bullet_speed_mps() const { return bullet_speed_mps_; }
   [[nodiscard]] rm::u32 frame_count() const { return frame_count_; }
 
  private:
   bool combat_mode_{false};
+  float bullet_speed_mps_{0.0f};
   rm::u32 frame_count_{0};
 };

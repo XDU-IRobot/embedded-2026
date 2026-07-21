@@ -35,10 +35,14 @@ int16_t fw_rpm_4 = 0;
 int16_t fw_rpm_5 = 0;
 int16_t fw_rpm_6 = 0;
 
+int16_t fw_123 = 0;
+int16_t fw_456 = 0;
+
 // for debug
 float yaw = 0.f;
 float pitch = 0.f;
 float roll = 0.f;
+float bullet_speed_debug = 0.f;
 static int sof_count = 0;
 static int imu_status = 0;
 
@@ -95,8 +99,11 @@ void MainLoop() {
     fw_rpm_4 = shoot_ctrl.fw_rpm(3);
     fw_rpm_5 = shoot_ctrl.fw_rpm(4);
     fw_rpm_6 = shoot_ctrl.fw_rpm(5);
-    int16_t fric_rpm_sum = fw_rpm_1 + fw_rpm_2 + fw_rpm_3 + fw_rpm_4 + fw_rpm_5 + fw_rpm_6;
-    gb_to_chassis->SetChassisFricRpm(fric_rpm_sum / kFrictionWheelCount, 0);
+    rm::i16 fric_rpm_1= fw_rpm_1 + fw_rpm_2 + fw_rpm_3 ;
+    rm::i16 fric_rpm_2= fw_rpm_4 + fw_rpm_5 + fw_rpm_6 ;
+    gb_to_chassis->SetChassisFricRpm(fric_rpm_1/(rm::i16)3, fric_rpm_2/(rm::i16)3);
+    fw_123 = fric_rpm_1/(rm::i16)3;
+    fw_456 = fric_rpm_2/(rm::i16)3;
     imu_status = static_cast<int>(imu->online_status());
 
 #else
@@ -108,6 +115,7 @@ void MainLoop() {
   yaw = imu->yaw();
   pitch = imu->pitch();
   roll = imu->roll();
+  bullet_speed_debug = (chassis_rx ? chassis_rx->bullet_speed_mps() : 0.f);
 }
 
 extern "C" [[noreturn]] void AppMain(void) {
