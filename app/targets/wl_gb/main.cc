@@ -99,11 +99,11 @@ void MainLoop() {
     fw_rpm_4 = shoot_ctrl.fw_rpm(3);
     fw_rpm_5 = shoot_ctrl.fw_rpm(4);
     fw_rpm_6 = shoot_ctrl.fw_rpm(5);
-    rm::i16 fric_rpm_1= fw_rpm_1 + fw_rpm_2 + fw_rpm_3 ;
-    rm::i16 fric_rpm_2= fw_rpm_4 + fw_rpm_5 + fw_rpm_6 ;
-    gb_to_chassis->SetChassisFricRpm(fric_rpm_1/(rm::i16)3, fric_rpm_2/(rm::i16)3);
-    fw_123 = fric_rpm_1/(rm::i16)3;
-    fw_456 = fric_rpm_2/(rm::i16)3;
+    rm::i16 fric_rpm_1 = fw_rpm_1 + fw_rpm_2 + fw_rpm_3;
+    rm::i16 fric_rpm_2 = fw_rpm_4 + fw_rpm_5 + fw_rpm_6;
+    gb_to_chassis->SetChassisFricRpm(fric_rpm_1 / (rm::i16)3, fric_rpm_2 / (rm::i16)3);
+    fw_123 = fric_rpm_1 / (rm::i16)3;
+    fw_456 = fric_rpm_2 / (rm::i16)3;
     imu_status = static_cast<int>(imu->online_status());
 
 #else
