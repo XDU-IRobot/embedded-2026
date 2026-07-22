@@ -32,7 +32,7 @@ inline class Chassis {
 
   const u16 steer_wheel_init_encoder_[4]{1114, 3111, 2912, 2274};  // 舵轮初始编码器值
 
-  const f32 front_down_yaw_angle_ = 4.5166f;  // 前方下部yaw轴角度
+  const f32 front_down_yaw_angle_ = 4.1560f;  // 前方下部yaw轴角度
 
   const f32 chassis_sensitivity_xy_ = 1800.0f;  // 底盘x、y轴灵敏度
   const f32 chassis_max_speed_xy_ = 10000.0f;   // 底盘x、y轴最大速度
