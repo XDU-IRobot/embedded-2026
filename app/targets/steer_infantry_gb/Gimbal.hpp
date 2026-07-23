@@ -86,6 +86,16 @@ inline class Gimbal {
 
   float GetFireDelayAvg() const { return fd_count_ > 0 ? fd_sum_ms_ / static_cast<float>(fd_count_) : 0.0f; }
 
+  [[nodiscard]] f32 yaw_target() const { return gimbal_yaw_target_; }
+  [[nodiscard]] f32 pitch_target() const { return gimbal_pitch_target_; }
+  [[nodiscard]] f32 yaw_speed_reference() const { return yaw_speed_ref; }
+  [[nodiscard]] f32 pitch_speed_reference() const { return pitch_speed_ref; }
+  [[nodiscard]] f32 yaw_accel_reference() const { return yaw_accel_ref; }
+  [[nodiscard]] f32 pitch_accel_reference() const { return pitch_accel_ref; }
+  [[nodiscard]] f32 yaw_feedforward_torque() const { return yaw_torque_; }
+  [[nodiscard]] f32 yaw_command() const { return yaw_current_; }
+  [[nodiscard]] f32 pitch_command() const { return pitch_torque_; }
+
  private:
   void GimbalStateUpdate();
 

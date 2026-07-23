@@ -8,6 +8,7 @@
 
 #include "main.hpp"
 #include "Gimbal.hpp"
+#include "freemaster.hpp"
 
 using namespace rm;
 
@@ -359,6 +360,7 @@ void GlobalWarehouse::SubLoop100Hz() {
       globals->last_switch_r = globals->rc->switch_r();
     }
   }
+  freemaster();
 }
 
 void GlobalWarehouse::SubLoop50Hz() {
