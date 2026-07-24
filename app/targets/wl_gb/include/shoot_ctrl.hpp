@@ -8,11 +8,11 @@
 constexpr int kFrictionWheelCount = 6;
 constexpr uint16_t kFwMotorIds[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 // 吊射参数
-constexpr float kFwTargetSpeedRpm_123 = 5150.0f;
-constexpr float kFwTargetSpeedRpm_456 = 5200.0f;
+constexpr float kFwLobTargetSpeedRpm_123 = 5050.0f;
+constexpr float kFwLobTargetSpeedRpm_456 = 5100.0f;
 // 平时参数
-// constexpr float kFwTargetSpeedRpm_123 = 3650.0f;
-// constexpr float kFwTargetSpeedRpm_456 = 3650.0f;
+constexpr float kFwNormalTargetSpeedRpm_123 = 3650.0f;
+constexpr float kFwNormalTargetSpeedRpm_456 = 3650.0f;
 
 constexpr float kFwSpeedKp = 10.0f;
 constexpr float kFwSpeedKi = 0.0f;
@@ -57,12 +57,12 @@ class ShootCtrl {
 
     fric_speed_target_rpm_ =
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
-        kFwTargetSpeedRpm_123;
+        kFwNormalTargetSpeedRpm_123;
 #else
         kFricSpeedTargetRpm;
 #endif
 #if WHEEL_LEGGED_ROBOT_VARIANT == 1
-    fric_speed_target_rpm_456_ = kFwTargetSpeedRpm_456;
+    fric_speed_target_rpm_456_ = kFwNormalTargetSpeedRpm_456;
 #endif
   }
 
@@ -129,6 +129,18 @@ class ShootCtrl {
     fric_speed_target_rpm_456_ += delta;
 #endif
   }
+
+#if WHEEL_LEGGED_ROBOT_VARIANT == 1
+  void SetLongDistanceMode(bool lob) {
+    if (lob) {
+      fric_speed_target_rpm_ = kFwLobTargetSpeedRpm_123;
+      fric_speed_target_rpm_456_ = kFwLobTargetSpeedRpm_456;
+    } else {
+      fric_speed_target_rpm_ = kFwNormalTargetSpeedRpm_123;
+      fric_speed_target_rpm_456_ = kFwNormalTargetSpeedRpm_456;
+    }
+  }
+#endif
 
   bool PopShotDetected() {
     bool v = shot_this_cycle_;

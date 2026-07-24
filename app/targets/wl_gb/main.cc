@@ -80,6 +80,11 @@ void MainLoop() {
 
   // 发射控制：使用底盘发来的 combat_mode
   const bool enter_shoot = (chassis_rx && chassis_rx->combat_mode());
+#if WHEEL_LEGGED_ROBOT_VARIANT == 1
+  if (chassis_rx) {
+    shoot_ctrl.SetLongDistanceMode(chassis_rx->long_distance_mode());
+  }
+#endif
   shoot_ctrl.Update(enter_shoot);
 
   // 打弹检测：检测到打弹时通知底盘

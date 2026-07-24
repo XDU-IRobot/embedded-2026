@@ -159,6 +159,7 @@ class ChassisToGimbalRxBridge final : public rm::device::CanDevice {
     if (msg->rx_std_id == kRxStdId && msg->dlc >= kPayloadSize) {
       combat_mode_ = (msg->data[0] != 0);
       std::memcpy(&bullet_speed_mps_, &msg->data[1], sizeof(float));
+      long_distance_mode_ = (msg->data[5] != 0);
       frame_count_++;
       ReportStatus(kOk);
     }
@@ -166,10 +167,12 @@ class ChassisToGimbalRxBridge final : public rm::device::CanDevice {
 
   [[nodiscard]] bool combat_mode() const { return combat_mode_; }
   [[nodiscard]] float bullet_speed_mps() const { return bullet_speed_mps_; }
+  [[nodiscard]] bool long_distance_mode() const { return long_distance_mode_; }
   [[nodiscard]] rm::u32 frame_count() const { return frame_count_; }
 
  private:
   bool combat_mode_{false};
   float bullet_speed_mps_{0.0f};
+  bool long_distance_mode_{false};
   rm::u32 frame_count_{0};
 };
