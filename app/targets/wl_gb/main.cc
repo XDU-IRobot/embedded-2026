@@ -114,6 +114,7 @@ void MainLoop() {
 #else
     gb_to_chassis->SetChassisFricRpm(shoot_ctrl.fric_left_rpm(), shoot_ctrl.fric_right_rpm());
 #endif
+    gb_to_chassis->SetFricSpeedTarget(static_cast<rm::u16>(shoot_ctrl.fric_speed_target_rpm()));
     gb_to_chassis->QueueSend();
   }
 

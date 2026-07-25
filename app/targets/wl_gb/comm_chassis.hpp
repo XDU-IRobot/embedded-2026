@@ -32,6 +32,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     fric_left_rpm_ = left;
     fric_right_rpm_ = right;
   }
+  void SetFricSpeedTarget(rm::u16 rpm) { fric_speed_target_rpm_ = rpm; }
   void SetShotDetected() { shot_detected_ = true; }
 
   void RxCallback(const rm::hal::CanFrame* msg) override {}
@@ -126,11 +127,12 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
     PackU16(robot_hp_.standard_4_HP, &tx_d_[6]);
   }
 
-  // Frame E (8 bytes): [0..1] sentry_7_HP, [2..3] fric_left_rpm, [4..5] fric_right_rpm
+  // Frame E (8 bytes): [0..1] sentry_7_HP, [2..3] fric_left_rpm, [4..5] fric_right_rpm, [6..7] fric_speed_target_rpm
   void EncodeFrameE() {
     PackU16(robot_hp_.sentry_7_HP, &tx_e_[0]);
     PackI16(fric_left_rpm_, &tx_e_[2]);
     PackI16(fric_right_rpm_, &tx_e_[4]);
+    PackU16(fric_speed_target_rpm_, &tx_e_[6]);
   }
 
   const rm::device::HipnucImu* imu_{nullptr};
@@ -138,6 +140,7 @@ class GimbalToChassisTxBridge final : public rm::device::CanDevice {
   EmyRobotHP robot_hp_{};
   rm::i16 fric_left_rpm_{0};
   rm::i16 fric_right_rpm_{0};
+  rm::u16 fric_speed_target_rpm_{0};
   bool shot_detected_{false};
   std::array<rm::u8, kPayloadSize> tx_a_{};
   std::array<rm::u8, kPayloadSize> tx_b_{};
