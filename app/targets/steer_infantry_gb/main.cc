@@ -135,61 +135,60 @@ void GlobalWarehouse::RCStateUpdate() {
     }
     if (globals->remote_source == RemoteControlSource::kDt17) {
       switch (globals->rc->switch_r()) {
-      case rm::device::DR16::SwitchPosition::kUp:
-        // 右拨杆打到最上侧挡位
-        switch (globals->rc->switch_l()) {
-          case rm::device::DR16::SwitchPosition::kDown:
-            globals->StateMachine_ = kMatch;
-            break;
-          case rm::device::DR16::SwitchPosition::kMid:
-            globals->StateMachine_ = kTest;
-            gimbal->GimbalMove_ = kGbFfVerify;
-            break;
-          case rm::device::DR16::SwitchPosition::kUp:
-            globals->StateMachine_ = kTest;
-            gimbal->GimbalMove_ = kGbIdentify;
-            break;
-          default:
-            globals->StateMachine_ = kNoForce;
-            break;
-        }
-        break;
+        case rm::device::DR16::SwitchPosition::kUp:
+          // 右拨杆打到最上侧挡位
+          switch (globals->rc->switch_l()) {
+            case rm::device::DR16::SwitchPosition::kDown:
+              globals->StateMachine_ = kMatch;
+              break;
+            case rm::device::DR16::SwitchPosition::kMid:
+              globals->StateMachine_ = kTest;
+              gimbal->GimbalMove_ = kGbFfVerify;
+              break;
+            case rm::device::DR16::SwitchPosition::kUp:
+              globals->StateMachine_ = kTest;
+              gimbal->GimbalMove_ = kGbIdentify;
+              break;
+            default:
+              globals->StateMachine_ = kNoForce;
+              break;
+          }
+          break;
 
-      case rm::device::DR16::SwitchPosition::kMid:
-        // 右拨杆打到中间挡位
-        switch (globals->rc->switch_l()) {
-          case rm::device::DR16::SwitchPosition::kDown:
-            globals->StateMachine_ = kTest;
-            gimbal->GimbalMove_ = kGbRemote;
-            break;
-          case rm::device::DR16::SwitchPosition::kMid:
-            globals->StateMachine_ = kTest;
-            gimbal->GimbalMove_ = kGbAimbotFu;
-            break;
-          case rm::device::DR16::SwitchPosition::kUp:
-            globals->StateMachine_ = kTest;
-            gimbal->GimbalMove_ = kGbAimbot;
-            break;
-          default:
-            globals->StateMachine_ = kNoForce;
-            break;
-        }
-        break;
+        case rm::device::DR16::SwitchPosition::kMid:
+          // 右拨杆打到中间挡位
+          switch (globals->rc->switch_l()) {
+            case rm::device::DR16::SwitchPosition::kDown:
+              globals->StateMachine_ = kTest;
+              gimbal->GimbalMove_ = kGbRemote;
+              break;
+            case rm::device::DR16::SwitchPosition::kMid:
+              globals->StateMachine_ = kTest;
+              gimbal->GimbalMove_ = kGbAimbotFu;
+              break;
+            case rm::device::DR16::SwitchPosition::kUp:
+              globals->StateMachine_ = kTest;
+              gimbal->GimbalMove_ = kGbAimbot;
+              break;
+            default:
+              globals->StateMachine_ = kNoForce;
+              break;
+          }
+          break;
 
-      case rm::device::DR16::SwitchPosition::kDown:
-        if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
-          globals->Music();
-        }
-        globals->StateMachine_ = kNoForce;
-        break;
-      default:
-        globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
-        break;
+        case rm::device::DR16::SwitchPosition::kDown:
+          if (globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kUp) {
+            globals->Music();
+          }
+          globals->StateMachine_ = kNoForce;
+          break;
+        default:
+          globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
+          break;
       }
     } else if (globals->remote_source == RemoteControlSource::kVt03) {
-      globals->StateMachine_ = globals->image_data->data().switch_position == rm::device::VT03::SwitchPosition::S
-                                   ? kMatch
-                                   : kNoForce;
+      globals->StateMachine_ =
+          globals->image_data->data().switch_position == rm::device::VT03::SwitchPosition::S ? kMatch : kNoForce;
     } else {
       globals->StateMachine_ = kNoForce;
     }
@@ -235,16 +234,14 @@ void GlobalWarehouse::RemoteInputUpdate() {
 void GlobalWarehouse::ChassisStateUpdate() {
   // 前后左右
   globals->chassis_move_x = rm::modules::Clamp(
-      globals->remote_input.right_x * 100.0f +
-          static_cast<f32>(globals->remote_input.key(rm::device::VT03::kD) -
-                           globals->remote_input.key(rm::device::VT03::kA)) *
-              100.0f,
+      globals->remote_input.right_x * 100.0f + static_cast<f32>(globals->remote_input.key(rm::device::VT03::kD) -
+                                                                globals->remote_input.key(rm::device::VT03::kA)) *
+                                                   100.0f,
       -100.0f, 100.0f);
   globals->chassis_move_y = rm::modules::Clamp(
-      globals->remote_input.right_y * 100.0f +
-          static_cast<f32>(globals->remote_input.key(rm::device::VT03::kW) -
-                           globals->remote_input.key(rm::device::VT03::kS)) *
-              100.0f,
+      globals->remote_input.right_y * 100.0f + static_cast<f32>(globals->remote_input.key(rm::device::VT03::kW) -
+                                                                globals->remote_input.key(rm::device::VT03::kS)) *
+                                                   100.0f,
       -100.0f, 100.0f);
   // 有无力
   if ((globals->StateMachine_ == kTest && gimbal->GimbalMove_ == kGbRemote) || globals->StateMachine_ == kMatch) {
@@ -280,15 +277,13 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 3);
   }
   // 打符模式切换
-  if (globals->remote_input.key(rm::device::VT03::kF) &&
-      !globals->xf_state && globals->StateMachine_ == kMatch) {
+  if (globals->remote_input.key(rm::device::VT03::kF) && !globals->xf_state && globals->StateMachine_ == kMatch) {
     globals->df_flag = true;
   } else if (globals->df_flag) {
     globals->df_flag = false;
     globals->df_state ^= true;
   }
-  if (globals->remote_input.key(rm::device::VT03::kG) &&
-      !globals->df_state && globals->StateMachine_ == kMatch) {
+  if (globals->remote_input.key(rm::device::VT03::kG) && !globals->df_state && globals->StateMachine_ == kMatch) {
     globals->xf_flag = true;
   } else if (globals->xf_flag) {
     globals->xf_flag = false;
