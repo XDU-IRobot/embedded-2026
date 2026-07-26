@@ -9,6 +9,9 @@ extern void UIInfantryAdd1();
 extern void UIInfantryAdd2();
 extern void UIInfantryAdd3();
 extern void UIInfantryAdd4();
+extern void UIInfantrySupercapBoxAdd();
+extern void UIInfantrySpeedModeAdd();
 extern void UIInfantryEdit();
+extern void UIInfantrySpeedModeEdit();
 
 #endif  // DRONEHERO_HPP

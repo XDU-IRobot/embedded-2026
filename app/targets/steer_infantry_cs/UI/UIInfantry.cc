@@ -12,6 +12,34 @@ using namespace rm::device;
 
 extern u16 robotID;
 
+namespace {
+constexpr u16 kSupercapBarStartX = 598;
+constexpr u16 kSupercapBarEndX = 1315;
+constexpr u16 kSupercapBarY = 103;
+constexpr u16 kSupercapBarWidth = kSupercapBarEndX - kSupercapBarStartX;
+constexpr u8 kSupercapLowEnergyThreshold = 102;  // 40% of the 0~255 energy range.
+
+u16 SupercapBarEndX(const u8 energy) {
+  return kSupercapBarStartX + static_cast<u16>(static_cast<u32>(kSupercapBarWidth) * energy / 255U);
+}
+
+UIFigure::Color SupercapBarColor(const u8 energy) {
+  return energy < kSupercapLowEnergyThreshold ? UIFigure::Color::Pink : UIFigure::Color::Green;
+}
+
+void SendSpeedModeText(const UIFigure::Operation operation) {
+  UICharacter text;
+  const bool high_speed_enabled = chassis->speed_mode_ == kHighSpeed;
+  const char *value = high_speed_enabled ? "ON " : "OFF";
+  const auto color = high_speed_enabled ? UIFigure::Color::Green : UIFigure::Color::Pink;
+
+  text.character.fillCharacter("spd", operation, 0, color, 3, 1335, 112, 24, 3);
+  memcpy(text.data, value, 3);
+  const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, text, robotID, robotID + 256);
+  globals->referee_uart->Write(globals->dataBox, dataLen, 500);
+}
+}  // namespace
+
 // 无人机显示英雄UI
 void UIInfantryAdd1() {
   UIFigure7 UIGroup1;
@@ -28,13 +56,25 @@ void UIInfantryAdd1() {
 }
 void UIInfantryAdd2() {
   UIFigure2 UIGroup1;
-  UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 5, 900, 270, 27,
-                             static_cast<f32>(globals->super_cap->GetCapEnergy()) * 1000.0f);
+  const u8 energy = globals->super_cap->GetCapEnergy();
+  UIGroup1.figure1.fillLine("cap", UIFigure::Operation::Add, 0, SupercapBarColor(energy), 34,
+                            kSupercapBarStartX, kSupercapBarY, SupercapBarEndX(energy), kSupercapBarY);
   UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Add, 0, UIFigure::Color::White, 2, 100, 720, 25,
                              static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
   globals->referee_uart->Write(globals->dataBox, dataLen, 500);
 }
+
+void UIInfantrySupercapBoxAdd() {
+  UIFigure1 UIGroup1;
+  UIGroup1.figure1.fillRec("cbr", UIFigure::Operation::Add, 0, UIFigure::Color::Yellow, 3,
+                           kSupercapBarStartX, 86, kSupercapBarEndX, 120);
+  const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
+  globals->referee_uart->Write(globals->dataBox, dataLen, 500);
+}
+
+void UIInfantrySpeedModeAdd() { SendSpeedModeText(UIFigure::Operation::Add); }
+
 void UIInfantryAdd3() {
   UICharacter UITextHeader;
   UITextHeader.character.fillCharacter("aim", UIFigure::Operation::Add, 0, UIFigure::Color::Green, 2, 160, 720, 25, 21);
@@ -54,13 +94,9 @@ void UIInfantryAdd4() {
 void UIInfantryEdit() {
   UIFigure7 UIGroup1;
   // 电容电压
-  if (chassis->speed_mode_ == kHighSpeed) {
-    UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 5, 900, 270, 27,
-                               static_cast<f32>(globals->super_cap->GetCapEnergy()) * 1000.0f);
-  } else {
-    UIGroup1.figure1.fillFloat("cms", UIFigure::Operation::Edit, 0, UIFigure::Color::RedBlue, 5, 900, 270, 27,
-                               static_cast<f32>(globals->super_cap->GetCapEnergy()) * 1000.0f);
-  }
+  const u8 energy = globals->super_cap->GetCapEnergy();
+  UIGroup1.figure1.fillLine("cap", UIFigure::Operation::Edit, 0, SupercapBarColor(energy), 34,
+                            kSupercapBarStartX, kSupercapBarY, SupercapBarEndX(energy), kSupercapBarY);
   // 弹速调节
   if (globals->gimbal_communicator->aim_speed_change() > 0) {
     UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 2, 100, 720, 25,
@@ -115,3 +151,5 @@ void UIInfantryEdit() {
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
   globals->referee_uart->Write(globals->dataBox, dataLen, 500);
 }
+
+void UIInfantrySpeedModeEdit() { SendSpeedModeText(UIFigure::Operation::Edit); }

@@ -170,11 +170,14 @@ void GlobalWarehouse::SubLoop30Hz() {
 }
 
 void UiRefresh() {
+  static bool last_ui_show_flag = false;
   // 接收机器人ID
   robotID = globals->referee_data->data().robot_status.robot_id;
-  if (globals->gimbal_communicator->UI_show_flag() == 1) {
+  const bool ui_show_flag = globals->gimbal_communicator->UI_show_flag() == 1;
+  if (ui_show_flag && !last_ui_show_flag && robotID != 0) {
     static_UI_add();
   }
+  last_ui_show_flag = ui_show_flag && robotID != 0;
 }
 
 static auto UIRobotHeaderBlueADD = device::UITask(UITextHeaderRobotBlue_add);
@@ -197,15 +200,21 @@ static auto UIInfantryADD1 = device::UITask(UIInfantryAdd1);
 static auto UIInfantryADD2 = device::UITask(UIInfantryAdd2);
 static auto UIInfantryADD3 = device::UITask(UIInfantryAdd3);
 static auto UIInfantryADD4 = device::UITask(UIInfantryAdd4);
+static auto UIInfantrySupercapBoxADD = device::UITask(UIInfantrySupercapBoxAdd);
+static auto UIInfantrySpeedModeADD = device::UITask(UIInfantrySpeedModeAdd);
 static auto UIInfantryEDIT = device::UITask(UIInfantryEdit, 10);
+static auto UIInfantrySpeedModeEDIT = device::UITask(UIInfantrySpeedModeEdit, 10);
 
 void static_UI_add() {
   schedule.addTaskStatic(&UIInfantryADD1);
   schedule.addTaskStatic(&UIInfantryADD2);
   schedule.addTaskStatic(&UIInfantryADD3);
   schedule.addTaskStatic(&UIInfantryADD4);
+  schedule.addTaskStatic(&UIInfantrySupercapBoxADD);
+  schedule.addTaskStatic(&UIInfantrySpeedModeADD);
 
   schedule.addTask(&UIInfantryEDIT);
+  schedule.addTask(&UIInfantrySpeedModeEDIT);
   if (robotID >= 100) {
     schedule.addTaskStatic(&UIRobotHeaderBlueADD);
     schedule.addTaskStatic(&UIalBlueADD);
