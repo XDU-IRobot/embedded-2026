@@ -1,0 +1,176 @@
+`D:\rm\2026_code\1\embedded-2026\build\Debug-hero\app\wl_gb.elf' has changed; re-reading symbols.
+Remote debugging using localhost:3333
+0x0801d690 in char* std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_construct<char const*>(char const*, char const*, std::allocator<char> const&, std::forward_iterator_tag) [clone .isra.0] ()
+r0             0x2001fbfe          537000958
+r1             0x2000538a          536892298
+r2             0x2d9c5e1c          765222428
+r3             0x8                 8
+r4             0x52                82
+r5             0x20004e50          536890960
+r6             0x0                 0
+r7             0x2001fbc0          537000896
+r8             0x0                 0
+r9             0x0                 0
+r10            0x0                 0
+r11            0x0                 0
+r12            0x12e               302
+sp             0x2001fbc0          0x2001fbc0
+lr             0x801d5f7           134338039
+pc             0x801d690           0x801d690 <char* std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_construct<char const*>(char const*, char const*, std::allocator<char> const&, std::forward_iterator_tag) [clone .isra.0]+24>
+xpsr           0x1000035           16777269
+fpscr          0x10                16
+msp            0x2001fbc0          0x2001fbc0
+psp            0x0                 0x0
+primask        0x0                 0
+basepri        0x0                 0
+faultmask      0x0                 0
+control        0x0                 0
+#0  0x0801d690 in char* std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_construct<char const*>(char const*, char const*, std::allocator<char> const&, std::forward_iterator_tag) [clone .isra.0] ()
+#1  0x00000058 in ?? ()
+Backtrace stopped: previous frame identical to this frame (corrupt stack?)
+=> 0x801d690 <_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag.isra.0+24>:	str	r3, [r7, #28]
+char* std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_construct<char const*>(char const*, char const*, std::allocator<char> const&, std::forward_iterator_tag) [clone .isra.0] + 24 in section .text
+std::runtime_error::~runtime_error() + 10 in section .text
+   0x801d5e0 <_ZNKSt9type_infoeqERKS_+36>:	ldr	r3, [r7, #4]
+   0x801d5e2 <_ZNKSt9type_infoeqERKS_+38>:	adds	r3, #8
+   0x801d5e4 <_ZNKSt9type_infoeqERKS_+40>:	adds	r1, r3, #6
+   0x801d5e6 <_ZNKSt9type_infoeqERKS_+42>:	ldr	r3, [r7, #4]
+   0x801d5e8 <_ZNKSt13runtime_error4whatEv>:	ldr	r3, [r3, #4]
+   0x801d5ea <_ZNKSt13runtime_error4whatEv+2>:	mov	r2, r3
+   0x801d5ec <_ZNSt13runtime_errorD2Ev>:	add.w	r3, r7, #14
+   0x801d5f0 <_ZNSt13runtime_errorD2Ev+4>:	mov	r0, r3
+   0x801d5f2 <_ZNSt13runtime_errorD2Ev+6>:	bl	0x801d63a <_ZNSt6chrono3_V212system_clock3nowEv+22>
+   0x801d5f6 <_ZNSt13runtime_errorD2Ev+10>:	ldr	r3, [r7, #4]
+   0x801d5f8 <_ZNSt13runtime_errorD2Ev+12>:	adds	r3, #8
+   0x801d5fa <_ZNSt13runtime_errorD2Ev+14>:	adds	r3, #4
+Dump of assembler code from 0x801d5c0 to 0x801d620:
+   0x0801d5c0 <_ZNKSt9type_infoeqERKS_+4>:	pop	{r7, pc}
+   0x0801d5c2 <_ZNKSt9type_infoeqERKS_+6>:	push	{r7, lr}
+   0x0801d5c4 <_ZNKSt9type_infoeqERKS_+8>:	sub	sp, #16
+   0x0801d5c6 <_ZNKSt9type_infoeqERKS_+10>:	add	r7, sp, #0
+   0x0801d5c8 <_ZNKSt9type_infoeqERKS_+12>:	str	r0, [r7, #4]
+   0x0801d5ca <_ZNKSt9type_infoeqERKS_+14>:	movs	r3, #0
+   0x0801d5cc <_ZNKSt9type_infoeqERKS_+16>:	strh	r3, [r7, #14]
+   0x0801d5ce <_ZNKSt9type_infoeqERKS_+18>:	ldr	r3, [r7, #4]
+   0x0801d5d0 <_ZNKSt9type_infoeqERKS_+20>:	add.w	r1, r3, #8
+   0x0801d5d4 <_ZNKSt9type_infoeqERKS_+24>:	add.w	r3, r7, #14
+   0x0801d5d8 <_ZNKSt9type_infoeqERKS_+28>:	movs	r2, #4
+   0x0801d5da <_ZNKSt9type_infoeqERKS_+30>:	mov	r0, r3
+   0x0801d5dc <_ZNKSt9type_infoeqERKS_+32>:	bl	0x801d63a <_ZNSt6chrono3_V212system_clock3nowEv+22>
+   0x0801d5e0 <_ZNKSt9type_infoeqERKS_+36>:	ldr	r3, [r7, #4]
+   0x0801d5e2 <_ZNKSt9type_infoeqERKS_+38>:	adds	r3, #8
+   0x0801d5e4 <_ZNKSt9type_infoeqERKS_+40>:	adds	r1, r3, #6
+   0x0801d5e6 <_ZNKSt9type_infoeqERKS_+42>:	ldr	r3, [r7, #4]
+   0x0801d5e8 <_ZNKSt13runtime_error4whatEv+0>:	ldr	r3, [r3, #4]
+   0x0801d5ea <_ZNKSt13runtime_error4whatEv+2>:	mov	r2, r3
+   0x0801d5ec <_ZNSt13runtime_errorD2Ev+0>:	add.w	r3, r7, #14
+   0x0801d5f0 <_ZNSt13runtime_errorD2Ev+4>:	mov	r0, r3
+   0x0801d5f2 <_ZNSt13runtime_errorD2Ev+6>:	bl	0x801d63a <_ZNSt6chrono3_V212system_clock3nowEv+22>
+   0x0801d5f6 <_ZNSt13runtime_errorD2Ev+10>:	ldr	r3, [r7, #4]
+   0x0801d5f8 <_ZNSt13runtime_errorD2Ev+12>:	adds	r3, #8
+   0x0801d5fa <_ZNSt13runtime_errorD2Ev+14>:	adds	r3, #4
+   0x0801d5fc <_ZNSt13runtime_errorD2Ev+16>:	mov	r0, r3
+   0x0801d5fe <_ZNSt13runtime_errorD2Ev+18>:	bl	0x801cd9c <parse_data+460>
+   0x0801d602 <_ZNSt13runtime_errorD2Ev+22>:	mov	r3, r0
+   0x0801d604 <_ZNSt13runtime_errorD2Ev+24>:	mov	r2, r3
+   0x0801d606 <_ZNSt13runtime_errorD2Ev+26>:	ldrh	r3, [r7, #14]
+   0x0801d608 <_ZNSt13runtime_errorD2Ev+28>:	cmp	r2, r3
+   0x0801d60a <_ZNSt13runtime_errorD2Ev+30>:	beq.n	0x801d612 <_ZNSt13runtime_errorD0Ev+2>
+   0x0801d60c <_ZNSt13runtime_errorD2Ev+32>:	mov.w	r3, #4294967295
+   0x0801d610 <_ZNSt13runtime_errorD0Ev+0>:	b.n	0x801d61a <_ZNSt13runtime_errorD0Ev+10>
+   0x0801d612 <_ZNSt13runtime_errorD0Ev+2>:	ldr	r0, [r7, #4]
+   0x0801d614 <_ZNSt13runtime_errorD0Ev+4>:	bl	0x801ce24 <parse_data+596>
+   0x0801d618 <_ZNSt13runtime_errorD0Ev+8>:	mov	r3, r0
+   0x0801d61a <_ZNSt13runtime_errorD0Ev+10>:	mov	r0, r3
+   0x0801d61c <_ZNSt13runtime_errorD0Ev+12>:	adds	r7, #16
+   0x0801d61e <_ZNSt13runtime_errorD0Ev+14>:	mov	sp, r7
+End of assembler dump.
+0x2001fbc0:	0x12e08acb	0x0000004c	0x2000538a	0x2001fbfe
+0x2001fbd0:	0x000001e3	0x00000058	0x9c067cc6	0x00000007
+0x2001fbe0:	0x0000004a	0x9c067cc6	0x40011004	0x2001fbf0
+0x2001fbf0:	0x2001fbf8	0x2000537c	0x00000206	0x035d510c
+0x2001fc00:	0x2001fc08	0x0801d631	0x40026400	0x2000537c
+0x2001fc10:	0x2001fc18	0x08018a7f	0x2001fc40	0x20005320
+0x2001fc20:	0x00000052	0x00000043	0x20004f58	0x00520052
+0x2001fc30:	0x0000004c	0x00000168	0x2001fc40	0x080188e5
+0x2001fc40:	0x2001fc68	0x20005320	0x00000000	0x00521014
+0x2001fc50:	0x2001fc90	0x20005320	0x2001fc60	0x0801871b
+0x2001fc60:	0x2001fc90	0x20004e50	0x20004f06	0x20004f58
+0x2001fc70:	0x2001fd04	0x20004e50	0x2001fc80	0x08019475
+0x2001fc80:	0xc01a420e	0x2001fd04	0x20004e50	0x20004e50
+0x2001fc90:	0x20004f06	0x20004f58	0x4001100c	0x20004e50
+0x2001fca0:	0x2001fca8	0x08019363	0x2001fd04	0x20004e50
+0x2001fcb0:	0x20004e50	0x20004e50	0x2001fcc0	0x080192a7
+0x2001fbc0:	0x12e08acb	0x4c	0x2000538a	0x2001fbfe
+0x2001fbd0:	0x1e3	0x58	0x9c067cc6	0x7
+0x2001fbe0:	0x4a	0x9c067cc6	0x40011004	0x2001fbf0
+0x2001fbf0:	0x2001fbf8	0x2000537c	0x206	0x35d510c
+0x2001fc00:	0x2001fc08	0x801d631 <_ZNSt6chrono3_V212system_clock3nowEv+12>	0x40026400	0x2000537c
+0x2001fc10:	0x2001fc18	0x8018a7f <_ZN2rm6device9HipnucImu17ProcessHi91PacketEv+330>	0x2001fc40	0x20005320
+0x2001fc20:	0x52	0x43	0x20004f58	0x520052
+0x2001fc30:	0x4c	0x168	0x2001fc40	0x80188e5 <_ZN2rm6device9HipnucImu20FindAndDecodePacketsEv+588>
+0x2001fc40:	0x2001fc68	0x20005320	0x0	0x521014
+0x2001fc50:	0x2001fc90	0x20005320	0x2001fc60	0x801871b <_ZN2rm6device9HipnucImu20FindAndDecodePacketsEv+130>
+0x2001fc60:	0x2001fc90	0x20004e50	0x20004f06	0x20004f58
+0x2001fc70:	0x2001fd04	0x20004e50	0x2001fc80	0x8019475 <_ZN2rm7modules3PIDC2Efffff+104>
+0x2001fc80:	0xc01a420e	0x2001fd04	0x20004e50	0x20004e50
+0x2001fc90:	0x20004f06	0x20004f58	0x4001100c	0x20004e50
+0x2001fca0:	0x2001fca8	0x8019363 <_ZN2rm7modules4Crc8EPKhjh+70>	0x2001fd04	0x20004e50
+0x2001fcb0:	0x20004e50	0x20004e50	0x2001fcc0	0x80192a7 <std::_Function_base::_Base_manager<rm::device::HipnucImu::HipnucImu(rm::hal::AsyncReadable&)::<lambda(etl::span<unsigned char const, 4294967295>)> >::_M_create<const rm::device::HipnucImu::HipnucImu(rm::hal::AsyncReadable&)::<lambda(etl::span<unsigned char const>)>&>(std::_Any_data &, const struct {...} &, std::true_type)+44>
+0x2001fbc0:	0x12e08acb	0x0000004c	0x2000538a	0x2001fbfe
+0x2001fbd0:	0x000001e3	0x00000058	0x9c067cc6	0x00000007
+0x2001fbe0:	0x0000004a	0x9c067cc6	0x40011004	0x2001fbf0
+0x2001fbf0:	0x2001fbf8	0x2000537c	0x00000206	0x035d510c
+0x2001fc00:	0x2001fc08	0x0801d631	0x40026400	0x2000537c
+0x2001fc10:	0x2001fc18	0x08018a7f	0x2001fc40	0x20005320
+0x2001fc20:	0x00000052	0x00000043	0x20004f58	0x00520052
+0x2001fc30:	0x0000004c	0x00000168	0x2001fc40	0x080188e5
+0x2001fbc0:	0x12e08acb	0x4c	0x2000538a	0x2001fbfe
+0x2001fbd0:	0x1e3	0x58	0x9c067cc6	0x7
+0x2001fbe0:	0x4a	0x9c067cc6	0x40011004	0x2001fbf0
+0x2001fbf0:	0x2001fbf8	0x2000537c	0x206	0x35d510c
+0x2001fc00:	0x2001fc08	0x801d631 <_ZNSt6chrono3_V212system_clock3nowEv+12>	0x40026400	0x2000537c
+0x2001fc10:	0x2001fc18	0x8018a7f <_ZN2rm6device9HipnucImu17ProcessHi91PacketEv+330>	0x2001fc40	0x20005320
+0x2001fc20:	0x52	0x43	0x20004f58	0x520052
+0x2001fc30:	0x4c	0x168	0x2001fc40	0x80188e5 <_ZN2rm6device9HipnucImu20FindAndDecodePacketsEv+588>
+Invalid number "0x080xxxxx".
+warning: could not convert 'State' from the host encoding (CP1252) to UTF-32.
+This normally should not happen, please file a bug report.
+There is no member named State.
+$1 = 0x20
+$2 = 0x22
+$3 = 0x0
+$4 = 0x1
+$5 = 0x206
+$6 = 0x1b4
+$7 = 0x1f8
+$8 = 0xe0
+$9 = 0x201c
+$10 = 0x0
+$11 = 0x41
+$12 = 0x1f8
+$13 = 1
+$14 = 1
+$15 = 1
+$16 = 0
+$17 = 0
+$18 = 0
+$19 = 0x2
+$20 = 0x0
+$21 = 0x8020416
+$22 = 0x0
+$23 = 0x40011004
+$24 = 0x2000510c
+$25 = 0x20
+$26 = 0x20004e30
+$27 = 0x20003bc0
+$28 = 0x20003d88
+$29 = 0x20003d88
+Quit
+Quit
+Quit
+Quit
+Quit
+Quit
+Quit
+Quit

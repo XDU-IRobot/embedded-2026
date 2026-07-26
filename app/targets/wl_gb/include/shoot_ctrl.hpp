@@ -11,8 +11,8 @@ constexpr uint16_t kFwMotorIds[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 constexpr float kFwLobTargetSpeedRpm_123 = 5050.0f;
 constexpr float kFwLobTargetSpeedRpm_456 = 5100.0f;
 // 平时参数
-constexpr float kFwNormalTargetSpeedRpm_123 = 3650.0f;
-constexpr float kFwNormalTargetSpeedRpm_456 = 3650.0f;
+constexpr float kFwNormalTargetSpeedRpm_123 = 3550.0f;
+constexpr float kFwNormalTargetSpeedRpm_456 = 3550.0f;
 
 constexpr float kFwSpeedKp = 10.0f;
 constexpr float kFwSpeedKi = 0.0f;
