@@ -57,9 +57,11 @@ void GlobalWarehouse::Init() {
   image_data = new rm::device::VT03;
   ref = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
   rx_referee = new rm::device::RxReferee{*referee_uart, *image_data, *ref};
+  image_data->SetHeartbeatTimeout(std::chrono::milliseconds(100));
 
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   rc = new rm::device::DR16{*dbus};
+  rc->SetHeartbeatTimeout(std::chrono::milliseconds(100));
   yaw_motor = new rm::device::GM6020{*can1, 4};
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can2, {0x03, 0x02, 12.5f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
@@ -111,15 +113,28 @@ void GlobalWarehouse::ShootPIDInit() {
 }
 
 void GlobalWarehouse::RCStateUpdate() {
-  if (!globals->device_rc.all_device_ok() || !globals->chassis_communicator->gimbal_power_state()) {
+  const bool dt17_online = globals->device_rc.all_device_ok();
+  const bool vt03_online = globals->device_referee.all_device_ok();
+
+  if (!globals->chassis_communicator->gimbal_power_state()) {
+    globals->remote_source = RemoteControlSource::kNone;
     globals->StateMachine_ = kUnable;
   } else {
+    if (dt17_online) {
+      globals->remote_source = RemoteControlSource::kDt17;
+    } else if (vt03_online) {
+      globals->remote_source = RemoteControlSource::kVt03;
+    } else {
+      globals->remote_source = RemoteControlSource::kNone;
+    }
+
     if (globals->init_time > 0) {
       globals->StateMachine_ = kNoForce;
       globals->init_time--;
       return;
     }
-    switch (globals->rc->switch_r()) {
+    if (globals->remote_source == RemoteControlSource::kDt17) {
+      switch (globals->rc->switch_r()) {
       case rm::device::DR16::SwitchPosition::kUp:
         // 右拨杆打到最上侧挡位
         switch (globals->rc->switch_l()) {
@@ -170,26 +185,65 @@ void GlobalWarehouse::RCStateUpdate() {
       default:
         globals->StateMachine_ = kNoForce;  // 如果遥控器离线，进入无力模式
         break;
+      }
+    } else if (globals->remote_source == RemoteControlSource::kVt03) {
+      globals->StateMachine_ = globals->image_data->data().switch_position == rm::device::VT03::SwitchPosition::S
+                                   ? kMatch
+                                   : kNoForce;
+    } else {
+      globals->StateMachine_ = kNoForce;
     }
+  }
+}
+
+void GlobalWarehouse::RemoteInputUpdate() {
+  globals->remote_input = {};
+
+  if (globals->remote_source == RemoteControlSource::kDt17) {
+    constexpr f32 kDt17Scale = 660.0f;
+    globals->remote_input.left_x = static_cast<f32>(globals->rc->left_x()) / kDt17Scale;
+    globals->remote_input.left_y = static_cast<f32>(globals->rc->left_y()) / kDt17Scale;
+    globals->remote_input.right_x = static_cast<f32>(globals->rc->right_x()) / kDt17Scale;
+    globals->remote_input.right_y = static_cast<f32>(globals->rc->right_y()) / kDt17Scale;
+    globals->remote_input.dial = static_cast<f32>(globals->rc->dial()) / kDt17Scale;
+    globals->remote_input.mouse_x = globals->rc->mouse_x();
+    globals->remote_input.mouse_y = globals->rc->mouse_y();
+    globals->remote_input.mouse_z = globals->rc->mouse_z();
+    globals->remote_input.mouse_left = globals->rc->mouse_button_left();
+    globals->remote_input.mouse_right = globals->rc->mouse_button_right();
+    for (u8 bit = 0; bit < 16; ++bit) {
+      const auto key = static_cast<rm::device::DR16::Key>(1U << bit);
+      if (globals->rc->key(key)) globals->remote_input.keyboard |= static_cast<u16>(1U << bit);
+    }
+  } else if (globals->remote_source == RemoteControlSource::kVt03) {
+    const auto &data = globals->image_data->data();
+    globals->remote_input.left_x = data.left_x;
+    globals->remote_input.left_y = data.left_y;
+    globals->remote_input.right_x = data.right_x;
+    globals->remote_input.right_y = data.right_y;
+    globals->remote_input.dial = data.dial;
+    globals->remote_input.mouse_x = data.mouse_x;
+    globals->remote_input.mouse_y = data.mouse_y;
+    globals->remote_input.mouse_z = data.mouse_z;
+    globals->remote_input.keyboard = data.keyboard_key;
+    globals->remote_input.mouse_left = data.mouse_button_left;
+    globals->remote_input.mouse_right = data.mouse_button_right;
+    globals->remote_input.trigger = data.trigger;
   }
 }
 
 void GlobalWarehouse::ChassisStateUpdate() {
   // 前后左右
   globals->chassis_move_x = rm::modules::Clamp(
-      static_cast<f32>(globals->rc->right_x()) / 6.6f +
-          static_cast<f32>(globals->image_update_flag ? (globals->image_data->data().keyboard_key >> 3 & 0x01) -
-                                                            (globals->image_data->data().keyboard_key >> 2 & 0x01)
-                                                      : globals->rc->key(rm::device::DR16::Key::kD) -
-                                                            globals->rc->key(rm::device::DR16::Key::kA)) *
+      globals->remote_input.right_x * 100.0f +
+          static_cast<f32>(globals->remote_input.key(rm::device::VT03::kD) -
+                           globals->remote_input.key(rm::device::VT03::kA)) *
               100.0f,
       -100.0f, 100.0f);
   globals->chassis_move_y = rm::modules::Clamp(
-      static_cast<f32>(globals->rc->right_y()) / 6.6f +
-          static_cast<f32>(globals->image_update_flag ? (globals->image_data->data().keyboard_key >> 0 & 0x01) -
-                                                            (globals->image_data->data().keyboard_key >> 1 & 0x01)
-                                                      : globals->rc->key(rm::device::DR16::Key::kW) -
-                                                            globals->rc->key(rm::device::DR16::Key::kS)) *
+      globals->remote_input.right_y * 100.0f +
+          static_cast<f32>(globals->remote_input.key(rm::device::VT03::kW) -
+                           globals->remote_input.key(rm::device::VT03::kS)) *
               100.0f,
       -100.0f, 100.0f);
   // 有无力
@@ -199,12 +253,11 @@ void GlobalWarehouse::ChassisStateUpdate() {
     globals->chassis_state &= ~static_cast<u8>(1 << 0);
   }
   // 小陀螺
-  if ((globals->StateMachine_ == kTest && globals->rc->dial() >= 650) ||
-      (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 4 & 0x01
-                                  : globals->rc->key(rm::device::DR16::Key::kShift))) {
+  if ((globals->StateMachine_ == kTest && globals->remote_input.dial >= 0.98f) ||
+      globals->remote_input.key(rm::device::VT03::kShift)) {
     globals->chassis_state |= static_cast<u8>(1 << 1);
     globals->chassis_state &= ~static_cast<u8>(1 << 2);
-  } else if (globals->StateMachine_ == kTest && globals->rc->dial() <= -650) {
+  } else if (globals->StateMachine_ == kTest && globals->remote_input.dial <= -0.98f) {
     globals->chassis_state |= static_cast<u8>(1 << 2);
     globals->chassis_state &= ~static_cast<u8>(1 << 1);
   } else {
@@ -215,30 +268,26 @@ void GlobalWarehouse::ChassisStateUpdate() {
   if (globals->super_cap->GetCapEnergy() <= 80 || globals->super_cap->GetErrorCode()) {
     globals->chassis_state &= ~static_cast<u8>(1 << 3);
   } else if (globals->StateMachine_ == kMatch) {
-    if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 13 & 0x01
-                                   : globals->rc->key(rm::device::DR16::Key::kC)) {
+    if (globals->remote_input.key(rm::device::VT03::kC)) {
       globals->speed_change_flag = true;
     } else if (globals->speed_change_flag == 1) {
       globals->speed_change_flag = false;
       globals->chassis_state ^= static_cast<u8>(1 << 3);
     }
-  } else if (globals->rc->switch_r() == rm::device::DR16::SwitchPosition::kMid &&
-             globals->rc->switch_l() == rm::device::DR16::SwitchPosition::kMid) {
+  } else if (globals->StateMachine_ == kTest && gimbal->GimbalMove_ == kGbAimbotFu) {
     globals->chassis_state |= static_cast<u8>(1 << 3);
   } else {
     globals->chassis_state &= ~static_cast<u8>(1 << 3);
   }
   // 打符模式切换
-  if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 9 & 0x01
-                                  : globals->rc->key(rm::device::DR16::Key::kF)) &&
+  if (globals->remote_input.key(rm::device::VT03::kF) &&
       !globals->xf_state && globals->StateMachine_ == kMatch) {
     globals->df_flag = true;
   } else if (globals->df_flag) {
     globals->df_flag = false;
     globals->df_state ^= true;
   }
-  if ((globals->image_update_flag ? globals->image_data->data().keyboard_key >> 10 & 0x01
-                                  : globals->rc->key(rm::device::DR16::Key::kG)) &&
+  if (globals->remote_input.key(rm::device::VT03::kG) &&
       !globals->df_state && globals->StateMachine_ == kMatch) {
     globals->xf_flag = true;
   } else if (globals->xf_flag) {
@@ -261,23 +310,19 @@ void GlobalWarehouse::ChassisStateUpdate() {
     }
   }
   // UI信息
-  globals->ui_refresh_flag = globals->image_update_flag ? globals->image_data->data().keyboard_key >> 8 & 0x01
-                                                        : globals->rc->key(rm::device::DR16::Key::kR);
+  globals->ui_refresh_flag = globals->remote_input.key(rm::device::VT03::kR);
   globals->get_target_flag = globals->aimbot_communicator->aimbot_state() >> 0 & 0x01;
   globals->suggest_fire_flag = globals->aimbot_communicator->aimbot_state() >> 1 & 0x01;
   // 弹速调整
-  if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 5 & 0x01
-                                 : globals->rc->key(rm::device::DR16::Key::kCtrl)) {
-    if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 14 & 0x01
-                                   : globals->rc->key(rm::device::DR16::Key::kV)) {
+  if (globals->remote_input.key(rm::device::VT03::kCtrl)) {
+    if (globals->remote_input.key(rm::device::VT03::kV)) {
       globals->aim_speed_change_flag = -1;
     } else if (globals->aim_speed_change_flag == -1) {
       globals->aim_speed_change--;
       if (globals->aim_speed_change < -10) globals->aim_speed_change = -10;
       globals->aim_speed_change_flag = 0;
     }
-    if (globals->image_update_flag ? globals->image_data->data().keyboard_key >> 15 & 0x01
-                                   : globals->rc->key(rm::device::DR16::Key::kB)) {
+    if (globals->remote_input.key(rm::device::VT03::kB)) {
       globals->aim_speed_change_flag = 1;
     } else if (globals->aim_speed_change_flag == 1) {
       globals->aim_speed_change++;
@@ -288,6 +333,8 @@ void GlobalWarehouse::ChassisStateUpdate() {
 }
 
 void GlobalWarehouse::Music() {
+  // Music() is called while decoding the DT17 switch combination, before the
+  // unified input snapshot for this control cycle is refreshed.
   if (globals->rc->dial() >= 650) {
     globals->music_play_flag = true;
   }
@@ -331,6 +378,7 @@ void GlobalWarehouse::SubLoop500Hz() {
       globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch, globals->ahrs.euler_angle().roll,
       globals->chassis_communicator->robot_id() ? 103 : 3, globals->aim_mode, globals->imu_count, ammo_speed);
   globals->RCStateUpdate();
+  globals->RemoteInputUpdate();
   globals->ChassisStateUpdate();
   globals->chassis_communicator->SendChassisCommand(
       globals->chassis_move_x, globals->chassis_move_y, globals->chassis_state, globals->ui_refresh_flag,

@@ -103,7 +103,7 @@ SubLoop100Hz() [100Hz, 每 10ms]
 
 在 `ShootEnableUpdate()` 中（500Hz），以下条件之一满足且 `single_shoot_flag_ == false` 时进入单发：
 
-1. **遥控器手动单发**：`rc->dial() <= -650`
+1. **当前控制源手动单发**：拨轮归一化值 `remote_input.dial <= -0.98`，或 VT03 扳机键按下
 2. **自瞄打符**：`GimbalMove_ == kGbAimbotFu && suggest_fire_flag == 1`
 3. **符模式右键射击**：`heat_remain > 30 && (df_state || xf_state) && mouse_right`
 

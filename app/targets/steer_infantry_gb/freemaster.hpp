@@ -32,7 +32,9 @@ struct FreemasterData {
   struct {
     std::uint8_t robot_state{};   ///< 整机状态，对应 StateMachineType
     std::uint8_t gimbal_mode{};   ///< 云台运动模式，对应 Gimbal::GimbalMove_
-    std::uint8_t rc_online{};     ///< 遥控器在线标志：0 离线，1 在线
+    std::uint8_t rc_online{};     ///< DT17 在线标志：0 离线，1 在线
+    std::uint8_t vt03_online{};   ///< VT03 在线标志：0 离线，1 在线
+    std::uint8_t remote_source{}; ///< 当前控制源：0 无，1 DT17，2 VT03
     std::uint8_t aimbot_online{}; ///< 自瞄通信器在线标志：0 离线，1 在线
     std::uint8_t gimbal_online{}; ///< 云台电机在线标志：0 异常，1 全部在线
     std::uint8_t shoot_online{};  ///< 发射机构电机在线标志：0 异常，1 全部在线
@@ -147,6 +149,8 @@ inline void freemaster() {
   freemaster_data.runtime.robot_state = static_cast<std::uint8_t>(globals->StateMachine_);
   freemaster_data.runtime.gimbal_mode = static_cast<std::uint8_t>(gimbal->GimbalMove_);
   freemaster_data.runtime.rc_online = static_cast<std::uint8_t>(globals->device_rc.all_device_ok());
+  freemaster_data.runtime.vt03_online = static_cast<std::uint8_t>(globals->device_referee.all_device_ok());
+  freemaster_data.runtime.remote_source = static_cast<std::uint8_t>(globals->remote_source);
   freemaster_data.runtime.aimbot_online = static_cast<std::uint8_t>(globals->device_nuc.all_device_ok());
   freemaster_data.runtime.gimbal_online = static_cast<std::uint8_t>(globals->device_gimbal.all_device_ok());
   freemaster_data.runtime.shoot_online = static_cast<std::uint8_t>(globals->device_shoot.all_device_ok());

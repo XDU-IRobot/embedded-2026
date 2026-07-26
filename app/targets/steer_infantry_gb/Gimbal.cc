@@ -167,14 +167,10 @@ void Gimbal::GimbalStateUpdate() {
 
 void Gimbal::GimbalRCTargetUpdate() {
   gimbal->gimbal_yaw_target_ -= rm::modules::Map(
-      static_cast<f32>(globals->rc->left_x()) +
-          30.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_x
-                                                              : globals->rc->mouse_x()),  // 上部yaw轴目标值
+      globals->remote_input.left_x * 660.0f + 30.0f * static_cast<f32>(globals->remote_input.mouse_x),
       -660, 660, -gimbal->sensitivity_yaw_, gimbal->sensitivity_yaw_);
   gimbal->gimbal_pitch_target_ -= rm::modules::Map(
-      static_cast<f32>(globals->rc->left_y()) +
-          30.0f * static_cast<f32>(globals->image_update_flag ? globals->image_data->data().mouse_y
-                                                              : globals->rc->mouse_y()),  // pitch轴目标值
+      globals->remote_input.left_y * 660.0f + 30.0f * static_cast<f32>(globals->remote_input.mouse_y),
       -660, 660, -gimbal->sensitivity_pitch_, gimbal->sensitivity_pitch_);
   gimbal->gimbal_yaw_target_ =
       rm::modules::Wrap(gimbal->gimbal_yaw_target_, -static_cast<f32>(M_PI), M_PI);  // yaw轴限位
@@ -194,8 +190,7 @@ void Gimbal::GimbalRCTargetUpdate() {
 
 void Gimbal::GimbalAimbotTargetUpdate() {
   if ((globals->StateMachine_ == kTest && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01) ||
-      (globals->StateMachine_ == kMatch && (globals->image_update_flag ? globals->image_data->data().mouse_button_right
-                                                                       : globals->rc->mouse_button_right()))) {
+      (globals->StateMachine_ == kMatch && globals->remote_input.mouse_right)) {
     gimbal->gimbal_yaw_target_ = globals->aimbot_communicator->yaw();
     gimbal->gimbal_pitch_target_ = globals->aimbot_communicator->pitch();
     gimbal->gimbal_yaw_target_ =
@@ -340,14 +335,14 @@ void Gimbal::GimbalEnableUpdate() {
     if (globals->aim_mode != 0x02 && globals->aim_mode != 0x03) {
       globals->aim_mode = 0x02;
     }
-    if (globals->rc->dial() <= -10 && !globals->aim_mood_change_flag) {
+    if (globals->remote_input.dial <= -0.015f && !globals->aim_mood_change_flag) {
       if (globals->aim_mode == 0x02) {
         globals->aim_mode = 0x03;
       } else if (globals->aim_mode == 0x03) {
         globals->aim_mode = 0x02;
       }
       globals->aim_mood_change_flag = true;
-    } else if (globals->rc->dial() >= 0) {
+    } else if (globals->remote_input.dial >= 0.0f) {
       globals->aim_mood_change_flag = false;
     }
     gimbal->GimbalAimbotTargetUpdate();
@@ -400,12 +395,10 @@ void Gimbal::ShootEnableUpdate() {
   globals->shoot_controller.Arm(true);
   globals->shoot_controller.SetArmSpeed(gimbal->ammo_speed_ - static_cast<f32>(globals->aim_speed_change) * 100.0f);
   globals->dail_encoder_counter.Update(globals->dial_motor->encoder());
-  if (globals->rc->dial() <= -650 ||
+  if (globals->remote_input.dial <= -0.98f || globals->remote_input.trigger ||
       (gimbal->GimbalMove_ == kGbAimbotFu && globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
       (globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real() > 30 &&
-       (globals->df_state || globals->xf_state) &&
-       (globals->image_update_flag ? globals->image_data->data().mouse_button_right
-                                   : globals->rc->mouse_button_right()))) {
+       (globals->df_state || globals->xf_state) && globals->remote_input.mouse_right)) {
     if (!gimbal->single_shoot_flag_) {
       globals->shoot_controller.SetMode(Shoot3Fric::kSingleShot);
       globals->shoot_controller.Fire();
@@ -418,16 +411,12 @@ void Gimbal::ShootEnableUpdate() {
     }
   } else if ((globals->StateMachine_ == kTest && ((globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
                                                    globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
-                                                  globals->rc->dial() >= 650)) ||
+                                                  globals->remote_input.dial >= 0.98f)) ||
              (globals->StateMachine_ == kMatch &&
-              (((globals->image_update_flag ? globals->image_data->data().mouse_button_left
-                                            : globals->rc->mouse_button_left()) &&  // 左键按下
-                (globals->image_update_flag ? !globals->image_data->data().mouse_button_right
-                                            : !globals->rc->mouse_button_right())) ||  // 右键未按下
-               ((globals->image_update_flag ? globals->image_data->data().mouse_button_right
-                                            : globals->rc->mouse_button_right()) &&  // 右键按下且瞄到目标
-                globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
-                globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)))) {
+               ((globals->remote_input.mouse_left && !globals->remote_input.mouse_right) ||
+                (globals->remote_input.mouse_right &&
+                 globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
+                 globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)))) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     if (globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real() > 100) {
       globals->shoot_controller.SetShootFrequency(10.0f);//自瞄测试弹频修改至10（原来是20）

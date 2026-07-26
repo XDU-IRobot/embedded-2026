@@ -27,6 +27,29 @@ typedef enum {
   kGbFfVerify,
 } StateMachineType;
 
+enum class RemoteControlSource : u8 {
+  kNone = 0,
+  kDt17,
+  kVt03,
+};
+
+struct RemoteInput {
+  f32 left_x{};
+  f32 left_y{};
+  f32 right_x{};
+  f32 right_y{};
+  f32 dial{};
+  i16 mouse_x{};
+  i16 mouse_y{};
+  i16 mouse_z{};
+  u16 keyboard{};
+  bool mouse_left{};
+  bool mouse_right{};
+  bool trigger{};
+
+  [[nodiscard]] bool key(const u16 mask) const { return (keyboard & mask) != 0; }
+};
+
 inline struct GlobalWarehouse {
   Buzzer *buzzer{nullptr};  ///< 蜂鸣器
   rm::modules::BuzzerController<rm::modules::buzzer_melody::Silent, rm::modules::buzzer_melody::Startup,
@@ -74,6 +97,8 @@ inline struct GlobalWarehouse {
   EncoderCounter dail_encoder_counter;          ///< 拨盘电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
+  RemoteControlSource remote_source = RemoteControlSource::kNone;
+  RemoteInput remote_input{};
 
   u16 robot_hp[5]{};
   uint8_t time = 0;                   // 时间
@@ -125,6 +150,8 @@ inline struct GlobalWarehouse {
   void ShootPIDInit();
 
   void RCStateUpdate();
+
+  void RemoteInputUpdate();
 
   void ChassisStateUpdate();
 
