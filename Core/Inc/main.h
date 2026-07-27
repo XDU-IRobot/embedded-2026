@@ -57,6 +57,9 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define PitchMotorLimit_Pin GPIO_PIN_1
+#define PitchMotorLimit_GPIO_Port GPIOF
+#define PitchMotorLimit_EXTI_IRQn EXTI1_IRQn
 #define ONBOARD_KEY_Pin GPIO_PIN_0
 #define ONBOARD_KEY_GPIO_Port GPIOA
 #define ONBOARD_KEY_EXTI_IRQn EXTI0_IRQn
