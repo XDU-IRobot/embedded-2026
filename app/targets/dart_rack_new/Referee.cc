@@ -3,29 +3,29 @@
 #include <librm.hpp>
 #include "dart_sys.hpp"
 
-volatile uint8_t glb_robot_id = 0;           // 机器人ID (FreeMaster)
-volatile uint8_t glb_game_status = 0;        // 比赛进行阶段 (FreeMaster)
-volatile u16 glb_stage_remain_time = 0;      // 当前阶段剩余时间（秒）(FreeMaster)
-volatile u64 glb_sync_timestamp = 0;         // 裁判系统同步Unix时间戳 (FreeMaster)
+volatile uint8_t glb_robot_id = 0;       // 机器人ID (FreeMaster)
+volatile uint8_t glb_game_status = 0;    // 比赛进行阶段 (FreeMaster)
+volatile u16 glb_stage_remain_time = 0;  // 当前阶段剩余时间（秒）(FreeMaster)
+volatile u64 glb_sync_timestamp = 0;     // 裁判系统同步Unix时间戳 (FreeMaster)
 
-volatile u8 glb_dart_remaining_time = 0;     // 己方飞镖发射剩余时间（秒）(FreeMaster)
-volatile u8 glb_dart_last_hit_target = 0;    // 最近一次己方飞镖击中的目标 (FreeMaster)
-volatile u8 glb_dart_enemy_hit_count = 0;    // 对方最近被击中目标累计被击中次数 (FreeMaster)
-volatile u8 glb_dart_selected_target = 0;    // 飞镖此时选定的击打目标 (FreeMaster)
+volatile u8 glb_dart_remaining_time = 0;   // 己方飞镖发射剩余时间（秒）(FreeMaster)
+volatile u8 glb_dart_last_hit_target = 0;  // 最近一次己方飞镖击中的目标 (FreeMaster)
+volatile u8 glb_dart_enemy_hit_count = 0;  // 对方最近被击中目标累计被击中次数 (FreeMaster)
+volatile u8 glb_dart_selected_target = 0;  // 飞镖此时选定的击打目标 (FreeMaster)
 
-volatile u8 glb_dart_launch_opening_status = 1;   // 当前飞镖发射站的状态 (FreeMaster)
-volatile u16 glb_dart_target_change_time = 0;     // 切换击打目标时的比赛剩余时间（秒）(FreeMaster)
+volatile u8 glb_dart_launch_opening_status = 1;  // 当前飞镖发射站的状态 (FreeMaster)
+volatile u16 glb_dart_target_change_time = 0;    // 切换击打目标时的比赛剩余时间（秒）(FreeMaster)
 volatile u16 glb_dart_latest_launch_cmd_time = 0;  // 最后一次操作手确定发射指令时的比赛剩余时间（秒）(FreeMaster)
-volatile u16 glb_referee_head = 0;                 // 环形缓冲区写指针 (FreeMaster)
-volatile u32 glb_referee_cb_count = 0;             // 回调触发总次数 (FreeMaster)
-volatile u16 glb_referee_last_cmd = 0;             // 最近一次回调的cmd_id (FreeMaster)
-volatile u8 glb_referee_buf0 = 0;                  // 环形缓冲区第0字节 (FreeMaster)
-volatile u8 glb_referee_buf1 = 0;                  // 环形缓冲区第1字节 (FreeMaster)
-volatile u8 glb_referee_buf2 = 0;                  // 环形缓冲区第2字节 (FreeMaster)
-volatile u8 glb_referee_buf3 = 0;                  // 环形缓冲区第3字节 (FreeMaster)
-volatile u8 glb_referee_buf4 = 0;                  // 环形缓冲区第4字节 (FreeMaster)
-volatile u8 glb_referee_buf5 = 0;                  // 环形缓冲区第5字节 (FreeMaster)
-volatile u8 glb_referee_buf6 = 0;                  // 环形缓冲区第6字节 (FreeMaster)
+volatile u16 glb_referee_head = 0;      // 环形缓冲区写指针 (FreeMaster)
+volatile u32 glb_referee_cb_count = 0;  // 回调触发总次数 (FreeMaster)
+volatile u16 glb_referee_last_cmd = 0;  // 最近一次回调的cmd_id (FreeMaster)
+volatile u8 glb_referee_buf0 = 0;       // 环形缓冲区第0字节 (FreeMaster)
+volatile u8 glb_referee_buf1 = 0;       // 环形缓冲区第1字节 (FreeMaster)
+volatile u8 glb_referee_buf2 = 0;       // 环形缓冲区第2字节 (FreeMaster)
+volatile u8 glb_referee_buf3 = 0;       // 环形缓冲区第3字节 (FreeMaster)
+volatile u8 glb_referee_buf4 = 0;       // 环形缓冲区第4字节 (FreeMaster)
+volatile u8 glb_referee_buf5 = 0;       // 环形缓冲区第5字节 (FreeMaster)
+volatile u8 glb_referee_buf6 = 0;       // 环形缓冲区第6字节 (FreeMaster)
 
 namespace rm::device {
 RxReferee::RxReferee(rm::hal::SerialInterface &serial) : serial_(&serial) {
@@ -46,18 +46,24 @@ void RxReferee::Begin() {
       // 比赛进行阶段 (0x0001)
       auto &gs = dart_sys.referee_data_buffer->data().game_status;
       auto progress = gs.game_progress;
-      if (progress == 0)      glb_game_status = 0;  // 未开始比赛
-      else if (progress == 1) glb_game_status = 1;  // 准备阶段
-      else if (progress == 2) glb_game_status = 2;  // 十五秒裁判系统自检
-      else if (progress == 3) glb_game_status = 3;  // 五秒倒计时
-      else if (progress == 4) glb_game_status = 4;  // 比赛进行中
-      else if (progress == 5) glb_game_status = 5;  // 比赛结算
+      if (progress == 0)
+        glb_game_status = 0;  // 未开始比赛
+      else if (progress == 1)
+        glb_game_status = 1;  // 准备阶段
+      else if (progress == 2)
+        glb_game_status = 2;  // 十五秒裁判系统自检
+      else if (progress == 3)
+        glb_game_status = 3;  // 五秒倒计时
+      else if (progress == 4)
+        glb_game_status = 4;  // 比赛进行中
+      else if (progress == 5)
+        glb_game_status = 5;  // 比赛结算
       glb_stage_remain_time = gs.stage_remain_time;
       glb_sync_timestamp = gs.SyncTimeStamp;
     } else if (cmd_id == 0x0105) {
       // 飞镖信息 (0x0105)
-      auto &dart = dart_sys.referee_data_buffer->data().dart_info; // 己方飞镖发射剩余时间，单位：秒
-      glb_dart_remaining_time = dart.dart_remaining_time; // 解析 dart_info 的位域
+      auto &dart = dart_sys.referee_data_buffer->data().dart_info;  // 己方飞镖发射剩余时间，单位：秒
+      glb_dart_remaining_time = dart.dart_remaining_time;           // 解析 dart_info 的位域
       u16 info = dart.dart_info;
       glb_dart_last_hit_target = info & 0x07;
       // bit 0-2: 最近一次己方飞镖击中的目标
@@ -70,8 +76,7 @@ void RxReferee::Begin() {
       // bit 6-8: 飞镖此时选定的击打目标
       // 0=开局默认或未选定/选定前哨站, 1=选中基地固定目标
       // 2=选中基地随机固定目标, 3=选中基地随机移动目标, 4=选中基地末端移动目标
-    }
-    else if (cmd_id == 0x020A) {
+    } else if (cmd_id == 0x020A) {
       // 飞镖客户端指令 (0x020A)
       auto &dart_cmd = dart_sys.referee_data_buffer->data().dart_client_cmd;
       glb_dart_launch_opening_status = dart_cmd.dart_launch_opening_status;

@@ -21,7 +21,8 @@ void DartSys::init() {
   yaw_motor_angle_pid_.SetKp(17000).SetKi(0.05).SetKd(0).SetMaxOut(15000).SetMaxIout(5000);
 
   reload_motor_speed_pid_.SetKp(1000).SetKi(80).SetKd(0).SetMaxOut(25000).SetMaxIout(25000);
-  reload_motor_angle_pid_.SetKp(1).SetKi(0).SetKd(0).SetMaxOut(400).SetMaxIout(0).SetCircular(true).SetCircularCycle(360);
+  reload_motor_angle_pid_.SetKp(1).SetKi(0).SetKd(0).SetMaxOut(400).SetMaxIout(0).SetCircular(true).SetCircularCycle(
+      360);
 
   // TODO:切换自动发射记得更新堵转电流，和空载不一样
   load_motor_l_odometer_.Reset();
@@ -177,7 +178,7 @@ void DartSys::dart_rc_control_task() {
     fire_states_.load_state_ = LoadState::kReset;
   }
 }
-float  reload_motor_pos;
+float reload_motor_pos;
 uint16_t ticks;
 void DartSys::dart_signal_fire_task() {
   if (reload_motor_target_pos_ < 0) {
@@ -202,11 +203,11 @@ void DartSys::dart_signal_fire_task() {
           shoot_count_++;
           fire_states_.reload_state_ = ReloadState::kReloadStir;
           reload_motor_target_pos_ -= 60.0f;
-         }
+        }
         // fire_states_.aim_state_ = AimState::kAim;
       }
       if (fire_states_.load_state_ == LoadState::kLoadHighSpd) {
-        //bool load_state = load_motor_pos(170);
+        // bool load_state = load_motor_pos(170);
         bool trigger_state = pwm_servo_.TriggerServo(pwm_servo_.trigger_on_compare);
         if (trigger_state) {
           (*led_)(0xff0000ff);
@@ -248,7 +249,6 @@ void DartSys::dart_signal_fire_task() {
         }
       }
       if (fire_states_.reload_state_ == ReloadState::kReloadStir) {
-
         if (abs(reload_motor_->pos_degree() - reload_motor_target_pos_) <= 1) {
           fire_states_.reload_state_ = ReloadState::kReloadServo;
         }
@@ -273,7 +273,6 @@ void DartSys::dart_signal_fire_task() {
         ticks = 0;
       }
       if (fire_states_.reload_state_ == ReloadState::kReloadMagnet) {
-
         switch (shoot_count_) {
           case 1:
             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
@@ -325,8 +324,7 @@ void DartSys::dart_signal_fire_task() {
         }
       }
     }
-  }
-  else {
+  } else {
     shoot_count_ = 0;
     fire_states_.reload_state_ = ReloadState::kReloadSet;
   }

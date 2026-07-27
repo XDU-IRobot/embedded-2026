@@ -4,10 +4,9 @@
 
 #include <librm.hpp>
 
-
 uint8_t x[50];
 
-volatile uint32_t g_usb_rx_count ;
+volatile uint32_t g_usb_rx_count;
 volatile uint32_t g_usb_rx_matched = 0;
 uint8_t g_vision_id = 0;
 volatile float g_vision_pitch = 0.0f;
@@ -35,8 +34,7 @@ void UsbReceive(uint8_t* rx_data, uint8_t len) {
       g_vision_pitch = 0.0f;
       g_vision_yaw = 0.0f;
       g_vision_is_valid = 0;
-    }
-    else if (rx_data[10] == AIMBOT_DATA_RECEIVE_ID) {
+    } else if (rx_data[10] == AIMBOT_DATA_RECEIVE_ID) {
       dart_sys.vision_data_->ID = rx_data[1];
       dart_sys.vision_data_->Pitch = *((float*)&rx_data[2]);
       dart_sys.vision_data_->Yaw = *((float*)&rx_data[6]);
@@ -45,8 +43,7 @@ void UsbReceive(uint8_t* rx_data, uint8_t len) {
       g_vision_pitch = dart_sys.vision_data_->Pitch;
       g_vision_yaw = dart_sys.vision_data_->Yaw;
       g_vision_is_valid = dart_sys.vision_data_->IsValiLock;
-    }
-    else {
+    } else {
       dart_sys.vision_data_->ID = 0;
       dart_sys.vision_data_->Pitch = 0.0f;
       dart_sys.vision_data_->Yaw = 0.0f;
