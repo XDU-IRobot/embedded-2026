@@ -229,8 +229,6 @@ class DartSys {
   bool pitch_motor_pos(int16_t pos);
   bool pitch_motor_spd_stall(int16_t spd);
 
-
-
   // bool signal_fire_reload_task();
   // bool signal_fire_load_task();
   // bool signal_fire_trigger_task();
