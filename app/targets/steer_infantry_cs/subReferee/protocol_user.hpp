@@ -389,6 +389,17 @@ struct UICharacter {
   u8 data[30]{};
 };
 
+// RoboMaster referee protocol V2.0.0 UI payload sizes. Keep these checks close
+// to the packed definitions so a compiler/layout change cannot silently create
+// packets that the client rejects.
+static_assert(sizeof(UILayer) == 2);
+static_assert(sizeof(UIFigure) == 15);
+static_assert(sizeof(UIFigure1) == 15);
+static_assert(sizeof(UIFigure2) == 30);
+static_assert(sizeof(UIFigure5) == 75);
+static_assert(sizeof(UIFigure7) == 105);
+static_assert(sizeof(UICharacter) == 45);
+
 struct RefereeSubCmdId {
   // 对应0x20B，哨兵机器人接收位置信息
   constexpr static u16 kAllyRobotPosition = 0x0200;

@@ -49,8 +49,8 @@ inline struct GlobalWarehouse {
   rm::device::BMI088 *imu{nullptr};                                                   ///< IMU
   rm::hal::Serial<128> *referee_uart{nullptr};                                        ///< 裁判系统串口接口
   rm::device::RxReferee *rx_referee{nullptr};                                         ///< 裁判系统解包
-  rm::device::Referee<rm::device::RefereeRevision::kNewV120> *referee_data{nullptr};  ///< 裁判系统数据
-  rm::device::RefereeUser<rm::device::RefereeRevision::kNewV120> *subReferee{nullptr};
+  rm::device::Referee<rm::device::RefereeRevision::kNewV200> *referee_data{nullptr};  ///< 裁判系统数据
+  rm::device::RefereeUser<rm::device::RefereeRevision::kNewV200> *subReferee{nullptr};
   u_int8_t dataBox[128];
 
   // 设备 //

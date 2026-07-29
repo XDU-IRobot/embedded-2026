@@ -58,9 +58,9 @@ class RefereeUser final : public Device {
   // 增加 data_len_this_time_ 参数以便传入本次接收的数据长度
   void AttachCallback(u16 cmd_id_, u8 seq_) {
     ReportStatus(kOk);
+    if (cmd_id_ != RefereeCmdId<revision>::kRobotInteractionData) return;
     // 将裁判系统的数据拷贝到反序列化缓冲区。
     u16 subCmdID = referee_.data().robot_interaction_data.data_cmd_id;
-    if (cmd_id_ != 0x301) return;
     if (!rm::device::RefereeSubProtocolMemoryMap::map.contains(subCmdID)) return;
     const usize member_offset = rm::device::RefereeSubProtocolMemoryMap::map.at(subCmdID);
     u8 *dest_ptr = reinterpret_cast<u8 *>(&deserialize_buffer_) + member_offset;
@@ -71,19 +71,30 @@ class RefereeUser final : public Device {
 }  // namespace rm::device
 
 namespace rm::device {
-template <typename T>
-[[nodiscard]] inline u8 Referee0x301Prepare(u8 *data, const u16 start_index, T &info, const u16 sender,
-                                            const u16 receiver) {
+template <usize BufferSize, typename T>
+[[nodiscard]] inline u8 Referee0x301Prepare(u8 (&data)[BufferSize], const u16 start_index, const T &info,
+                                            const u16 sender, const u16 receiver) {
+  constexpr usize kInteractionHeaderLength = 6;
+  constexpr usize kMaxInteractionContentLength = 112;
+  constexpr usize kMaxFrameLength = 127;
+  constexpr usize data_len = sizeof(T) + kInteractionHeaderLength;
+  constexpr usize frame_len = data_len + kRefProtocolAllMetadataLen;
+
+  static_assert(sizeof(T) <= kMaxInteractionContentLength);
+  static_assert(frame_len <= kMaxFrameLength);
+
+  if (start_index > BufferSize || frame_len > BufferSize - start_index) return 0;
+
   static u8 seq_ = 0;
   u16 index_ = start_index;
   data[index_++] = kRefProtocolHeaderSof;
-  constexpr u16 data_len = sizeof(info) + 6;
   data[index_++] = data_len & 0xff;
   data[index_++] = data_len >> 8;
   data[index_++] = seq_++;
   data[index_++] = modules::Crc8(&data[start_index], kRefProtocolHeaderLen - 1, modules::CRC8_INIT);
-  data[index_++] = 0x301 & 0xff;
-  data[index_++] = 0x301 >> 8;
+  constexpr u16 cmd_id = RefereeCmdId<RefereeRevision::kNewV200>::kRobotInteractionData;
+  data[index_++] = cmd_id & 0xff;
+  data[index_++] = cmd_id >> 8;
   data[index_++] = getCmd(info) & 0xff;
   data[index_++] = getCmd(info) >> 8;
   data[index_++] = sender & 0xff;

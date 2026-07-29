@@ -62,8 +62,8 @@ void GlobalWarehouse::Init() {
   super_cap = new rm::device::GkSupercap(*can1);
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
+  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV200>;
   subReferee = new rm::device::RefereeUser(*referee_data);
-  referee_data = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
   rx_referee = new rm::device::RxReferee{*referee_uart, *referee_data};
   referee_data->AttachCallback([this]<typename T0, typename T1>(T0 &&PH1, T1 &&PH2) {
     subReferee->AttachCallback(std::forward<T0>(PH1), std::forward<T1>(PH2));
@@ -171,13 +171,21 @@ void GlobalWarehouse::SubLoop30Hz() {
 
 void UiRefresh() {
   static bool last_ui_show_flag = false;
+  static bool ui_add_pending = false;
   // 接收机器人ID
   robotID = globals->referee_data->data().robot_status.robot_id;
   const bool ui_show_flag = globals->gimbal_communicator->UI_show_flag() == 1;
-  if (ui_show_flag && !last_ui_show_flag && robotID != 0) {
-    static_UI_add();
+
+  // UI 请求可能早于新版协议的 0x0201 机器人状态帧到达，先锁存请求，
+  // 等 robotID 有效后再发送，避免一次按键被直接丢掉。
+  if (ui_show_flag && !last_ui_show_flag) {
+    ui_add_pending = true;
   }
-  last_ui_show_flag = ui_show_flag && robotID != 0;
+  if (ui_add_pending && robotID != 0) {
+    static_UI_add();
+    ui_add_pending = false;
+  }
+  last_ui_show_flag = ui_show_flag;
 }
 
 static auto UIRobotHeaderBlueADD = device::UITask(UITextHeaderRobotBlue_add);
