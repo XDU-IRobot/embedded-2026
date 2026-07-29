@@ -30,44 +30,44 @@ struct FreemasterData {
   std::uint32_t update_count{};  ///< 100 Hz 快照累计更新次数，可用于检查刷新是否正常
 
   struct {
-    std::uint8_t robot_state{};   ///< 整机状态，对应 StateMachineType
-    std::uint8_t gimbal_mode{};   ///< 云台运动模式，对应 Gimbal::GimbalMove_
-    std::uint8_t rc_online{};     ///< DT17 在线标志：0 离线，1 在线
-    std::uint8_t vt03_online{};   ///< VT03 在线标志：0 离线，1 在线
-    std::uint8_t remote_source{}; ///< 当前控制源：0 无，1 DT17，2 VT03
-    std::uint8_t aimbot_online{}; ///< 自瞄通信器在线标志：0 离线，1 在线
-    std::uint8_t gimbal_online{}; ///< 云台电机在线标志：0 异常，1 全部在线
-    std::uint8_t shoot_online{};  ///< 发射机构电机在线标志：0 异常，1 全部在线
-    float fire_delay_avg_ms{};    ///< 平均开火延迟，单位 ms
-  } runtime;                      ///< 运行状态与设备在线状态
+    std::uint8_t robot_state{};    ///< 整机状态，对应 StateMachineType
+    std::uint8_t gimbal_mode{};    ///< 云台运动模式，对应 Gimbal::GimbalMove_
+    std::uint8_t rc_online{};      ///< DT17 在线标志：0 离线，1 在线
+    std::uint8_t vt03_online{};    ///< VT03 在线标志：0 离线，1 在线
+    std::uint8_t remote_source{};  ///< 当前控制源：0 无，1 DT17，2 VT03
+    std::uint8_t aimbot_online{};  ///< 自瞄通信器在线标志：0 离线，1 在线
+    std::uint8_t gimbal_online{};  ///< 云台电机在线标志：0 异常，1 全部在线
+    std::uint8_t shoot_online{};   ///< 发射机构电机在线标志：0 异常，1 全部在线
+    float fire_delay_avg_ms{};     ///< 平均开火延迟，单位 ms
+  } runtime;                       ///< 运行状态与设备在线状态
 
   struct {
-    float yaw{};                   ///< 最终 Yaw 位置目标，单位 rad
-    float pitch{};                 ///< 最终 Pitch 位置目标，单位 rad
-    float yaw_speed{};             ///< Yaw 速度参考，单位 rad/s
-    float pitch_speed{};           ///< Pitch 速度参考，单位 rad/s
-    float yaw_accel{};             ///< Yaw 加速度参考，单位 rad/s^2
-    float pitch_accel{};           ///< Pitch 加速度参考，单位 rad/s^2
-    float yaw_speed_feedforward{}; ///< 实际送入控制器的 Yaw 速度前馈，单位 rad/s
-  } gimbal_target;                 ///< 云台控制目标与轨迹参考量
+    float yaw{};                    ///< 最终 Yaw 位置目标，单位 rad
+    float pitch{};                  ///< 最终 Pitch 位置目标，单位 rad
+    float yaw_speed{};              ///< Yaw 速度参考，单位 rad/s
+    float pitch_speed{};            ///< Pitch 速度参考，单位 rad/s
+    float yaw_accel{};              ///< Yaw 加速度参考，单位 rad/s^2
+    float pitch_accel{};            ///< Pitch 加速度参考，单位 rad/s^2
+    float yaw_speed_feedforward{};  ///< 实际送入控制器的 Yaw 速度前馈，单位 rad/s
+  } gimbal_target;                  ///< 云台控制目标与轨迹参考量
 
   struct {
-    float yaw{};                       ///< AHRS Yaw 姿态角，单位 rad
-    float pitch{};                     ///< AHRS Pitch 姿态角，单位 rad
-    float roll{};                      ///< AHRS Roll 姿态角，单位 rad
-    float gyro_x{};                    ///< IMU X 轴角速度，单位 rad/s
-    float gyro_y{};                    ///< IMU Y 轴角速度，单位 rad/s
-    float gyro_z{};                    ///< IMU Z 轴角速度，单位 rad/s
-    float controller_yaw_position{};   ///< Yaw 位置环实际使用的反馈，单位 rad
-    float controller_yaw_speed{};      ///< Yaw 速度环实际使用的反馈，单位 rad/s
-    float controller_pitch_position{}; ///< Pitch 位置环实际使用的反馈，单位 rad
-    float controller_pitch_speed{};    ///< Pitch 速度环实际使用的反馈，单位 rad/s
-    float yaw_motor_rpm{};             ///< GM6020 Yaw 电机反馈转速，单位 rpm
-    float yaw_motor_current{};         ///< GM6020 Yaw 电机回传电流原始值
-    float pitch_motor_position{};      ///< DM Pitch 电机位置，单位 rad
-    float pitch_motor_speed{};         ///< DM Pitch 电机速度，单位 rad/s
-    float pitch_motor_torque{};        ///< DM Pitch 电机回传转矩，单位 N*m
-  } gimbal_feedback;                   ///< 姿态、控制器反馈和电机反馈
+    float yaw{};                        ///< AHRS Yaw 姿态角，单位 rad
+    float pitch{};                      ///< AHRS Pitch 姿态角，单位 rad
+    float roll{};                       ///< AHRS Roll 姿态角，单位 rad
+    float gyro_x{};                     ///< IMU X 轴角速度，单位 rad/s
+    float gyro_y{};                     ///< IMU Y 轴角速度，单位 rad/s
+    float gyro_z{};                     ///< IMU Z 轴角速度，单位 rad/s
+    float controller_yaw_position{};    ///< Yaw 位置环实际使用的反馈，单位 rad
+    float controller_yaw_speed{};       ///< Yaw 速度环实际使用的反馈，单位 rad/s
+    float controller_pitch_position{};  ///< Pitch 位置环实际使用的反馈，单位 rad
+    float controller_pitch_speed{};     ///< Pitch 速度环实际使用的反馈，单位 rad/s
+    float yaw_motor_rpm{};              ///< GM6020 Yaw 电机反馈转速，单位 rpm
+    float yaw_motor_current{};          ///< GM6020 Yaw 电机回传电流原始值
+    float pitch_motor_position{};       ///< DM Pitch 电机位置，单位 rad
+    float pitch_motor_speed{};          ///< DM Pitch 电机速度，单位 rad/s
+    float pitch_motor_torque{};         ///< DM Pitch 电机回传转矩，单位 N*m
+  } gimbal_feedback;                    ///< 姿态、控制器反馈和电机反馈
 
   struct {
     std::int16_t left_x{};       ///< 遥控器左摇杆横向原始值，范围约 -660~660
@@ -98,26 +98,26 @@ struct FreemasterData {
   } aimbot_rx;                   ///< 云台自瞄 CAN 通信器接收数据
 
   struct {
-    std::uint16_t heat_real{};   ///< 底盘回传的当前枪口热量
-    std::uint16_t heat_limit{};  ///< 底盘回传的枪口热量上限
-    float ammo_speed{};          ///< 底盘回传的裁判系统弹速，单位 m/s
-    std::uint8_t robot_id{};     ///< 底盘回传的机器人阵营/编号选择位
-    std::uint8_t gimbal_power{}; ///< 裁判系统云台供电状态：0 关闭，1 开启
-    std::uint8_t chassis_power{}; ///< 裁判系统底盘供电状态：0 关闭，1 开启
-    std::uint8_t ammo_power{};   ///< 裁判系统发射机构供电状态：0 关闭，1 开启
-  } chassis_rx;                  ///< 底盘 CAN 通信器接收数据
+    std::uint16_t heat_real{};     ///< 底盘回传的当前枪口热量
+    std::uint16_t heat_limit{};    ///< 底盘回传的枪口热量上限
+    float ammo_speed{};            ///< 底盘回传的裁判系统弹速，单位 m/s
+    std::uint8_t robot_id{};       ///< 底盘回传的机器人阵营/编号选择位
+    std::uint8_t gimbal_power{};   ///< 裁判系统云台供电状态：0 关闭，1 开启
+    std::uint8_t chassis_power{};  ///< 裁判系统底盘供电状态：0 关闭，1 开启
+    std::uint8_t ammo_power{};     ///< 裁判系统发射机构供电状态：0 关闭，1 开启
+  } chassis_rx;                    ///< 底盘 CAN 通信器接收数据
 
   struct {
-    FreemasterPidData yaw_position;   ///< Yaw 外环（位置环）PID 数据
-    FreemasterPidData yaw_speed;      ///< Yaw 内环（速度环）PID 数据
-    FreemasterPidData pitch_position; ///< Pitch 外环（位置环）PID 数据
-    FreemasterPidData pitch_speed;    ///< Pitch 内环（速度环）PID 数据
-    float yaw_controller_out{};       ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
-    float pitch_controller_out{};     ///< Pitch 串级 PID 最终输出，单位 N*m
-    float yaw_feedforward_torque{};   ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
-    float yaw_motor_command{};        ///< 限幅后的 GM6020 Yaw 最终电压指令
-    float pitch_motor_command{};      ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m
-  } gimbal_output;                    ///< 云台四个 PID、前馈及最终执行指令
+    FreemasterPidData yaw_position;    ///< Yaw 外环（位置环）PID 数据
+    FreemasterPidData yaw_speed;       ///< Yaw 内环（速度环）PID 数据
+    FreemasterPidData pitch_position;  ///< Pitch 外环（位置环）PID 数据
+    FreemasterPidData pitch_speed;     ///< Pitch 内环（速度环）PID 数据
+    float yaw_controller_out{};        ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
+    float pitch_controller_out{};      ///< Pitch 串级 PID 最终输出，单位 N*m
+    float yaw_feedforward_torque{};    ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
+    float yaw_motor_command{};         ///< 限幅后的 GM6020 Yaw 最终电压指令
+    float pitch_motor_command{};       ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m
+  } gimbal_output;                     ///< 云台四个 PID、前馈及最终执行指令
 };
 
 inline volatile FreemasterData freemaster_data{};  ///< FreeMASTER 读取的 100 Hz 全局数据快照
