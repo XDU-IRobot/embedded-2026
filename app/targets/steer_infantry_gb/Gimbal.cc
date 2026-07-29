@@ -229,7 +229,7 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->yaw_current_ =
       globals->gimbal_controller.output().yaw + static_cast<f32>(globals->yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
   gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
-  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y()+0.01;
+  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y() + 0.01;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
 }
 
@@ -413,13 +413,12 @@ void Gimbal::ShootEnableUpdate() {
                                                    globals->aimbot_communicator->aimbot_state() >> 1 & 0x01) ||
                                                   globals->remote_input.dial >= 0.98f)) ||
              (globals->StateMachine_ == kMatch &&
-               ((globals->remote_input.mouse_left && !globals->remote_input.mouse_right) ||
-                (globals->remote_input.mouse_right &&
-                 globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
-                 globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)))) {
+              ((globals->remote_input.mouse_left && !globals->remote_input.mouse_right) ||
+               (globals->remote_input.mouse_right && globals->aimbot_communicator->aimbot_state() >> 0 & 0x01 &&
+                globals->aimbot_communicator->aimbot_state() >> 1 & 0x01)))) {
     globals->shoot_controller.SetMode(Shoot3Fric::kFullAuto);
     if (globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real() > 100) {
-      globals->shoot_controller.SetShootFrequency(10.0f);//自瞄测试弹频修改至10（原来是20）
+      globals->shoot_controller.SetShootFrequency(10.0f);  // 自瞄测试弹频修改至10（原来是20）
     } else if (globals->chassis_communicator->heat_limit() - globals->chassis_communicator->heat_real() < 30) {
       globals->shoot_controller.SetShootFrequency(0.0f);
     } else {

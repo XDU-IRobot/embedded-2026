@@ -96,7 +96,7 @@ inline struct GlobalWarehouse {
   Shoot3Fric shoot_controller{9, 19.2f, true};  ///< 三摩擦轮发射机构控制器，8发拨盘
   EncoderCounter dail_encoder_counter;          ///< 拨盘电机位置计数器
 
-  StateMachineType StateMachine_ = {kNoForce};  // 当前状态
+  StateMachineType StateMachine_ = {kNoForce};                     // 当前状态
   RemoteControlSource remote_source = RemoteControlSource::kNone;  ///< 整车状态控制源
   RemoteInput remote_input{};
 
