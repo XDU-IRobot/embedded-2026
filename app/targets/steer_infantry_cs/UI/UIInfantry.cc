@@ -57,8 +57,8 @@ void UIInfantryAdd1() {
 void UIInfantryAdd2() {
   UIFigure2 UIGroup1;
   const u8 energy = globals->super_cap->GetCapEnergy();
-  UIGroup1.figure1.fillLine("cap", UIFigure::Operation::Add, 0, SupercapBarColor(energy), 34,
-                            kSupercapBarStartX, kSupercapBarY, SupercapBarEndX(energy), kSupercapBarY);
+  UIGroup1.figure1.fillLine("cap", UIFigure::Operation::Add, 0, SupercapBarColor(energy), 34, kSupercapBarStartX,
+                            kSupercapBarY, SupercapBarEndX(energy), kSupercapBarY);
   UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Add, 0, UIFigure::Color::White, 2, 100, 720, 25,
                              static_cast<f32>(globals->gimbal_communicator->aim_speed_change()) * 1000.0f);
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
@@ -67,8 +67,8 @@ void UIInfantryAdd2() {
 
 void UIInfantrySupercapBoxAdd() {
   UIFigure1 UIGroup1;
-  UIGroup1.figure1.fillRec("cbr", UIFigure::Operation::Add, 0, UIFigure::Color::Yellow, 3,
-                           kSupercapBarStartX, 86, kSupercapBarEndX, 120);
+  UIGroup1.figure1.fillRec("cbr", UIFigure::Operation::Add, 0, UIFigure::Color::Yellow, 3, kSupercapBarStartX, 86,
+                           kSupercapBarEndX, 120);
   const auto dataLen = Referee0x301Prepare(globals->dataBox, 0, UIGroup1, robotID, robotID + 256);
   globals->referee_uart->Write(globals->dataBox, dataLen, 500);
 }
@@ -95,8 +95,8 @@ void UIInfantryEdit() {
   UIFigure7 UIGroup1;
   // 电容电压
   const u8 energy = globals->super_cap->GetCapEnergy();
-  UIGroup1.figure1.fillLine("cap", UIFigure::Operation::Edit, 0, SupercapBarColor(energy), 34,
-                            kSupercapBarStartX, kSupercapBarY, SupercapBarEndX(energy), kSupercapBarY);
+  UIGroup1.figure1.fillLine("cap", UIFigure::Operation::Edit, 0, SupercapBarColor(energy), 34, kSupercapBarStartX,
+                            kSupercapBarY, SupercapBarEndX(energy), kSupercapBarY);
   // 弹速调节
   if (globals->gimbal_communicator->aim_speed_change() > 0) {
     UIGroup1.figure2.fillFloat("asj", UIFigure::Operation::Edit, 0, UIFigure::Color::Green, 2, 100, 720, 25,
