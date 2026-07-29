@@ -20,7 +20,16 @@
 #include "encoder_counter.hpp"
 #include "usb.hpp"
 #include "tim.h"
-
+struct FreeMasterVars {
+  volatile float yaw_deg = 88.0f;
+  volatile int16_t rpm = 0;
+  volatile int32_t rpm_pitch = 0;
+  volatile float angle_out = 0.0f;
+  volatile float speed_out = 0.0f;
+  volatile float yaw_vision = 0.0f;
+  volatile int32_t pitch_ticks = 0;
+};
+extern FreeMasterVars g_fm;
 class PWM_Servo {
  public:
   const uint16_t trigger_off_compare{2050};
@@ -94,7 +103,7 @@ class DartSys {
   rm::hal::Can *can1_{nullptr};  ///< CAN 总线接口
   rm::hal::Can *can2_{nullptr};  ///< CAN 总线接口
 
-  rm::hal::Serial *dbus_{nullptr};  ///< 遥控器串口接口
+  rm::hal::Serial<128> *dbus_{nullptr};  ///< 遥控器串口接口
   // 设备
   rm::device::DR16 *rc_{nullptr};  ///< 遥控器
 
@@ -192,7 +201,8 @@ class DartSys {
     kLoadLowSpd = 2,
     kLoadStall = 3,
     kLoadReversePos = 4,
-    kLoadFire = 5
+    kAim = 5,
+    kLoadFire = 6
   };
   // enum class TriggerState : uint8_t {
   //   kTriggerOff = 0, kTriggerOffDone = 1,
@@ -218,6 +228,8 @@ class DartSys {
   bool load_motor_spd_stall(int16_t spd, uint16_t current_limit, bool if_reset);
   bool pitch_motor_pos(int16_t pos);
   bool pitch_motor_spd_stall(int16_t spd);
+
+
 
   // bool signal_fire_reload_task();
   // bool signal_fire_load_task();

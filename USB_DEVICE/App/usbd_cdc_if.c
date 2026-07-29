@@ -22,6 +22,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#define DART_RACK
 #ifdef OLD_SENTRY
 #include "old_sentry/USB.hpp"
 #endif
@@ -32,7 +33,7 @@
 #include "drone_gb/Usb.hpp"
 #endif
 #ifdef DART_RACK
-#include "dart_rack/usb.hpp"
+#include "dart_rack_new/usb.hpp"
 #endif
 
 #ifdef ALGORITHM_ENROLL_TEST

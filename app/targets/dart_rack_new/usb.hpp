@@ -31,6 +31,14 @@ typedef struct __attribute__((packed)) {
   uint8_t _EOF;  // 包尾
 } USBVisionSend_SCM_t;
 
+// USB 全局变量声明 (FreeMaster)
+extern volatile uint32_t g_usb_rx_count;
+extern volatile uint32_t g_usb_rx_matched;
+extern volatile uint8_t g_vision_id;
+extern volatile float g_vision_pitch;
+extern volatile float g_vision_yaw;
+extern volatile uint8_t g_vision_is_valid;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

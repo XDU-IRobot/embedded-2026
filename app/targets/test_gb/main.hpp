@@ -40,9 +40,9 @@ inline struct GlobalWarehouse {
 
   // 硬件接口 //
   rm::hal::Can *can1{nullptr}, *can2{nullptr};                   ///< CAN 总线接口
-  rm::hal::Serial *dbus{nullptr};                                ///< 遥控器串口接口
+  rm::hal::Serial<128> *dbus{nullptr};                                ///< 遥控器串口接口
   rm::device::AimbotCanCommunicator *can_communicator{nullptr};  ///< CAN 通信器
-  rm::hal::Serial *imu_uart{nullptr};                            ///< imu串口接口
+  rm::hal::Serial<128> *imu_uart{nullptr};                            ///< imu串口接口
 
   // 设备 //
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
