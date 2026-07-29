@@ -10,7 +10,7 @@ class RxReferee : public Device {
  public:
   RxReferee() = delete;
 
-  explicit RxReferee(rm::hal::SerialInterface &serial, VT03 &image, Referee<RefereeRevision::kNewV120> &referee);
+  explicit RxReferee(rm::hal::SerialInterface &serial, VT03 &image, Referee<RefereeRevision::kNewV200> &referee);
 
   void Begin();
 
@@ -19,7 +19,7 @@ class RxReferee : public Device {
  private:
   rm::hal::SerialInterface *serial_;
   rm::device::VT03 &image_;
-  rm::device::Referee<RefereeRevision::kNewV120> &referee_;
+  rm::device::Referee<RefereeRevision::kNewV200> &referee_;
 };
 }  // namespace rm::device
 

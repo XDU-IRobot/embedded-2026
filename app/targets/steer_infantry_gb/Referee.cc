@@ -2,7 +2,7 @@
 #include "main.hpp"
 
 namespace rm::device {
-RxReferee::RxReferee(rm::hal::SerialInterface &serial, VT03 &image, Referee<RefereeRevision::kNewV120> &referee)
+RxReferee::RxReferee(rm::hal::SerialInterface &serial, VT03 &image, Referee<RefereeRevision::kNewV200> &referee)
     : serial_(&serial), image_(image), referee_(referee) {
   this->serial_->AttachRxCallback([this](etl::span<const u8> data) { this->RxCallback(data); });
 }

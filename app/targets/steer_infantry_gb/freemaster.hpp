@@ -34,7 +34,7 @@ struct FreemasterData {
     std::uint8_t gimbal_mode{};    ///< 云台运动模式，对应 Gimbal::GimbalMove_
     std::uint8_t rc_online{};      ///< DT17 在线标志：0 离线，1 在线
     std::uint8_t vt03_online{};    ///< VT03 在线标志：0 离线，1 在线
-    std::uint8_t remote_source{};  ///< 当前控制源：0 无，1 DT17，2 VT03
+    std::uint8_t remote_source{};  ///< 整车状态控制源：0 无，1 DT17，2 VT03
     std::uint8_t aimbot_online{};  ///< 自瞄通信器在线标志：0 离线，1 在线
     std::uint8_t gimbal_online{};  ///< 云台电机在线标志：0 异常，1 全部在线
     std::uint8_t shoot_online{};   ///< 发射机构电机在线标志：0 异常，1 全部在线

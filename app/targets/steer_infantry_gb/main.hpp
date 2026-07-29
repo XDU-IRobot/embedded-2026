@@ -71,7 +71,7 @@ inline struct GlobalWarehouse {
   rm::hal::Serial<128> *referee_uart{nullptr};                      ///< 裁判系统串口接口
   rm::hal::Serial<128> *ident_uart{nullptr};
   rm::device::RxReferee *rx_referee{nullptr};  ///< 裁判系统接口
-  rm::device::Referee<rm::device::RefereeRevision::kNewV120> *ref;
+  rm::device::Referee<rm::device::RefereeRevision::kNewV200> *ref;
   rm::device::VT03 *image_data{nullptr};  ///< 裁判系统数据缓冲区
 
   // 设备 //
@@ -97,7 +97,7 @@ inline struct GlobalWarehouse {
   EncoderCounter dail_encoder_counter;          ///< 拨盘电机位置计数器
 
   StateMachineType StateMachine_ = {kNoForce};  // 当前状态
-  RemoteControlSource remote_source = RemoteControlSource::kNone;
+  RemoteControlSource remote_source = RemoteControlSource::kNone;  ///< 整车状态控制源
   RemoteInput remote_input{};
 
   u16 robot_hp[5]{};

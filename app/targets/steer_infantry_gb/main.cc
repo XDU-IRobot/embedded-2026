@@ -55,7 +55,7 @@ void GlobalWarehouse::Init() {
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
   image_data = new rm::device::VT03;
-  ref = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
+  ref = new rm::device::Referee<rm::device::RefereeRevision::kNewV200>;
   rx_referee = new rm::device::RxReferee{*referee_uart, *image_data, *ref};
   image_data->SetHeartbeatTimeout(std::chrono::milliseconds(100));
 
@@ -197,6 +197,7 @@ void GlobalWarehouse::RCStateUpdate() {
 
 void GlobalWarehouse::RemoteInputUpdate() {
   globals->remote_input = {};
+  const bool vt03_online = globals->device_referee.all_device_ok();
 
   if (globals->remote_source == RemoteControlSource::kDt17) {
     constexpr f32 kDt17Scale = 660.0f;
@@ -205,6 +206,30 @@ void GlobalWarehouse::RemoteInputUpdate() {
     globals->remote_input.right_x = static_cast<f32>(globals->rc->right_x()) / kDt17Scale;
     globals->remote_input.right_y = static_cast<f32>(globals->rc->right_y()) / kDt17Scale;
     globals->remote_input.dial = static_cast<f32>(globals->rc->dial()) / kDt17Scale;
+  } else if (globals->remote_source == RemoteControlSource::kVt03) {
+    const auto &data = globals->image_data->data();
+    globals->remote_input.left_x = data.left_x;
+    globals->remote_input.left_y = data.left_y;
+    globals->remote_input.right_x = data.right_x;
+    globals->remote_input.right_y = data.right_y;
+    globals->remote_input.dial = data.dial;
+    globals->remote_input.trigger = data.trigger;
+  } else {
+    return;
+  }
+
+  // Vehicle state authority is selected separately in RCStateUpdate(). When
+  // VT03 is online, its keyboard and mouse remain active even while DT17 owns
+  // the vehicle state; the DT17-mode overlay excludes VT03 switch/trigger data.
+  if (vt03_online) {
+    const auto &data = globals->image_data->data();
+    globals->remote_input.mouse_x = data.mouse_x;
+    globals->remote_input.mouse_y = data.mouse_y;
+    globals->remote_input.mouse_z = data.mouse_z;
+    globals->remote_input.keyboard = data.keyboard_key;
+    globals->remote_input.mouse_left = data.mouse_button_left;
+    globals->remote_input.mouse_right = data.mouse_button_right;
+  } else if (globals->remote_source == RemoteControlSource::kDt17) {
     globals->remote_input.mouse_x = globals->rc->mouse_x();
     globals->remote_input.mouse_y = globals->rc->mouse_y();
     globals->remote_input.mouse_z = globals->rc->mouse_z();
@@ -214,20 +239,6 @@ void GlobalWarehouse::RemoteInputUpdate() {
       const auto key = static_cast<rm::device::DR16::Key>(1U << bit);
       if (globals->rc->key(key)) globals->remote_input.keyboard |= static_cast<u16>(1U << bit);
     }
-  } else if (globals->remote_source == RemoteControlSource::kVt03) {
-    const auto &data = globals->image_data->data();
-    globals->remote_input.left_x = data.left_x;
-    globals->remote_input.left_y = data.left_y;
-    globals->remote_input.right_x = data.right_x;
-    globals->remote_input.right_y = data.right_y;
-    globals->remote_input.dial = data.dial;
-    globals->remote_input.mouse_x = data.mouse_x;
-    globals->remote_input.mouse_y = data.mouse_y;
-    globals->remote_input.mouse_z = data.mouse_z;
-    globals->remote_input.keyboard = data.keyboard_key;
-    globals->remote_input.mouse_left = data.mouse_button_left;
-    globals->remote_input.mouse_right = data.mouse_button_right;
-    globals->remote_input.trigger = data.trigger;
   }
 }
 
