@@ -71,7 +71,7 @@ inline struct GlobalWarehouse {
   rm::hal::Serial<128> *referee_uart{nullptr};                      ///< 裁判系统串口接口
   rm::hal::Serial<128> *ident_uart{nullptr};
   rm::device::RxReferee *rx_referee{nullptr};  ///< 裁判系统接口
-  rm::device::Referee<rm::device::RefereeRevision::kNewV200> *ref;
+  rm::device::Referee<rm::device::RefereeRevision::kNewV120> *ref;
   rm::device::VT03 *image_data{nullptr};  ///< 裁判系统数据缓冲区
 
   // 设备 //

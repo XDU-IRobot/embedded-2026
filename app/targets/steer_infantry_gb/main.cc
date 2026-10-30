@@ -55,7 +55,7 @@ void GlobalWarehouse::Init() {
   referee_uart = new rm::hal::Serial<128>{huart6, false, true};
   ident_uart = new rm::hal::Serial<128>{huart1, false, true};
   image_data = new rm::device::VT03;
-  ref = new rm::device::Referee<rm::device::RefereeRevision::kNewV200>;
+  ref = new rm::device::Referee<rm::device::RefereeRevision::kNewV120>;
   rx_referee = new rm::device::RxReferee{*referee_uart, *image_data, *ref};
   image_data->SetHeartbeatTimeout(std::chrono::milliseconds(100));
 
