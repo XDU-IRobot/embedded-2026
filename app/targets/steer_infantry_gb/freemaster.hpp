@@ -5,6 +5,33 @@
 #include "Gimbal.hpp"
 
 /**
+ * @brief 一个 SMC 控制器的 FreeMASTER 调参和观测数据。
+ *
+ * 参数字段：由 FreeMASTER 写入，程序每 100 Hz 同步给 SMC。
+ * 状态字段：由程序每 100 Hz 刷新，FreeMASTER 只读。
+ */
+struct FreemasterSMCData {
+  // ---------- 可写参数 ----------
+  float C{};          ///< 滑模面系数
+  float K{};          ///< 线性趋近项系数
+  float J{};          ///< 输出尺度系数，沿用当前控制律中的 J
+  float epsilon{};    ///< 饱和切换项系数
+  float q{};          ///< 终端滑模指数的分子，指数为 q / p
+  float p{};          ///< 终端滑模指数的分母，必须大于 0
+  float error_eps{};  ///< 位置误差死区，单位 rad，必须大于 0
+  float u_max{};      ///< SMC 输出限幅，单位为电机指令标度
+
+  // ---------- 只读状态 ----------
+  float set{};             ///< SMC 位置目标，单位 rad
+  float feedback{};        ///< SMC 最近一次采样的位置反馈，单位 rad
+  float speed{};           ///< SMC 最近一次采样的角速度，单位 rad/s
+  float error{};           ///< SMC 最近一次计算的圆周误差：feedback - set
+  float s{};               ///< 滑模面值，停用或进入误差死区时置 0
+  float out{};             ///< SMC 限幅后的输出，尚未经过电机最终限幅
+  std::uint8_t enabled{};  ///< 控制器是否启用：0 停用，1 启用
+};
+
+/**
  * @brief FreeMASTER snapshot of one PID controller.
  *
  * The fields are copied at 100 Hz so FreeMASTER only needs to read simple
@@ -112,6 +139,7 @@ struct FreemasterData {
     FreemasterPidData yaw_speed;       ///< Yaw 内环（速度环）PID 数据
     FreemasterPidData pitch_position;  ///< Pitch 外环（位置环）PID 数据
     FreemasterPidData pitch_speed;     ///< Pitch 内环（速度环）PID 数据
+    FreemasterSMCData yaw_smc;         ///< Yaw SMC 参数和运行数据
     float yaw_controller_out{};        ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
     float pitch_controller_out{};      ///< Pitch 串级 PID 最终输出，单位 N*m
     float yaw_feedforward_torque{};    ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
@@ -143,6 +171,18 @@ inline void freemaster() {
     destination.d_out = source.d_out()[0];
     destination.out = source.out();
   };
+
+  const auto sync_smc = [](volatile FreemasterSMCData &data, SMC &smc) {
+    data.set = smc.target;
+    data.feedback = smc.angle;
+    data.speed = smc.ang_vel;
+    data.error = smc.GetError();
+    data.s = smc.GetSlidingSurface();
+    data.out = smc.u;
+    data.enabled = static_cast<std::uint8_t>(smc.IsEnabled());
+  };
+
+  sync_smc(freemaster_data.gimbal_output.yaw_smc, gimbal->yaw_smc());
 
   freemaster_data.update_count = freemaster_data.update_count + 1U;
 

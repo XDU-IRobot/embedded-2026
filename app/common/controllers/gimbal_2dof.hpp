@@ -1,6 +1,8 @@
 #pragma once
 
 #include <librm.hpp>
+// TODO
+#include "../targets/steer_infantry_gb/slidingmodec.hpp"
 
 /**
  * @brief 二轴云台控制器

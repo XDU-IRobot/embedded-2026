@@ -105,6 +105,9 @@ void Gimbal::GimbalInit() {
   gimbal->identify_pitch_center_ = kIdentifyPitchCenter;
   gimbal->identify_yaw_encoder_counter_.Reset(0, globals->yaw_motor->encoder());
   globals->dail_encoder_counter.Reset(0, globals->dial_motor->encoder());
+
+  // TODO TEST
+  gimbal->yaw_smc_.SMCInit(20, 400, 0, 0.001, 21, 27, 30000, 80, 0.5);
 }
 
 void Gimbal::GimbalTask() {
@@ -231,6 +234,11 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y() + 0.01;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
+
+  // TODO 当前仅作覆盖
+  yaw_smc_.SetTarget(gimbal_yaw_target_);
+  yaw_smc_.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z());
+  yaw_current_ = rm::modules::Clamp(yaw_smc_.u, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
 }
 
 void Gimbal::ApplyNormalGimbalPID() {
@@ -317,6 +325,7 @@ void Gimbal::GimbalMatchUpdate() {
 }
 
 void Gimbal::GimbalEnableUpdate() {
+  yaw_smc_.Enable(GimbalMove_ == kGbRemote || GimbalMove_ == kGbAimbot || GimbalMove_ == kGbAimbotFu);
   gimbal->DaMiaoMotorEnable();
   globals->gimbal_controller.Enable(true);
   if (gimbal->GimbalMove_ != kGbIdentify) {
@@ -361,6 +370,7 @@ void Gimbal::GimbalEnableUpdate() {
 }
 
 void Gimbal::GimbalDisableUpdate() {
+  yaw_smc_.Enable(false);
   gimbal->DaMiaoMotorDisable();
   globals->aim_mode = 0x01;
   globals->gimbal_controller.EnableSpeedPid(true);

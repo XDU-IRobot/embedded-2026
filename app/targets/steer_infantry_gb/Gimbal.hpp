@@ -5,6 +5,9 @@
 
 #include "main.hpp"
 
+// TODO 极其推荐移动到 gimbal_2dof
+#include "slidingmodec.hpp"
+
 using namespace rm;
 
 inline class Gimbal {
@@ -77,6 +80,8 @@ inline class Gimbal {
   const f32 highest_pitch_angle_ = 0.4f;  // 云台pitch轴最高（弧度制）
   const f32 lowest_pitch_angle_ = -0.6f;  // 云台pitch轴最低（弧度制）
 
+  SMC yaw_smc_{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5};
+
  public:
   void GimbalInit();
 
@@ -95,6 +100,8 @@ inline class Gimbal {
   [[nodiscard]] f32 yaw_feedforward_torque() const { return yaw_torque_; }
   [[nodiscard]] f32 yaw_command() const { return yaw_current_; }
   [[nodiscard]] f32 pitch_command() const { return pitch_torque_; }
+
+  SMC &yaw_smc() { return yaw_smc_; }
 
  private:
   void GimbalStateUpdate();
