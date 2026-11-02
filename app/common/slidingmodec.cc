@@ -4,7 +4,9 @@
 /**
  * @brief SMC 更新
  */
-void SMC::Update(float angle_now, float angle_vel) {
+void SMC::Update(float target_pos, float angle_now, float angle_vel) {
+  target = target_pos;
+
   if (!enabled_) {
     u = 0.0f;
     s = 0.0f;

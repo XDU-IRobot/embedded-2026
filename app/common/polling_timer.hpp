@@ -26,7 +26,7 @@ class PollingTimer {
     std::vector<std::function<void()>> to_run;
 
     tasks_.erase(std::remove_if(tasks_.begin(), tasks_.end(),
-                                [&](const Task& task) {
+                                [&](const Task &task) {
                                   if (task.due_time <= now) {
                                     to_run.push_back(task.func);
                                     return true;  // Remove from tasks_
@@ -35,7 +35,7 @@ class PollingTimer {
                                 }),
                  tasks_.end());
 
-    for (auto& func : to_run) {
+    for (auto &func : to_run) {
       func();
     }
   }

@@ -12,6 +12,7 @@
 #include "aimbot_comm_can.hpp"
 #include "ChassisCommunicator.hpp"
 #include "Referee.hpp"
+#include "wave_generator.hpp"
 
 // 状态机
 typedef enum {
@@ -100,6 +101,9 @@ inline struct GlobalWarehouse {
   RemoteControlSource remote_source = RemoteControlSource::kNone;  ///< 整车状态控制源
   RemoteInput remote_input{};
 
+  WaveGenerator yaw_wave{};
+  WaveGenerator pitch_wave{};
+
   u16 robot_hp[5]{};
   uint8_t time = 0;                   // 时间
   uint16_t init_time = 1000;          // 初始化时间
@@ -143,6 +147,8 @@ inline struct GlobalWarehouse {
   void SubLoop10Hz();
 
  private:
+  void GimbalSMCInit();
+
   void GimbalPIDInit();
 
   void ChassisPIDInit();

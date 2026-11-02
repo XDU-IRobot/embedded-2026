@@ -1,8 +1,8 @@
 #pragma once
 
 #include <librm.hpp>
-// TODO
-#include "../targets/steer_infantry_gb/slidingmodec.hpp"
+#include "slidingmodec.hpp"
+#include "steer_infantry_gb/main.hpp"
 
 /**
  * @brief 二轴云台控制器
@@ -18,7 +18,15 @@ class Gimbal2Dof {
     pid_.pitch_position
         .SetFuzzy(true)  //
         .SetFuzzyErrorScale(M_PI);
+
+    state_.yaw_mode = Mode::kSMC;
+    state_.pitch_mode = Mode::kSMC;
   }
+
+  enum class Mode {
+    kPid,         // Pid 控制
+    kSMC          // 滑模控制
+  };
 
   /**
    * @brief 更新一步，角度单位均为弧度，速度单位均为弧度每秒
@@ -35,20 +43,59 @@ class Gimbal2Dof {
       return;
     }
 
-    pid_.yaw_position.Update(target_.yaw_position, state_.yaw_position, dt);
-    pid_.pitch_position.Update(target_.pitch_position, state_.pitch_position, dt);
-
-    if (speed_pid_enabled_) {  // 速度位置双环
-      const float yaw_speed_target = pid_.yaw_position.out() + target_.yaw_speed_ff;
-      pid_.yaw_speed.Update(yaw_speed_target, state_.yaw_speed, dt);
-      output_.yaw = pid_.yaw_speed.out() + target_.yaw_output_ff;
-      const float pitch_speed_target = pid_.pitch_position.out();
-      pid_.pitch_speed.Update(pitch_speed_target, state_.pitch_speed, dt);
-      output_.pitch = pid_.pitch_speed.out();
-    } else {  // 单位置环
-      output_.yaw = pid_.yaw_position.out() + target_.yaw_output_ff;
-      output_.pitch = pid_.pitch_position.out();
+    switch (state_.yaw_mode) {
+      case Mode::kPid: {
+        pid_.yaw_position.Update(target_.yaw_position, state_.yaw_position, dt);
+        if (speed_pid_enabled_) {  // 速度位置双环
+          const float yaw_speed_target = pid_.yaw_position.out() + target_.yaw_speed_ff;
+          pid_.yaw_speed.Update(yaw_speed_target, state_.yaw_speed, dt);
+          output_.yaw = pid_.yaw_speed.out() + target_.yaw_output_ff;
+        } else {  // 单位置环
+          output_.yaw = pid_.yaw_position.out() + target_.yaw_output_ff;
+        }
+        break;
+      }
+      case Mode::kSMC: {
+        smc_.yaw.Update(target_.yaw_position, yaw_position, yaw_speed);
+        output_.yaw = smc_.yaw.u;
+        break;
+      }
+      default:
+        break;
     }
+
+    switch (state_.pitch_mode) {
+      case Mode::kPid: {  // 单位置环
+        pid_.pitch_position.Update(target_.pitch_position, state_.pitch_position, dt);
+        if (speed_pid_enabled_) {  // 速度位置双环
+          const float pitch_speed_target = pid_.pitch_position.out();
+          pid_.pitch_speed.Update(pitch_speed_target, state_.pitch_speed, dt);
+          output_.pitch = pid_.pitch_speed.out();
+        } else {  // 单位置环
+          output_.pitch = pid_.pitch_position.out();
+        }
+        break;
+      }
+      case Mode::kSMC: {
+        smc_.pitch.Update(target_.pitch_position, pitch_position, pitch_speed);
+        output_.pitch = smc_.pitch.u;
+        break;
+      }
+      default:
+        break;
+    }
+
+    // if (speed_pid_enabled_) {  // 速度位置双环
+    //   const float yaw_speed_target = pid_.yaw_position.out() + target_.yaw_speed_ff;
+    //   pid_.yaw_speed.Update(yaw_speed_target, state_.yaw_speed, dt);
+    //   output_.yaw = pid_.yaw_speed.out() + target_.yaw_output_ff;
+    //   const float pitch_speed_target = pid_.pitch_position.out();
+    //   pid_.pitch_speed.Update(pitch_speed_target, state_.pitch_speed, dt);
+    //   output_.pitch = pid_.pitch_speed.out();
+    // } else {  // 单位置环
+    //   output_.yaw = pid_.yaw_position.out() + target_.yaw_output_ff;
+    //   output_.pitch = pid_.pitch_position.out();
+    // }
   }
 
   /**
@@ -62,18 +109,26 @@ class Gimbal2Dof {
     target_.yaw_output_ff = yaw_control_feedforward;
   }
 
-  /**
-   * @brief 启用或禁用速度环 PID 控制（切换单位置环或速度位置双环控制）
-   */
-  void EnableSpeedPid(bool enable) { speed_pid_enabled_ = enable; }
+  void SetYawMode(Mode mode) { state_.yaw_mode = mode; }
+  void SetPitchMode(Mode mode) { state_.pitch_mode = mode; }
 
   /**
    * @brief 启用或禁用控制器（切换有力无力）
    */
-  void Enable(bool enable) { enabled_ = enable; }
+  void Enable(bool enable) {
+    enabled_ = enable;
+
+    if (!enable) {
+      smc_.yaw.Enable(false);
+      smc_.pitch.Enable(false);
+    }
+  }
+
+  void EnableSpeedPid(bool enable) { speed_pid_enabled_ = enable; }
 
   // getters
   auto &pid() { return pid_; }
+  auto &smc() { return smc_; }
   auto &state() { return state_; }
   auto &target() { return target_; }
 
@@ -86,10 +141,16 @@ class Gimbal2Dof {
     rm::modules::PID yaw_speed, yaw_position, pitch_speed, pitch_position;
   } pid_;
   struct {
+    SMC yaw{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5};
+    SMC pitch{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5};
+  } smc_;
+  struct {
     float yaw_position;
     float yaw_speed;
     float pitch_position;
     float pitch_speed;
+    Mode yaw_mode;
+    Mode pitch_mode;
   } state_{};  ///< 当前状态
   struct {
     float yaw_position;

@@ -25,8 +25,7 @@ class SMC {
       : C(C), K(K), target(ref), error_eps(error_eps), q(q), p(p), u_max(u_max), J(J), epsilon(epsilon) {};
 
   void SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon);
-  void Update(float angle_now, float angle_vel);
-  void SetTarget(const float target_pos) { target = target_pos; }
+  void Update(float target_pos, float angle_now, float angle_vel);
   void Reset(float angle_now);
   void Enable(bool enable);
 

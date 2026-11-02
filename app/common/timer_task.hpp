@@ -23,7 +23,7 @@ class TimerTask {
  public:
   using Callback = etl::delegate<void()>;  // 回调函数类型
 
-  explicit TimerTask(TIM_HandleTypeDef* htim = nullptr, Callback cb = {}) : htim_(htim), cb_(std::move(cb)) {
+  explicit TimerTask(TIM_HandleTypeDef *htim = nullptr, Callback cb = {}) : htim_(htim), cb_(std::move(cb)) {
     Register(this);
     if (htim_) {
       // 注册 HAL 的周期回调，转发到 HandleIRQ
@@ -34,10 +34,10 @@ class TimerTask {
   ~TimerTask() { Unregister(this); }
 
   // Non-copyable
-  TimerTask(const TimerTask&) = delete;
-  TimerTask& operator=(const TimerTask&) = delete;
+  TimerTask(const TimerTask &) = delete;
+  TimerTask &operator=(const TimerTask &) = delete;
 
-  void Attach(TIM_HandleTypeDef* htim) {
+  void Attach(TIM_HandleTypeDef *htim) {
     htim_ = htim;
     if (htim_) {
       HAL_TIM_RegisterCallback(htim_, HAL_TIM_PERIOD_ELAPSED_CB_ID, &TimerTask::HALTimerCallback);
@@ -74,9 +74,9 @@ class TimerTask {
   }
 
   // 将 HAL 的周期中断回调转发到匹配的 TimerTask 实例
-  static void HandleIRQ(TIM_HandleTypeDef* htim) {
+  static void HandleIRQ(TIM_HandleTypeDef *htim) {
     for (auto it = tasks_.begin(); it != tasks_.end(); ++it) {
-      TimerTask* t = *it;
+      TimerTask *t = *it;
       if (t && t->htim_ == htim) {
         t->IRQHandler();
       }
@@ -84,24 +84,24 @@ class TimerTask {
   }
 
  private:
-  TIM_HandleTypeDef* htim_;
+  TIM_HandleTypeDef *htim_;
   Callback cb_;
 
-  static etl::forward_list<TimerTask*, 16> tasks_;  ///< 注册的任务指针链表
+  static etl::forward_list<TimerTask *, 16> tasks_;  ///< 注册的任务指针链表
 
-  static void Register(TimerTask* t) {
+  static void Register(TimerTask *t) {
     if (t == nullptr) return;
     tasks_.push_front(t);
   }
 
-  static void Unregister(TimerTask* t) {
+  static void Unregister(TimerTask *t) {
     if (t == nullptr) return;
     tasks_.remove(t);  // remove all matching entries
   }
 
   // 用于向 HAL 注册的全局回调，转发到 HandleIRQ
-  static void HALTimerCallback(TIM_HandleTypeDef* htim) { HandleIRQ(htim); }
+  static void HALTimerCallback(TIM_HandleTypeDef *htim) { HandleIRQ(htim); }
 };
 
 // 静态成员定义
-inline etl::forward_list<TimerTask*, 16> TimerTask::tasks_;
+inline etl::forward_list<TimerTask *, 16> TimerTask::tasks_;

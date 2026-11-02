@@ -140,6 +140,7 @@ struct FreemasterData {
     FreemasterPidData pitch_position;  ///< Pitch 外环（位置环）PID 数据
     FreemasterPidData pitch_speed;     ///< Pitch 内环（速度环）PID 数据
     FreemasterSMCData yaw_smc;         ///< Yaw SMC 参数和运行数据
+    FreemasterSMCData pitch_smc;       ///< Pitch SMC 参数和运行数据
     float yaw_controller_out{};        ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
     float pitch_controller_out{};      ///< Pitch 串级 PID 最终输出，单位 N*m
     float yaw_feedforward_torque{};    ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
@@ -150,12 +151,31 @@ struct FreemasterData {
 
 inline volatile FreemasterData freemaster_data{};  ///< FreeMASTER 读取的 100 Hz 全局数据快照
 
+inline void freemaster_init() {
+  const auto init_smc = [](volatile FreemasterSMCData &data, const SMC &smc) {
+    data.C = smc.C;
+    data.K = smc.K;
+    data.J = smc.J;
+    data.epsilon = smc.epsilon;
+    data.q = smc.q;
+    data.p = smc.p;
+    data.error_eps = smc.error_eps;
+    data.u_max = smc.u_max;
+  };
+
+  init_smc(freemaster_data.gimbal_output.yaw_smc, globals->gimbal_controller.smc().yaw);
+  init_smc(freemaster_data.gimbal_output.pitch_smc, globals->gimbal_controller.smc().pitch);
+}
+
 /**
  * @brief Refresh all FreeMASTER telemetry.
  *
  * Called by GlobalWarehouse::SubLoop100Hz() after device-state updates.
  */
 inline void freemaster() {
+  constexpr f32 kDegToRad = static_cast<f32>(M_PI) / 180.0f;
+  constexpr f32 kRadToDeg = 180.0f / static_cast<f32>(M_PI);
+
   if (globals == nullptr || gimbal == nullptr || globals->rc == nullptr || globals->imu == nullptr ||
       globals->yaw_motor == nullptr || globals->pitch_motor == nullptr || globals->aimbot_communicator == nullptr ||
       globals->chassis_communicator == nullptr) {
@@ -172,7 +192,16 @@ inline void freemaster() {
     destination.out = source.out();
   };
 
-  const auto sync_smc = [](volatile FreemasterSMCData &data, SMC &smc) {
+  const auto copy_smc = [](volatile FreemasterSMCData &data, SMC &smc) {
+    smc.C = data.C;
+    smc.K = data.K;
+    smc.J = data.J;
+    smc.epsilon = data.epsilon;
+    smc.q = data.q;
+    smc.p = data.p;
+    smc.error_eps = data.error_eps;
+    smc.u_max = data.u_max;
+
     data.set = smc.target;
     data.feedback = smc.angle;
     data.speed = smc.ang_vel;
@@ -181,8 +210,6 @@ inline void freemaster() {
     data.out = smc.u;
     data.enabled = static_cast<std::uint8_t>(smc.IsEnabled());
   };
-
-  sync_smc(freemaster_data.gimbal_output.yaw_smc, gimbal->yaw_smc());
 
   freemaster_data.update_count = freemaster_data.update_count + 1U;
 
@@ -196,17 +223,22 @@ inline void freemaster() {
   freemaster_data.runtime.shoot_online = static_cast<std::uint8_t>(globals->device_shoot.all_device_ok());
   freemaster_data.runtime.fire_delay_avg_ms = AdelayTime;
 
-  freemaster_data.gimbal_target.yaw = gimbal->yaw_target();
-  freemaster_data.gimbal_target.pitch = gimbal->pitch_target();
+  // freemaster_data.gimbal_target.yaw = gimbal->yaw_target();
+  // freemaster_data.gimbal_target.pitch = gimbal->pitch_target();
+  freemaster_data.gimbal_target.yaw = globals->gimbal_controller.target().yaw_position * kRadToDeg;
+  freemaster_data.gimbal_target.pitch = globals->gimbal_controller.target().pitch_position * kRadToDeg;
   freemaster_data.gimbal_target.yaw_speed = gimbal->yaw_speed_reference();
   freemaster_data.gimbal_target.pitch_speed = gimbal->pitch_speed_reference();
   freemaster_data.gimbal_target.yaw_accel = gimbal->yaw_accel_reference();
   freemaster_data.gimbal_target.pitch_accel = gimbal->pitch_accel_reference();
   freemaster_data.gimbal_target.yaw_speed_feedforward = globals->gimbal_controller.target().yaw_speed_ff;
 
-  freemaster_data.gimbal_feedback.yaw = globals->ahrs.euler_angle().yaw;
-  freemaster_data.gimbal_feedback.pitch = globals->ahrs.euler_angle().pitch;
-  freemaster_data.gimbal_feedback.roll = globals->ahrs.euler_angle().roll;
+  // freemaster_data.gimbal_feedback.yaw = globals->ahrs.euler_angle().yaw;
+  // freemaster_data.gimbal_feedback.pitch = globals->ahrs.euler_angle().pitch;
+  // freemaster_data.gimbal_feedback.roll = globals->ahrs.euler_angle().roll;
+  freemaster_data.gimbal_feedback.yaw = globals->ahrs.euler_angle().yaw * kRadToDeg;
+  freemaster_data.gimbal_feedback.pitch = globals->ahrs.euler_angle().pitch * kRadToDeg;
+  freemaster_data.gimbal_feedback.roll = globals->ahrs.euler_angle().roll * kRadToDeg;
   freemaster_data.gimbal_feedback.gyro_x = globals->imu->gyro_x();
   freemaster_data.gimbal_feedback.gyro_y = globals->imu->gyro_y();
   freemaster_data.gimbal_feedback.gyro_z = globals->imu->gyro_z();
@@ -264,9 +296,15 @@ inline void freemaster() {
   copy_pid(freemaster_data.gimbal_output.yaw_speed, gimbal_pid.yaw_speed);
   copy_pid(freemaster_data.gimbal_output.pitch_position, gimbal_pid.pitch_position);
   copy_pid(freemaster_data.gimbal_output.pitch_speed, gimbal_pid.pitch_speed);
-  freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw;
-  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch;
+  // freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw;
+  // freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch;
+  freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw / 30000 * 10;
+  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch / 10 * 100;
   freemaster_data.gimbal_output.yaw_feedforward_torque = gimbal->yaw_feedforward_torque();
   freemaster_data.gimbal_output.yaw_motor_command = gimbal->yaw_command();
   freemaster_data.gimbal_output.pitch_motor_command = gimbal->pitch_command();
+
+  auto &gimbal_smc = globals->gimbal_controller.smc();
+  copy_smc(freemaster_data.gimbal_output.yaw_smc, gimbal_smc.yaw);
+  copy_smc(freemaster_data.gimbal_output.pitch_smc, gimbal_smc.pitch);
 }

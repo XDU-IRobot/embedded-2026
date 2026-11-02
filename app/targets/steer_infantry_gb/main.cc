@@ -90,13 +90,26 @@ void GlobalWarehouse::Init() {
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
+  yaw_wave = WaveFactory::Trapezoid(4.f, 0.1745f, 0.2f, 0.2f, 0.2);
+  pitch_wave = WaveFactory::Sine(2.f, 0.05f, 0.f);
+
+  globals->GimbalSMCInit();
   globals->GimbalPIDInit();
   globals->ShootPIDInit();
   gimbal->GimbalInit();
+
+  freemaster_init();
+}
+
+void GlobalWarehouse::GimbalSMCInit() {
+  // 初始化 SMC
+  // gimbal_controller.smc().yaw.SMCInit(20, 400, 0, 0.001, 21, 27, 30000, 80, 0.5);
+  gimbal_controller.smc().yaw.SMCInit(20, 400, 0, 0.001, 21, 27, 30000, 80, 0.5);
+  gimbal_controller.smc().pitch.SMCInit(3, 5, 0, 0.01, 21, 27, 7, 0.2, 0.5);
 }
 
 void GlobalWarehouse::GimbalPIDInit() {
-  // 初始化PID
+  // 初始化 PID
   // Yaw PID 参数
   gimbal_controller.pid().yaw_position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(12000.0f).SetMaxIout(0.0f);
   gimbal_controller.pid().yaw_speed.SetKp(580.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
@@ -393,6 +406,9 @@ void GlobalWarehouse::SubLoop500Hz() {
   gimbal->GimbalTask();
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
+
+  globals->yaw_wave.Update(0.002f);
+  globals->pitch_wave.Update(0.002f);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {}
