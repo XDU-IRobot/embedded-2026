@@ -24,8 +24,8 @@ class Gimbal2Dof {
   }
 
   enum class Mode {
-    kPid,         // Pid 控制
-    kSMC          // 滑模控制
+    kPid,  // Pid 控制
+    kSMC   // 滑模控制
   };
 
   /**
