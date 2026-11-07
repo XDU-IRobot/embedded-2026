@@ -219,17 +219,19 @@ void Gimbal::GimbalMovePIDUpdate() {
 
   // Test
   f32 yaw_target_for_controller = gimbal->gimbal_yaw_target_;
+  f32 pitch_target_for_controller = gimbal->gimbal_pitch_target_;
   if (gimbal->GimbalMove_ == kGbAimbot) {
-    yaw_target_for_controller = rm::modules::Wrap(yaw_target_for_controller + globals->yaw_wave.GetValue(),
-                                                  -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
+    yaw_target_for_controller = rm::modules::Wrap(yaw_target_for_controller + globals->yaw_wave.GetValue(),-static_cast<f32>(M_PI), static_cast<f32>(M_PI));
+    pitch_target_for_controller = rm::modules::Wrap(pitch_target_for_controller + globals->pitch_wave.GetValue(), -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
   }
-  globals->gimbal_controller.SetTarget(yaw_target_for_controller, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
+  globals->gimbal_controller.SetTarget(yaw_target_for_controller, pitch_target_for_controller, gimbal->yaw_speed_ff);
   // Test
+  // globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
 
-  // globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_,
-  // gimbal->yaw_speed_ff);
+  // globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
+  //                                   globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
-                                    globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
+                                    globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), 0.002);
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
   const auto ff =
       g_gimbal_dynamics.ComputeFf(yaw_position_, -globals->pitch_motor->pos() - 1.0f, 0, 0, 0, 0, g_stationary);
@@ -239,7 +241,7 @@ void Gimbal::GimbalMovePIDUpdate() {
   gimbal->yaw_current_ =
       globals->gimbal_controller.output().yaw + static_cast<f32>(globals->yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
   gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
-  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y() + 0.01;
+  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y() - 0.5f;
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
 }
 

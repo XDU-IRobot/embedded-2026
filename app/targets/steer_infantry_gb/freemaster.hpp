@@ -141,6 +141,8 @@ struct FreemasterData {
     FreemasterPidData pitch_speed;     ///< Pitch 内环（速度环）PID 数据
     FreemasterSMCData yaw_smc;         ///< Yaw SMC 参数和运行数据
     FreemasterSMCData pitch_smc;       ///< Pitch SMC 参数和运行数据
+    float yaw_error{};                 ///< Yaw 误差值
+    float pitch_error{};               ///< Pitch 误差值
     float yaw_controller_out{};        ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
     float pitch_controller_out{};      ///< Pitch 串级 PID 最终输出，单位 N*m
     float yaw_feedforward_torque{};    ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
@@ -299,7 +301,11 @@ inline void freemaster() {
   // freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw;
   // freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch;
   freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw / 30000 * 10;
-  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch / 10 * 100;
+  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch / 7 * 40;
+  freemaster_data.gimbal_output.yaw_error =
+      (globals->gimbal_controller.target().yaw_position - globals->ahrs.euler_angle().yaw) * kRadToDeg;
+  freemaster_data.gimbal_output.pitch_error =
+      (globals->gimbal_controller.target().pitch_position - globals->ahrs.euler_angle().pitch) * kRadToDeg;
   freemaster_data.gimbal_output.yaw_feedforward_torque = gimbal->yaw_feedforward_torque();
   freemaster_data.gimbal_output.yaw_motor_command = gimbal->yaw_command();
   freemaster_data.gimbal_output.pitch_motor_command = gimbal->pitch_command();

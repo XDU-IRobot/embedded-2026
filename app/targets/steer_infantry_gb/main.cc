@@ -91,7 +91,7 @@ void GlobalWarehouse::Init() {
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   yaw_wave = WaveFactory::Trapezoid(4.f, 0.1745f, 0.2f, 0.2f, 0.2);
-  pitch_wave = WaveFactory::Sine(2.f, 0.05f, 0.f);
+  pitch_wave = WaveFactory::Trapezoid(5.f, 0.1745f, 0.2f, 0.2f, 0.2);
 
   globals->GimbalSMCInit();
   globals->GimbalPIDInit();
@@ -103,9 +103,9 @@ void GlobalWarehouse::Init() {
 
 void GlobalWarehouse::GimbalSMCInit() {
   // 初始化 SMC
-  // gimbal_controller.smc().yaw.SMCInit(20, 400, 0, 0.001, 21, 27, 30000, 80, 0.5);
-  gimbal_controller.smc().yaw.SMCInit(20, 400, 0, 0.001, 21, 27, 30000, 80, 0.5);
-  gimbal_controller.smc().pitch.SMCInit(3, 5, 0, 0.01, 21, 27, 7, 0.2, 0.5);
+  gimbal_controller.smc().yaw.SMCInit(18, 300, 0, 0.001, 21, 27, 30000, 80, 0.5);
+  // gimbal_controller.smc().yaw.SMCInit(30, 400, 0, 0.001, 21, 27, 30000, 90, 0.5);
+  gimbal_controller.smc().pitch.SMCInit(10, 30, 0, 0.001, 27, 27, 5, 0.0, 0.5);
 }
 
 void GlobalWarehouse::GimbalPIDInit() {
@@ -407,7 +407,7 @@ void GlobalWarehouse::SubLoop500Hz() {
   rm::device::DjiMotorBase::SendCommand(*can1);
   rm::device::DjiMotorBase::SendCommand(*can2);
 
-  globals->yaw_wave.Update(0.002f);
+  // globals->yaw_wave.Update(0.002f);
   globals->pitch_wave.Update(0.002f);
 }
 

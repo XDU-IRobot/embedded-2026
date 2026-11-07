@@ -4,7 +4,7 @@
 /**
  * @brief SMC 更新
  */
-void SMC::Update(float target_pos, float angle_now, float angle_vel) {
+void SMC::Update(float target_pos, float angle_now, float angle_vel, float dt) {
   target = target_pos;
 
   if (!enabled_) {
@@ -25,9 +25,10 @@ void SMC::Update(float target_pos, float angle_now, float angle_vel) {
 
   error = rm::modules::Wrap(angle - target, -M_PI, M_PI);
   float error_dot = ang_vel - target_dot;
-  const float target_delta = rm::modules::Wrap(target - target_last, -M_PI, M_PI);
-  target_ddot = target_delta - target_dot;
+  const float target_delta = rm::modules::Wrap(target - target_last, -M_PI, M_PI) / dt;
+  target_ddot = (target_delta - target_dot) / dt;
   target_dot = target_delta;
+  target_last = target;
 
   // error = angle - target;
   // float error_dot = ang_vel - target_dot;
@@ -37,7 +38,6 @@ void SMC::Update(float target_pos, float angle_now, float angle_vel) {
   if (fabs(error) < error_eps) {
     u = 0;
     s = 0.0f;
-    target_last = target;
     return;
   }
 
@@ -50,7 +50,7 @@ void SMC::Update(float target_pos, float angle_now, float angle_vel) {
   ds = -epsilon * Sat(s) - K * s;
   u = J * (target_ddot + ds - C * qp * error_dot * e_qp / (error));
 
-  if (abs(error) < 1) {
+  if (abs(error) < 1 * M_PI / 180.0f) {
     // error = angle - target;
 
     s = C * error + error_dot;  // smc surface
@@ -60,7 +60,7 @@ void SMC::Update(float target_pos, float angle_now, float angle_vel) {
   if (u > u_max) u = u_max;
   if (u < -u_max) u = -u_max;
 
-  target_last = target;
+  // target_last = target;
 }
 
 /**

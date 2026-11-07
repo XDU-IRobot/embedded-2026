@@ -45,6 +45,7 @@ class Gimbal2Dof {
 
     switch (state_.yaw_mode) {
       case Mode::kPid: {
+        dt = 1.0f;   // DEBUG  TODO
         pid_.yaw_position.Update(target_.yaw_position, state_.yaw_position, dt);
         if (speed_pid_enabled_) {  // 速度位置双环
           const float yaw_speed_target = pid_.yaw_position.out() + target_.yaw_speed_ff;
@@ -56,7 +57,7 @@ class Gimbal2Dof {
         break;
       }
       case Mode::kSMC: {
-        smc_.yaw.Update(target_.yaw_position, yaw_position, yaw_speed);
+        smc_.yaw.Update(target_.yaw_position, yaw_position, yaw_speed, dt);
         output_.yaw = smc_.yaw.u;
         break;
       }
@@ -66,6 +67,7 @@ class Gimbal2Dof {
 
     switch (state_.pitch_mode) {
       case Mode::kPid: {  // 单位置环
+        dt = 1.0f;   // DEBUG  TODO
         pid_.pitch_position.Update(target_.pitch_position, state_.pitch_position, dt);
         if (speed_pid_enabled_) {  // 速度位置双环
           const float pitch_speed_target = pid_.pitch_position.out();
@@ -77,7 +79,7 @@ class Gimbal2Dof {
         break;
       }
       case Mode::kSMC: {
-        smc_.pitch.Update(target_.pitch_position, pitch_position, pitch_speed);
+        smc_.pitch.Update(target_.pitch_position, pitch_position, pitch_speed, dt);
         output_.pitch = smc_.pitch.u;
         break;
       }
@@ -142,7 +144,7 @@ class Gimbal2Dof {
   } pid_;
   struct {
     SMC yaw{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5};
-    SMC pitch{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5};
+    SMC pitch{3, 5, 0, 0.001, 21, 27, 7, 0.2, 0.5};
   } smc_;
   struct {
     float yaw_position;
