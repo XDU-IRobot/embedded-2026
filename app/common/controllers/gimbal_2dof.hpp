@@ -45,7 +45,7 @@ class Gimbal2Dof {
 
     switch (state_.yaw_mode) {
       case Mode::kPid: {
-        dt = 1.0f;   // DEBUG  TODO
+        dt = 1.0f;  // DEBUG  TODO
         pid_.yaw_position.Update(target_.yaw_position, state_.yaw_position, dt);
         if (speed_pid_enabled_) {  // 速度位置双环
           const float yaw_speed_target = pid_.yaw_position.out() + target_.yaw_speed_ff;
@@ -67,7 +67,7 @@ class Gimbal2Dof {
 
     switch (state_.pitch_mode) {
       case Mode::kPid: {  // 单位置环
-        dt = 1.0f;   // DEBUG  TODO
+        dt = 1.0f;        // DEBUG  TODO
         pid_.pitch_position.Update(target_.pitch_position, state_.pitch_position, dt);
         if (speed_pid_enabled_) {  // 速度位置双环
           const float pitch_speed_target = pid_.pitch_position.out();
