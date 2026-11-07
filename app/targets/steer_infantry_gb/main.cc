@@ -105,7 +105,7 @@ void GlobalWarehouse::GimbalSMCInit() {
   // 初始化 SMC
   gimbal_controller.smc().yaw.SMCInit(18, 300, 0, 0.001, 21, 27, 30000, 80, 0.5);
   // gimbal_controller.smc().yaw.SMCInit(30, 400, 0, 0.001, 21, 27, 30000, 90, 0.5);
-  gimbal_controller.smc().pitch.SMCInit(10, 30, 0, 0.001, 27, 27, 5, 0.0, 0.5);
+  gimbal_controller.smc().pitch.SMCInit(10, 40, 0, 0.001, 27, 27, 5, 0.02, 0.5);
 }
 
 void GlobalWarehouse::GimbalPIDInit() {

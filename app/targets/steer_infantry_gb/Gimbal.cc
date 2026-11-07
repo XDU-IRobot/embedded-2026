@@ -221,12 +221,15 @@ void Gimbal::GimbalMovePIDUpdate() {
   f32 yaw_target_for_controller = gimbal->gimbal_yaw_target_;
   f32 pitch_target_for_controller = gimbal->gimbal_pitch_target_;
   if (gimbal->GimbalMove_ == kGbAimbot) {
-    yaw_target_for_controller = rm::modules::Wrap(yaw_target_for_controller + globals->yaw_wave.GetValue(),-static_cast<f32>(M_PI), static_cast<f32>(M_PI));
-    pitch_target_for_controller = rm::modules::Wrap(pitch_target_for_controller + globals->pitch_wave.GetValue(), -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
+    yaw_target_for_controller = rm::modules::Wrap(yaw_target_for_controller + globals->yaw_wave.GetValue(),
+                                                  -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
+    pitch_target_for_controller = rm::modules::Wrap(pitch_target_for_controller + globals->pitch_wave.GetValue(),
+                                                    -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
   }
   globals->gimbal_controller.SetTarget(yaw_target_for_controller, pitch_target_for_controller, gimbal->yaw_speed_ff);
   // Test
-  // globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
+  // globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_,
+  // gimbal->yaw_speed_ff);
 
   // globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
   //                                   globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
