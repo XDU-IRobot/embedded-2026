@@ -10,9 +10,9 @@ class PitchGravity {
   enum class CalibrationState { kIdle, kRunning, kDone, kFailed };
   enum class CalibrationError { kNone, kNotConfigured, kInvalidFeedback, kTimeout, kFitRejected };
   struct CalibrationStep {
-    float target;          // 本拍的 pitch 位置目标，交给原有闭环
-    bool reset_feedback;   // 进入标定或拟合成功时，清除原控制器的目标差分历史
-    bool stop;             // 标定失败，调用方应输出零力矩
+    float target;         // 本拍的 pitch 位置目标，交给原有闭环
+    bool reset_feedback;  // 进入标定或拟合成功时，清除原控制器的目标差分历史
+    bool stop;            // 标定失败，调用方应输出零力矩
   };
 
   static float Calculate(float gain_nm, float phase_rad, float angle_rad) {
@@ -31,8 +31,9 @@ class PitchGravity {
   // 使用与控制反馈相同坐标系的软件角度限位。四个采样点在范围内侧 20%~80%。
   // 配置成功会复位标定进度，保留已有补偿；运行中拒绝更改限位。
   bool SetAngleLimits(float lower_rad, float upper_rad) {
-    if (progress_.state == CalibrationState::kRunning || !std::isfinite(lower_rad) ||
-        !std::isfinite(upper_rad) || !(upper_rad > lower_rad)) return false;
+    if (progress_.state == CalibrationState::kRunning || !std::isfinite(lower_rad) || !std::isfinite(upper_rad) ||
+        !(upper_rad > lower_rad))
+      return false;
     lower_rad_ = lower_rad;
     upper_rad_ = upper_rad;
     limits_set_ = true;
@@ -48,8 +49,8 @@ class PitchGravity {
     if (progress_.state == CalibrationState::kFailed) return Fail(progress_.error);
     if (!limits_set_ || !(limit_nm_ > 0.0f)) return Fail(CalibrationError::kNotConfigured);
     if (!controller_ok || !std::isfinite(angle_rad) || !std::isfinite(speed_rad_s) ||
-        !std::isfinite(applied_torque_nm) || !(dt > 0.0f && dt <= 0.02f) ||
-        angle_rad < lower_rad_ - 0.03f || angle_rad > upper_rad_ + 0.03f) {
+        !std::isfinite(applied_torque_nm) || !(dt > 0.0f && dt <= 0.02f) || angle_rad < lower_rad_ - 0.03f ||
+        angle_rad > upper_rad_ + 0.03f) {
       return Fail(CalibrationError::kInvalidFeedback);
     }
 
@@ -72,8 +73,7 @@ class PitchGravity {
     const float max_step = kMoveSpeed * dt;
     progress_.reference += difference > max_step ? max_step : (difference < -max_step ? -max_step : difference);
 
-    const bool steady = std::fabs(progress_.reference - goal) < 1e-5f &&
-                        std::fabs(speed_rad_s) < kStableSpeed &&
+    const bool steady = std::fabs(progress_.reference - goal) < 1e-5f && std::fabs(speed_rad_s) < kStableSpeed &&
                         std::fabs(angle_rad - goal) < kPositionTolerance && !saturated;
     if (!steady) {
       ResetWindow();
@@ -116,8 +116,7 @@ class PitchGravity {
   CalibrationError calibration_error() const { return progress_.error; }
   unsigned calibration_point() const { return progress_.point; }
   // 补偿幅值上限，不是电机总力矩上限。初始系数为 0。
-  explicit PitchGravity(float limit_nm)
-      : limit_nm_(std::isfinite(limit_nm) && limit_nm > 0.0f ? limit_nm : 0.0f) {}
+  explicit PitchGravity(float limit_nm) : limit_nm_(std::isfinite(limit_nm) && limit_nm > 0.0f ? limit_nm : 0.0f) {}
 
   float Calculate(float angle_rad) const {
     if (!std::isfinite(angle_rad)) return 0.0f;
