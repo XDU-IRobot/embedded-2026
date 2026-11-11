@@ -148,9 +148,6 @@ struct FreemasterData {
     float yaw_feedforward_torque{};    ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
     float yaw_motor_command{};         ///< 限幅后的 GM6020 Yaw 最终电压指令
     float pitch_motor_command{};       ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m
-    float pitch_gravity_gain{};        ///< 重力补偿自动计算出来的 A
-    float pitch_gravity_phase{};       ///< 重力补偿自动计算出来的 B
-    float pitch_gravity_out{};         ///< 重力补偿当前重力补偿所需要的力
   } gimbal_output;                     ///< 云台四个 PID、前馈及最终执行指令
 };
 
@@ -312,13 +309,6 @@ inline void freemaster() {
   freemaster_data.gimbal_output.yaw_feedforward_torque = gimbal->yaw_feedforward_torque();
   freemaster_data.gimbal_output.yaw_motor_command = gimbal->yaw_command();
   freemaster_data.gimbal_output.pitch_motor_command = gimbal->pitch_command();
-
-  float gain_nm = 0.0f;
-  float phase_rad = 0.0f;
-  PitchGravity::ABToGainPhase(gimbal->pitch_gravity_.cos_coefficient(), gimbal->pitch_gravity_.sin_coefficient(),
-                              gain_nm, phase_rad);
-  freemaster_data.gimbal_output.pitch_gravity_gain = gain_nm;
-  freemaster_data.gimbal_output.pitch_gravity_phase = phase_rad;
 
   auto &gimbal_smc = globals->gimbal_controller.smc();
   copy_smc(freemaster_data.gimbal_output.yaw_smc, gimbal_smc.yaw);

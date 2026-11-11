@@ -104,7 +104,7 @@ void Gimbal::GimbalInit() {
   gimbal->identify_yaw_center_ = 0.0f;
   gimbal->identify_pitch_center_ = kIdentifyPitchCenter;
   gimbal->identify_yaw_encoder_counter_.Reset(0, globals->yaw_motor->encoder());
-  gimbal->pitch_gravity_.SetAngleLimits(lowest_pitch_angle_, highest_pitch_angle_);
+  gimbal->pitch_sampler_.Start();
   globals->dail_encoder_counter.Reset(0, globals->dial_motor->encoder());
 }
 
@@ -572,7 +572,7 @@ void Gimbal::GimbalMoveUpdate() {
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), Ts);
 
-  const f32 pitch_ff_nm = PitchGravity::Calculate(0.83432, 2.92575, globals->ahrs.euler_angle().pitch) + 0.01f;
+  const f32 pitch_ff_nm = PitchGravity::Model::Calc(0.83432, 2.92575, globals->ahrs.euler_angle().pitch) + 0.01f;
   // const f32 pitch_ff_nm = PitchGravity::Calculate(1, M_PI, globals->ahrs.euler_angle().pitch);
   const f32 yaw_ff_cmd = 0.0f;
 
@@ -586,37 +586,6 @@ void Gimbal::GimbalMoveUpdate() {
 }
 
 void Gimbal::GimbalPitchGravityCalc() {
-  auto &controller = globals->gimbal_controller;
-  auto &smc = controller.smc().pitch;
-
-  const bool using_smc = controller.state().pitch_mode == Gimbal2Dof::Mode::kSMC;
-
-  const bool saturated =
-      std::fabs(pitch_torque_) >= 9.95f || (using_smc && std::fabs(controller.output().pitch) >= smc.u_max - 0.05f);
-
-  // 内部自动推进整个标定流程
-  const auto step = pitch_gravity_.Calibrate(globals->ahrs.euler_angle().pitch,  // 实际角度，rad
-                                             globals->imu->gyro_x(),             // 实际速度，rad/s
-                                             pitch_torque_,                      // 已发送的总力矩，N*m
-                                             Ts,                                 // 控制周期，s
-                                             !using_smc || smc.J > 0.0f,         // 反馈控制是否有效
-                                             saturated);                         // 输出是否饱和
-
-  if (step.stop) {
-    yaw_current_ = yaw_torque_ = pitch_torque_ = 0.0f;
-    return;
-  }
-
-  // 进入标定、拟合完成时，由类通知一次
-  if (step.reset_feedback) {
-    gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
-
-    controller.Enable(false);
-    controller.Enable(true);
-    controller.smc().yaw.Enable(true);
-    controller.smc().pitch.Enable(true);
-  }
-
-  gimbal_pitch_target_ = step.target;
+  gimbal_pitch_target_ = pitch_sampler_.Update(globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), pitch_torque_, Ts);
   GimbalMoveUpdate();
 }

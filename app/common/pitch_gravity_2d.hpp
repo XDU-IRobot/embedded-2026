@@ -1,214 +1,161 @@
 #pragma once
 
 #include <cmath>
+#include <array>
+#include <cstddef>
 
-// 单轴重力补偿 + 自动四点静态标定。角度 rad，速度 rad/s，力矩 N*m。
-// 无动态内存，不依赖 PID、SMC、HAL 或电机驱动。
-// 初始化 SetAngleLimits；正常使用 Calculate；标定时逐拍 Calibrate；退出时 CancelCalibration。
 class PitchGravity {
  public:
-  enum class CalibrationState { kIdle, kRunning, kDone, kFailed };
-  enum class CalibrationError { kNone, kNotConfigured, kInvalidFeedback, kTimeout, kFitRejected };
-  struct CalibrationStep {
-    float target;         // 本拍的 pitch 位置目标，交给原有闭环
-    bool reset_feedback;  // 进入标定或拟合成功时，清除原控制器的目标差分历史
-    bool stop;            // 标定失败，调用方应输出零力矩
+  // ==========================================
+  // 传统物理模型法 (A * cos(θ + φ))
+  // ==========================================
+  class Model {
+   public:
+    float gain_nm = 0.0f;
+    float phase_rad = 0.0f;
+
+    static float Calc(float gain, float phase, float angle) {
+      if (!std::isfinite(angle)) return 0.0f;
+      return gain * std::cos(angle + phase);
+    }
+
+    static void ABToGainPhase(float a, float b, float &out_gain, float &out_phase) {
+      out_gain = std::hypot(a, b);
+      out_phase = out_gain > 0.0f ? std::atan2(-b, a) : 0.0f;
+    }
+
+    float Calculate(float angle) const {
+      return Calc(gain_nm, phase_rad, angle);
+    }
   };
 
-  static float Calculate(float gain_nm, float phase_rad, float angle_rad) {
-    if (!std::isfinite(angle_rad)) return 0.0f;
-    const float torque = gain_nm * std::cos(angle_rad + phase_rad);
-    return torque;
-  }
+  // ==========================================
+  // 高阶傅里叶拟合法
+  // ==========================================
+  template <std::size_t Order>
+  class Fourier {
+   public:
+    static_assert(Order >= 0, "Fourier Order must be >= 0!");
 
-  // a*cos(angle) + b*sin(angle)
-  // 转换为 gain_nm*cos(angle + phase_rad)
-  static void ABToGainPhase(float a, float b, float &gain_nm, float &phase_rad) {
-    gain_nm = std::hypot(a, b);
-    phase_rad = gain_nm > 0.0f ? std::atan2(-b, a) : 0.0f;
-  }
+    std::array<float, Order + 1> cos_coeffs_{};
+    std::array<float, Order + 1> sin_coeffs_{};
 
-  // 使用与控制反馈相同坐标系的软件角度限位。四个采样点在范围内侧 20%~80%。
-  // 配置成功会复位标定进度，保留已有补偿；运行中拒绝更改限位。
-  bool SetAngleLimits(float lower_rad, float upper_rad) {
-    if (progress_.state == CalibrationState::kRunning || !std::isfinite(lower_rad) || !std::isfinite(upper_rad) ||
-        !(upper_rad > lower_rad))
-      return false;
-    lower_rad_ = lower_rad;
-    upper_rad_ = upper_rad;
-    limits_set_ = true;
-    CancelCalibration();
-    return true;
-  }
-
-  // 每个控制周期调用一次；第一次自动开始，完成或失败后不会自行重试。
-  // applied_torque_nm 是与当前反馈对应的、已经施加的最终总力矩，包含已有补偿。
-  // controller_ok/saturated 由调用方按当前反馈控制器与最终输出限幅判断。
-  CalibrationStep Calibrate(float angle_rad, float speed_rad_s, float applied_torque_nm, float dt,
-                            bool controller_ok = true, bool saturated = false) {
-    if (progress_.state == CalibrationState::kFailed) return Fail(progress_.error);
-    if (!limits_set_ || !(limit_nm_ > 0.0f)) return Fail(CalibrationError::kNotConfigured);
-    if (!controller_ok || !std::isfinite(angle_rad) || !std::isfinite(speed_rad_s) ||
-        !std::isfinite(applied_torque_nm) || !(dt > 0.0f && dt <= 0.02f) || angle_rad < lower_rad_ - 0.03f ||
-        angle_rad > upper_rad_ + 0.03f) {
-      return Fail(CalibrationError::kInvalidFeedback);
-    }
-
-    bool reset_feedback = false;
-    if (progress_.state == CalibrationState::kIdle) {
-      progress_ = {};
-      progress_.state = CalibrationState::kRunning;
-      progress_.reference = angle_rad;
-      ClearSamples();
-      reset_feedback = true;
-    }
-    if (progress_.state == CalibrationState::kDone) return {progress_.reference, false, false};
-
-    progress_.point_time += dt;
-    if (progress_.point_time >= kPointTimeout) return Fail(CalibrationError::kTimeout);
-
-    const float fraction = 0.2f + 0.6f * static_cast<float>(progress_.point) / (kPointCount - 1);
-    const float goal = lower_rad_ + fraction * (upper_rad_ - lower_rad_);
-    const float difference = goal - progress_.reference;
-    const float max_step = kMoveSpeed * dt;
-    progress_.reference += difference > max_step ? max_step : (difference < -max_step ? -max_step : difference);
-
-    const bool steady = std::fabs(progress_.reference - goal) < 1e-5f && std::fabs(speed_rad_s) < kStableSpeed &&
-                        std::fabs(angle_rad - goal) < kPositionTolerance && !saturated;
-    if (!steady) {
-      ResetWindow();
-    } else {
-      progress_.settle_time += dt;
-      if (progress_.settle_time >= kSettleTime) {
-        if (progress_.samples == 0) progress_.torque_min = progress_.torque_max = applied_torque_nm;
-        if (applied_torque_nm < progress_.torque_min) progress_.torque_min = applied_torque_nm;
-        if (applied_torque_nm > progress_.torque_max) progress_.torque_max = applied_torque_nm;
-        if (progress_.torque_max - progress_.torque_min > kTorqueVariation) {
-          ResetWindow();
-        } else {
-          progress_.angle_sum += angle_rad;
-          progress_.torque_sum += applied_torque_nm;
-          ++progress_.samples;
-          progress_.sample_time += dt;
-          if (progress_.sample_time >= kSampleTime) {
-            const float mean_angle = static_cast<float>(progress_.angle_sum / progress_.samples);
-            const float mean_torque = static_cast<float>(progress_.torque_sum / progress_.samples);
-            if (!AddSample(mean_angle, mean_torque)) return Fail(CalibrationError::kInvalidFeedback);
-            ++progress_.point;
-            progress_.point_time = 0.0f;
-            ResetWindow();
-            if (progress_.point == kPointCount) {
-              if (!Fit()) return Fail(CalibrationError::kFitRejected);
-              progress_.state = CalibrationState::kDone;
-              progress_.reference = angle_rad;
-              reset_feedback = true;
-            }
-          }
-        }
+    Fourier &SetCoeff(std::size_t i, float a_i, float b_i) {
+      if (i <= Order) {
+        cos_coeffs_[i] = a_i;
+        sin_coeffs_[i] = b_i;
       }
+      return *this;
     }
-    return {progress_.reference, reset_feedback, false};
-  }
 
-  // 离开标定模式或进入无力时调用。只清进度，不清已有 a、b。
-  void CancelCalibration() { progress_ = {}; }
-  CalibrationState calibration_state() const { return progress_.state; }
-  CalibrationError calibration_error() const { return progress_.error; }
-  unsigned calibration_point() const { return progress_.point; }
-  // 补偿幅值上限，不是电机总力矩上限。初始系数为 0。
-  explicit PitchGravity(float limit_nm) : limit_nm_(std::isfinite(limit_nm) && limit_nm > 0.0f ? limit_nm : 0.0f) {}
+    float Calculate(float angle_rad) const {
+      if (!std::isfinite(angle_rad)) return 0.0f;
 
-  float Calculate(float angle_rad) const {
-    if (!std::isfinite(angle_rad)) return 0.0f;
-    const float torque = a_nm_ * std::cos(angle_rad) + b_nm_ * std::sin(angle_rad);
-    return torque > limit_nm_ ? limit_nm_ : (torque < -limit_nm_ ? -limit_nm_ : torque);
-  }
+      float result = cos_coeffs_[0]; // a0
+      for (std::size_t i = 1; i <= Order; ++i) {
+        result += cos_coeffs_[i] * std::cos(i * angle_rad);
+        result += sin_coeffs_[i] * std::sin(i * angle_rad);
+      }
+      return result;
+    }
+  };
 
-  // 手动设置参数，或上电加载上次保存的参数；失败保留旧参数。
-  bool SetCoefficients(float a_nm, float b_nm) {
-    if (!std::isfinite(a_nm) || !std::isfinite(b_nm)) return false;
-    if (std::hypot(a_nm, b_nm) > limit_nm_) return false;
-    a_nm_ = a_nm;
-    b_nm_ = b_nm;
-    return true;
-  }
 
-  // 开始新一轮标定；不清除正在使用的补偿系数。
-  void ClearSamples() {
-    cc_ = cs_ = ss_ = ct_ = st_ = 0.0;
-    count_ = 0;
-  }
+  // ==========================================
+  // 采样器
+  // ==========================================
+  template <std::size_t kMaxSamples>
+  class Sampler {
+   public:
+    static_assert(kMaxSamples >= 2, "Max samples must be >= 2!");
+    Sampler() = delete;
+    explicit Sampler(float begin_rad, float end_rad) : begin_(begin_rad), end_(end_rad), target_(begin_rad) {}
 
-  // holding_torque_nm：该姿态下最终施加的总保持力矩，已经包含已有补偿。
-  // 可以输入静止时的逐拍数据，也可以输入每个姿态的平均角度和平均力矩。
-  bool AddSample(float angle_rad, float holding_torque_nm) {
-    if (!std::isfinite(angle_rad) || !std::isfinite(holding_torque_nm)) return false;
-    const double c = std::cos(static_cast<double>(angle_rad));
-    const double s = std::sin(static_cast<double>(angle_rad));
-    cc_ += c * c;
-    cs_ += c * s;
-    ss_ += s * s;
-    ct_ += c * holding_torque_nm;
-    st_ += s * holding_torque_nm;
-    ++count_;
-    return true;
-  }
+    struct SampleData {
+      float angle;
+      float output;
+    };
 
-  // 收集多个不同姿态的数据后调用一次。成功才更新 a、b。
-  // false：数据不足、角度太集中，或解出的补偿幅值超过上限。
-  bool Fit() {
-    if (count_ < 3) return false;
-    const double det = cc_ * ss_ - cs_ * cs_;
-    const double trace = cc_ + ss_;
-    if (det <= 0.005 * trace * trace) return false;
-    const float a = static_cast<float>((ct_ * ss_ - st_ * cs_) / det);
-    const float b = static_cast<float>((st_ * cc_ - ct_ * cs_) / det);
-    return SetCoefficients(a, b);
-  }
+    void Start() {
+      index_ = 0;
+      target_ = begin_;
+      is_sampling_ = true;
+      ClearWindow();
+    }
 
-  float cos_coefficient() const { return a_nm_; }
-  float sin_coefficient() const { return b_nm_; }
-  unsigned sample_count() const { return count_; }
+    void Stop() {
+      is_sampling_ = false;
+    }
 
- private:
-  // 扫描和稳态判断的默认参数集中在类内部，需要时修改这里。
-  static constexpr unsigned kPointCount = 4;
-  static constexpr float kMoveSpeed = 0.08f;
-  static constexpr float kStableSpeed = 0.025f;
-  static constexpr float kPositionTolerance = 0.10f;
-  static constexpr float kSettleTime = 0.6f;
-  static constexpr float kSampleTime = 1.0f;
-  static constexpr float kPointTimeout = 15.0f;
-  static constexpr float kTorqueVariation = 0.30f;
+    void Record(float angle, float output) {
+      if (!is_sampling_) return;
+      buffer_[index_++] = {angle, output};
+      if (index_ == 2 * kMaxSamples) Stop();
+    }
 
-  struct CalibrationProgress {
-    CalibrationState state = CalibrationState::kIdle;
-    CalibrationError error = CalibrationError::kNone;
-    unsigned point = 0, samples = 0;
-    float reference = 0.0f, point_time = 0.0f;
-    float settle_time = 0.0f, sample_time = 0.0f;
-    float torque_min = 0.0f, torque_max = 0.0f;
-    double angle_sum = 0.0, torque_sum = 0.0;
-  } progress_;
+    float Update(float angle, float speed, float torque, float dt = 0.002f) {
+      if (!is_sampling_) return target_;
 
-  void ResetWindow() {
-    progress_.settle_time = progress_.sample_time = 0.0f;
-    progress_.samples = 0;
-    progress_.angle_sum = progress_.torque_sum = 0.0;
-  }
+      if (!std::isfinite(angle) || !std::isfinite(speed) ||
+          !std::isfinite(torque) || !(dt > 0.0f)) {
+        return target_;
+      }
 
-  CalibrationStep Fail(CalibrationError error) {
-    progress_.state = CalibrationState::kFailed;
-    progress_.error = error;
-    return {progress_.reference, false, true};
-  }
+      const std::size_t point = index_ < kMaxSamples ? index_ : 2 * kMaxSamples - 1 - index_;
+      const float goal = begin_ + (end_ - begin_) * point / (kMaxSamples - 1);
 
-  bool limits_set_ = false;
-  float lower_rad_ = 0.0f, upper_rad_ = 0.0f;
-  float limit_nm_;
-  float a_nm_ = 0.0f;
-  float b_nm_ = 0.0f;
-  double cc_ = 0.0, cs_ = 0.0, ss_ = 0.0;
-  double ct_ = 0.0, st_ = 0.0;
-  unsigned count_ = 0;
+      // 后续采样点之间缓慢移动，0.08 rad/s
+      const float delta = goal - target_;
+      const float step = 0.08f * dt;
+
+      target_ += delta > step ? step : (delta < -step ? -step : delta);
+
+      // 尚未停稳，重新等待
+      if (std::fabs(target_ - goal) > 1e-5f ||
+          std::fabs(angle - goal) > 0.10f ||
+          std::fabs(speed) > 0.03f) {
+        ClearWindow();
+        return target_;
+      }
+
+      stable_time_ += dt;
+
+      // 连续停稳0.8秒后开始采样
+      if (stable_time_ < 0.8f) return target_;
+
+      angle_sum_ += angle;
+      torque_sum_ += torque;
+      ++sample_count_;
+
+      // 再采约1秒，得到这一次的平均值
+      if (stable_time_ < 1.8f) return target_;
+
+      Record(static_cast<float>(angle_sum_ / sample_count_), static_cast<float>(torque_sum_ / sample_count_));
+      ClearWindow();
+      return target_;
+    }
+
+    const SampleData *GetBuffer() const { return buffer_.data(); }
+    std::size_t GetIndex() const { return index_; }
+    bool IsSampling() const { return is_sampling_; }
+
+   private:
+    void ClearWindow() {
+      stable_time_ = 0.0f;
+      angle_sum_ = torque_sum_ = 0.0;
+      sample_count_ = 0;
+    }
+
+    float begin_, end_, target_;
+    float stable_time_ = 0.0f;
+
+    double angle_sum_ = 0.0;
+    double torque_sum_ = 0.0;
+    unsigned sample_count_ = 0;
+
+    std::array<SampleData, 2 * kMaxSamples> buffer_{};   // 上下两次采样
+
+    std::size_t index_ = 0;  // 两遍累计进度：0～2N
+    bool is_sampling_ = false;
+  };
 };
