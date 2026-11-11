@@ -79,6 +79,7 @@ class Gimbal2Dof {
         break;
       }
       case Mode::kSMC: {
+        dt = 1.0f;   // DEBUG  TODO
         smc_.pitch.Update(target_.pitch_position, pitch_position, pitch_speed, dt);
         output_.pitch = smc_.pitch.u;
         break;

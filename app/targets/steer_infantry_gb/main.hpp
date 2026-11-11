@@ -13,6 +13,7 @@
 #include "ChassisCommunicator.hpp"
 #include "Referee.hpp"
 #include "wave_generator.hpp"
+#include "pitch_gravity_2d.hpp"
 
 // 状态机
 typedef enum {
