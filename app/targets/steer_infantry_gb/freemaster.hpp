@@ -315,7 +315,8 @@ inline void freemaster() {
 
   float gain_nm = 0.0f;
   float phase_rad = 0.0f;
-  PitchGravity::ABToGainPhase(gimbal->pitch_gravity_.cos_coefficient(), gimbal->pitch_gravity_.sin_coefficient(), gain_nm, phase_rad);
+  PitchGravity::ABToGainPhase(gimbal->pitch_gravity_.cos_coefficient(), gimbal->pitch_gravity_.sin_coefficient(),
+                              gain_nm, phase_rad);
   freemaster_data.gimbal_output.pitch_gravity_gain = gain_nm;
   freemaster_data.gimbal_output.pitch_gravity_phase = phase_rad;
 

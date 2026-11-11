@@ -218,8 +218,7 @@ void Gimbal::GimbalMovePIDUpdate() {
   const auto yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
                              kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
 
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_,
-                                        gimbal->yaw_speed_ff);
+  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
 
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
@@ -592,17 +591,16 @@ void Gimbal::GimbalPitchGravityCalc() {
 
   const bool using_smc = controller.state().pitch_mode == Gimbal2Dof::Mode::kSMC;
 
-  const bool saturated = std::fabs(pitch_torque_) >= 9.95f ||
-      (using_smc && std::fabs(controller.output().pitch) >= smc.u_max - 0.05f);
+  const bool saturated =
+      std::fabs(pitch_torque_) >= 9.95f || (using_smc && std::fabs(controller.output().pitch) >= smc.u_max - 0.05f);
 
   // 内部自动推进整个标定流程
-  const auto step = pitch_gravity_.Calibrate(
-      globals->ahrs.euler_angle().pitch,  // 实际角度，rad
-      globals->imu->gyro_x(),             // 实际速度，rad/s
-      pitch_torque_,                      // 已发送的总力矩，N*m
-      Ts,                                 // 控制周期，s
-      !using_smc || smc.J > 0.0f,         // 反馈控制是否有效
-      saturated);                         // 输出是否饱和
+  const auto step = pitch_gravity_.Calibrate(globals->ahrs.euler_angle().pitch,  // 实际角度，rad
+                                             globals->imu->gyro_x(),             // 实际速度，rad/s
+                                             pitch_torque_,                      // 已发送的总力矩，N*m
+                                             Ts,                                 // 控制周期，s
+                                             !using_smc || smc.J > 0.0f,         // 反馈控制是否有效
+                                             saturated);                         // 输出是否饱和
 
   if (step.stop) {
     yaw_current_ = yaw_torque_ = pitch_torque_ = 0.0f;

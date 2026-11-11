@@ -10,7 +10,7 @@ using namespace rm;
 inline class Gimbal {
  public:
   StateMachineType GimbalMove_ = {kNoForce};  // 云台运动状态
-  PitchGravity pitch_gravity_{7.0f};    // 重力补偿自动计算器
+  PitchGravity pitch_gravity_{7.0f};          // 重力补偿自动计算器
 
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
