@@ -24,9 +24,7 @@ class PitchGravity {
       out_phase = out_gain > 0.0f ? std::atan2(-b, a) : 0.0f;
     }
 
-    float Calculate(float angle) const {
-      return Calc(gain_nm, phase_rad, angle);
-    }
+    float Calculate(float angle) const { return Calc(gain_nm, phase_rad, angle); }
   };
 
   // ==========================================
@@ -51,7 +49,7 @@ class PitchGravity {
     float Calculate(float angle_rad) const {
       if (!std::isfinite(angle_rad)) return 0.0f;
 
-      float result = cos_coeffs_[0]; // a0
+      float result = cos_coeffs_[0];  // a0
       for (std::size_t i = 1; i <= Order; ++i) {
         result += cos_coeffs_[i] * std::cos(i * angle_rad);
         result += sin_coeffs_[i] * std::sin(i * angle_rad);
@@ -59,7 +57,6 @@ class PitchGravity {
       return result;
     }
   };
-
 
   // ==========================================
   // 采样器
@@ -83,9 +80,7 @@ class PitchGravity {
       ClearWindow();
     }
 
-    void Stop() {
-      is_sampling_ = false;
-    }
+    void Stop() { is_sampling_ = false; }
 
     void Record(float angle, float output) {
       if (!is_sampling_) return;
@@ -96,8 +91,7 @@ class PitchGravity {
     float Update(float angle, float speed, float torque, float dt = 0.002f) {
       if (!is_sampling_) return target_;
 
-      if (!std::isfinite(angle) || !std::isfinite(speed) ||
-          !std::isfinite(torque) || !(dt > 0.0f)) {
+      if (!std::isfinite(angle) || !std::isfinite(speed) || !std::isfinite(torque) || !(dt > 0.0f)) {
         return target_;
       }
 
@@ -111,9 +105,7 @@ class PitchGravity {
       target_ += delta > step ? step : (delta < -step ? -step : delta);
 
       // 尚未停稳，重新等待
-      if (std::fabs(target_ - goal) > 1e-5f ||
-          std::fabs(angle - goal) > 0.10f ||
-          std::fabs(speed) > 0.03f) {
+      if (std::fabs(target_ - goal) > 1e-5f || std::fabs(angle - goal) > 0.10f || std::fabs(speed) > 0.03f) {
         ClearWindow();
         return target_;
       }
@@ -153,7 +145,7 @@ class PitchGravity {
     double torque_sum_ = 0.0;
     unsigned sample_count_ = 0;
 
-    std::array<SampleData, 2 * kMaxSamples> buffer_{};   // 上下两次采样
+    std::array<SampleData, 2 * kMaxSamples> buffer_{};  // 上下两次采样
 
     std::size_t index_ = 0;  // 两遍累计进度：0～2N
     bool is_sampling_ = false;
