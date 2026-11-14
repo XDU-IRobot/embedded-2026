@@ -47,6 +47,15 @@ struct FreemasterPidData {
   float out{};       ///< P、I、D 求和并限幅后的 PID 输出
 };
 
+inline constexpr std::uint16_t kSampleCapacity = 42;  // 采样点数，需要简单修改比采样点数大
+struct FreemasterSampleData {
+  std::uint16_t count{};    // 当前有效记录数，完整采样后为 kSampleCapacity
+  std::uint8_t sampling{};  // 1: 正在采样，0: 没有采样
+
+  float angle[kSampleCapacity]{};   // 平均实际角度，rad
+  float output[kSampleCapacity]{};  // 平均电机输出，N*m
+};
+
 /**
  * @brief Target-local telemetry exported to FreeMASTER.
  *
@@ -135,20 +144,21 @@ struct FreemasterData {
   } chassis_rx;                    ///< 底盘 CAN 通信器接收数据
 
   struct {
-    FreemasterPidData yaw_position;    ///< Yaw 外环（位置环）PID 数据
-    FreemasterPidData yaw_speed;       ///< Yaw 内环（速度环）PID 数据
-    FreemasterPidData pitch_position;  ///< Pitch 外环（位置环）PID 数据
-    FreemasterPidData pitch_speed;     ///< Pitch 内环（速度环）PID 数据
-    FreemasterSMCData yaw_smc;         ///< Yaw SMC 参数和运行数据
-    FreemasterSMCData pitch_smc;       ///< Pitch SMC 参数和运行数据
-    float yaw_error{};                 ///< Yaw 误差值
-    float pitch_error{};               ///< Pitch 误差值
-    float yaw_controller_out{};        ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
-    float pitch_controller_out{};      ///< Pitch 串级 PID 最终输出，单位 N*m
-    float yaw_feedforward_torque{};    ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
-    float yaw_motor_command{};         ///< 限幅后的 GM6020 Yaw 最终电压指令
-    float pitch_motor_command{};       ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m
-  } gimbal_output;                     ///< 云台四个 PID、前馈及最终执行指令
+    FreemasterPidData yaw_position;        ///< Yaw 外环（位置环）PID 数据
+    FreemasterPidData yaw_speed;           ///< Yaw 内环（速度环）PID 数据
+    FreemasterPidData pitch_position;      ///< Pitch 外环（位置环）PID 数据
+    FreemasterPidData pitch_speed;         ///< Pitch 内环（速度环）PID 数据
+    FreemasterSMCData yaw_smc;             ///< Yaw SMC 参数和运行数据
+    FreemasterSMCData pitch_smc;           ///< Pitch SMC 参数和运行数据
+    float yaw_error{};                     ///< Yaw 误差值
+    float pitch_error{};                   ///< Pitch 误差值
+    float yaw_controller_out{};            ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
+    float pitch_controller_out{};          ///< Pitch 串级 PID 最终输出，单位 N*m
+    float yaw_feedforward_torque{};        ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
+    float yaw_motor_command{};             ///< 限幅后的 GM6020 Yaw 最终电压指令
+    float pitch_motor_command{};           ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m
+    FreemasterSampleData pitch_sampler{};  ///< Pitch 采样器数据
+  } gimbal_output;                         ///< 云台四个 PID、前馈及最终执行指令
 };
 
 inline volatile FreemasterData freemaster_data{};  ///< FreeMASTER 读取的 100 Hz 全局数据快照
@@ -313,4 +323,13 @@ inline void freemaster() {
   auto &gimbal_smc = globals->gimbal_controller.smc();
   copy_smc(freemaster_data.gimbal_output.yaw_smc, gimbal_smc.yaw);
   copy_smc(freemaster_data.gimbal_output.pitch_smc, gimbal_smc.pitch);
+
+  const auto *buffer = gimbal->pitch_sampler_.GetBuffer();
+  const auto count = gimbal->pitch_sampler_.GetIndex();
+  freemaster_data.gimbal_output.pitch_sampler.sampling = gimbal->pitch_sampler_.IsSampling();
+  freemaster_data.gimbal_output.pitch_sampler.count = static_cast<std::uint16_t>(count);
+  for (std::size_t i = 0; i < 42; ++i) {
+    freemaster_data.gimbal_output.pitch_sampler.angle[i] = buffer[i].angle;
+    freemaster_data.gimbal_output.pitch_sampler.output[i] = buffer[i].output;
+  }
 }

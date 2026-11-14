@@ -586,6 +586,17 @@ void Gimbal::GimbalMoveUpdate() {
 }
 
 void Gimbal::GimbalPitchGravityCalc() {
-  gimbal_pitch_target_ = pitch_sampler_.Update(globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), pitch_torque_, Ts);
+  static bool success_announced = false;
+
+  gimbal_pitch_target_ =
+      pitch_sampler_.Update(globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), pitch_torque_, Ts);
+  if (pitch_sampler_.IsSampling()) {
+    success_announced = false;
+  }
+
+  if (!pitch_sampler_.IsSampling() && pitch_sampler_.GetIndex() == 42 && !success_announced) {
+    globals->buzzer_controller.Play<modules::buzzer_melody::Success>();
+    success_announced = true;
+  }
   GimbalMoveUpdate();
 }

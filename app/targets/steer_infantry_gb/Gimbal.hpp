@@ -9,8 +9,8 @@ using namespace rm;
 
 inline class Gimbal {
  public:
-  StateMachineType GimbalMove_ = {kNoForce};  // 云台运动状态
-  PitchGravity::Sampler<21> pitch_sampler_{-0.4f, 0.2f};   // 重力补偿采样器
+  StateMachineType GimbalMove_ = {kNoForce};              // 云台运动状态
+  PitchGravity::Sampler<21> pitch_sampler_{-0.4f, 0.2f};  // 重力补偿采样器
 
   f32 pitch_torque_ = 0.0f;  // pitch轴力矩数据
 
