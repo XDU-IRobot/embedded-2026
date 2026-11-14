@@ -2,7 +2,6 @@
 
 #include <librm.hpp>
 #include "slidingmodec.hpp"
-#include "steer_infantry_gb/main.hpp"
 
 /**
  * @brief 二轴云台控制器
@@ -144,8 +143,9 @@ class Gimbal2Dof {
     rm::modules::PID yaw_speed, yaw_position, pitch_speed, pitch_position;
   } pid_;
   struct {
-    SMC yaw{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5};
-    SMC pitch{3, 5, 0, 0.001, 21, 27, 7, 0.2, 0.5};
+    // SMC yaw{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5};  // GM6020
+    SMC yaw{3, 5, 0, 0.001, 21, 27, 7, 0.2, 0.5};       // DM4310
+    SMC pitch{3, 5, 0, 0.001, 21, 27, 7, 0.2, 0.5};     // DM4310
   } smc_;
   struct {
     float yaw_position;

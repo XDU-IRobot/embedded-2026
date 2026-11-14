@@ -6,7 +6,7 @@ include(add_target.cmake)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/common)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/targets)
 
-#算法招新测试小云台
+# 算法招新测试小云台
 file(GLOB_RECURSE ALGORITHM_ENROLL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/algorithm_enroll_test/*.cc)
 add_exe_target(algorithm_enroll_test "${ALGORITHM_ENROLL_TEST_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(algorithm_enroll_test PRIVATE ALGORITHM_ENROLL_TEST)
@@ -44,7 +44,12 @@ file(GLOB_RECURSE TEST_GB_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/test_gb/*.cc
 add_exe_target(test_gb "${TEST_GB_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(test_gb PRIVATE TEST_GB)
 
-#飞镖镖架
+# 新测试平台云台
+file(GLOB_RECURSE TEST_GB_NEW_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/test_gb_new/*.cc)
+add_exe_target(test_gb_new "${TEST_GB_NEW_SOURCES};${COMMON_SOURCES}")
+target_compile_definitions(test_gb_new PRIVATE TEST_GB_NEW)
+
+# 飞镖镖架
 file(GLOB_RECURSE DART_RACK_SOURCES ${CMAKE_CURRENT_LIST_DIR}/targets/dart_rack/*.cc)
 add_exe_target(dart_rack "${DART_RACK_SOURCES};${COMMON_SOURCES}")
 target_compile_definitions(dart_rack PRIVATE DART_RACK)

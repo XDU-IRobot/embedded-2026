@@ -357,9 +357,9 @@ void Gimbal::GimbalEnableUpdate() {
   } else if (gimbal->GimbalMove_ == kGbIdentify) {
     gimbal->GimbalIdentifyUpdate();
   } else if (gimbal->GimbalMove_ == kGbFfVerify) {
-    // gimbal->GimbalFfVerifyUpdate();
-    // 临时替换成简单的在线计算 2d重力补偿计算
-    gimbal->GimbalPitchGravityCalc();
+    gimbal->GimbalFfVerifyUpdate();
+    // // 临时替换成简单的在线计算 2d重力补偿计算
+    // gimbal->GimbalPitchGravityCalc();
   } else {
     globals->gimbal_controller.Enable(false);
     gimbal->yaw_current_ = 0.f;
@@ -565,8 +565,8 @@ void Gimbal::GimbalMoveUpdate() {
   if (gimbal->GimbalMove_ == kGbAimbot) {
     // yaw_target_for_controller = rm::modules::Wrap(yaw_target_for_controller + globals->yaw_wave.GetValue(),
     //                                               -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
-    pitch_target_for_controller = rm::modules::Wrap(pitch_target_for_controller + globals->pitch_wave.GetValue(),
-                                                    -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
+    // pitch_target_for_controller = rm::modules::Wrap(pitch_target_for_controller + globals->pitch_wave.GetValue(),
+    //                                                 -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
   }
   globals->gimbal_controller.SetTarget(yaw_target_for_controller, pitch_target_for_controller);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
