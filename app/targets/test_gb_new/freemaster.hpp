@@ -19,7 +19,7 @@ struct FreemasterSMCData {
   float q{};          ///< 终端滑模指数的分子，指数为 q / p
   float p{};          ///< 终端滑模指数的分母，必须大于 0
   float error_eps{};  ///< 位置误差死区，单位 rad，必须大于 0
-  float u_max{};      ///< SMC 输出限幅，单位为电机指令标度
+  float u_max{};      ///< SMC 输出限幅，单位 N*m
 
   // ---------- 只读状态 ----------
   float set{};             ///< SMC 位置目标，单位 rad
@@ -69,15 +69,14 @@ struct FreemasterData {
     std::uint8_t robot_state{};    ///< 整机状态，对应 StateMachineType
     std::uint8_t gimbal_mode{};    ///< 云台运动模式，对应 Gimbal::GimbalMove_
     std::uint8_t rc_online{};      ///< DT17 在线标志：0 离线，1 在线
-    std::uint8_t vt03_online{};    ///< VT03 在线标志：0 离线，1 在线
-    std::uint8_t remote_source{};  ///< 整车状态控制源：0 无，1 DT17，2 VT03
+    std::uint8_t remote_source{};  ///< 控制源：0 无，1 DT17
     std::uint8_t aimbot_online{};  ///< 自瞄通信器在线标志：0 离线，1 在线
     std::uint8_t gimbal_online{};  ///< 云台电机在线标志：0 异常，1 全部在线
   } runtime;                       ///< 运行状态与设备在线状态
 
   struct {
-    float yaw{};                    ///< 最终 Yaw 位置目标，单位 rad
-    float pitch{};                  ///< 最终 Pitch 位置目标，单位 rad
+    float yaw{};                    ///< 最终 Yaw 位置目标，单位 deg
+    float pitch{};                  ///< 最终 Pitch 位置目标，单位 deg
     float yaw_speed{};              ///< Yaw 速度参考，单位 rad/s
     float pitch_speed{};            ///< Pitch 速度参考，单位 rad/s
     float yaw_accel{};              ///< Yaw 加速度参考，单位 rad/s^2
@@ -86,9 +85,9 @@ struct FreemasterData {
   } gimbal_target;                  ///< 云台控制目标与轨迹参考量
 
   struct {
-    float yaw{};                        ///< AHRS Yaw 姿态角，单位 rad
-    float pitch{};                      ///< AHRS Pitch 姿态角，单位 rad
-    float roll{};                       ///< AHRS Roll 姿态角，单位 rad
+    float yaw{};                        ///< AHRS Yaw 姿态角，单位 deg
+    float pitch{};                      ///< AHRS Pitch 姿态角，单位 deg
+    float roll{};                       ///< AHRS Roll 姿态角，单位 deg
     float gyro_x{};                     ///< IMU X 轴角速度，单位 rad/s
     float gyro_y{};                     ///< IMU Y 轴角速度，单位 rad/s
     float gyro_z{};                     ///< IMU Z 轴角速度，单位 rad/s
@@ -96,8 +95,9 @@ struct FreemasterData {
     float controller_yaw_speed{};       ///< Yaw 速度环实际使用的反馈，单位 rad/s
     float controller_pitch_position{};  ///< Pitch 位置环实际使用的反馈，单位 rad
     float controller_pitch_speed{};     ///< Pitch 速度环实际使用的反馈，单位 rad/s
-    float yaw_motor_rpm{};              ///< GM6020 Yaw 电机反馈转速，单位 rpm
-    float yaw_motor_current{};          ///< GM6020 Yaw 电机回传电流原始值
+    float yaw_motor_position{};         ///< DM Yaw 电机位置，单位 rad
+    float yaw_motor_speed{};            ///< DM Yaw 电机速度，单位 rad/s
+    float yaw_motor_torque{};           ///< DM Yaw 电机回传转矩，单位 N*m
     float pitch_motor_position{};       ///< DM Pitch 电机位置，单位 rad
     float pitch_motor_speed{};          ///< DM Pitch 电机速度，单位 rad/s
     float pitch_motor_torque{};         ///< DM Pitch 电机回传转矩，单位 N*m
@@ -138,12 +138,12 @@ struct FreemasterData {
     FreemasterPidData pitch_speed;         ///< Pitch 内环（速度环）PID 数据
     FreemasterSMCData yaw_smc;             ///< Yaw SMC 参数和运行数据
     FreemasterSMCData pitch_smc;           ///< Pitch SMC 参数和运行数据
-    float yaw_error{};                     ///< Yaw 误差值
-    float pitch_error{};                   ///< Pitch 误差值
-    float yaw_controller_out{};            ///< Yaw 串级 PID 最终输出，GM6020 指令量纲
-    float pitch_controller_out{};          ///< Pitch 串级 PID 最终输出，单位 N*m
+    float yaw_error{};                     ///< Yaw 误差值，单位 deg
+    float pitch_error{};                   ///< Pitch 误差值，单位 deg
+    float yaw_controller_out{};            ///< Yaw PID/SMC 输出，单位 N*m
+    float pitch_controller_out{};          ///< Pitch PID/SMC 输出，单位 N*m
     float yaw_feedforward_torque{};        ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
-    float yaw_motor_command{};             ///< 限幅后的 GM6020 Yaw 最终电压指令
+    float yaw_motor_command{};             ///< 限幅后的 DM Yaw 最终转矩指令，单位 N*m
     float pitch_motor_command{};           ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m
     FreemasterSampleData pitch_sampler{};  ///< Pitch 采样器数据
   } gimbal_output;                         ///< 云台四个 PID、前馈及最终执行指令
@@ -173,7 +173,6 @@ inline void freemaster_init() {
  * Called by GlobalWarehouse::SubLoop100Hz() after device-state updates.
  */
 inline void freemaster() {
-  constexpr f32 kDegToRad = static_cast<f32>(M_PI) / 180.0f;
   constexpr f32 kRadToDeg = 180.0f / static_cast<f32>(M_PI);
 
   if (globals == nullptr || gimbal == nullptr || globals->rc == nullptr || globals->imu == nullptr ||
@@ -215,13 +214,10 @@ inline void freemaster() {
   freemaster_data.runtime.robot_state = static_cast<std::uint8_t>(globals->StateMachine_);
   freemaster_data.runtime.gimbal_mode = static_cast<std::uint8_t>(gimbal->GimbalMove_);
   freemaster_data.runtime.rc_online = static_cast<std::uint8_t>(globals->device_rc.all_device_ok());
-  freemaster_data.runtime.vt03_online = static_cast<std::uint8_t>(globals->device_vt03.all_device_ok());
   freemaster_data.runtime.remote_source = static_cast<std::uint8_t>(globals->remote_source);
   freemaster_data.runtime.aimbot_online = static_cast<std::uint8_t>(globals->device_nuc.all_device_ok());
   freemaster_data.runtime.gimbal_online = static_cast<std::uint8_t>(globals->device_gimbal.all_device_ok());
 
-  // freemaster_data.gimbal_target.yaw = gimbal->yaw_target();
-  // freemaster_data.gimbal_target.pitch = gimbal->pitch_target();
   freemaster_data.gimbal_target.yaw = globals->gimbal_controller.target().yaw_position * kRadToDeg;
   freemaster_data.gimbal_target.pitch = globals->gimbal_controller.target().pitch_position * kRadToDeg;
   freemaster_data.gimbal_target.yaw_speed = gimbal->yaw_speed_reference();
@@ -230,9 +226,6 @@ inline void freemaster() {
   freemaster_data.gimbal_target.pitch_accel = gimbal->pitch_accel_reference();
   freemaster_data.gimbal_target.yaw_speed_feedforward = globals->gimbal_controller.target().yaw_speed_ff;
 
-  // freemaster_data.gimbal_feedback.yaw = globals->ahrs.euler_angle().yaw;
-  // freemaster_data.gimbal_feedback.pitch = globals->ahrs.euler_angle().pitch;
-  // freemaster_data.gimbal_feedback.roll = globals->ahrs.euler_angle().roll;
   freemaster_data.gimbal_feedback.yaw = globals->ahrs.euler_angle().yaw * kRadToDeg;
   freemaster_data.gimbal_feedback.pitch = globals->ahrs.euler_angle().pitch * kRadToDeg;
   freemaster_data.gimbal_feedback.roll = globals->ahrs.euler_angle().roll * kRadToDeg;
@@ -243,8 +236,9 @@ inline void freemaster() {
   freemaster_data.gimbal_feedback.controller_yaw_speed = globals->gimbal_controller.state().yaw_speed;
   freemaster_data.gimbal_feedback.controller_pitch_position = globals->gimbal_controller.state().pitch_position;
   freemaster_data.gimbal_feedback.controller_pitch_speed = globals->gimbal_controller.state().pitch_speed;
-  freemaster_data.gimbal_feedback.yaw_motor_rpm = static_cast<float>(globals->yaw_motor->rpm());
-  freemaster_data.gimbal_feedback.yaw_motor_current = static_cast<float>(globals->yaw_motor->current());
+  freemaster_data.gimbal_feedback.yaw_motor_position = globals->yaw_motor->pos();
+  freemaster_data.gimbal_feedback.yaw_motor_speed = globals->yaw_motor->vel();
+  freemaster_data.gimbal_feedback.yaw_motor_torque = globals->yaw_motor->tau();
   freemaster_data.gimbal_feedback.pitch_motor_position = globals->pitch_motor->pos();
   freemaster_data.gimbal_feedback.pitch_motor_speed = globals->pitch_motor->vel();
   freemaster_data.gimbal_feedback.pitch_motor_torque = globals->pitch_motor->tau();
@@ -285,10 +279,8 @@ inline void freemaster() {
   copy_pid(freemaster_data.gimbal_output.yaw_speed, gimbal_pid.yaw_speed);
   copy_pid(freemaster_data.gimbal_output.pitch_position, gimbal_pid.pitch_position);
   copy_pid(freemaster_data.gimbal_output.pitch_speed, gimbal_pid.pitch_speed);
-  // freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw;
-  // freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch;
-  freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw / 30000 * 10;
-  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch / 7 * 40;
+  freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw;
+  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch;
   freemaster_data.gimbal_output.yaw_error =
       (globals->gimbal_controller.target().yaw_position - globals->ahrs.euler_angle().yaw) * kRadToDeg;
   freemaster_data.gimbal_output.pitch_error =

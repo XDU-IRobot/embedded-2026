@@ -4,24 +4,14 @@
 
 #include "gimbal-tool-suite/dynamics/dynamics.hpp"
 
-f32 a, b, c, d;
-
 namespace {
 constexpr size_t kIdentifyHarmonicCount = 5;
 constexpr f32 kIdentifyBaseFreqHz = 0.1f;
-constexpr f32 kEncoderTicksPerRev = 8192.0f;
-constexpr f32 kRpmToRadPerSec = static_cast<f32>(M_PI) * 2.0f / 60.0f;
 constexpr f32 kIdentifyPitchTopLimit = -1.4521f;
 constexpr f32 kIdentifyPitchBottomLimit = -0.3057f;
 constexpr f32 kIdentifyPitchCenter = (kIdentifyPitchTopLimit + kIdentifyPitchBottomLimit) * 0.5f;
 constexpr f32 kIdentifyYawAmp[kIdentifyHarmonicCount] = {3.5f, -2.0f, 1.2f, -0.8f, 0.5f};
 constexpr f32 kIdentifyPitchAmp[kIdentifyHarmonicCount] = {0.34f, -0.18f, 0.11f, -0.07f, 0.04f};
-constexpr f32 kGm6020VoltageCmdLimit = 25000.0f;
-constexpr f32 kGm6020BusVoltage = 24.0f;
-constexpr f32 kGm6020TorqueConstant = 0.741f;
-constexpr f32 kGm6020PhaseResistance = 1.8f;
-constexpr f32 kGm6020SpeedConstantRpmPerVolt = 13.33f;
-constexpr f32 kGm6020BackEmfConstant = 60.0f / (2.0f * static_cast<f32>(M_PI) * kGm6020SpeedConstantRpmPerVolt);
 constexpr f32 kNormalFfMaxYawSpeed = 8.0f;
 constexpr f32 kNormalFfMaxPitchSpeed = 4.0f;
 constexpr f32 kNormalFfMaxYawAccel = 80.0f;
@@ -59,18 +49,6 @@ IdentifyTrajectoryPoint EvaluateIdentifyTrajectory(f32 center, const f32 (&ampli
 
 f32 PitchRawToIdentifyModel(f32 raw_pitch) { return raw_pitch - kIdentifyPitchCenter; }
 
-f32 YawVoltageCmdToTorque(f32 voltage_cmd, f32 speed_rad_per_sec) {
-  const f32 voltage = voltage_cmd / kGm6020VoltageCmdLimit * kGm6020BusVoltage;
-  return kGm6020TorqueConstant / kGm6020PhaseResistance * (voltage - kGm6020BackEmfConstant * speed_rad_per_sec);
-}
-
-f32 YawTorqueToVoltageCmd(f32 torque_nm, f32 speed_rad_per_sec) {
-  const f32 voltage =
-      torque_nm * kGm6020PhaseResistance / kGm6020TorqueConstant + kGm6020BackEmfConstant * speed_rad_per_sec;
-  return rm::modules::Clamp(voltage / kGm6020BusVoltage * kGm6020VoltageCmdLimit, -kGm6020VoltageCmdLimit,
-                            kGm6020VoltageCmdLimit);
-}
-
 int AppendFloat(char *buffer, size_t size, f32 value) {
   if (size == 0) {
     return 0;
@@ -97,22 +75,17 @@ void Gimbal::GimbalInit() {
   gimbal->last_pitch_speed_ref_ = 0.0f;
   gimbal->ff_verify_time_s_ = 0.0f;
   gimbal->identify_time_s_ = 0.0f;
-  gimbal->identify_yaw_position_ = 0.0f;
-  gimbal->identify_yaw_speed_ = 0.0f;
+  gimbal->identify_yaw_position_ = globals->yaw_motor->pos();
+  gimbal->identify_yaw_speed_ = globals->yaw_motor->vel();
   gimbal->identify_pitch_position_ = globals->pitch_motor->pos();
   gimbal->identify_pitch_speed_ = globals->pitch_motor->vel();
   gimbal->identify_yaw_center_ = 0.0f;
   gimbal->identify_pitch_center_ = kIdentifyPitchCenter;
-  gimbal->identify_yaw_encoder_counter_.Reset(0, globals->yaw_motor->encoder());
   gimbal->pitch_sampler_.Start();
 }
 
 void Gimbal::GimbalTask() {
   gimbal->GimbalStateUpdate();
-  a = gimbal->gimbal_yaw_target_;
-  b = gimbal->gimbal_pitch_target_;
-  c = globals->ahrs.euler_angle().yaw;
-  d = globals->ahrs.euler_angle().pitch;
 }
 
 void Gimbal::GimbalStateUpdate() {
@@ -182,53 +155,24 @@ void Gimbal::GimbalAimbotTargetUpdate() {
   }
 }
 
-void Gimbal::GimbalMovePIDUpdate() {
-  gimbal->yaw_speed_ff = gimbal->Kf * yaw_speed_ref;
-  gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
-  gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
-  gimbal->last_yaw_speed_ref_ = yaw_speed_ref;
-  gimbal->last_pitch_speed_ref_ = pitch_speed_ref;
-  gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
-  const auto yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
-                             kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
-
-  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_, gimbal->yaw_speed_ff);
-
-  globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
-                                    globals->ahrs.euler_angle().pitch, globals->imu->gyro_x());
-  const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
-  const auto ff =
-      g_gimbal_dynamics.ComputeFf(yaw_position_, -globals->pitch_motor->pos() - 1.0f, 0, 0, 0, 0, g_stationary);
-  gimbal->yaw_torque_ = ff.x();
-  const f32 yaw_ff_voltage =
-      YawTorqueToVoltageCmd(gimbal->yaw_torque_, static_cast<f32>(globals->yaw_motor->rpm()) * kRpmToRadPerSec);
-  gimbal->yaw_current_ =
-      globals->gimbal_controller.output().yaw + static_cast<f32>(globals->yaw_motor->rpm()) * 100.f + yaw_ff_voltage;
-  gimbal->yaw_current_ = rm::modules::Clamp(gimbal->yaw_current_, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
-  gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + ff.y() - 0.01f;
-  gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
-}
-
 void Gimbal::ApplyNormalGimbalPID() {
-  globals->gimbal_controller.pid().yaw_position.SetKp(380.0f).SetKi(0).SetKd(9000.0f).SetMaxOut(30000.0f).SetMaxIout(0);
-  globals->gimbal_controller.pid().yaw_speed.SetKp(580.0f).SetKi(0).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0);
+  globals->gimbal_controller.pid().yaw_position.SetKp(60.0f).SetKi(0).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0);
+  globals->gimbal_controller.pid().yaw_speed.SetKp(0.5f).SetKi(0).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0);
   // pitch PID 参数
   globals->gimbal_controller.pid().pitch_position.SetKp(42.0f).SetKi(0).SetKd(600.0f).SetMaxOut(10000.0f).SetMaxIout(0);
   globals->gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0);
 }
 
 void Gimbal::ApplyIdentifyGimbalPID() {
-  globals->gimbal_controller.pid().yaw_position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(0);
+  globals->gimbal_controller.pid().yaw_position.SetKp(45).SetKi(0).SetKd(65).SetMaxOut(10).SetMaxIout(0);
   globals->gimbal_controller.pid().pitch_position.SetKp(45).SetKi(0).SetKd(65).SetMaxOut(10).SetMaxIout(0);
 }
 
 void Gimbal::GimbalIdentifyUpdate() {
   gimbal->ApplyIdentifyGimbalPID();
   globals->gimbal_controller.EnableSpeedPid(false);
-  gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
-  gimbal->identify_yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
-                                   kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
-  gimbal->identify_yaw_speed_ = static_cast<f32>(globals->yaw_motor->rpm()) * kRpmToRadPerSec;
+  gimbal->identify_yaw_position_ = globals->yaw_motor->pos();
+  gimbal->identify_yaw_speed_ = globals->yaw_motor->vel();
   gimbal->identify_pitch_position_ = globals->pitch_motor->pos();
   gimbal->identify_pitch_speed_ = globals->pitch_motor->vel();
 
@@ -248,20 +192,18 @@ void Gimbal::GimbalIdentifyTargetUpdate() {
 
 void Gimbal::GimbalIdentifyPIDUpdate() {
   globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_);
-  globals->gimbal_controller.Update(gimbal->identify_yaw_position_, 0.0f, gimbal->identify_pitch_position_, 0.0f);
-  gimbal->yaw_current_ =
-      rm::modules::Clamp(globals->gimbal_controller.output().yaw, -kGm6020VoltageCmdLimit, kGm6020VoltageCmdLimit);
-  gimbal->yaw_torque_ = YawVoltageCmdToTorque(gimbal->yaw_current_, gimbal->identify_yaw_speed_);
+  globals->gimbal_controller.Update(gimbal->identify_yaw_position_, gimbal->identify_yaw_speed_,
+                                    gimbal->identify_pitch_position_, gimbal->identify_pitch_speed_, Ts);
+  gimbal->yaw_feedforward_torque_ = 0.0f;
+  gimbal->yaw_torque_ = rm::modules::Clamp(globals->gimbal_controller.output().yaw, -10.0f, 10.0f);
   gimbal->pitch_torque_ = rm::modules::Clamp(globals->gimbal_controller.output().pitch, -10.0f, 10.0f);
 }
 
 void Gimbal::GimbalFfVerifyUpdate() {
   globals->gimbal_controller.Enable(false);
   globals->gimbal_controller.EnableSpeedPid(false);
-  gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
-  gimbal->identify_yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
-                                   kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
-  gimbal->identify_yaw_speed_ = static_cast<f32>(globals->yaw_motor->rpm()) * kRpmToRadPerSec;
+  gimbal->identify_yaw_position_ = globals->yaw_motor->pos();
+  gimbal->identify_yaw_speed_ = globals->yaw_motor->vel();
   gimbal->identify_pitch_position_ = globals->pitch_motor->pos();
   gimbal->identify_pitch_speed_ = globals->pitch_motor->vel();
 
@@ -271,13 +213,13 @@ void Gimbal::GimbalFfVerifyUpdate() {
   gimbal->gimbal_pitch_target_ =
       rm::modules::Clamp(pitch.q + kIdentifyPitchCenter, kIdentifyPitchTopLimit, kIdentifyPitchBottomLimit);
 
-  // 重力补偿验证：dq/ddq 置零，只用实际 pitch 位置计算重力项
+  // 按参考轨迹计算完整动力学前馈力矩
   const Eigen::Vector3f g_stationary(0.0f, 0.0f, -9.81f);
   const auto ff =
       g_gimbal_dynamics.ComputeFfDecomposed(yaw.q, pitch.q, yaw.dq, pitch.dq, yaw.ddq, pitch.ddq, g_stationary);
 
-  gimbal->yaw_torque_ = ff.yaw;
-  gimbal->yaw_current_ = YawTorqueToVoltageCmd(gimbal->yaw_torque_, gimbal->identify_yaw_speed_);
+  gimbal->yaw_feedforward_torque_ = ff.yaw;
+  gimbal->yaw_torque_ = rm::modules::Clamp(ff.yaw, -10.0f, 10.0f);
   gimbal->pitch_torque_ = rm::modules::Clamp(ff.pitch, -10.0f, 10.0f);
   gimbal->ff_verify_time_s_ += gimbal->Ts;
 }
@@ -304,12 +246,10 @@ void Gimbal::GimbalEnableUpdate() {
   if (gimbal->GimbalMove_ == kGbRemote) {
     globals->aim_mode = 0x01;
     gimbal->GimbalRCTargetUpdate();
-    // gimbal->GimbalMovePIDUpdate();
     gimbal->GimbalMoveUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbot) {
     globals->aim_mode = 0x01;
     gimbal->GimbalAimbotTargetUpdate();
-    // gimbal->GimbalMovePIDUpdate();
     gimbal->GimbalMoveUpdate();
   } else if (gimbal->GimbalMove_ == kGbAimbotFu) {
     if (globals->aim_mode != 0x02 && globals->aim_mode != 0x03) {
@@ -326,17 +266,14 @@ void Gimbal::GimbalEnableUpdate() {
       globals->aim_mood_change_flag = false;
     }
     gimbal->GimbalAimbotTargetUpdate();
-    // gimbal->GimbalMovePIDUpdate();
     gimbal->GimbalMoveUpdate();
   } else if (gimbal->GimbalMove_ == kGbIdentify) {
     gimbal->GimbalIdentifyUpdate();
   } else if (gimbal->GimbalMove_ == kGbFfVerify) {
     gimbal->GimbalFfVerifyUpdate();
-    // // 临时替换成简单的在线计算 2d重力补偿计算
-    // gimbal->GimbalPitchGravityCalc();
   } else {
     globals->gimbal_controller.Enable(false);
-    gimbal->yaw_current_ = 0.f;
+    gimbal->yaw_feedforward_torque_ = 0.f;
     gimbal->yaw_torque_ = 0.f;
     gimbal->pitch_torque_ = 0.f;
   }
@@ -351,26 +288,29 @@ void Gimbal::GimbalDisableUpdate() {
   globals->gimbal_controller.Enable(false);
   gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
   gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
-  // gimbal->GimbalMovePIDUpdate();
   gimbal->GimbalMoveUpdate();
-  gimbal->yaw_current_ = 0.f;
+  gimbal->yaw_feedforward_torque_ = 0.f;
   gimbal->yaw_torque_ = 0.f;
   gimbal->pitch_torque_ = 0.f;
 }
 
 void Gimbal::DaMiaoMotorEnable() {
-  if (globals->pitch_motor->status() != 0x01 && globals->pitch_motor->status() != 0x00) {
-    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-  } else if (globals->pitch_motor->status() == 0x00) {
-    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+  for (auto *motor : {globals->yaw_motor, globals->pitch_motor}) {
+    if (motor->status() != 0x01 && motor->status() != 0x00) {
+      motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+    } else if (motor->status() == 0x00) {
+      motor->SendInstruction(rm::device::DmMotorInstructions::kEnable);
+    }
   }
 }
 
 void Gimbal::DaMiaoMotorDisable() {
-  if (globals->pitch_motor->status() != 0x01 && globals->pitch_motor->status() != 0x00) {
-    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
-  } else if (globals->pitch_motor->status() == 0x01) {
-    globals->pitch_motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+  for (auto *motor : {globals->yaw_motor, globals->pitch_motor}) {
+    if (motor->status() != 0x01 && motor->status() != 0x00) {
+      motor->SendInstruction(rm::device::DmMotorInstructions::kClearError);
+    } else if (motor->status() == 0x01) {
+      motor->SendInstruction(rm::device::DmMotorInstructions::kDisable);
+    }
   }
 }
 
@@ -404,41 +344,55 @@ void Gimbal::GimbalIdentifyDataSend() {
   globals->ident_uart->Write(reinterpret_cast<const u8 *>(tx_buf), static_cast<usize>(len), 500);
 }
 
-void Gimbal::GimbalMoveUpdate() {
-  gimbal->yaw_speed_ff = gimbal->Kf * yaw_speed_ref;
+void Gimbal::GimbalMoveSMCUpdate() {
   gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
   gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
   gimbal->last_yaw_speed_ref_ = yaw_speed_ref;
   gimbal->last_pitch_speed_ref_ = pitch_speed_ref;
-  gimbal->identify_yaw_encoder_counter_.Update(globals->yaw_motor->encoder());
-  const auto yaw_position_ = static_cast<f32>(gimbal->identify_yaw_encoder_counter_.linear_ticks()) /
-                             kEncoderTicksPerRev * 2.0f * static_cast<f32>(M_PI);
 
-  f32 yaw_target_for_controller = gimbal->gimbal_yaw_target_;
-  f32 pitch_target_for_controller = gimbal->gimbal_pitch_target_;
-
-  // 生成波形叠加测试
-  if (gimbal->GimbalMove_ == kGbAimbot) {
-    // yaw_target_for_controller = rm::modules::Wrap(yaw_target_for_controller + globals->yaw_wave.GetValue(),
-    //                                               -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
-    // pitch_target_for_controller = rm::modules::Wrap(pitch_target_for_controller + globals->pitch_wave.GetValue(),
-    //                                                 -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
-  }
-  globals->gimbal_controller.SetTarget(yaw_target_for_controller, pitch_target_for_controller);
+  globals->gimbal_controller.SetTarget(gimbal->gimbal_yaw_target_, gimbal->gimbal_pitch_target_);
   globals->gimbal_controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
                                     globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), Ts);
 
   const f32 pitch_ff_nm = PitchGravity::Model::Calc(0.83432, 2.92575, globals->ahrs.euler_angle().pitch) + 0.01f;
-  // const f32 pitch_ff_nm = PitchGravity::Calculate(1, M_PI, globals->ahrs.euler_angle().pitch);
-  const f32 yaw_ff_cmd = 0.0f;
+  gimbal->yaw_feedforward_torque_ = 0.0f;
 
   // 计算输出
-  gimbal->yaw_torque_ = globals->gimbal_controller.output().yaw + yaw_ff_cmd;
+  gimbal->yaw_torque_ = globals->gimbal_controller.output().yaw + gimbal->yaw_feedforward_torque_;
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch + pitch_ff_nm;
 
   // 限幅
   gimbal->yaw_torque_ = rm::modules::Clamp(gimbal->yaw_torque_, -10.f, 10.f);
   gimbal->pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
+}
+
+void Gimbal::GimbalMovePIDUpdate() {
+  auto &controller = globals->gimbal_controller;
+
+  last_yaw_target = gimbal_yaw_target_;
+  last_pitch_target_ = gimbal_pitch_target_;
+  last_yaw_speed_ref_ = yaw_speed_ref;
+  last_pitch_speed_ref_ = pitch_speed_ref;
+
+  controller.SetTarget(gimbal_yaw_target_, gimbal_pitch_target_, yaw_speed_ref);
+  controller.Update(globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
+                    globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), Ts);
+
+  const f32 yaw_model_rad = globals->yaw_motor->pos();
+  const f32 pitch_model_rad = -globals->pitch_motor->pos() - 1.0f;
+  const Eigen::Vector3f gravity(0.0f, 0.0f, -9.81f);
+
+  const auto ff = g_gimbal_dynamics.ComputeFf(yaw_model_rad, pitch_model_rad, 0.0f, 0.0f, 0.0f, 0.0f, gravity);
+
+  yaw_feedforward_torque_ = ff.x();
+  yaw_torque_ = globals->gimbal_controller.output().yaw + ff.x();
+  pitch_torque_ = globals->gimbal_controller.output().pitch + ff.x();
+  yaw_torque_ = rm::modules::Clamp(gimbal->yaw_torque_, -10.f, 10.f);
+  pitch_torque_ = rm::modules::Clamp(gimbal->pitch_torque_, -10.f, 10.f);
+}
+
+void Gimbal::GimbalMoveUpdate() {
+  GimbalMoveSMCUpdate();
 }
 
 void Gimbal::GimbalPitchGravityCalc() {

@@ -4,11 +4,9 @@
 
 #include "rgb_led.hpp"
 #include "buzzer.hpp"
-#include "encoder_counter.hpp"
 #include "controllers/gimbal_2dof.hpp"
 
 #include "aimbot_comm_can.hpp"
-#include "wave_generator.hpp"
 #include "pitch_gravity_2d.hpp"
 
 using namespace rm;
@@ -30,7 +28,6 @@ typedef enum {
 enum class RemoteControlSource : u8 {
   kNone = 0,
   kDt17,
-  kVt03,
 };
 
 struct RemoteInput {
@@ -45,7 +42,6 @@ struct RemoteInput {
   u16 keyboard{};
   bool mouse_left{};
   bool mouse_right{};
-  bool trigger{};
 
   [[nodiscard]] bool key(const u16 mask) const { return (keyboard & mask) != 0; }
 };
@@ -63,12 +59,11 @@ inline struct GlobalWarehouse {
       led_controller;  ///< RGB LED控制器
 
   // 硬件接口 //
-  rm::hal::Can *can1{nullptr}, *can2{nullptr};                      ///< CAN 总线接口
+  rm::hal::Can *can1{nullptr};                                      ///< 云台
+  rm::hal::Can *can2{nullptr};                                      ///< 自瞄 CAN 总线接口
   rm::hal::Serial<18> *dbus{nullptr};                               ///< 遥控器串口接口
   rm::device::AimbotCanCommunicator *aimbot_communicator{nullptr};  ///< CAN 通信器
-  rm::hal::Serial<128> *vt03_uart{nullptr};                         ///< VT03 遥控串口接口
   rm::hal::Serial<128> *ident_uart{nullptr};
-  rm::device::VT03 *image_data{nullptr};  ///< VT03 遥控数据
 
   u8 aimbot_robot_id = 3;           // 独立云台：3为红方，103为蓝方
   f32 aimbot_bullet_speed = 23.5f;  // 沿用原先未收到弹速时的默认值
@@ -77,7 +72,6 @@ inline struct GlobalWarehouse {
   rm::device::DeviceManager<1> device_rc;  ///< 设备管理器，维护所有设备在线状态
   rm::device::DeviceManager<2> device_gimbal;
   rm::device::DeviceManager<1> device_nuc;
-  rm::device::DeviceManager<1> device_vt03;
 
   // 云台
   rm::device::BMI088 *imu{nullptr};                                                 ///< IMU
@@ -87,14 +81,11 @@ inline struct GlobalWarehouse {
 
   // 控制器 //
   rm::modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
-  Gimbal2Dof gimbal_controller;          ///< 二轴双 Yaw 云台控制器
+  Gimbal2Dof gimbal_controller;          ///< 二轴云台控制器
 
   StateMachineType StateMachine_ = {kNoForce};                     // 当前状态
-  RemoteControlSource remote_source = RemoteControlSource::kNone;  ///< 整车状态控制源
+  RemoteControlSource remote_source = RemoteControlSource::kNone;  ///< DT17 在线时为控制源
   RemoteInput remote_input{};
-
-  WaveGenerator yaw_wave{};
-  WaveGenerator pitch_wave{};
 
   uint8_t time = 0;                   // 时间
   uint16_t init_time = 1000;          // 初始化时间
