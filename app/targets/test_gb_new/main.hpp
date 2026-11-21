@@ -8,6 +8,7 @@
 
 #include "aimbot_comm_can.hpp"
 #include "pitch_gravity_2d.hpp"
+#include "wave_generator.hpp"
 
 using namespace rm;
 
@@ -102,6 +103,9 @@ inline struct GlobalWarehouse {
 
   rm::device::DR16::SwitchPosition last_switch_l = rm::device::DR16::SwitchPosition::kDown;  // 左拨杆上一次状态
   rm::device::DR16::SwitchPosition last_switch_r = rm::device::DR16::SwitchPosition::kDown;  // 右拨杆上一次状态
+
+  WaveGenerator yaw_wave{};
+  WaveGenerator pitch_wave{};
 
   // 函数 //
   void Init();

@@ -20,6 +20,7 @@ struct FreemasterSMCData {
   float p{};          ///< 终端滑模指数的分母，必须大于 0
   float error_eps{};  ///< 位置误差死区，单位 rad，必须大于 0
   float u_max{};      ///< SMC 输出限幅，单位 N*m
+  float dt{};         ///< SMC 间隔时间，单位 s
 
   // ---------- 只读状态 ----------
   float set{};             ///< SMC 位置目标，单位 rad
@@ -142,7 +143,7 @@ struct FreemasterData {
     float pitch_error{};                   ///< Pitch 误差值，单位 deg
     float yaw_controller_out{};            ///< Yaw PID/SMC 输出，单位 N*m
     float pitch_controller_out{};          ///< Pitch PID/SMC 输出，单位 N*m
-    float yaw_feedforward_torque{};        ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
+    // float yaw_feedforward_torque{};        ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
     float yaw_motor_command{};             ///< 限幅后的 DM Yaw 最终转矩指令，单位 N*m
     float pitch_motor_command{};           ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m
     FreemasterSampleData pitch_sampler{};  ///< Pitch 采样器数据
@@ -161,10 +162,12 @@ inline void freemaster_init() {
     data.p = smc.p;
     data.error_eps = smc.error_eps;
     data.u_max = smc.u_max;
+    data.u_max = smc.u_max;
+    data.dt = smc.dt;
   };
 
-  init_smc(freemaster_data.gimbal_output.yaw_smc, globals->gimbal_controller.smc().yaw);
-  init_smc(freemaster_data.gimbal_output.pitch_smc, globals->gimbal_controller.smc().pitch);
+  init_smc(freemaster_data.gimbal_output.yaw_smc, globals->gimbal_controller.motor().yaw.smc());
+  init_smc(freemaster_data.gimbal_output.pitch_smc, globals->gimbal_controller.motor().pitch.smc());
 }
 
 /**
@@ -199,6 +202,7 @@ inline void freemaster() {
     smc.p = data.p;
     smc.error_eps = data.error_eps;
     smc.u_max = data.u_max;
+    smc.dt = data.dt;
 
     data.set = smc.target;
     data.feedback = smc.angle;
@@ -206,7 +210,6 @@ inline void freemaster() {
     data.error = smc.GetError();
     data.s = smc.GetSlidingSurface();
     data.out = smc.u;
-    data.enabled = static_cast<std::uint8_t>(smc.IsEnabled());
   };
 
   freemaster_data.update_count = freemaster_data.update_count + 1U;
@@ -224,7 +227,7 @@ inline void freemaster() {
   freemaster_data.gimbal_target.pitch_speed = gimbal->pitch_speed_reference();
   freemaster_data.gimbal_target.yaw_accel = gimbal->yaw_accel_reference();
   freemaster_data.gimbal_target.pitch_accel = gimbal->pitch_accel_reference();
-  freemaster_data.gimbal_target.yaw_speed_feedforward = globals->gimbal_controller.target().yaw_speed_ff;
+  freemaster_data.gimbal_target.yaw_speed_feedforward = globals->gimbal_controller.motor().yaw.target().speed_ff;
 
   freemaster_data.gimbal_feedback.yaw = globals->ahrs.euler_angle().yaw * kRadToDeg;
   freemaster_data.gimbal_feedback.pitch = globals->ahrs.euler_angle().pitch * kRadToDeg;
@@ -236,10 +239,10 @@ inline void freemaster() {
   freemaster_data.gimbal_feedback.controller_yaw_speed = globals->gimbal_controller.state().yaw_speed;
   freemaster_data.gimbal_feedback.controller_pitch_position = globals->gimbal_controller.state().pitch_position;
   freemaster_data.gimbal_feedback.controller_pitch_speed = globals->gimbal_controller.state().pitch_speed;
-  freemaster_data.gimbal_feedback.yaw_motor_position = globals->yaw_motor->pos();
+  freemaster_data.gimbal_feedback.yaw_motor_position = globals->yaw_motor->pos() * kRadToDeg;
   freemaster_data.gimbal_feedback.yaw_motor_speed = globals->yaw_motor->vel();
   freemaster_data.gimbal_feedback.yaw_motor_torque = globals->yaw_motor->tau();
-  freemaster_data.gimbal_feedback.pitch_motor_position = globals->pitch_motor->pos();
+  freemaster_data.gimbal_feedback.pitch_motor_position = globals->pitch_motor->pos() * kRadToDeg;
   freemaster_data.gimbal_feedback.pitch_motor_speed = globals->pitch_motor->vel();
   freemaster_data.gimbal_feedback.pitch_motor_torque = globals->pitch_motor->tau();
 
@@ -274,24 +277,24 @@ inline void freemaster() {
   freemaster_data.aimbot_rx.yaw_acceleration = globals->aimbot_communicator->yaw_acc();
   freemaster_data.aimbot_rx.pitch_acceleration = globals->aimbot_communicator->pitch_acc();
 
-  auto &gimbal_pid = globals->gimbal_controller.pid();
-  copy_pid(freemaster_data.gimbal_output.yaw_position, gimbal_pid.yaw_position);
-  copy_pid(freemaster_data.gimbal_output.yaw_speed, gimbal_pid.yaw_speed);
-  copy_pid(freemaster_data.gimbal_output.pitch_position, gimbal_pid.pitch_position);
-  copy_pid(freemaster_data.gimbal_output.pitch_speed, gimbal_pid.pitch_speed);
-  freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw;
-  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch;
+  auto &gimbal_ctl = globals->gimbal_controller;
+  copy_pid(freemaster_data.gimbal_output.yaw_position, gimbal_ctl.motor().yaw.pid().position);
+  copy_pid(freemaster_data.gimbal_output.yaw_speed, gimbal_ctl.motor().yaw.pid().speed);
+  copy_pid(freemaster_data.gimbal_output.pitch_position, gimbal_ctl.motor().pitch.pid().position);
+  copy_pid(freemaster_data.gimbal_output.pitch_speed, gimbal_ctl.motor().pitch.pid().speed);
+  // freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw;
+  // freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch;
+  freemaster_data.gimbal_output.yaw_controller_out = globals->gimbal_controller.output().yaw / 30000 * 10;
+  freemaster_data.gimbal_output.pitch_controller_out = globals->gimbal_controller.output().pitch / 7 * 40;
   freemaster_data.gimbal_output.yaw_error =
       (globals->gimbal_controller.target().yaw_position - globals->ahrs.euler_angle().yaw) * kRadToDeg;
   freemaster_data.gimbal_output.pitch_error =
       (globals->gimbal_controller.target().pitch_position - globals->ahrs.euler_angle().pitch) * kRadToDeg;
-  freemaster_data.gimbal_output.yaw_feedforward_torque = gimbal->yaw_feedforward_torque();
   freemaster_data.gimbal_output.yaw_motor_command = gimbal->yaw_command();
   freemaster_data.gimbal_output.pitch_motor_command = gimbal->pitch_command();
 
-  auto &gimbal_smc = globals->gimbal_controller.smc();
-  copy_smc(freemaster_data.gimbal_output.yaw_smc, gimbal_smc.yaw);
-  copy_smc(freemaster_data.gimbal_output.pitch_smc, gimbal_smc.pitch);
+  copy_smc(freemaster_data.gimbal_output.yaw_smc, gimbal_ctl.motor().yaw.smc());
+  copy_smc(freemaster_data.gimbal_output.pitch_smc, gimbal_ctl.motor().pitch.smc());
 
   const auto *buffer = gimbal->pitch_sampler_.GetBuffer();
   const auto count = gimbal->pitch_sampler_.GetIndex();

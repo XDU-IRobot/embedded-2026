@@ -60,6 +60,10 @@ void GlobalWarehouse::Init() {
   pitch_motor = new rm::device::DmMotor<rm::device::DmMotorControlMode::kMit>  //
       {*can1, {0x11, 0x01, 12.5f, 30.0f, 10.0f, {0.0f, 500.0f}, {0.0f, 5.0f}}};
 
+  // 波形生成器
+  yaw_wave = WaveFactory::Trapezoid(4.f, 0.1745f / 2, 0.2f, 0.2f, 0.1);
+  pitch_wave = WaveFactory::Trapezoid(6.f, 0.1745f / 2, 0.2f, 0.2f, 0.2);
+
   device_rc << rc;                            // 遥控器
   device_gimbal << yaw_motor << pitch_motor;  // 云台电机
   device_nuc << aimbot_communicator;          // NUC
@@ -87,18 +91,22 @@ void GlobalWarehouse::Init() {
 
 void GlobalWarehouse::GimbalSMCInit() {
   // 初始化 SMC
-  gimbal_controller.smc().yaw.SMCInit(33, 380, 0, 0.0, 27, 27, 10, 0.0005, 10);
-  gimbal_controller.smc().pitch.SMCInit(33, 380, 0, 0.0, 27, 27, 10, 0.0005, 10);
+  // gimbal_controller.motor().yaw.smc().SMCInit(30, 400, 0, 0.001, 21, 27, 30000, 90, 0.5, 1.0);
+  // gimbal_controller.motor().pitch.smc().SMCInit(33, 380, 0, 0.0, 21, 27, 10, 0.005, 10, 1.0);
+  gimbal_controller.motor().yaw.smc().SMCInit(60, 40, 0, 0.0003, 27, 27, 10, 0.007, 50, 1);
+  gimbal_controller.motor().pitch.smc().SMCInit(50, 60, 0, 0.0003, 27, 27, 10, 0.001, 10, 1);
 }
 
 void GlobalWarehouse::GimbalPIDInit() {
-  // 初始化 PID
+  // 初始化 PID (dt = 1.0f)
   // Yaw PID 参数
-  gimbal_controller.pid().yaw_position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().yaw_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  // gimbal_controller.motor().yaw.pid().position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(12000.0f).SetMaxIout(0.0f);
+  // gimbal_controller.motor().yaw.pid().speed.SetKp(580.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
+  gimbal_controller.motor().yaw.pid().position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.motor().yaw.pid().speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.pid().pitch_position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
-  gimbal_controller.pid().pitch_speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
+  gimbal_controller.motor().pitch.pid().position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.motor().pitch.pid().speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
 void GlobalWarehouse::RCStateUpdate() {
@@ -252,9 +260,11 @@ void GlobalWarehouse::Music() {
 
 void GlobalWarehouse::SubLoop500Hz() {
   globals->imu->Update();
-  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
-                                                globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
-                                                globals->imu->accel_x(), globals->imu->accel_z()});
+  // globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
+  //                                               globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
+  //                                               globals->imu->accel_x(), globals->imu->accel_z()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z() - 0.0031f,
+                             -globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()});
   // can 通信
   globals->aimbot_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
                                               globals->ahrs.euler_angle().roll, globals->aimbot_robot_id,
@@ -265,6 +275,9 @@ void GlobalWarehouse::SubLoop500Hz() {
   gimbal->GimbalTask();
   globals->yaw_motor->SetMitCommand(0, 0, gimbal->yaw_torque_, 0, 0);
   globals->pitch_motor->SetMitCommand(0, 0, gimbal->pitch_torque_, 0, 0);
+
+  globals->yaw_wave.Update(0.002f);
+  globals->pitch_wave.Update(0.002f);
 }
 
 void GlobalWarehouse::SubLoop250Hz() {}

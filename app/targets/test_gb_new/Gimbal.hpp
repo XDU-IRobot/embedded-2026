@@ -19,7 +19,6 @@ inline class Gimbal {
   f32 gimbal_pitch_target_ = 0.0f;  // 云台pitch轴目标数据
 
   f32 Ts = 0.002f;
-  f32 yaw_feedforward_torque_ = 0.0f;
   f32 last_yaw_target = 0.0f;
   f32 last_pitch_target_ = 0.0f;
   f32 last_yaw_speed_ref_ = 0.0f;
@@ -57,7 +56,6 @@ inline class Gimbal {
   [[nodiscard]] f32 pitch_speed_reference() const { return pitch_speed_ref; }
   [[nodiscard]] f32 yaw_accel_reference() const { return yaw_accel_ref; }
   [[nodiscard]] f32 pitch_accel_reference() const { return pitch_accel_ref; }
-  [[nodiscard]] f32 yaw_feedforward_torque() const { return yaw_feedforward_torque_; }
   [[nodiscard]] f32 yaw_command() const { return yaw_torque_; }
   [[nodiscard]] f32 pitch_command() const { return pitch_torque_; }
 
