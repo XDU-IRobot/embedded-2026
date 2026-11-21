@@ -84,9 +84,7 @@ void Gimbal::GimbalInit() {
   gimbal->pitch_sampler_.Start();
 }
 
-void Gimbal::GimbalTask() {
-  gimbal->GimbalStateUpdate();
-}
+void Gimbal::GimbalTask() { gimbal->GimbalStateUpdate(); }
 
 void Gimbal::GimbalStateUpdate() {
   if (!globals->device_gimbal.all_device_ok()) {
@@ -156,15 +154,29 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 }
 
 void Gimbal::ApplyNormalGimbalPID() {
-  globals->gimbal_controller.motor().yaw.pid().position.SetKp(380.0f).SetKi(0).SetKd(9000.0f).SetMaxOut(30000.0f).SetMaxIout(0);
-  globals->gimbal_controller.motor().yaw.pid().speed.SetKp(580.0f).SetKi(0).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0);
+  globals->gimbal_controller.motor()
+      .yaw.pid()
+      .position.SetKp(380.0f)
+      .SetKi(0)
+      .SetKd(9000.0f)
+      .SetMaxOut(30000.0f)
+      .SetMaxIout(0);
+  globals->gimbal_controller.motor().yaw.pid().speed.SetKp(580.0f).SetKi(0).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(
+      0);
   // pitch PID 参数
-  globals->gimbal_controller.motor().pitch.pid().position.SetKp(42.0f).SetKi(0).SetKd(600.0f).SetMaxOut(10000.0f).SetMaxIout(0);
+  globals->gimbal_controller.motor()
+      .pitch.pid()
+      .position.SetKp(42.0f)
+      .SetKi(0)
+      .SetKd(600.0f)
+      .SetMaxOut(10000.0f)
+      .SetMaxIout(0);
   globals->gimbal_controller.motor().pitch.pid().speed.SetKp(0.5f).SetKi(0).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0);
 }
 
 void Gimbal::ApplyIdentifyGimbalPID() {
-  globals->gimbal_controller.motor().yaw.pid().position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(0);
+  globals->gimbal_controller.motor().yaw.pid().position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(
+      0);
   globals->gimbal_controller.motor().pitch.pid().position.SetKp(45).SetKi(0).SetKd(65).SetMaxOut(10).SetMaxIout(0);
 }
 
@@ -364,9 +376,11 @@ void Gimbal::GimbalMoveUpdate() {
   globals->gimbal_controller.SetPitchFeedforward(0, pitch_ff_nm);
   // globals->gimbal_controller.Update(globals->yaw_motor->pos(), globals->imu->gyro_z(),
   //                                   globals->pitch_motor->pos(), globals->imu->gyro_x(), Ts);
-  globals->gimbal_controller.UpdateWithImu(globals->ahrs.euler_angle().yaw, globals->yaw_motor->pos(), globals->imu->gyro_z(),
-                                    globals->ahrs.euler_angle().pitch, globals->pitch_motor->pos(), globals->imu->gyro_x(), Ts);
-  // globals->gimbal_controller.UpdateWithImu(globals->ahrs.euler_angle().yaw, globals->yaw_motor->pos(), globals->yaw_motor->vel(),
+  globals->gimbal_controller.UpdateWithImu(globals->ahrs.euler_angle().yaw, globals->yaw_motor->pos(),
+                                           globals->imu->gyro_z(), globals->ahrs.euler_angle().pitch,
+                                           globals->pitch_motor->pos(), globals->imu->gyro_x(), Ts);
+  // globals->gimbal_controller.UpdateWithImu(globals->ahrs.euler_angle().yaw, globals->yaw_motor->pos(),
+  // globals->yaw_motor->vel(),
   //   globals->ahrs.euler_angle().pitch, globals->pitch_motor->pos(), globals->pitch_motor->vel(), Ts);
 
   gimbal->yaw_torque_ = globals->gimbal_controller.output().yaw;

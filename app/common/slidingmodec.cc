@@ -86,7 +86,8 @@ void SMC::Reset(float angle_now) {
 /**
  * @brief SMC 初始化
  */
-void SMC::SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon, float dt = 1.0f) {
+void SMC::SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon,
+                  float dt = 1.0f) {
   this->C = C;
   this->K = K;
   this->target = ref;

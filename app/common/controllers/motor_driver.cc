@@ -1,16 +1,16 @@
 /**
 ****************************************************************************************************
- * @file        motor_driver.cc
- * @author      ForTomorrow
- * @version     V1.0
- * @date        2026-11-16
- * @brief       简易 PID
- ****************************************************************************************************
- * @attention
- ****************************************************************************************************
- * @log  v1.0  去掉了冗杂的轨迹规划器，smc 可以实现在线的轨迹规划效果更优
- ****************************************************************************************************
- */
+* @file        motor_driver.cc
+* @author      ForTomorrow
+* @version     V1.0
+* @date        2026-11-16
+* @brief       简易 PID
+****************************************************************************************************
+* @attention
+****************************************************************************************************
+* @log  v1.0  去掉了冗杂的轨迹规划器，smc 可以实现在线的轨迹规划效果更优
+****************************************************************************************************
+*/
 
 #include "motor_driver.hpp"
 
@@ -65,7 +65,8 @@ void MotorDriver::Update(const float raw_position, const float raw_speed, const 
  * @note  注意保证编码器方向和 imu 方向一致，否则可能出现暴走!!!
  * @note  保证输入单位一致
  */
-void MotorDriver::UpdateWithImu(const float raw_imu_position, const float raw_enc_position, const float input_speed, const float dt) {
+void MotorDriver::UpdateWithImu(const float raw_imu_position, const float raw_enc_position, const float input_speed,
+                                const float dt) {
   // 计算当前位置和速度
   state_.position = raw_imu_position;
   state_.speed = input_speed;
@@ -103,8 +104,8 @@ void MotorDriver::CalcOutput(float target_position, const float dt) {
       output_ = pid_.speed.out() + target_.output_ff;
       break;
     }
-    case Mode::kSMC: {   // 滑膜（注：速度设置对滑膜无效果）
-      smc_.Update(target_position, state_.position, state_.speed);   // smc 使用独立的 dt
+    case Mode::kSMC: {                                              // 滑膜（注：速度设置对滑膜无效果）
+      smc_.Update(target_position, state_.position, state_.speed);  // smc 使用独立的 dt
       output_ = smc_.u + target_.output_ff;
     }
     default:

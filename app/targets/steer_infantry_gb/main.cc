@@ -115,10 +115,12 @@ void GlobalWarehouse::GimbalSMCInit() {
 void GlobalWarehouse::GimbalPIDInit() {
   // 初始化 PID (dt = 1.0f)
   // Yaw PID 参数
-  gimbal_controller.motor().yaw.pid().position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(12000.0f).SetMaxIout(0.0f);
+  gimbal_controller.motor().yaw.pid().position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(12000.0f).SetMaxIout(
+      0.0f);
   gimbal_controller.motor().yaw.pid().speed.SetKp(580.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.motor().pitch.pid().position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
+  gimbal_controller.motor().pitch.pid().position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(
+      0.0f);
   gimbal_controller.motor().pitch.pid().speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 

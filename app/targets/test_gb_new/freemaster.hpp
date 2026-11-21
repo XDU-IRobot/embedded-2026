@@ -133,16 +133,16 @@ struct FreemasterData {
   } aimbot_rx;                   ///< 云台自瞄 CAN 通信器接收数据
 
   struct {
-    FreemasterPidData yaw_position;        ///< Yaw 外环（位置环）PID 数据
-    FreemasterPidData yaw_speed;           ///< Yaw 内环（速度环）PID 数据
-    FreemasterPidData pitch_position;      ///< Pitch 外环（位置环）PID 数据
-    FreemasterPidData pitch_speed;         ///< Pitch 内环（速度环）PID 数据
-    FreemasterSMCData yaw_smc;             ///< Yaw SMC 参数和运行数据
-    FreemasterSMCData pitch_smc;           ///< Pitch SMC 参数和运行数据
-    float yaw_error{};                     ///< Yaw 误差值，单位 deg
-    float pitch_error{};                   ///< Pitch 误差值，单位 deg
-    float yaw_controller_out{};            ///< Yaw PID/SMC 输出，单位 N*m
-    float pitch_controller_out{};          ///< Pitch PID/SMC 输出，单位 N*m
+    FreemasterPidData yaw_position;    ///< Yaw 外环（位置环）PID 数据
+    FreemasterPidData yaw_speed;       ///< Yaw 内环（速度环）PID 数据
+    FreemasterPidData pitch_position;  ///< Pitch 外环（位置环）PID 数据
+    FreemasterPidData pitch_speed;     ///< Pitch 内环（速度环）PID 数据
+    FreemasterSMCData yaw_smc;         ///< Yaw SMC 参数和运行数据
+    FreemasterSMCData pitch_smc;       ///< Pitch SMC 参数和运行数据
+    float yaw_error{};                 ///< Yaw 误差值，单位 deg
+    float pitch_error{};               ///< Pitch 误差值，单位 deg
+    float yaw_controller_out{};        ///< Yaw PID/SMC 输出，单位 N*m
+    float pitch_controller_out{};      ///< Pitch PID/SMC 输出，单位 N*m
     // float yaw_feedforward_torque{};        ///< 动力学模型计算的 Yaw 前馈转矩，单位 N*m
     float yaw_motor_command{};             ///< 限幅后的 DM Yaw 最终转矩指令，单位 N*m
     float pitch_motor_command{};           ///< 限幅后的 DM Pitch 最终转矩指令，单位 N*m

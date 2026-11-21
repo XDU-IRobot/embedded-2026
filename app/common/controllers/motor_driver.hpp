@@ -25,21 +25,24 @@ class MotorDriver {
   };
 
   void Update(const float raw_position, const float raw_speed, const float dt = 1.f);
-  void UpdateWithImu(const float raw_imu_position, const float raw_enc_position, const float input_speed, const float dt);
+  void UpdateWithImu(const float raw_imu_position, const float raw_enc_position, const float input_speed,
+                     const float dt);
 
   void SetMode(const Mode mode);
   void SetSpeed(float target_speed, float speed_feedforward = 0.f);
   void SetPosition(float target_position);
   void SetFeedforward(float speed_feedforward = 0.f, float output_feedforward = 0.f);
-  void SetOutputLimits(const float min, const float max, const bool is_enabled = true);    // 最终输出限幅
-  void SetPositionLimits(const float min, const float max, const bool is_enabled = true);  // 机械位置限幅（无imu，情况下和目标限幅类似）
-  void SetTargetLimits(const float min, const float max, const bool is_enabled = true);    // 目标值限幅
+  void SetOutputLimits(const float min, const float max, const bool is_enabled = true);  // 最终输出限幅
+  void SetPositionLimits(const float min, const float max,
+                         const bool is_enabled = true);  // 机械位置限幅（无imu，情况下和目标限幅类似）
+  void SetTargetLimits(const float min, const float max, const bool is_enabled = true);  // 目标值限幅
 
   void Enable(const bool is_enable) { is_enable_ = is_enable; }
   void EnableOutputLimits(const bool is_enable) { is_output_limits_ = is_enable; }
   void EnablePositionLimits(const bool is_enable) { is_position_limits_ = is_enable; }
   void EnableTargetLimits(const bool is_enable) { is_target_limits_ = is_enable; }
-  void SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon, float dt);
+  void SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon,
+               float dt);
 
   // 对外接口
   [[nodiscard]] auto &smc() { return smc_; }

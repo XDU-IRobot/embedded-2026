@@ -39,13 +39,12 @@ class Gimbal2Dof {
     output_.pitch = motor_.pitch.output();
   }
 
-
   /**
    * @brief 带有 imu 的更新一步，传入编码器位置做机械限位
    * @note  请让需要限位的轴的 enc 传入为过零处理后的数值（Yaw 需要小陀螺时请勿加机械限位）
    */
-  void UpdateWithImu(float yaw_imu_position, float yaw_enc_position, float yaw_speed,
-                     float pitch_imu_position, float pitch_enc_position, float pitch_speed, float dt = 1.f) {
+  void UpdateWithImu(float yaw_imu_position, float yaw_enc_position, float yaw_speed, float pitch_imu_position,
+                     float pitch_enc_position, float pitch_speed, float dt = 1.f) {
     state_.yaw_position = yaw_imu_position;
     state_.yaw_speed = yaw_speed;
     state_.pitch_position = pitch_imu_position;
@@ -111,7 +110,7 @@ class Gimbal2Dof {
   struct {
     float yaw_position;
     float pitch_position;
-  } target_{};    ///< 目标状态
+  } target_{};  ///< 目标状态
   struct {
     float yaw;
     float pitch;

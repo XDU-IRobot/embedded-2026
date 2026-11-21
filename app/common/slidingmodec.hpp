@@ -6,7 +6,7 @@
 // 优质参数
 // SMC YawSMC(20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5, 1.0);
 class SMC {
-public:
+ public:
   float C;
   float K;
   float target;
@@ -25,7 +25,8 @@ public:
   SMC(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon, float dt)
       : C(C), K(K), target(ref), error_eps(error_eps), q(q), p(p), u_max(u_max), J(J), epsilon(epsilon), dt(dt) {}
 
-  void SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon, float dt);
+  void SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon,
+               float dt);
   void Update(float target_pos, float angle_now, float angle_vel);
   void Reset(float angle_now);
 
