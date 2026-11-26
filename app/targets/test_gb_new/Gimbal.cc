@@ -163,7 +163,8 @@ void Gimbal::ApplyNormalGimbalPID() {
 }
 
 void Gimbal::ApplyIdentifyGimbalPID() {
-  globals->gimbal_controller.motor().yaw.pid().position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(0);
+  globals->gimbal_controller.motor().yaw.pid().position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(
+      0);
   globals->gimbal_controller.motor().pitch.pid().position.SetKp(45).SetKi(0).SetKd(65).SetMaxOut(10).SetMaxIout(0);
 }
 
@@ -368,13 +369,9 @@ void Gimbal::GimbalMoveUpdate() {
   //                                   globals->pitch_motor->pos(), -globals->imu->gyro_y(), Ts);
 
   // imu 更新 imu 速度输入
-  globals->gimbal_controller.UpdateWithImu(
-    globals->ahrs.euler_angle().z(),
-    globals->yaw_motor->pos(),
-    globals->imu->gyro_z(),
-    globals->ahrs.euler_angle().y(),
-    globals->pitch_motor->pos(),
-    -globals->imu->gyro_y(), Ts);
+  globals->gimbal_controller.UpdateWithImu(globals->ahrs.euler_angle().z(), globals->yaw_motor->pos(),
+                                           globals->imu->gyro_z(), globals->ahrs.euler_angle().y(),
+                                           globals->pitch_motor->pos(), -globals->imu->gyro_y(), Ts);
 
   // // imu 更新 编码器速度输入
   // globals->gimbal_controller.UpdateWithImu(

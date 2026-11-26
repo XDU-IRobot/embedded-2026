@@ -89,7 +89,7 @@ inline struct GlobalWarehouse {
   //   Eigen::Vector3f &euler_angle() { return angles; }
   //   const Eigen::Vector3f &euler_angle() const { return angles; }
   // } ahrs;
-  Gimbal2Dof gimbal_controller;          ///< 二轴云台控制器
+  Gimbal2Dof gimbal_controller;  ///< 二轴云台控制器
 
   StateMachineType StateMachine_ = {kNoForce};                     // 当前状态
   RemoteControlSource remote_source = RemoteControlSource::kNone;  ///< DT17 在线时为控制源

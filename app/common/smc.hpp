@@ -4,9 +4,9 @@
 #include <librm.hpp>
 
 enum class SMCMode {
-  kSMC,     // 线性滑膜面
-  kTSMC,    // 终端滑模面
-  kISMC     // 积分滑膜面
+  kSMC,   // 线性滑膜面
+  kTSMC,  // 终端滑模面
+  kISMC   // 积分滑膜面
 };
 
 // SMC YawSMC(20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5, 1.0);
@@ -32,27 +32,47 @@ class SMC {
 
   // ISMC 专属
   float C1, C2;
-  float z_integral_ = 0.f; // 积分累加项
+  float z_integral_ = 0.f;  // 积分累加项
 
   SMC() = default;
 
   // ================= 初始化函数 =================
-  void SMCInit(float C, float K, float J, float target, float epsilon, float error_eps, float u_max,  float dt) {
-    this->C = C; this->K = K; this->J = J;
-    this->target = target; this->epsilon = epsilon; this->error_eps = error_eps;
-    this->u_max = u_max;  this->dt = dt;
+  void SMCInit(float C, float K, float J, float target, float epsilon, float error_eps, float u_max, float dt) {
+    this->C = C;
+    this->K = K;
+    this->J = J;
+    this->target = target;
+    this->epsilon = epsilon;
+    this->error_eps = error_eps;
+    this->u_max = u_max;
+    this->dt = dt;
   }
 
-  void TSMCInit(float C, float K,  float J, float q, float p, float target, float epsilon, float error_eps, float u_max, float dt) {
-    this->C = C; this->K = K; this->q = q; this->p = p; this->J = J;
-    this->target = target; this->epsilon = epsilon; this->error_eps = error_eps;
-    this->u_max = u_max; this->dt = dt;
+  void TSMCInit(float C, float K, float J, float q, float p, float target, float epsilon, float error_eps, float u_max,
+                float dt) {
+    this->C = C;
+    this->K = K;
+    this->q = q;
+    this->p = p;
+    this->J = J;
+    this->target = target;
+    this->epsilon = epsilon;
+    this->error_eps = error_eps;
+    this->u_max = u_max;
+    this->dt = dt;
   }
 
-  void ISMCInit(float C1, float C2, float K, float J, float target, float epsilon, float error_eps, float u_max, float dt) {
-    this->C1 = C1; this->C2 = C2; this->K = K; this->J = J;
-    this->target = target; this->epsilon = epsilon; this->error_eps = error_eps;
-    this->u_max = u_max; this->dt = dt;
+  void ISMCInit(float C1, float C2, float K, float J, float target, float epsilon, float error_eps, float u_max,
+                float dt) {
+    this->C1 = C1;
+    this->C2 = C2;
+    this->K = K;
+    this->J = J;
+    this->target = target;
+    this->epsilon = epsilon;
+    this->error_eps = error_eps;
+    this->u_max = u_max;
+    this->dt = dt;
   }
 
   // ================= 核心更新函数 =================
@@ -92,8 +112,7 @@ class SMC {
       s_ = error_dot + C * error_;
       ds_ = -epsilon * std::tanh(s_) - K * s_;
       u = J * (target_ddot_ - C * error_dot + ds_);
-    }
-    else if constexpr (Mode == SMCMode::kTSMC) {  // 终端滑膜
+    } else if constexpr (Mode == SMCMode::kTSMC) {  // 终端滑膜
       const float qp = q / p;
       const float e_qp = (error_ < 0) ? -std::pow(std::abs(error_), qp) : std::pow(std::abs(error_), qp);
 
@@ -106,8 +125,7 @@ class SMC {
       //   s_ = error_dot + C * error_;
       //   u = J * (target_ddot_ - C * error_dot - epsilon * std::tanh(s_) - K * s_);
       // }
-    }
-    else if constexpr (Mode == SMCMode::kISMC) {   // 积分滑膜
+    } else if constexpr (Mode == SMCMode::kISMC) {  // 积分滑膜
       const float sigma = error_dot + C1 * error_;
 
       if (std::abs(u) < u_max * 0.9f) {

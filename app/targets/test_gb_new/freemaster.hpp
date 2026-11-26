@@ -243,7 +243,8 @@ inline void freemaster() {
   freemaster_data.gimbal_feedback.gyro_z = globals->imu->gyro_z();
   freemaster_data.gimbal_feedback.controller_yaw_position = globals->gimbal_controller.state().yaw_position * kRadToDeg;
   freemaster_data.gimbal_feedback.controller_yaw_speed = globals->gimbal_controller.state().yaw_speed;
-  freemaster_data.gimbal_feedback.controller_pitch_position = globals->gimbal_controller.state().pitch_position * kRadToDeg;
+  freemaster_data.gimbal_feedback.controller_pitch_position =
+      globals->gimbal_controller.state().pitch_position * kRadToDeg;
   freemaster_data.gimbal_feedback.controller_pitch_speed = globals->gimbal_controller.state().pitch_speed;
   freemaster_data.gimbal_feedback.yaw_motor_position = globals->yaw_motor->pos() * kRadToDeg;
   freemaster_data.gimbal_feedback.yaw_motor_speed = globals->yaw_motor->vel();
