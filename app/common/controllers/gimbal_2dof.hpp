@@ -3,7 +3,7 @@
 #include "motor_driver.hpp"
 
 #include <librm.hpp>
-#include "slidingmodec.hpp"
+#include "smc.hpp"
 
 /**
  * @brief 二轴云台控制器
@@ -21,6 +21,17 @@ class Gimbal2Dof {
     motor_.pitch.SetOutputLimits(-kDM4310TorqueCmdLimit, kDM4310TorqueCmdLimit);
     motor_.pitch.SetPositionLimits(-36 * kDegToRad, 10 * kDegToRad, false);
   };
+
+  void UpdateFilter(float yaw_position, float yaw_speed, float pitch_position, float pitch_speed, float dt) {
+    if (!filter_.is_initialized) {
+      // filter_.yaw_speed.Reset(yaw_speed);
+      // filter_.pitch_speed.Reset(pitch_speed);
+      filter_.is_initialized = true;
+    }
+
+    // filter_.yaw_speed.Update(yaw_speed);
+    // filter_.pitch_speed.Update(pitch_speed);
+  }
 
   /**
    * @brief 更新一步，角度单位均为弧度，速度单位均为弧度每秒
@@ -95,6 +106,7 @@ class Gimbal2Dof {
   [[nodiscard]] auto &motor() { return motor_; }
   [[nodiscard]] auto &state() { return state_; }
   [[nodiscard]] auto &target() { return target_; }
+  [[nodiscard]] auto &filter() { return filter_; }
   [[nodiscard]] auto &output() { return output_; }
 
  private:
@@ -115,4 +127,11 @@ class Gimbal2Dof {
     float yaw;
     float pitch;
   } output_{};  ///< 控制输出
+  struct {
+    // ABG yaw{0.05f, 0.0005f, 0.000005f};
+    // ABG pitch{0.05f, 0.0005f, 0.000005f};
+    // Biquad yaw_speed{0.067455f, 0.134910f, 0.067455f, -1.142980f, 0.412801f};
+    // Biquad pitch_speed{0.067455f, 0.134910f, 0.067455f, -1.142980f, 0.412801f};
+    bool is_initialized{false};
+  } filter_;
 };

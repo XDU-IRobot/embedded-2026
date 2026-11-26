@@ -4,7 +4,7 @@ namespace rm::device {
 constexpr f32 kDegToRad = static_cast<f32>(M_PI) / 180.0f;
 constexpr f32 kRadToDeg = 180.0f / static_cast<f32>(M_PI);
 
-AimbotCanCommunicator::AimbotCanCommunicator(rm::hal::CanInterface &can) : CanDevice(can, 0x170, 0x160) {}
+AimbotCanCommunicator::AimbotCanCommunicator(rm::hal::CanInterface &can) : CanDevice(can) {}
 
 u8 AimbotCanCommunicator::aimbot_state() const { return aimbot_state_; }
 
@@ -25,7 +25,7 @@ f32 AimbotCanCommunicator::yaw_acc() const { return yaw_acc_; }
 f32 AimbotCanCommunicator::pitch_acc() const { return pitch_acc_; }
 
 void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
-  if (msg->rx_std_id == 0x170) {
+  if (msg->std_id == 0x170) {
     ReportStatus(kOk);
     aimbot_state_ = static_cast<u8>(msg->data[0]);
     aimbot_target_ = static_cast<u8>(msg->data[1]);
@@ -34,7 +34,7 @@ void AimbotCanCommunicator::RxCallback(const hal::CanFrame *msg) {
     pitch_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[4]) << 8) | msg->data[5])) *
              kDegToRad;
     nuc_start_flag_ = static_cast<u8>(msg->data[6]);
-  } else if (msg->rx_std_id == 0x160) {
+  } else if (msg->std_id == 0x160) {
     ReportStatus(kOk);
     yaw_vel_ = modules::F16ToF32(static_cast<modules::f16>((static_cast<uint16_t>(msg->data[0]) << 8) | msg->data[1])) *
                kDegToRad;

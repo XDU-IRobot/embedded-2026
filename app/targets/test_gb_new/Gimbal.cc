@@ -67,8 +67,8 @@ int AppendFloat(char *buffer, size_t size, f32 value) {
 }  // namespace
 
 void Gimbal::GimbalInit() {
-  gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
+  gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().z();
+  gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().y();
   gimbal->last_yaw_target = gimbal->gimbal_yaw_target_;
   gimbal->last_pitch_target_ = gimbal->gimbal_pitch_target_;
   gimbal->last_yaw_speed_ref_ = 0.0f;
@@ -154,29 +154,16 @@ void Gimbal::GimbalAimbotTargetUpdate() {
 }
 
 void Gimbal::ApplyNormalGimbalPID() {
-  globals->gimbal_controller.motor()
-      .yaw.pid()
-      .position.SetKp(380.0f)
-      .SetKi(0)
-      .SetKd(9000.0f)
-      .SetMaxOut(30000.0f)
-      .SetMaxIout(0);
-  globals->gimbal_controller.motor().yaw.pid().speed.SetKp(580.0f).SetKi(0).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(
-      0);
-  // pitch PID 参数
-  globals->gimbal_controller.motor()
-      .pitch.pid()
-      .position.SetKp(42.0f)
-      .SetKi(0)
-      .SetKd(600.0f)
-      .SetMaxOut(10000.0f)
-      .SetMaxIout(0);
-  globals->gimbal_controller.motor().pitch.pid().speed.SetKp(0.5f).SetKi(0).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0);
+  globals->GimbalPIDInit();
+  // globals->gimbal_controller.motor().yaw.pid().position.SetKp(380.0f).SetKi(0).SetKd(9000.0f).SetMaxOut(30000.0f).SetMaxIout(0);
+  // globals->gimbal_controller.motor().yaw.pid().speed.SetKp(580.0f).SetKi(0).SetKd(0.0f).SetMaxOut(30000.0f).SetMaxIout(0);
+  // // pitch PID 参数
+  // globals->gimbal_controller.motor().pitch.pid().position.SetKp(42.0f).SetKi(0).SetKd(600.0f).SetMaxOut(10000.0f).SetMaxIout(0);
+  // globals->gimbal_controller.motor().pitch.pid().speed.SetKp(0.5f).SetKi(0).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0);
 }
 
 void Gimbal::ApplyIdentifyGimbalPID() {
-  globals->gimbal_controller.motor().yaw.pid().position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(
-      0);
+  globals->gimbal_controller.motor().yaw.pid().position.SetKp(75000).SetKi(0).SetKd(10000).SetMaxOut(30000).SetMaxIout(0);
   globals->gimbal_controller.motor().pitch.pid().position.SetKp(45).SetKi(0).SetKd(65).SetMaxOut(10).SetMaxIout(0);
 }
 
@@ -290,8 +277,8 @@ void Gimbal::GimbalDisableUpdate() {
   globals->aim_mode = 0x01;
   // globals->gimbal_controller.EnableSpeedPid(true);
   globals->gimbal_controller.Enable(false);
-  gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().yaw;
-  gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().pitch;
+  gimbal->gimbal_yaw_target_ = globals->ahrs.euler_angle().z();
+  gimbal->gimbal_pitch_target_ = globals->ahrs.euler_angle().y();
   // // TODO
   // gimbal->gimbal_yaw_target_ = globals->yaw_motor->pos();
   // gimbal->gimbal_pitch_target_ = globals->pitch_motor->pos();
@@ -368,20 +355,59 @@ void Gimbal::GimbalMoveUpdate() {
     //                                                 -static_cast<f32>(M_PI), static_cast<f32>(M_PI));
   }
 
-  // const f32 pitch_ff_nm = PitchGravity::Model::Calc(0.83432, 2.92575, globals->ahrs.euler_angle().pitch) + 0.01f;
-  const f32 pitch_ff_nm = 0.0f;
+  // const f32 pitch_ff_nm = PitchGravity::Model::Calc(0.83432, 2.92575, globals->ahrs.euler_angle().y()) + 0.01f;
+  const f32 pitch_ff_nm = PitchGravity::Model::Calc(0.95, 2.92575, globals->ahrs.euler_angle().y()) + 0.01f;
+  // const f32 pitch_ff_nm = 0.0f;
   const f32 yaw_ff_cmd = 0.0f;
   globals->gimbal_controller.SetTarget(yaw_target_for_controller, pitch_target_for_controller);
   globals->gimbal_controller.SetYawFeedforward(0, yaw_ff_cmd);
   globals->gimbal_controller.SetPitchFeedforward(0, pitch_ff_nm);
+
+  // // 无 imu 更新
   // globals->gimbal_controller.Update(globals->yaw_motor->pos(), globals->imu->gyro_z(),
-  //                                   globals->pitch_motor->pos(), globals->imu->gyro_x(), Ts);
-  globals->gimbal_controller.UpdateWithImu(globals->ahrs.euler_angle().yaw, globals->yaw_motor->pos(),
-                                           globals->imu->gyro_z(), globals->ahrs.euler_angle().pitch,
-                                           globals->pitch_motor->pos(), globals->imu->gyro_x(), Ts);
-  // globals->gimbal_controller.UpdateWithImu(globals->ahrs.euler_angle().yaw, globals->yaw_motor->pos(),
-  // globals->yaw_motor->vel(),
-  //   globals->ahrs.euler_angle().pitch, globals->pitch_motor->pos(), globals->pitch_motor->vel(), Ts);
+  //                                   globals->pitch_motor->pos(), -globals->imu->gyro_y(), Ts);
+
+  // imu 更新 imu 速度输入
+  globals->gimbal_controller.UpdateWithImu(
+    globals->ahrs.euler_angle().z(),
+    globals->yaw_motor->pos(),
+    globals->imu->gyro_z(),
+    globals->ahrs.euler_angle().y(),
+    globals->pitch_motor->pos(),
+    -globals->imu->gyro_y(), Ts);
+
+  // // imu 更新 编码器速度输入
+  // globals->gimbal_controller.UpdateWithImu(
+  //   globals->ahrs.euler_angle().yaw,
+  //   globals->yaw_motor->pos(),
+  //   globals->yaw_motor->vel(),
+  //   globals->ahrs.euler_angle().pitch,
+  //   globals->pitch_motor->pos(),
+  //   globals->pitch_motor->vel(), Ts);
+
+  // // 过滤器
+  // globals->gimbal_controller.UpdateFilter(
+  //   globals->ahrs.euler_angle().yaw, globals->imu->gyro_z(),
+  //   globals->ahrs.euler_angle().pitch, globals->imu->gyro_y(), Ts);
+  // globals->gimbal_controller.UpdateWithImu(
+  //   globals->ahrs.euler_angle().yaw,
+  //   globals->yaw_motor->pos(),
+  //   globals->gimbal_controller.filter().yaw_speed.out,
+  //   globals->ahrs.euler_angle().pitch,
+  //   globals->pitch_motor->pos(),
+  //   globals->gimbal_controller.filter().pitch_speed.out, Ts);
+
+  // // 死区
+  // const float deadband = 0.03f;
+  // float yaw_speed_filter = (std::abs(globals->imu->gyro_z()) < deadband) ? 0 : globals->imu->gyro_z();
+  // float pitch_speed_filter = (std::abs(globals->imu->gyro_y()) < deadband) ? 0 : globals->imu->gyro_y();
+  // globals->gimbal_controller.UpdateWithImu(
+  //   globals->ahrs.euler_angle().yaw,
+  //   globals->yaw_motor->pos(),
+  //   yaw_speed_filter,
+  //   globals->ahrs.euler_angle().pitch,
+  //   globals->pitch_motor->pos(),
+  //   pitch_speed_filter, Ts);
 
   gimbal->yaw_torque_ = globals->gimbal_controller.output().yaw;
   gimbal->pitch_torque_ = globals->gimbal_controller.output().pitch;
@@ -391,7 +417,7 @@ void Gimbal::GimbalPitchGravityCalc() {
   static bool success_announced = false;
 
   gimbal_pitch_target_ =
-      pitch_sampler_.Update(globals->ahrs.euler_angle().pitch, globals->imu->gyro_x(), pitch_torque_, Ts);
+      pitch_sampler_.Update(globals->ahrs.euler_angle().y(), globals->imu->gyro_y(), pitch_torque_, Ts);
   if (pitch_sampler_.IsSampling()) {
     success_announced = false;
   }

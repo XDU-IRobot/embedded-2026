@@ -48,8 +48,11 @@ void GlobalWarehouse::Init() {
   can2 = new rm::hal::Can{hcan2};
   aimbot_communicator = new rm::device::AimbotCanCommunicator{*can2};
   dbus = new rm::hal::Serial<18>{huart3, false, true};
-  ident_uart = new rm::hal::Serial<128>{huart1, false, true};
+  ident_uart = new rm::hal::Serial<128>{huart6, false, true};
 
+  // imu_uart = new rm::hal::Serial<1024>{huart1, false, true};
+  // imu = new rm::device::HipnucImu{*imu_uart};
+  // imu->SetHeartbeatTimeout(std::chrono::milliseconds(100));
   imu = new rm::device::BMI088{hspi1, CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, CS1_GYRO_GPIO_Port, CS1_GYRO_Pin};
   rc = new rm::device::DR16{*dbus};
   rc->SetHeartbeatTimeout(std::chrono::milliseconds(100));
@@ -72,6 +75,7 @@ void GlobalWarehouse::Init() {
   can2->SetFilter(0, 0);
   can1->Begin();
   can2->Begin();
+  // imu->Begin();
   rc->Begin();
   ident_uart->Start();
   buzzer->Init();
@@ -87,14 +91,18 @@ void GlobalWarehouse::Init() {
   gimbal->GimbalInit();
 
   freemaster_init();
+
+  printf("Welcome To RM");
 }
 
 void GlobalWarehouse::GimbalSMCInit() {
   // 初始化 SMC
   // gimbal_controller.motor().yaw.smc().SMCInit(30, 400, 0, 0.001, 21, 27, 30000, 90, 0.5, 1.0);
   // gimbal_controller.motor().pitch.smc().SMCInit(33, 380, 0, 0.0, 21, 27, 10, 0.005, 10, 1.0);
-  gimbal_controller.motor().yaw.smc().SMCInit(60, 40, 0, 0.0003, 27, 27, 10, 0.007, 50, 1);
-  gimbal_controller.motor().pitch.smc().SMCInit(50, 60, 0, 0.0003, 27, 27, 10, 0.001, 10, 1);
+  gimbal_controller.motor().yaw.smc().SMCInit(50, 35, 0.006, 0, 10, 0.01, 5, 1);
+  gimbal_controller.motor().pitch.smc().SMCInit(50, 60, 0.006, 0, 10, 0.01, 5, 1);
+  // gimbal_controller.motor().yaw.smc().ISMCInit(50, 50, 35, 0.002, 0, 10, 0.01, 5, 0.002);
+  // gimbal_controller.motor().pitch.smc().ISMCInit(50, 50, 60, 0.002, 0, 10, 0.01, 5, 0.002);
 }
 
 void GlobalWarehouse::GimbalPIDInit() {
@@ -102,12 +110,10 @@ void GlobalWarehouse::GimbalPIDInit() {
   // Yaw PID 参数
   // gimbal_controller.motor().yaw.pid().position.SetKp(380.0f).SetKi(0.0f).SetKd(9000.0f).SetMaxOut(12000.0f).SetMaxIout(0.0f);
   // gimbal_controller.motor().yaw.pid().speed.SetKp(580.0f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(15000.0f).SetMaxIout(0.0f);
-  gimbal_controller.motor().yaw.pid().position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(
-      0.0f);
+  gimbal_controller.motor().yaw.pid().position.SetKp(20.0f).SetKi(0.0f).SetKd(100.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.motor().yaw.pid().speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
   // pitch PID 参数
-  gimbal_controller.motor().pitch.pid().position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(
-      0.0f);
+  gimbal_controller.motor().pitch.pid().position.SetKp(60.0f).SetKi(0.0f).SetKd(700.0f).SetMaxOut(10000.0f).SetMaxIout(0.0f);
   gimbal_controller.motor().pitch.pid().speed.SetKp(0.5f).SetKi(0.0f).SetKd(0.0f).SetMaxOut(10.0f).SetMaxIout(0.0f);
 }
 
@@ -265,12 +271,18 @@ void GlobalWarehouse::SubLoop500Hz() {
   // globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_y(), globals->imu->gyro_x(),
   //                                               globals->imu->gyro_z() + 0.00075f, -globals->imu->accel_y(),
   //                                               globals->imu->accel_x(), globals->imu->accel_z()});
-  globals->ahrs.Update(rm::modules::ImuData6Dof{-globals->imu->gyro_x(), -globals->imu->gyro_y(),
-                                                globals->imu->gyro_z() - 0.0031f, -globals->imu->accel_x(),
-                                                -globals->imu->accel_y(), globals->imu->accel_z()});
+  globals->ahrs.Update(rm::modules::ImuData6Dof{
+      Eigen::Vector3f{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z() + 0.001f},
+      Eigen::Vector3f{-globals->imu->accel_x(), -globals->imu->accel_y(), globals->imu->accel_z()}});
+  // globals->ahrs.Update(rm::modules::ImuData6Dof{
+  //     Eigen::Vector3f{-globals->imu->gyro_x(), -globals->imu->gyro_y(), globals->imu->gyro_z() + 0.001f},
+  //     Eigen::Vector3f{-globals->imu->acc_x(), -globals->imu->acc_y(), globals->imu->acc_z()}});
+  // ahrs.euler_angle().x() = imu->roll();
+  // ahrs.euler_angle().y() = imu->pitch();
+  // ahrs.euler_angle().z() = imu->yaw();
   // can 通信
-  globals->aimbot_communicator->UpdateControl(globals->ahrs.euler_angle().yaw, globals->ahrs.euler_angle().pitch,
-                                              globals->ahrs.euler_angle().roll, globals->aimbot_robot_id,
+  globals->aimbot_communicator->UpdateControl(globals->ahrs.euler_angle().z(), globals->ahrs.euler_angle().y(),
+                                              globals->ahrs.euler_angle().x(), globals->aimbot_robot_id,
                                               globals->aim_mode, globals->imu_count, globals->aimbot_bullet_speed);
   globals->RCStateUpdate();
   globals->RemoteInputUpdate();

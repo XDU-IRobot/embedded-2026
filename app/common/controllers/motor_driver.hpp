@@ -1,6 +1,6 @@
 #pragma once
 
-#include "slidingmodec.hpp"
+#include "smc.hpp"
 #include <librm.hpp>
 #include <limits>
 
@@ -41,8 +41,6 @@ class MotorDriver {
   void EnableOutputLimits(const bool is_enable) { is_output_limits_ = is_enable; }
   void EnablePositionLimits(const bool is_enable) { is_position_limits_ = is_enable; }
   void EnableTargetLimits(const bool is_enable) { is_target_limits_ = is_enable; }
-  void SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J, float epsilon,
-               float dt);
 
   // 对外接口
   [[nodiscard]] auto &smc() { return smc_; }
@@ -57,7 +55,7 @@ class MotorDriver {
   bool is_target_limits_{false};    // 目标限位，仅对位置模式有效，速度模式无效
   bool is_position_limits_{false};  // 机械限位，仅对位置模式有效，速度模式无效
 
-  SMC smc_{20, 120, 0, 0.001, 21, 27, 25000, 0.8, 0.5, 1.0};  // 参数请在外部修改
+  SMC<SMCMode::kSMC> smc_;
 
   struct {
     rm::modules::PID speed, position;

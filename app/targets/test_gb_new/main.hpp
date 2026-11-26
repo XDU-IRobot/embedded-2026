@@ -75,13 +75,20 @@ inline struct GlobalWarehouse {
   rm::device::DeviceManager<1> device_nuc;
 
   // 云台
+  // rm::hal::Serial<1024> *imu_uart{nullptr};
+  // rm::device::HipnucImu *imu{nullptr};
   rm::device::BMI088 *imu{nullptr};                                                 ///< IMU
   rm::device::DR16 *rc{nullptr};                                                    ///< 遥控器
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *yaw_motor{nullptr};    ///< 云台 Yaw 上电机
   rm::device::DmMotor<rm::device::DmMotorControlMode::kMit> *pitch_motor{nullptr};  ///< 云台 Pitch 电机
 
   // 控制器 //
-  rm::modules::MahonyAhrs ahrs{500.0f};  ///< 姿态解算器
+  rm::modules::QuaternionEkfAhrs ahrs{500.0f};  ///< 姿态解算器
+  // struct {
+  //   Eigen::Vector3f angles = Eigen::Vector3f::Zero();
+  //   Eigen::Vector3f &euler_angle() { return angles; }
+  //   const Eigen::Vector3f &euler_angle() const { return angles; }
+  // } ahrs;
   Gimbal2Dof gimbal_controller;          ///< 二轴云台控制器
 
   StateMachineType StateMachine_ = {kNoForce};                     // 当前状态
@@ -120,10 +127,10 @@ inline struct GlobalWarehouse {
 
   void SubLoop10Hz();
 
+  void GimbalPIDInit();
+
  private:
   void GimbalSMCInit();
-
-  void GimbalPIDInit();
 
   void RCStateUpdate();
 

@@ -15,14 +15,6 @@
 #include "motor_driver.hpp"
 
 /**
- * @brief SMC 初始化
- */
-void MotorDriver::SMCInit(float C, float K, float ref, float error_eps, float q, float p, float u_max, float J,
-                          float epsilon, float dt) {
-  smc_ = SMC(C, K, ref, error_eps, q, p, u_max, J, epsilon, dt);
-}
-
-/**
  * @brief 更新一步
  * @param raw_position 原始位置
  * @param raw_speed 原始速度
